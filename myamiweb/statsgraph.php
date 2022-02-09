@@ -42,17 +42,22 @@ if ($viewdata) {
 
 
 foreach ($stats as $stat) {
-	$prefId = $stat['prefId'];
-	$datay[$prefId][] = $stat['mean'];
-        $datax[$prefId][] = $stat['parent mean'];
+	// no stat
+	if ($stat['prefId']+0 == 0) continue;
+	//no parent
+	if ($stat['parent mean'] == '') continue;
+	$prefId = $stat['preftable'].$stat['prefId'];
+	$datay[$prefId][] = $stat['mean']+0;
+  $datax[$prefId][] = $stat['parent mean']+0;
 	
 }
+
 $keys = (array_keys($datax));
-if (empty($keys[0])) { 
+if (empty(end($keys))) {
 	$width = 12;
 	$height = 12;
 	$source = blankimage($width,$height);
-} else {	
+} else {
 	$parentinfo = $leginondata->getParent($stats[0]['Id']);
 	$graph = new Graph(800,600,"auto");
 	$graph->SetScale("linlin");
@@ -66,13 +71,12 @@ if (empty($keys[0])) {
 	$graph->yaxis->title->Set("density ".$parentinfo['parentpreset']);
 
 	foreach ($keys as $k=>$v) {
-                $sp[$k] = new ScatterPlot($datay[$v],$datax[$v]);
-        	$color = '#'.dechex(getColorMap($k));
-        	$sp[$k]->mark->SetFillColor($color);
-        	$sp[$k]->mark->SetColor($color);
-                $graph->Add($sp[$k]);
-        }
-
+		$sp[$k] = new ScatterPlot($datay[$v],$datax[$v]);
+		$color = '#'.dechex(getColorMap($k));
+		$sp[$k]->mark->SetFillColor($color);
+		$sp[$k]->mark->SetColor($color);
+		$graph->Add($sp[$k]);
+	}
 
 	$source = $graph->Stroke(_IMG_HANDLER);
 }
