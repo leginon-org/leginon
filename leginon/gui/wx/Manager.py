@@ -18,6 +18,7 @@ import wx.lib.intctrl
 from leginon import event
 from leginon import manager
 from leginon.gui.wx import About
+from leginon.gui.wx import DBinfo
 from leginon.gui.wx import ApplicationEditor
 from leginon.gui.wx import Launcher
 from leginon.gui.wx import LeginonLogging
@@ -287,6 +288,9 @@ class Frame(wx.Frame):
 		self.aboutmenuitem = wx.MenuItem(self.settingsmenu, -1, '&About...')
 		self.Bind(wx.EVT_MENU, self.onMenuAbout, self.aboutmenuitem)
 		self.helpmenu.AppendItem(self.aboutmenuitem)
+		self.dbmenuitem = wx.MenuItem(self.settingsmenu, -1, '&DBinfo...')
+		self.Bind(wx.EVT_MENU, self.onMenuDBinfo, self.dbmenuitem)
+		self.helpmenu.AppendItem(self.dbmenuitem)
 		self.menubar.Append(self.helpmenu, '&Help')
 
 		self.SetMenuBar(self.menubar)
@@ -419,6 +423,11 @@ class Frame(wx.Frame):
 
 	def onMenuAbout(self, evt):
 		dialog = About.Dialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
+
+	def onMenuDBinfo(self, evt):
+		dialog = DBinfo.Dialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
