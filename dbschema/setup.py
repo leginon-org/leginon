@@ -3,8 +3,8 @@ import glob
 import sys
 
 # script files to be installed in bin dir
-binfiles=glob.glob('tools/*leginon_path*.py')
-binfiles.extend(glob.glob('tools/*appion_path*.py'))
+binfiles=glob.glob('tools/*.py')
+binfiles.remove('tools/__init__.py)
 binfiles.extend(glob.glob('info_tools/export_all_target_info.py'))
 binfiles.extend(['schema_update.py','show_schema_history.py'])
 print binfiles
