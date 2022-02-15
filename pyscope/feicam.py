@@ -732,8 +732,6 @@ class Falcon3(FeiCam):
 		self.camera_settings.ExposureTime = movie_exposure_second
 		if self.save_frames:
 			self.camera_settings.AlignImage = self.align_frames
-		if self.getDebugCamera():
-			print 'n base frames', max_nframes
 		frame_time_second = self.dosefrac_frame_time
 		if self.save_frames:
 			# EER only works in counting mode
@@ -752,6 +750,8 @@ class Falcon3(FeiCam):
 					self.camera_settings.EER = False
 				# Use all available frames
 				max_nframes = self.camera_settings.CalculateNumberOfFrames()
+				if self.getDebugCamera():
+					print 'n base frames', max_nframes
 				rangelist = self.frameconfig.makeRangeListFromNumberOfBaseFramesAndFrameTime(max_nframes,frame_time_second)
 				if self.getDebugCamera():
 					print 'rangelist', rangelist, len(rangelist)
