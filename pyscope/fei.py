@@ -448,6 +448,8 @@ class Tecnai(tem.TEM):
 		value = self.getFeiConfig('optics','minimum_intensity_movement')
 		if value is None:
 			return 1e-8
+		else:
+			return value
 
 	def getIntensity(self):
 		intensity = getattr(self.tecnai.Illumination, self.intensity_prop)
