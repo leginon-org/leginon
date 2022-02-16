@@ -4,6 +4,7 @@ import subprocess
 import glob
 import shutil
 import sys
+import numpy
 
 import ccdcamera
 import time
@@ -16,7 +17,7 @@ try:
 except ImportError:
 	USE_SAFEARRAY_AS_NDARRAY = False
 
-SIMULATION = False
+SIMULATION = True
 class FEIAdvScriptingConnection(object):
 	instr = None
 	csa = None
@@ -340,7 +341,9 @@ class FeiCam(ccdcamera.CCDCamera):
 			self.registerCallback(name, self.readoutcallback)
 			self.backgroundReadout(name)
 		else:
-			if self.getExposureType() != 'norm':
+			if self.getExposureType() == 'dark':
+				result=self._getFakeDark()
+			elif self.getExposureType() != 'norm':
 				result=self._getImage()
 				self.csa.Wait()
 			else:
@@ -397,6 +400,25 @@ class FeiCam(ccdcamera.CCDCamera):
 		arr = self.modifyImage(arr)
 		return arr
 
+	def _getFakeDark(self):
+		'''
+		Return image array at zeros
+		'''
+		try:
+			self.finalizeSetup()
+			self.custom_setup()
+		except Exception, e:
+			if self.getDebugCamera():
+				print 'Camera setup',e
+			raise RuntimeError('Error setting camera parameters: %s' % (e,))
+		rk = self._getConfig('readout')
+		limit_dim = self.limit_dim[rk]
+		arr = numpy.zeros((limit_dim['y'],limit_dim['x']))
+		self.image_metadata = {}
+		if self.getDebugCamera():
+			print 'got arr and to modify'
+		arr = self.modifyImage(arr)
+		return arr
 	def _getImage(self):
 		'''
 		Acquire an image using the setup for this client.
