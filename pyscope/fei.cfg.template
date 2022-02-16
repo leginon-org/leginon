@@ -57,6 +57,8 @@ FALCON_IMAGE_STORAGE_PATH = z:\TEMScripting\BM-Falcon\
 FRAME_SUBPATH = leginonframes
 # Falcon EC EER
 SAVE_EER = False
+# Falcon EC Gain reference directory for EER files
+EER_GAIN_REFERENCE_DIR = z:\ImagesForProcessing\BM-Falcon\300kV
 # Falcon frame filename prefix. Default is empty string
 FRAME_NAME_PREFIX =
 # Falcon protector may be too slow
