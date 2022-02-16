@@ -162,6 +162,28 @@ class Corrector(imagewatcher.ImageWatcher):
 		self.panel.acquisitionDone()
 		self.stopTimer('acquireRaw')
 
+	def retrieveNorm(self, channels):
+		"""
+		Retrieve Norm image (Gain in Falcon terminology) instead of
+		acquire our own.  Camera software often has an easier gui.
+		"""
+		if 1 in channels:
+			self.logger.error('Norm retrieval can only be applied to channel 0')
+			return
+		# save only to channel 0
+		channel = 0
+		try:
+			self.instrument.ccdcamera.Settings = self.settings['camera settings']
+			imagedata = self._retrieveReference(exp_type='norm', channel=channel)
+		except Exception, e:
+			self.logger.exception('Cannot retrieve reference: %s' % (e,))
+		else:
+			image = imagedata['image']
+			self.displayImage(image)
+			self.currentimage = image
+			self.beep()
+		self.panel.acquisitionDone()
+
 	def acquireCorrected(self, channels):
 		for channel in channels:
 			self.startTimer('acquireCorrected')
@@ -277,6 +299,21 @@ class Corrector(imagewatcher.ImageWatcher):
 		finaldata['image'] = med
 		finaldata = self.storeCorrectorImageData(finaldata, type, channel)
 		return finaldata
+
+	def _retrieveReference(self,exp_type, channel):
+		"""
+		Pretend to acquire image but in fact return an existing one
+		on the camera pc.
+		"""
+		exposuretype = exp_type
+		try:
+			imagedata = self.acquireRawCameraImageData(type=exposuretype, force_no_frames=True)
+		except Exception, e:
+			self.logger.error('Error retrieving image: %s' % e)
+			raise
+		## final image based on contents of last image in series
+		imagedata = self.storeCorrectorImageData(imagedata, 'norm', 0)
+		return imagedata
 
 	def insert(self, x):
 		self.__n += 1

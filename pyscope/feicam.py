@@ -16,7 +16,7 @@ try:
 except ImportError:
 	USE_SAFEARRAY_AS_NDARRAY = False
 
-SIMULATION = False
+SIMULATION = True
 class FEIAdvScriptingConnection(object):
 	instr = None
 	csa = None
@@ -282,7 +282,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		return self.exposuretype
 
 	def setExposureType(self, value):
-		if value not in ['normal', 'dark']:
+		if value not in self.getExposureTypes():
 			raise ValueError('invalid exposure type')
 		self.exposuretype = value
 
@@ -340,8 +340,11 @@ class FeiCam(ccdcamera.CCDCamera):
 			self.registerCallback(name, self.readoutcallback)
 			self.backgroundReadout(name)
 		else:
-			result=self._getImage()
-			self.csa.Wait()
+			if self.getExposureType() != 'norm':
+				result=self._getImage()
+				self.csa.Wait()
+			else:
+				result= self._getSavedNorm()
 			return result
 
 	def _getSafeArray(self):
@@ -357,9 +360,41 @@ class FeiCam(ccdcamera.CCDCamera):
 		rk = self._getConfig('readout')
 		# 64-bit pyscope/safearray does not work with newer 64-bit comtypes installation.
 		# use safearray_as_ndarray instead.
+		if self.getDebugCamera():
+			print 'readout key', rk
+			print 'limit_dim', self.limit_dim[rk]
+			print 'binning', self.binning
 		arr = arr.reshape((self.limit_dim[rk]['y']/self.binning['y'],self.limit_dim[rk]['x']/self.binning['x']))
 		if USE_SAFEARRAY_AS_NDARRAY:
 			arr = arr.T
+		return arr
+
+	def getNormImagePath(self):
+		return None
+
+	def _getSavedNorm(self):
+		'''
+		Return image array from saved image.
+		'''
+		try:
+			self.finalizeSetup()
+			self.custom_setup()
+		except Exception, e:
+			if self.getDebugCamera():
+				print 'Camera setup',e
+			raise RuntimeError('Error setting camera parameters: %s' % (e,))
+		normpath = self.getNormImagePath()
+		if not normpath:
+			raise RuntimeError('Error finding saved norm image')
+		if self.getDebugCamera():
+			print 'loading', normpath
+		from pyami import tifffile
+		tif = tifffile.TIFFfile(normpath)
+		arr = tif.asarray()
+		self.image_metadata = {}
+		if self.getDebugCamera():
+			print 'got arr and to modify'
+		arr = self.modifyImage(arr)
 		return arr
 
 	def _getImage(self):
@@ -822,3 +857,30 @@ class Falcon4EC(Falcon3EC):
 
 	def setInserted(self, value):
 		super(Falcon4EC, self).setInserted(value)
+
+	def getExposureTypes(self):
+		"""
+		norm type is used to retrieve norm image, not a real exposure.
+		"""
+		return ['normal', 'dark','norm']
+
+	def getSystemGainDarkCorrected(self):
+		if self.frame_format != 'eer':
+			return True
+		return not self.getSaveRawFrames()
+
+	def getNormImagePath(self):
+		"""
+		return the path for the latest gain file.
+		"""
+		norm_dir = self.getFeiConfig('camera','eer_gain_reference_dir')
+		if not os.path.isdir(norm_dir):
+			return None
+		pattern = os.path.join(norm_dir,'*.gain')
+		files = glob.glob(pattern)
+		files.sort()
+		if len(files) == 0:
+			return None
+		return files[-1]
+
+
