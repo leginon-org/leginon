@@ -17,7 +17,7 @@ try:
 except ImportError:
 	USE_SAFEARRAY_AS_NDARRAY = False
 
-SIMULATION = True
+SIMULATION = False
 class FEIAdvScriptingConnection(object):
 	instr = None
 	csa = None
