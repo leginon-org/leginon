@@ -244,6 +244,7 @@ camera_params = (
 	('temperature status', str),
 	('readout delay', int),
 	('gain index', int),
+	('system corrected', bool), # deprecated in v3.6
 	('sum gain corrected', bool),
 	('frame gain corrected', bool),
 	('system dark subtracted', bool),

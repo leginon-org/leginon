@@ -524,6 +524,10 @@ class DE20(DD):
 		return {'x': psize, 'y': psize}
 
 	## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+	def getSystemGainDarkCorrected(self):
+		# deprecated in v3.6
+		return True
+
 	def getSystemDarkSubtracted(self):
 		return True
 
@@ -554,6 +558,10 @@ class DE20c(DD):
 		return {'x': psize, 'y': psize}
 
 	## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+	def getSystemGainDarkCorrected(self):
+		# deprecated in v3.6
+		return True
+
 	def getSystemDarkSubtracted(self):
 		return True
 
@@ -577,6 +585,10 @@ class DE16(DD):
 		return {'x': psize, 'y': psize}
 
 	## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+	def getSystemGainDarkCorrected(self):
+		# deprecated in v3.6
+		return True
+
 	def getSystemDarkSubtracted(self):
 		return True
 
@@ -608,6 +620,10 @@ class DE16c(DD):
 		return {'x': psize, 'y': psize}
 
 	## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+	def getSystemGainDarkCorrected(self):
+		# deprecated in v3.6
+		return True
+
 	def getSystemDarkSubtracted(self):
 		return True
 
@@ -638,6 +654,10 @@ class DE64(DD):
 		return FRAME_ROTATE
 
 	## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+	def getSystemGainDarkCorrected(self):
+		# deprecated in v3.6
+		return True
+
 	def getSystemDarkSubtracted(self):
 		return True
 
@@ -669,6 +689,10 @@ class DE64c(DD):
 		return {'x': psize, 'y': psize}
 
 	## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+	def getSystemGainDarkCorrected(self):
+		# deprecated in v3.6
+		return True
+
 	def getSystemDarkSubtracted(self):
 		return True
 

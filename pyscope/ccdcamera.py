@@ -326,6 +326,10 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 	#def setAlignFilter(self, value):
 	#	raise NotImplementedError
 
+	def getSystemGainDarkCorrected(self):
+		# deprecated in v3.6
+		return False
+
 	def getSystemDarkSubtracted(self):
 		return False
 

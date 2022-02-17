@@ -474,6 +474,10 @@ class TIA_Falcon(TIA):
 				# In case falconframe.py is not set up right
 				pass
 
+	def getSystemGainDarkCorrected(self):
+		# deprecated in v3.6
+		return True
+
 	def getSystemDarkSubtracted(self):
 		return True
 
@@ -509,6 +513,10 @@ class FakeK2(TIA):
 class TIA_Ceta(TIA):
 	name = 'Ceta'
 	camera_name = 'BM-Ceta'
+
+	def getSystemGainDarkCorrected(self):
+		# deprecated in v3.6
+		return True
 
 	def getSystemDarkSubtracted(self):
 		return True

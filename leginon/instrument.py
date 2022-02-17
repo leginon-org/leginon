@@ -444,6 +444,7 @@ parametermapping = (
 	('temperature status', 'TemperatureStatus'),
 	('binned multiplier', 'BinnedMultiplier'),
 	('gain index', 'GainIndex'),
+	('system corrected', 'SystemGainDarkCorrected'),
 	('sum gain corrected', 'SumGainCorrected'),
 	('frame gain corrected', 'FrameGainCorrected'),
 	('system dark subtracted', 'SystemDarkSubtracted'),

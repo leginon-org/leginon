@@ -70,6 +70,10 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 			raise AttributeError('attribute not supported')
 		return object.__getattribute__(self, attr_name)
 
+	def getSystemGainDarkCorrected(self):
+		# deprecated in v3.6
+		return self.getSumGainCorrected()
+
 	def getSystemDarkSubtracted(self):
 		# Default to not do dark subtraction if have simulated images
 		if self.simpar_dir is None:
@@ -750,6 +754,10 @@ class SimK3Camera(SimFrameCamera):
 		self.camsize = self.getCameraSize()
 		self.tempoffset = dict(self.offset)
 		self.pixel_size = {'x': 2.5e-6, 'y': 2.5e-6}
+
+	def getSystemGainDarkCorrected(self):
+		# deprecated in v3.6
+		return True
 
 	def getSystemDarkSubtracted(self):
 		return True

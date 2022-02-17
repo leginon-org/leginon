@@ -964,6 +964,10 @@ class GatanK3(GatanK2Base):
 			# default
 			return 'gain normalized'
 
+	def getSystemGainDarkCorrected(self):
+		# deprecated in v3.6
+		return self.dm_processing == 'gain normalized'
+
 	def getSystemDarkSubtracted(self):
 		return self.dm_processing in ('dark subtracted', 'gain normalized')
 

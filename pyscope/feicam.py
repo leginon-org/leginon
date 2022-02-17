@@ -661,6 +661,10 @@ class FeiCam(ccdcamera.CCDCamera):
 		else:
 			raise NotImplementedError()
 
+	def getSystemGainDarkCorrected(self):
+		# deprecated in v3.6
+		return True
+
 	def getSystemDarkSubtracted(self):
 		return True
 
