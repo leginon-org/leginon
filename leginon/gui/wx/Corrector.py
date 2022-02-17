@@ -301,6 +301,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		elif chanstr == 'Channel 1':
 			channel = 1
 		else:
+			self.node.displayInLogger('error','Displaying %s is not a valid choice.' % chanstr)
 			return
 		self.node.displayRef(reftype, channel)
 

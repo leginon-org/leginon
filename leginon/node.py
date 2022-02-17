@@ -592,6 +592,9 @@ class Node(correctorclient.CorrectorClient):
 		time.sleep(0.2)
 		self.beep()
 
+	def displayInLogger(self, level, msg):
+		getattr(self.logger,level)(msg)
+
 	def setStatus(self, status):
 		'''
 		TO DO: Need a general remote master switch for local-remote switch.
