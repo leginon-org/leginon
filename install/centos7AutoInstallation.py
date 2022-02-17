@@ -290,6 +290,7 @@ class CentosInstallation(object):
 		self.runCommand("yum install -y python2-pip")
 		self.runCommand("pip install joblib==0.10.3")		
 		self.runCommand("pip install slackclient==1.0.0")
+		self.runCommand("pip install PyMySQL==0.10.1") #https://emg.nysbc.org/redmine/issues/11689
 
 	def setupWebServer(self):
 		self.writeToLog("--- Start install Web Server")
@@ -311,6 +312,13 @@ class CentosInstallation(object):
 		self.runCommand("systemctl restart httpd")
 		self.runCommand("systemctl enable httpd")
 		self.openFirewallPort(80)
+		
+		#this is for tiltgroup_wrangler_cli.py https://emg.nysbc.org/redmine/issues/12047
+		#optional: only used in CTF report page. Can be removed, if this step fails.
+		tiltgroup_wrangler_cli = os.path.join(self.gitMyamiDir, "programs","tiltgroup_wrangler","tiltgroup_wrangler_cli.py")
+		self.runCommand("cp %s /usr/local/bin" % (tiltgroup_wrangler_cli))		 
+		self.runCommand("pip install numpy==1.13.3 scikit-learn==0.19.2")		
+		
 		return True
 
 	def updateMyCnf(self):
