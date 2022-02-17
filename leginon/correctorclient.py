@@ -389,9 +389,9 @@ class CorrectorClient(cameraclient.CameraClient):
 			if dark is None:
 				self.logger.warning('Cannot find references, image will not be normalized')
 				return
-		if not cameradata['sum gain corrected'] or not cameradata['frame gain corrected']:
-			# find norm data to save in imagedata even if no correction
-			# needed on the sum image
+		if not cameradata['sum gain corrected'] or (cameradata['save frames'] and not cameradata['frame gain corrected']):
+			# find norm data to save in imagedata for later frame processing
+			#even though no correction needed on the sum image
 			norm = self.retrieveCorrectorImageData('norm', scopedata, cameradata, channel)
 			if norm is None:
 				self.logger.warning('Cannot find references, image will not be normalized')
@@ -465,6 +465,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		this puts an image through a pipeline of corrections
 		'''
 		if ('sum gain corrected' in imagedata['camera'].keys() and imagedata['camera']['sum gain corrected']) and ('frame gain corrected' in imagedata['camera'].keys() and imagedata['camera']['frame gain corrected']):
+			pass
 		else:
 			try:
 				self.normalizeCameraImageData(imagedata, channel)

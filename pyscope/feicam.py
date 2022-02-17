@@ -837,7 +837,7 @@ class Falcon3(FeiCam):
 
 	def getFrameGainCorrected(self):
 		# Only eer movies need to use gain reference
-		return not (self.save_frames and self.frame_format == 'eer')
+		return not self.frame_format == 'eer'
 
 	def getFrameFlip(self):
 		'''
