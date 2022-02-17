@@ -661,14 +661,20 @@ class FeiCam(ccdcamera.CCDCamera):
 		else:
 			raise NotImplementedError()
 
+	def getSystemDarkSubtracted(self):
+		return True
+
+	def getFrameGainCorrected(self):
+		return True
+
+	def getSumGainCorrected(self):
+		return True
+
 class Ceta(FeiCam):
 	name = 'Ceta'
 	camera_name = 'BM-Ceta'
 	binning_limits = [1,2,4]
 	intensity_averaged = False
-
-	def getSystemGainDarkCorrected(self):
-		return True
 
 class Falcon3(FeiCam):
 	name = 'Falcon3'
@@ -829,8 +835,9 @@ class Falcon3(FeiCam):
 		for i in range(len(rangelist)):
 			self.dfd.AddRange(rangelist[i][0],rangelist[i][1])
 
-	def getSystemGainDarkCorrected(self):
-		return True
+	def getFrameGainCorrected(self):
+		# Only eer movies need to use gain reference
+		return not (self.save_frames and self.frame_format == 'eer')
 
 	def getFrameFlip(self):
 		'''
@@ -885,11 +892,6 @@ class Falcon4EC(Falcon3EC):
 		norm type is used to retrieve norm image, not a real exposure.
 		"""
 		return ['normal', 'dark','norm']
-
-	def getSystemGainDarkCorrected(self):
-		if self.frame_format != 'eer':
-			return True
-		return not self.getSaveRawFrames()
 
 	def getNormImagePath(self):
 		"""

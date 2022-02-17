@@ -523,8 +523,14 @@ class DE20(DD):
 		psize = 6.4e-6
 		return {'x': psize, 'y': psize}
 
-	def getSystemGainDarkCorrected(self):
-		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+	## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+	def getSystemDarkSubtracted(self):
+		return True
+
+	def getFrameGainCorrected(self):
+		return True
+
+	def getSumGainCorrected(self):
 		return True
 
 	def getBinning(self):
@@ -547,8 +553,14 @@ class DE20c(DD):
 		psize = 6.4e-6
 		return {'x': psize, 'y': psize}
 
-	def getSystemGainDarkCorrected(self):
-		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+	## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+	def getSystemDarkSubtracted(self):
+		return True
+
+	def getFrameGainCorrected(self):
+		return True
+
+	def getSumGainCorrected(self):
 		return True
 
 	def custom_setup(self):
@@ -564,8 +576,14 @@ class DE16(DD):
 		psize = 6.5e-6
 		return {'x': psize, 'y': psize}
 
-	def getSystemGainDarkCorrected(self):
-		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+	## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+	def getSystemDarkSubtracted(self):
+		return True
+
+	def getFrameGainCorrected(self):
+		return True
+
+	def getSumGainCorrected(self):
 		return True
 
 	def getBinning(self):
@@ -589,8 +607,14 @@ class DE16c(DD):
 		psize = 6.5e-6
 		return {'x': psize, 'y': psize}
 
-	def getSystemGainDarkCorrected(self):
-		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+	## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+	def getSystemDarkSubtracted(self):
+		return True
+
+	def getFrameGainCorrected(self):
+		return True
+
+	def getSumGainCorrected(self):
 		return True
 
 	def custom_setup(self):
@@ -613,8 +637,14 @@ class DE64(DD):
 		'''
 		return FRAME_ROTATE
 
-	def getSystemGainDarkCorrected(self):
-		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+	## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+	def getSystemDarkSubtracted(self):
+		return True
+
+	def getFrameGainCorrected(self):
+		return True
+
+	def getSumGainCorrected(self):
 		return True
 
 	def getBinning(self):
@@ -638,8 +668,14 @@ class DE64c(DD):
 		psize = 6.5e-6
 		return {'x': psize, 'y': psize}
 
-	def getSystemGainDarkCorrected(self):
-		## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+	## Allows for the DE server to do the gain corrections, otherwise leginon will do the corrections
+	def getSystemDarkSubtracted(self):
+		return True
+
+	def getFrameGainCorrected(self):
+		return True
+
+	def getSumGainCorrected(self):
 		return True
 
 	def getFrameRotate(self):

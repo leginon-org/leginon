@@ -474,7 +474,10 @@ class TIA_Falcon(TIA):
 				# In case falconframe.py is not set up right
 				pass
 
-	def getSystemGainDarkCorrected(self):
+	def getSystemDarkSubtracted(self):
+		return True
+
+	def getSystemGainCorrected(self):
 		return True
 
 	def getFrameFlip(self):
@@ -507,7 +510,10 @@ class TIA_Ceta(TIA):
 	name = 'Ceta'
 	camera_name = 'BM-Ceta'
 
-	def getSystemGainDarkCorrected(self):
+	def getSystemDarkSubtracted(self):
+		return True
+
+	def getSystemGainCorrected(self):
 		return True
 
 	def getPixelSize(self):

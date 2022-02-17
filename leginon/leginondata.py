@@ -244,7 +244,9 @@ camera_params = (
 	('temperature status', str),
 	('readout delay', int),
 	('gain index', int),
-	('system corrected', bool),
+	('sum gain corrected', bool),
+	('frame gain corrected', bool),
+	('system dark subtracted', bool),
 	('use cds', bool),
 	('fast save', bool),
 )

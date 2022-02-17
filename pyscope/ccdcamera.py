@@ -326,7 +326,13 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 	#def setAlignFilter(self, value):
 	#	raise NotImplementedError
 
-	def getSystemGainDarkCorrected(self):
+	def getSystemDarkSubtracted(self):
+		return False
+
+	def getFrameGainCorrected(self):
+		return False
+
+	def getSumGainCorrected(self):
 		return False
 
 	def getCalculateNormOnDark(self):

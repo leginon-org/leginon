@@ -70,12 +70,23 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 			raise AttributeError('attribute not supported')
 		return object.__getattribute__(self, attr_name)
 
-	def getSystemGainDarkCorrected(self):
-		# Default to not do gain dark correction if have simulated images
+	def getSystemDarkSubtracted(self):
+		# Default to not do dark subtraction if have simulated images
 		if self.simpar_dir is None:
 			return False
 		else:
 			return True
+
+	def getSumGainCorrected(self):
+		# Default to not do gain correction if have simulated images
+		if self.simpar_dir is None:
+			return False
+		else:
+			return True
+
+	def getFrameGainCorrected(self):
+		# frames don't use simpar
+		return False
 
 	def getRetractable(self):
 		return True
@@ -707,6 +718,9 @@ class SimK2CountingCamera(SimFrameCamera):
 		self.binmethod = 'floor'
 		self.pixel_size = {'x': 5e-6, 'y': 5e-6}
 
+	def getSystemDarkSubtracted(self):
+		return True
+
 	def getFrameFlip(self):
 		# flip before? rotation
 		return False
@@ -737,7 +751,7 @@ class SimK3Camera(SimFrameCamera):
 		self.tempoffset = dict(self.offset)
 		self.pixel_size = {'x': 2.5e-6, 'y': 2.5e-6}
 
-	def getSystemGainDarkCorrected(self):
+	def getSystemDarkSubtracted(self):
 		return True
 
 	def setOffset(self, value):
