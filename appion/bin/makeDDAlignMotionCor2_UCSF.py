@@ -104,6 +104,7 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		self.framealigner.setKV(self.dd.getKVFromImage(self.dd.image))
 		self.framealigner.setTotalRawFrames(self.dd.getNumberOfFrameSaved())
 		self.framealigner.setRenderedFrameSize(self.params['rendered_frame_size'])
+		self.framealigner.setIsEer(self.dd.image['camera']['eer frames'])
 		self.framealigner.setEerSampling(self.params['eer_sampling'])
 		if self.params['totaldose'] is not None:
 			totaldose = self.params['totaldose']

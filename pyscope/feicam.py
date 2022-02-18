@@ -897,6 +897,9 @@ class Falcon4EC(Falcon3EC):
 		"""
 		return ['normal', 'dark','norm']
 
+	def getSaveEer(self):
+		return self.frame_format == 'eer' and self.electron_counting
+
 	def getNormImagePath(self):
 		"""
 		return the path for the latest gain file.

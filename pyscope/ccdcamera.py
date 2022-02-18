@@ -357,6 +357,10 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 		# Lzw Tiff file saving for frames
 		return False
 
+	def getSaveEer(self):
+		# EERfile saving for frames
+		return False
+
 	def requireRecentDarkCurrentReferenceOnBright(self):
 		return False
 	

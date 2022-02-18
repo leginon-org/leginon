@@ -30,7 +30,8 @@ def initializeDDFrameprocess(sessionname,wait_flag=False):
 	initialize the DDprocess according to the camera
 	'''
 	sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
-	dcamdata = apDatabase.getFrameImageCamera(sessiondata)
+	camemdata = apDatabase.getFrameImageCameraState(sessiondata) #CameraEMData
+	dcamdata = camemdata['ccdcamera'] #InstrumentData instance
 	if not dcamdata:
 		apDisplay.printError('Can not determine DD camera type. Did you save frames?')
 	if 'GatanK2' in dcamdata['name']:
@@ -42,7 +43,7 @@ def initializeDDFrameprocess(sessionname,wait_flag=False):
 	elif 'DE' in dcamdata['name']:
 		from appionlib import apDEprocess
 		return apDEprocess.DEProcessing(wait_flag)
-	elif 'Falcon4EC' in dcamdata['name']:
+	elif 'Falcon4EC' in dcamdata['name'] and camemdata['eer frames']==True:
 		from appionlib import apEerProcess
 		return apEerProcess.EerProcessing(wait_flag)
 	elif 'Falcon3' in dcamdata['name'] or 'Falcon4' in dcamdata['name']:
@@ -125,6 +126,8 @@ class DirectDetectorProcessing(object):
 		self.extname = 'mrc'
 		if imagedata['camera']['tiff frames']:
 			self.extname = 'tif'
+		if imagedata['camera']['eer frames']:
+			self.extname = 'eer'
 		return self.extname
 		
 	def getFrameStackPath(self,temp=False):

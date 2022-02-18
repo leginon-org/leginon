@@ -225,8 +225,11 @@ class MotionCor2_UCSF(DDFrameAligner):
 		# max number of the raw frames in a rendered frame
 		self.alignparams['rendered_frame_size'] = size
 
+	def setIsEer(self, flag):
+		self.alignparams['is_eer'] = flag
+
 	def setEerSampling(self, factor):
-		# upsampling and then do Fourier binning
+		# eer file can be upsampled
 		self.alignparams['eer_sampling'] = factor
 
 	def setTotalDose(self, totaldose):
@@ -305,8 +308,11 @@ class MotionCor2_UCSF(DDFrameAligner):
 
 		cmd = '%s %s -OutMrc %s' % (self.executable, self.getInputCommand(), self.aligned_sumpath)
 
-		# binning from the upsampled stack
-		real_FtBin = self.alignparams['FtBin']*self.alignparams['EerSampling']
+		if self.alignparams['is_eer']:
+			# binning from the upsampled stack
+			real_FtBin = self.alignparams['FtBin']*self.alignparams['EerSampling']
+		else:
+			real_FtBin = self.alignparams['FtBin']
 		if real_FtBin > 1:
 			cmd += ' -FtBin %s ' % (real_FtBin,)
 
@@ -391,7 +397,8 @@ class MotionCor2_UCSF(DDFrameAligner):
 		cmd += ' -Gpu %s' % self.alignparams['Gpu'].replace(","," ")
 
 		# EER upsampling
-		cmd += ' -EerSampling %d ' % self.alignparams['EerSampling']
+		if self.alignparams['is_eer']:
+			cmd += ' -EerSampling %d ' % self.alignparams['EerSampling']
 
 		return cmd
 
@@ -419,6 +426,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 			"FmRef":"FmRef",
 			"eer_sampling":"EerSampling",
 			"doseweight":"doseweight",
+			"is_eer":"is_eer",
 			"total_raw_frames":"total_raw_frames",
 			"rendered_frame_size":"rendered_frame_size"
 			}

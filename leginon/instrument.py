@@ -431,6 +431,7 @@ parametermapping = (
 	('nframes', 'NumberOfFrames'),
 	('align frames', 'AlignFrames'),
 	('tiff frames', 'SaveLzwTiffFrames'),
+	('eer frames', 'SaveEer'),
 	('align filter', 'AlignFilter'),
 	('save frames', 'SaveRawFrames'),
 	('frames name', 'PreviousRawFramesName'),
