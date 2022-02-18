@@ -256,13 +256,16 @@ class MotionCor2_UCSF(DDFrameAligner):
 		modulo = nraw % size
 		int_div = nraw // size
 		lines = []
+		total_rendered_frames = modulo
 		if modulo != 0:
+			total_rendered_frames += 1
 			lines.append('%d\t%d\t%.3f\n' % (1, modulo, raw_dose*modulo))
 		lines.append('%d\t%d\t%.3f\n' % (int_div, size, raw_dose*size))
 		filepath = os.path.abspath('./intfile.txt')
 		f = open(filepath,'w')
 		f.write(''.join(lines))
 		f.close()
+		self.alignparams['total_rendered_frames'] = total_rendered_frames
 		return filepath
 
 	def setGainDarkCmd(self,norm_path,dark_path=None):
@@ -429,6 +432,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 			"is_eer":"is_eer",
 			"total_raw_frames":"total_raw_frames",
 			"rendered_frame_size":"rendered_frame_size"
+			"total_rendered_frames":"total_rendered_frames"
 			}
 
 #	def modifyFlipAlongYAxis(self):
@@ -501,8 +505,8 @@ class MotionCor2_UCSF(DDFrameAligner):
 		### motioncorr1 format, needs conversion from motioncorr2 format
 		log = self.framestackpath[:-4]+'_Log.txt'
                 f = open(log,"w")
-		f.write("Sum Frame #%.3d - #%.3d (Reference Frame #%.3d):\n" % (0, self.alignparams['totalframes'], self.alignparams['totalframes']/2))
-		for i in range(self.alignparams['totalframes']-self.alignparams['Throw']-self.alignparams['Trunc']):
+		f.write("Sum Frame #%.3d - #%.3d (Reference Frame #%.3d):\n" % (0, self.alignparams['total_rendered_frames'], self.alignparams['total_rendered_frames']/2))
+		for i in range(self.alignparams['total_rendered_frames']-self.alignparams['Throw']-self.alignparams['Trunc']):
 	                f.write("......Add Frame #%.3d with xy shift: %.5f %.5f\n" % (i+self.alignparams['Throw'], shifts_adjusted[i][0], shifts_adjusted[i][1]))
                 f.close()
 		
