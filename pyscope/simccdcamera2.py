@@ -733,7 +733,13 @@ class SimK2CountingCamera(SimFrameCamera):
 		# rotation in multiple of 90 degrees
 		return 0
 
-class SimK2SuperResCamera(SimFrameCamera):
+	def getSystemDarkSubtracted(self):
+		return True
+
+	def getFrameGainCorrected(self):
+		return False
+
+class SimK2SuperResCamera(SimK2CountingCamera):
 	name = 'SimK2SuperResCamera'
 	def __init__(self):
 		super(SimK2SuperResCamera,self).__init__()
@@ -755,12 +761,11 @@ class SimK3Camera(SimFrameCamera):
 		self.tempoffset = dict(self.offset)
 		self.pixel_size = {'x': 2.5e-6, 'y': 2.5e-6}
 
-	def getSystemGainDarkCorrected(self):
-		# deprecated in v3.6
-		return True
-
 	def getSystemDarkSubtracted(self):
 		return True
+
+	def getFrameGainCorrected(self):
+		return False
 
 	def setOffset(self, value):
 		# Work around

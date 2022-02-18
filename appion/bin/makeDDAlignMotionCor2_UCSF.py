@@ -52,6 +52,11 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		self.parser.add_option("--force_cpu_flat", dest="force_cpu_flat", default=False,
 			action="store_true", help="Use cpu to make frame flat field corrrection")
 
+		self.parser.add_option("--rendered_frame_size", dest="rendered_frame_size", type="int", default=1,
+			help="Sum this number of saved frames as a rendered frame in alignment", metavar="INT")
+		self.parser.add_option("--eer_sampling", dest="eer_sampling", type="int", default=1,
+			help="Upsampling eer frames. Fourier binning will be added to returnthe results back", metavar="INT")
+
 	def addBinOption(self):
 		self.parser.add_option("--bin",dest="bin",metavar="#",type=float,default="1.0",
 			help="Binning factor relative to the dd stack. MotionCor2 takes float value (optional)")
@@ -97,7 +102,9 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		self.temp_aligned_dw_sumpath = 'temp%s.gpuid_%d_sum_DW.mrc' % (self.hostname, self.gpuid)
 		#self.temp_aligned_stackpath = 'temp%s.gpuid_%d_aligned_st.mrc' % (self.hostname, self.gpuid)
 		self.framealigner.setKV(self.dd.getKVFromImage(self.dd.image))
-		self.framealigner.setTotalFrames(self.dd.getNumberOfFrameSaved())
+		self.framealigner.setTotalRawFrames(self.dd.getNumberOfFrameSaved())
+		self.framealigner.setRenderedFrameSize(self.params['rendered_frame_size'])
+		self.framealigner.setEerSampling(self.params['eer_sampling'])
 		if self.params['totaldose'] is not None:
 			totaldose = self.params['totaldose']
 		else:

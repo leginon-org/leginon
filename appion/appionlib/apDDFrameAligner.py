@@ -217,8 +217,17 @@ class MotionCor2_UCSF(DDFrameAligner):
 	def setKV(self, kv):
 		self.alignparams['kV'] = kv
 
-	def setTotalFrames(self, totalframes):
-		self.alignparams['totalframes'] = totalframes
+	def setTotalRawFrames(self, totalframes):
+		# total number of raw frames saved during data collection.
+		self.alignparams['total_raw_frames'] = totalframes
+
+	def setRenderedFrameSize(self, size):
+		# max number of the raw frames in a rendered frame
+		self.alignparams['rendered_frame_size'] = size
+
+	def setEerSampling(self, factor):
+		# upsampling and then do Fourier binning
+		self.alignparams['eer_sampling'] = factor
 
 	def setTotalDose(self, totaldose):
 		self.alignparams['totaldose'] = totaldose
@@ -231,6 +240,27 @@ class MotionCor2_UCSF(DDFrameAligner):
 
 	def getGainModification(self):
 		return self.alignparams['FlipGain'], self.alignparams['RotGain']
+
+	def setFmIntFile(self):
+		nraw = self.alignparams['total_raw_frames']
+		size = self.alignparams['rendered_frame_size']
+		if 'totaldose' in self.alignparams.keys() and self.alignparams['totaldose']> 0:
+			raw_dose = self.alignparams['totaldose'] / nraw
+		else:
+			apDisplay.printWarning('Use fake dose about 1 e/p per rendered frame')
+			raw_dose = 1.0/size #make fake dose as 1.0 per rendered frame
+
+		modulo = nraw % size
+		int_div = nraw // size
+		lines = []
+		if modulo != 0:
+			lines.append('%d\t%d\t%.3f\n' % (1, modulo, raw_dose*modulo))
+		lines.append('%d\t%d\t%.3f\n' % (int_div, size, raw_dose*size))
+		filepath = os.path.abspath('./intfile.txt')
+		f = open(filepath,'w')
+		f.write(''.join(lines))
+		f.close()
+		return filepath
 
 	def setGainDarkCmd(self,norm_path,dark_path=None):
 		'''
@@ -275,16 +305,17 @@ class MotionCor2_UCSF(DDFrameAligner):
 
 		cmd = '%s %s -OutMrc %s' % (self.executable, self.getInputCommand(), self.aligned_sumpath)
 
-		# binning
-		if self.alignparams['FtBin'] > 1:
-			cmd += ' -FtBin %s ' % (self.alignparams['FtBin'],)
+		# binning from the upsampled stack
+		real_FtBin = self.alignparams['FtBin']*self.alignparams['EerSampling']
+		if real_FtBin > 1:
+			cmd += ' -FtBin %s ' % (real_FtBin,)
 
 		if (self.alignparams['Bft_global'] > 0) and (self.alignparams['Bft_local'] > 0):
 			cmd += ' -Bft %d %d' % (self.alignparams['Bft_global'], self.alignparams['Bft_local'])		
 		
 		else:
 			apDisplay.printError("Invalid Bft arguments ! (global: %s, local: %s)" %(self.alignparams['Bft_global'], self.alignparams['Bft_local']))
-			
+
 		# frame truncation
 		if self.alignparams['Throw'] > 0:
 			cmd += ' -Throw %d' % self.alignparams['Throw']
@@ -337,11 +368,11 @@ class MotionCor2_UCSF(DDFrameAligner):
 			pass
 
 		# exposure filtering
+		self.alignparams['FmIntFile'] = self.setFmIntFile()
+		cmd += ' -FmIntFile %s ' % (self.alignparams['FmIntFile'])
 		if self.alignparams['doseweight'] is True and self.alignparams['totaldose']:
-			self.alignparams['FmDose'] = self.alignparams['totaldose'] / self.alignparams['totalframes']
 			cmd += ' -PixSize %.3f ' % (self.alignparams['PixSize'])
 			cmd += ' -kV %d ' % (self.alignparams['kV'])
-			cmd += ' -FmDose %.3f ' % (self.alignparams['FmDose'])
 		
 		# serial 1, defaulted
 #		cmd += ' Serial 1'
@@ -358,6 +389,9 @@ class MotionCor2_UCSF(DDFrameAligner):
 
 		# GPU ID
 		cmd += ' -Gpu %s' % self.alignparams['Gpu'].replace(","," ")
+
+		# EER upsampling
+		cmd += ' -EerSampling %d ' % self.alignparams['EerSampling']
 
 		return cmd
 
@@ -383,8 +417,10 @@ class MotionCor2_UCSF(DDFrameAligner):
 			"startframe":"Throw",
 			"Crop":"Crop",
 			"FmRef":"FmRef",
+			"eer_sampling":"EerSampling",
 			"doseweight":"doseweight",
-			"totalframes":"totalframes"
+			"total_raw_frames":"total_raw_frames",
+			"rendered_frame_size":"rendered_frame_size"
 			}
 
 #	def modifyFlipAlongYAxis(self):
@@ -466,11 +502,12 @@ class MotionCor2_UCSF(DDFrameAligner):
 
 		
 if __name__ == '__main__':
-	filepath = '/Users/acheng/testdata/frames/16aug10a/rawdata/16aug10a_00001en.frames.mrc'
+	filepath = '/Users/acheng/testdata/frames/22jan14a/rawdata/22jan14a_00019en.frames.mrc'
 	params = {'bin':2,'any':1}
 	makeStack = DDFrameAligner()
-	makeStack.setRunDir('.')
 	makeStack.setInputFrameStackPath(filepath)
+	makeStack.setLogPath('./test.log')
+	makeStack.setStackBinning(1)
 	makeStack.setFrameAlignOptions(params)
-	makeStack.setAlignedSumPath()
+	makeStack.setAlignedSumPath('.')
 	makeStack.alignFrameStack()
