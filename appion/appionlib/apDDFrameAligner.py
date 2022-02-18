@@ -431,8 +431,8 @@ class MotionCor2_UCSF(DDFrameAligner):
 			"doseweight":"doseweight",
 			"is_eer":"is_eer",
 			"total_raw_frames":"total_raw_frames",
-			"rendered_frame_size":"rendered_frame_size"
-			"total_rendered_frames":"total_rendered_frames"
+			"rendered_frame_size":"rendered_frame_size",
+			"total_rendered_frames":"total_rendered_frames",
 			}
 
 #	def modifyFlipAlongYAxis(self):
