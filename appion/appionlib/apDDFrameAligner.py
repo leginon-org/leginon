@@ -263,7 +263,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 		if modulo != 0:
 			total_rendered_frames += 1
 			lines.append('%d\t%d\t%.3f\n' % (1, modulo, raw_dose*modulo))
-		lines.append('%d\t%d\t%.3f\n' % (int_div, size, raw_dose*size))
+		lines.append('%d\t%d\t%.3f\n' % (int_div*size, size, raw_dose*size))
 		filepath = os.path.abspath('./intfile.txt')
 		f = open(filepath,'w')
 		f.write(''.join(lines))
@@ -298,6 +298,8 @@ class MotionCor2_UCSF(DDFrameAligner):
 	def getInputCommand(self):
 		if self.framestackpath.endswith('.tif'):
 			cmd = '-InTiff %s' % self.framestackpath
+		elif self.framestackpath.endswith('.eer'):
+			cmd = '-InEer %s' % self.framestackpath
 		else:
 			cmd = '-InMrc %s' % self.framestackpath
 		return cmd
