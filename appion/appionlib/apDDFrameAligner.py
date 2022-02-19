@@ -515,7 +515,8 @@ class MotionCor2_UCSF(DDFrameAligner):
 		log = self.framestackpath[:-4]+'_Log.txt'
                 f = open(log,"w")
 		f.write("Sum Frame #%.3d - #%.3d (Reference Frame #%.3d):\n" % (0, self.alignparams['total_rendered_frames'], self.alignparams['total_rendered_frames']/2))
-		for i in range(self.alignparams['total_rendered_frames']-self.alignparams['Throw']-self.alignparams['Trunc']):
+		# Eer nframe is not predictable.
+		for i in range(len(shifts_adjusted)):
 	                f.write("......Add Frame #%.3d with xy shift: %.5f %.5f\n" % (i+self.alignparams['Throw'], shifts_adjusted[i][0], shifts_adjusted[i][1]))
                 f.close()
 		
