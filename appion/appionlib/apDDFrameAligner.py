@@ -259,7 +259,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 		modulo = nraw % size
 		int_div = nraw // size
 		lines = []
-		total_rendered_frames = modulo
+		total_rendered_frames = int_div
 		if modulo != 0:
 			total_rendered_frames += 1
 			lines.append('%d\t%d\t%.3f\n' % (1, modulo, raw_dose*modulo))
