@@ -244,7 +244,10 @@ class MotionCor2_UCSF(DDFrameAligner):
 	def getGainModification(self):
 		return self.alignparams['FlipGain'], self.alignparams['RotGain']
 
-	def setFmIntFile(self):
+	def setFrameValues(self):
+		'''
+		calculate and set frame dose and create FmIntFile
+		'''
 		nraw = self.alignparams['total_raw_frames']
 		size = self.alignparams['rendered_frame_size']
 		if 'totaldose' in self.alignparams.keys() and self.alignparams['totaldose']> 0:
@@ -266,6 +269,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 		f.write(''.join(lines))
 		f.close()
 		self.alignparams['total_rendered_frames'] = total_rendered_frames
+		self.alignparams['FmDose'] = raw_dose*size #true on the full sizes
 		return filepath
 
 	def setGainDarkCmd(self,norm_path,dark_path=None):
@@ -376,10 +380,12 @@ class MotionCor2_UCSF(DDFrameAligner):
 		else: 
 			pass
 
-		# exposure filtering
-		self.alignparams['FmIntFile'] = self.setFmIntFile()
+		# Still works without this file. It will assume rendered_frame=raw_frame
+		self.alignparams['FmIntFile'] = self.setFrameValues()
 		cmd += ' -FmIntFile %s ' % (self.alignparams['FmIntFile'])
+		# exposure filtering
 		if self.alignparams['doseweight'] is True and self.alignparams['totaldose']:
+			cmd += ' -FmDose %.3f ' % (self.alignparams['FmDose'])
 			cmd += ' -PixSize %.3f ' % (self.alignparams['PixSize'])
 			cmd += ' -kV %d ' % (self.alignparams['kV'])
 		
@@ -406,6 +412,8 @@ class MotionCor2_UCSF(DDFrameAligner):
 		return cmd
 
 	def getValidAlignOptionMappings(self):
+		# the pairs mapped in here can be automated
+		# transferred from the bin makeDDAlign  params.
 		return {
 			'gpuids':'Gpu', 
 			'nrw':'Group', 
@@ -432,7 +440,6 @@ class MotionCor2_UCSF(DDFrameAligner):
 			"is_eer":"is_eer",
 			"total_raw_frames":"total_raw_frames",
 			"rendered_frame_size":"rendered_frame_size",
-			"total_rendered_frames":"total_rendered_frames",
 			}
 
 #	def modifyFlipAlongYAxis(self):

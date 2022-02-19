@@ -101,11 +101,10 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		super(MotionCor2UCSFAlignStackLoop,self).setOtherProcessImageResultParams()
 		self.temp_aligned_dw_sumpath = 'temp%s.gpuid_%d_sum_DW.mrc' % (self.hostname, self.gpuid)
 		#self.temp_aligned_stackpath = 'temp%s.gpuid_%d_aligned_st.mrc' % (self.hostname, self.gpuid)
+		# NOTE: self.params in self.framealigner alignparam mapping are directly transferred.
 		self.framealigner.setKV(self.dd.getKVFromImage(self.dd.image))
 		self.framealigner.setTotalRawFrames(self.dd.getNumberOfFrameSaved())
-		self.framealigner.setRenderedFrameSize(self.params['rendered_frame_size'])
 		self.framealigner.setIsEer(self.dd.image['camera']['eer frames'])
-		self.framealigner.setEerSampling(self.params['eer_sampling'])
 		if self.params['totaldose'] is not None:
 			totaldose = self.params['totaldose']
 		else:
