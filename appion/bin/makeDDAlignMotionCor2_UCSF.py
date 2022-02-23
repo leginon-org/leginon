@@ -141,7 +141,14 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		temp_aligned_sumpath = self.temp_aligned_sumpath
 		temp_aligned_dw_sumpath = self.temp_aligned_dw_sumpath
 		gain_flip, gain_rotate = self.framealigner.getGainModification()
+		need_flip = False
+		if 'eer' in self.dd.__class__.__name__.lower():
+			# output from -InEer is y-flipped even though gain in mrc
+			# format is not relative to the eer file
+			need_flip = True
 		if gain_flip:
+			need_flip = not need_flip
+		if need_flip:
 			apDisplay.printMsg('Flipping the aligned sum back')
 			self.imageYFlip(temp_aligned_sumpath)
 			self.imageYFlip(temp_aligned_dw_sumpath)
