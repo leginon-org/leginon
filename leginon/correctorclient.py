@@ -537,13 +537,22 @@ class CorrectorClient(cameraclient.CameraClient):
 
 	def getCameraDefectMap(self, cameradata):
 		plan, plandata = self.retrieveCorrectorPlan(cameradata)
+		return self._makeDefectMap(cameradata, plan)
+
+	def getImageDefectMap(self, imagedata):
+		plandata = imagedata['corrector plan']
+		plan = self.formatCorrectorPlan(plandata)
+		cameradata = imagedata['camera']
+		return self._makeDefectMap(cameradata, plan)
+
+	def _makeDefectMap(self, cameradata, plan):
 		dx = cameradata['dimension']['x']
 		dy = cameradata['dimension']['y']
 		map_array = numpy.zeros((dy,dx),dtype=numpy.int8)
 		for r in plan['rows']:
 			map_array[r,:] = 1
 		for c in plan['columns']:
-			map_array[c,:] = 1
+			map_array[:,c] = 1
 		for p in plan['pixels']:
 			px, py = p
 			map_array[py,px] = 1
