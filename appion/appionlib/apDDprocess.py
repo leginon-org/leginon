@@ -1074,8 +1074,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		return self.makeCorrectedFrameStack_cpu(use_full_raw_area)
 
 	def makeModifiedDefectMrc(self):
-		self.setCameraInfo(1,self.use_full_raw_area)
-		a = self.c_client.getCameraDefectMap(self.camerainfo)
+		image_for_correction = self.getCorrectedImageData()
+		a = self.c_client.getImageDefectMap(image_for_correction)
 		frame_flip, frame_rotate = self.getImageFrameOrientation()
 		# flip and rotate map_array.  Therefore, do the oposite of
 		# frames
