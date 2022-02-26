@@ -253,8 +253,8 @@ class MotionCor2_UCSF(DDFrameAligner):
 		if 'totaldose' in self.alignparams.keys() and self.alignparams['totaldose']> 0:
 			raw_dose = self.alignparams['totaldose'] / nraw
 		else:
-			apDisplay.printWarning('Use fake dose about 1 e/p per rendered frame')
-			raw_dose = 1.0/size #make fake dose as 1.0 per rendered frame
+			apDisplay.printWarning('Use fake dose about 0.03 e/p per raw frame')
+			raw_dose = 0.03 #make fake dose similar to Falcon4EC 7 e/p/s
 
 		modulo = nraw % size
 		int_div = nraw // size
@@ -383,10 +383,19 @@ class MotionCor2_UCSF(DDFrameAligner):
 			pass
 
 		# Still works without this file. It will assume rendered_frame=raw_frame
-		self.alignparams['FmIntFile'] = self.setFrameValues()
-		cmd += ' -FmIntFile %s ' % (self.alignparams['FmIntFile'])
+		if self.alignparams['is_eer'] == True or self.alignparams['rendered_frame_size'] > 1:
+			self.alignparams['FmIntFile'] = self.setFrameValues()
+			cmd += ' -FmIntFile %s ' % (self.alignparams['FmIntFile'])
+		else:
+			# old method total_rendered_frames = total_raw_frames
+			# No -FmIntFile set.
+			self.alignparams['total_rendered_frames'] = self.alignparams['total_raw_frames']
+			if self.alignparams['doseweight'] is True and self.alignparams['totaldose']:
+				self.alignparams['FmDose'] = self.alignparams['totaldose']/self.alignparams['total_raw_frames']
+			else:
+				self.alignparams['FmDose'] = None
 		# exposure filtering
-		if self.alignparams['doseweight'] is True and self.alignparams['totaldose']:
+		if self.alignparams['doseweight'] is True and 'FmDose' in self.alignparams and self.alignparams['FmDose']:
 			cmd += ' -FmDose %.3f ' % (self.alignparams['FmDose'])
 			cmd += ' -PixSize %.3f ' % (self.alignparams['PixSize'])
 			cmd += ' -kV %d ' % (self.alignparams['kV'])

@@ -104,17 +104,22 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		# NOTE: self.params in self.framealigner alignparam mapping are directly transferred.
 		self.framealigner.setKV(self.dd.getKVFromImage(self.dd.image))
 		self.framealigner.setTotalRawFrames(self.dd.getNumberOfFrameSaved())
-		self.framealigner.setIsEer(self.dd.image['camera']['eer frames'])
+		is_eer = self.dd.image['camera']['eer frames']
+		self.framealigner.setIsEer(is_eer)
 		if self.params['totaldose'] is not None:
 			totaldose = self.params['totaldose']
 		else:
 			totaldose = apDatabase.getDoseFromImageData(self.dd.image)
 		self.framealigner.setTotalDose(totaldose)
-		if totaldose is None and self.params['doseweight']:
-			self.has_dose = False
-			apDisplay.printWarning('No total dose estimated. Dose weighted alignment will be skipped')
+		self.has_dose = True
+		if not is_eer:
+			if totaldose is None and self.params['doseweight']:
+				self.has_dose = False
+				apDisplay.printWarning('No total dose estimated. Dose weighted alignment will be skipped')
 		else:
-			self.has_dose = True
+			if totaldose is None:
+				apDisplay.printWarning('Per frame dose of 0.03 e/p is assumed on eer raw frames since no value is entered.')
+
 #		self.temp_aligned_dw_sumpath = 'temp%s.gpuid_%d_sum_DW.mrc' % (self.hostname, self.params['gpuid'])
 		if self.isUseFrameAlignerFlat() and not self.params['force_cpu_flat']:
 			frame_flip, frame_rotate=self.dd.getImageFrameOrientation()
