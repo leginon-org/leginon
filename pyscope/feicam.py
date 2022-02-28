@@ -738,6 +738,20 @@ class Falcon3(FeiCam):
 		'''True: save frames, False: discard frames'''
 		self.save_frames = bool(value)
 
+	def getEerRenderDefault(self):
+		'''
+		Return the multiplication factor of eer raw frame to falcon
+		program CalculateNumberOfFrames method result.
+		'''
+		# Falcon4: CalculateNumberOfFrames * 7 =  eer nframes
+		# Falcon4i: CalculateNumberOfFrames * 9 =  eer nframes
+		if self.getSaveEer():
+			value = self.getFeiConfig('camera','eer_render')
+			if int(value):
+				return int(value)
+			return 7 # default
+		return 0
+
 	def getNumberOfFrames(self):
 		'''
 		This is number of the output frames. Only meaningful after getImage.
@@ -745,10 +759,11 @@ class Falcon3(FeiCam):
 		if self.save_frames:
 			if self.frame_format == 'mrc':
 				return self.frameconfig.getNumberOfFrameBins()
-			else:
-				return int(self.getExposureTime()*0.001*self.physical_frame_rate)
+			if self.frame_format == 'eer':
+				rendered_nframes = self.camera_settings.CalculateNumberOfFrames()
+				return rendered_nframes*self.getEerRenderDefault()
 		else:
-			return 0 # TO DO: Findout what it gives.
+			return 0
 
 	def calculateMovieExposure(self):
 		'''
