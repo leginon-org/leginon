@@ -747,9 +747,10 @@ class Falcon3(FeiCam):
 		# Falcon4i: CalculateNumberOfFrames * 9 =  eer nframes
 		if self.getSaveEer():
 			value = self.getFeiConfig('camera','eer_render')
-			if int(value):
+			try:
 				return int(value)
-			return 7 # default
+			except TypeError:
+				return 7 # default
 		return 0
 
 	def getNumberOfFrames(self):
