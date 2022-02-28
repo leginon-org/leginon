@@ -464,8 +464,9 @@ class CorrectorClient(cameraclient.CameraClient):
 		'''
 		this puts an image through a pipeline of corrections
 		'''
+		no_correction = False
 		if ('sum gain corrected' in imagedata['camera'].keys() and imagedata['camera']['sum gain corrected']) and ('frame gain corrected' in imagedata['camera'].keys() and imagedata['camera']['frame gain corrected']):
-			pass
+			no_correction = True
 		else:
 			try:
 				self.normalizeCameraImageData(imagedata, channel)
@@ -476,14 +477,21 @@ class CorrectorClient(cameraclient.CameraClient):
 
 		cameradata = imagedata['camera']
 		plan, plandata = self.retrieveCorrectorPlan(cameradata)
-		# save corrector plan for easy post-processing of raw frames
-		imagedata['corrector plan'] = plandata
+		if no_correction:
+			# ignore corrector plan completely.
+			plan = None
+			imagedata['corrector plan'] = None
+		else:
+			# save corrector plan for easy post-processing of raw frames
+			imagedata['corrector plan'] = plandata
 		# Escape if image is None
 		if imagedata.imageshape() is None or self.isFakeImageObj(imagedata):
 			# in-place change.  Nothing to return
 			return
 		# correct plan
-		if plan is not None:
+		if plan is not None and 'sum gain corrected' in cameradata.keys() and not cameradata['sum gain corrected'] and not self.isFakeImageObj(imagedata):
+			# only apply to this sum image if camera has not done so.
+			self.logger.info('fix bad pixels')
 			self.fixBadPixels(imagedata['image'], plan) #This will read image
 
 		pixelmax = imagedata['camera']['ccdcamera']['pixelmax']
