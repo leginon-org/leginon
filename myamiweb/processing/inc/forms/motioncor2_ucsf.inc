@@ -13,7 +13,7 @@ class motioncor2_ucsf extends MakeDDStackForm
 
 // Removed defergpu, alignoffset,alignccbox, nrw to make compatible with motioncor2 version
 {
-	function __construct(  $expId, $errorHTML='', $infoHTML='',$align=True,$bin=1, $nokeepstack=True, $ddstartframe=0, $ddnframe='',$alignlabel='a',$nrw=1, $MaskCentrow=0, $MaskCentcol=0, $MaskSizerows=1.0, $MaskSizecols=1.0, $Patchrows=5, $Patchcols=5, $Iter=7,$Tol=0.5,$Bft_global=500.0,$Bft_local=100.0,$FmRef=0,$totaldose='', $doseweight=true, $gpuids=0 )
+	function __construct(  $expId, $errorHTML='', $infoHTML='',$align=True,$bin=1, $rendered_frame_size=1, $nokeepstack=True, $ddstartframe=0, $ddnframe='',$alignlabel='a',$nrw=1, $MaskCentrow=0, $MaskCentcol=0, $MaskSizerows=1.0, $MaskSizecols=1.0, $Patchrows=5, $Patchcols=5, $Iter=7,$Tol=0.5,$Bft_global=500.0,$Bft_local=100.0,$FmRef=0,$totaldose='', $doseweight=true, $gpuids=0 )
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
 		
@@ -42,6 +42,7 @@ class motioncor2_ucsf extends MakeDDStackForm
 		$params->addParam( "align", $align, "align" );
 #		$params->addParam( "defergpu", $defergpu, "defer gpu processing" );
 		$params->addParam( "gpuids", $gpuids, "GPU ids used (',' separated)");
+		$params->addParam( "rendered_frame_size", $rendered_frame_size, "Number of raw frames grouped as a rendered_frame for processing" );
 		$params->addParam( "bin", $bin, "binning" );
 		$params->addParam( "no_keepstack", $nokeepstack, "remove generated stack after uploading aligned sum image" );
 		$params->addParam( "ddstartframe", $ddstartframe, "start frame" );
@@ -91,6 +92,8 @@ class motioncor2_ucsf extends MakeDDStackForm
 		$html.= "<br/>\n";
 		$html.= "<hr>\n";
 		
+		$html.= $params->insertTextFieldInRow( "rendered_frame_size", $fieldSize );
+		$html.= "<br/>\n";
 		$html.= $params->insertTextFieldInRow( "bin", $fieldSize*2 );
 		$html.= "<br/>\n";
 
@@ -160,14 +163,23 @@ class motioncor2_ucsf extends MakeDDStackForm
 		}
 
 		if ( $imageId ) {
-			$nframes = $leginondata->getNFramesSavedFromImage($imageId);
-			if ( $nframes == false ) { 
+			$info = $leginondata->getImageInfo($imageId);
+			$is_save_frames = $info['save frames']== 1;
+			if ( $is_save_frames == false ) {
 				if ( $testfilename ) {
 					$msg .= "<B>Error</B> Image does not have frames saved. Can not align";
 				}	else {
 					$msg .= "<B>Error</B> Last image of the specified preset does not have frames saved. Can not validate. Try again later.";
 				}
 			} else {
+				$test_render_frame_size = $params->getParamValue('rendered_frame_size');
+				$rendered_nframes = $info['nframes'] / $test_render_frame_size;
+				if ( $info['eer frames'] == 1 & $test_render_frame_size<=1 ) {
+					$msg .= "<B>Error</B> Eer files with ".$info['nframes']." rolling shutter frames should be grouped before running frame alignment. ";
+				}
+				if ( $rendered_nframes > 300 ) {
+					$msg .= "<B>Error</B> ".$rendered_nframes." rendered frames for alignment is too much. Please use larger rendered frame size.";
+				}
 // No alignoffset in motioncor2_ucsf, removing alignoffset check
 //				$alignoffset = $params->getParamValue('alignoffset');
 //				if ( $nframes / 2 < $alignoffset ) $msg .= "<B>Error</B> Align frame offset must be less than half of the number of frames saved.<br/>";
@@ -176,8 +188,6 @@ class motioncor2_ucsf extends MakeDDStackForm
 		}
 		$doseweight = $params->getParamValue('doseweight');
 		$totaldose = $params->getParamValue('totaldose');
-		if ($doseweight == false && $totaldose ) 
-			$msg .= "Total dose is irrelevant without dose weighting";
 		return $msg;
 	}
 

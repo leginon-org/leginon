@@ -30,7 +30,8 @@ def initializeDDFrameprocess(sessionname,wait_flag=False):
 	initialize the DDprocess according to the camera
 	'''
 	sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
-	dcamdata = apDatabase.getFrameImageCamera(sessiondata)
+	camemdata = apDatabase.getFrameImageCameraState(sessiondata) #CameraEMData
+	dcamdata = camemdata['ccdcamera'] #InstrumentData instance
 	if not dcamdata:
 		apDisplay.printError('Can not determine DD camera type. Did you save frames?')
 	if 'GatanK2' in dcamdata['name']:
@@ -42,6 +43,9 @@ def initializeDDFrameprocess(sessionname,wait_flag=False):
 	elif 'DE' in dcamdata['name']:
 		from appionlib import apDEprocess
 		return apDEprocess.DEProcessing(wait_flag)
+	elif 'Falcon4EC' in dcamdata['name'] and camemdata['eer frames']==True:
+		from appionlib import apEerProcess
+		return apEerProcess.EerProcessing(wait_flag)
 	elif 'Falcon3' in dcamdata['name'] or 'Falcon4' in dcamdata['name']:
 		from appionlib import apFalcon3Process
 		return apFalcon3Process.FalconProcessing(wait_flag)
@@ -122,6 +126,8 @@ class DirectDetectorProcessing(object):
 		self.extname = 'mrc'
 		if imagedata['camera']['tiff frames']:
 			self.extname = 'tif'
+		if imagedata['camera']['eer frames']:
+			self.extname = 'eer'
 		return self.extname
 		
 	def getFrameStackPath(self,temp=False):
@@ -1068,8 +1074,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		return self.makeCorrectedFrameStack_cpu(use_full_raw_area)
 
 	def makeModifiedDefectMrc(self):
-		self.setCameraInfo(1,self.use_full_raw_area)
-		a = self.c_client.getCameraDefectMap(self.camerainfo)
+		image_for_correction = self.getCorrectedImageData()
+		a = self.c_client.getImageDefectMap(image_for_correction)
 		frame_flip, frame_rotate = self.getImageFrameOrientation()
 		# flip and rotate map_array.  Therefore, do the oposite of
 		# frames

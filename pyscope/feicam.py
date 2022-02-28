@@ -4,6 +4,7 @@ import subprocess
 import glob
 import shutil
 import sys
+import numpy
 
 import ccdcamera
 import time
@@ -282,7 +283,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		return self.exposuretype
 
 	def setExposureType(self, value):
-		if value not in ['normal', 'dark']:
+		if value not in self.getExposureTypes():
 			raise ValueError('invalid exposure type')
 		self.exposuretype = value
 
@@ -340,8 +341,13 @@ class FeiCam(ccdcamera.CCDCamera):
 			self.registerCallback(name, self.readoutcallback)
 			self.backgroundReadout(name)
 		else:
-			result=self._getImage()
-			self.csa.Wait()
+			if self.getExposureType() == 'dark':
+				result=self._getFakeDark()
+			elif self.getExposureType() != 'norm':
+				result=self._getImage()
+				self.csa.Wait()
+			else:
+				result= self._getSavedNorm()
 			return result
 
 	def _getSafeArray(self):
@@ -357,11 +363,62 @@ class FeiCam(ccdcamera.CCDCamera):
 		rk = self._getConfig('readout')
 		# 64-bit pyscope/safearray does not work with newer 64-bit comtypes installation.
 		# use safearray_as_ndarray instead.
+		if self.getDebugCamera():
+			print 'readout key', rk
+			print 'limit_dim', self.limit_dim[rk]
+			print 'binning', self.binning
 		arr = arr.reshape((self.limit_dim[rk]['y']/self.binning['y'],self.limit_dim[rk]['x']/self.binning['x']))
 		if USE_SAFEARRAY_AS_NDARRAY:
 			arr = arr.T
 		return arr
 
+	def getNormImagePath(self):
+		return None
+
+	def _getSavedNorm(self):
+		'''
+		Return image array from saved image.
+		'''
+		try:
+			self.finalizeSetup()
+			self.custom_setup()
+		except Exception, e:
+			if self.getDebugCamera():
+				print 'Camera setup',e
+			raise RuntimeError('Error setting camera parameters: %s' % (e,))
+		normpath = self.getNormImagePath()
+		if not normpath:
+			raise RuntimeError('Error finding saved norm image')
+		if self.getDebugCamera():
+			print 'loading', normpath
+		from pyami import tifffile
+		tif = tifffile.TIFFfile(normpath)
+		arr = tif.asarray()
+		self.image_metadata = {}
+		if self.getDebugCamera():
+			print 'got arr and to modify'
+		arr = self.modifyImage(arr)
+		return arr
+
+	def _getFakeDark(self):
+		'''
+		Return image array at zeros
+		'''
+		try:
+			self.finalizeSetup()
+			self.custom_setup()
+		except Exception, e:
+			if self.getDebugCamera():
+				print 'Camera setup',e
+			raise RuntimeError('Error setting camera parameters: %s' % (e,))
+		rk = self._getConfig('readout')
+		limit_dim = self.limit_dim[rk]
+		arr = numpy.zeros((limit_dim['y'],limit_dim['x']))
+		self.image_metadata = {}
+		if self.getDebugCamera():
+			print 'got arr and to modify'
+		arr = self.modifyImage(arr)
+		return arr
 	def _getImage(self):
 		'''
 		Acquire an image using the setup for this client.
@@ -604,14 +661,24 @@ class FeiCam(ccdcamera.CCDCamera):
 		else:
 			raise NotImplementedError()
 
+	def getSystemGainDarkCorrected(self):
+		# deprecated in v3.6
+		return True
+
+	def getSystemDarkSubtracted(self):
+		return True
+
+	def getFrameGainCorrected(self):
+		return True
+
+	def getSumGainCorrected(self):
+		return True
+
 class Ceta(FeiCam):
 	name = 'Ceta'
 	camera_name = 'BM-Ceta'
 	binning_limits = [1,2,4]
 	intensity_averaged = False
-
-	def getSystemGainDarkCorrected(self):
-		return True
 
 class Falcon3(FeiCam):
 	name = 'Falcon3'
@@ -671,6 +738,21 @@ class Falcon3(FeiCam):
 		'''True: save frames, False: discard frames'''
 		self.save_frames = bool(value)
 
+	def getEerRenderDefault(self):
+		'''
+		Return the multiplication factor of eer raw frame to falcon
+		program CalculateNumberOfFrames method result.
+		'''
+		# Falcon4: CalculateNumberOfFrames * 7 =  eer nframes
+		# Falcon4i: CalculateNumberOfFrames * 9 =  eer nframes
+		if self.getSaveEer():
+			value = self.getFeiConfig('camera','eer_render')
+			try:
+				return int(value)
+			except TypeError:
+				return 7 # default
+		return 0
+
 	def getNumberOfFrames(self):
 		'''
 		This is number of the output frames. Only meaningful after getImage.
@@ -678,10 +760,11 @@ class Falcon3(FeiCam):
 		if self.save_frames:
 			if self.frame_format == 'mrc':
 				return self.frameconfig.getNumberOfFrameBins()
-			else:
-				return int(self.getExposureTime()*0.001*self.physical_frame_rate)
+			if self.frame_format == 'eer':
+				rendered_nframes = self.camera_settings.CalculateNumberOfFrames()
+				return rendered_nframes*self.getEerRenderDefault()
 		else:
-			return 0 # TO DO: Findout what it gives.
+			return 0
 
 	def calculateMovieExposure(self):
 		'''
@@ -772,8 +855,9 @@ class Falcon3(FeiCam):
 		for i in range(len(rangelist)):
 			self.dfd.AddRange(rangelist[i][0],rangelist[i][1])
 
-	def getSystemGainDarkCorrected(self):
-		return True
+	def getFrameGainCorrected(self):
+		# Only eer movies need to use gain reference
+		return not self.frame_format == 'eer'
 
 	def getFrameFlip(self):
 		'''
@@ -822,3 +906,28 @@ class Falcon4EC(Falcon3EC):
 
 	def setInserted(self, value):
 		super(Falcon4EC, self).setInserted(value)
+
+	def getExposureTypes(self):
+		"""
+		norm type is used to retrieve norm image, not a real exposure.
+		"""
+		return ['normal', 'dark','norm']
+
+	def getSaveEer(self):
+		return self.frame_format == 'eer' and self.electron_counting
+
+	def getNormImagePath(self):
+		"""
+		return the path for the latest gain file.
+		"""
+		norm_dir = self.getFeiConfig('camera','eer_gain_reference_dir')
+		if not os.path.isdir(norm_dir):
+			return None
+		pattern = os.path.join(norm_dir,'*.gain')
+		files = glob.glob(pattern)
+		files.sort()
+		if len(files) == 0:
+			return None
+		return files[-1]
+
+
