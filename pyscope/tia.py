@@ -481,7 +481,10 @@ class TIA_Falcon(TIA):
 	def getSystemDarkSubtracted(self):
 		return True
 
-	def getSystemGainCorrected(self):
+	def getFrameGainCorrected(self):
+		return True
+
+	def getSumGainCorrected(self):
 		return True
 
 	def getFrameFlip(self):
@@ -521,7 +524,10 @@ class TIA_Ceta(TIA):
 	def getSystemDarkSubtracted(self):
 		return True
 
-	def getSystemGainCorrected(self):
+	def getFrameGainCorrected(self):
+		return True
+
+	def getSumGainCorrected(self):
 		return True
 
 	def getPixelSize(self):
