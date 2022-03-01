@@ -1,1 +1,1 @@
-myami-beta
+myami-3.6
