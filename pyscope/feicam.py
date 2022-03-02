@@ -149,7 +149,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.limit_dim = {}
 		self.limit_off = {}
 		for k in self.sorted_readout_keys:
-			self.limit_dim[k] = {'x': size['x']/readout_dicts[k], 'y': size['y']/readout_dicts[k]}
+			self.limit_dim[k] = {'x': int(size['x']/readout_dicts[k]), 'y': int(size['y']/readout_dicts[k])}
 			self.limit_off[k] = {'x': int((size['x']-self.limit_dim[k]['x'])/2.0), 'y':int((size['y']-self.limit_dim[k]['y'])/2.0)}
 		self.readout_offset = {'x':0,'y':0}
 
@@ -357,7 +357,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		rk = self._getConfig('readout')
 		# 64-bit pyscope/safearray does not work with newer 64-bit comtypes installation.
 		# use safearray_as_ndarray instead.
-		arr = arr.reshape((self.limit_dim[rk]['y']/self.binning['y'],self.limit_dim[rk]['x']/self.binning['x']))
+		arr = arr.reshape((self.limit_dim[rk]['y']//self.binning['y'],self.limit_dim[rk]['x']//self.binning['x']))
 		if USE_SAFEARRAY_AS_NDARRAY:
 			arr = arr.T
 		return arr
