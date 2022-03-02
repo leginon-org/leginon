@@ -16,6 +16,7 @@ from leginon import mosaic
 import threading
 from leginon import node
 from leginon import targethandler
+from leginon import multihole
 from pyami import convolver, imagefun, mrc, ordereddict, affine
 from pyami import groupfun
 import numpy
