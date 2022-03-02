@@ -798,7 +798,7 @@ class _createSQLTable:
 				pass
 			newdict['Type'] = typestr
 			if newdict['Type'] == 'TIMESTAMP':
-				if not description.has_key('Default'):
+				if not 'Default' in description.keys():
 					# Fixing Issue #7798 by force timestamp default
 					# to current_timestamp().
 					# This way it matches with what is described
@@ -806,7 +806,7 @@ class _createSQLTable:
 					# the table
 					description['Default']='current_timestamp()'
 			newdict['Field'] = description['Field']
-			if description.has_key('Default'):
+			if 'Default' in description.keys():
 				newdict['Default'] = description['Default']
 				if description['Default']=='NULL':
 					newdict['Default'] = None
