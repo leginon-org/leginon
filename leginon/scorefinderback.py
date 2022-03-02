@@ -323,5 +323,5 @@ if __name__ == '__main__':
 	hf.configure_convolve(conv_vect=[(20,0),])
 	hf.configure_sample(classes=2, samples=4, category='thickness-mean')
 	hf.find_holes()
-	print 'first holes of',len(hf['holes']),hf['holes'][0].stats
-	print 'first holes2 of',len(hf['holes2']),hf['holes2'][0].stats
+	print('first holes of',len(hf['holes']),hf['holes'][0].stats)
+	print('first holes2 of',len(hf['holes2']),hf['holes2'][0].stats)

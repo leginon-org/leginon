@@ -215,9 +215,9 @@ def getData(host, port, int1, int2=None):
 	t1 = time.time()
 
 	#data = num.fromfile(f, uint16)
-	#print 'fromstring 0', time.time()
+	#print('fromstring 0', time.time())
 	#data = num.fromstring(data, uint16)
-	#print 'fromstring 1', time.time()
+	#print('fromstring 1', time.time())
 	print('TTTTTTTTTTT', time.time())
 	#data = num.fromfile(f, int32)
 

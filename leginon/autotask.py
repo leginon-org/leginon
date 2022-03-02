@@ -71,6 +71,6 @@ class AutoTaskOrganizer(object):
 
 if __name__=='__main__':
 	session = leginondata.SessionData().query(results=1)[0]
-	print 'test with session %s' % session['name']
+	print('test with session %s' % session['name'])
 	app = AutoTaskOrganizer(session)
-	print app.nextAutoTask()
+	print(app.nextAutoTask())

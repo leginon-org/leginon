@@ -380,9 +380,9 @@ def createSingleImage(inputimages, globaloutput, outfilename, outformat, outtext
 	if targetinputs:
 		for input,target in targetinputs:
 			globaloutput.insertImage(input, target)
-		print 'inserted %s targets' % (len(globaloutput.targets),)
+		print('inserted %s targets' % (len(globaloutput.targets),))
 	for target in globaloutput.targets:
-		print 'T', target
+		print('T', target)
 		markTarget(globaloutput.image, target)
 	'''
 	if outtext is not None:
@@ -559,7 +559,7 @@ if __name__ == '__main__':
 		(301396, {'row':91,'col':248}),
 	)
 	#### Target stuff
-	print 'creating input target objects'
+	print('creating input target objects')
 	targetinputs = createTargetInputs(targetimages)
 	longedge = targetinputs[3], targetinputs[2]
 	targetstages = targetStagePositions(targetinputs)
@@ -589,7 +589,7 @@ if __name__ == '__main__':
 
 	############# Image stats ############
 	'''
-	print 'calculating image stats...'
+	print('calculating image stats...')
 	min = None
 	max = None
 	mean = None
@@ -606,5 +606,5 @@ if __name__ == '__main__':
 		sum += stats['mean']
 	mean = sum / len(images)
 	clip = (mean-3*std, mean+3*std)
-	print 'clip', clip
+	print('clip', clip)
 	'''

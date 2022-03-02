@@ -157,7 +157,7 @@ class Focuser(singlefocuser.SingleFocuser):
 		if not setting['switch']:
 			return
 		# average the results for current
-		#print self.corrected_focus
+		#print(self.corrected_focus)
 		if setting['correction type'] == 'Defocus' and len(self.corrected_focus) > 0:
 			defocus0 = self.instrument.tem.Defocus
 			avg_focus = sum(self.corrected_focus) / len(self.corrected_focus)

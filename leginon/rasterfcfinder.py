@@ -153,7 +153,7 @@ class RasterFCFinder(rasterfinder.RasterFinder):
 		# radian step for 1 pixel
 		for i in range(int(circPix)):
 			omega = angRadStep * i
-			# print "angle: ", (omega*180.0/math.pi)
+			# print("angle: ", (omega*180.0/math.pi))
 			xPoint = int(focusCenterX + focusRadius*math.cos(omega))
 			yPoint = int(focusCenterY + focusRadius*math.sin(omega))
 			# coords have to be "transposed" for get_box_stats()

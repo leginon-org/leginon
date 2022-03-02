@@ -270,11 +270,11 @@ if __name__ == '__main__':
 	hf.configure_convolve(conv_vect=[(0,0),(20,0)])
 	hf.configure_sample(classes=2, samples=4, category='center')
 	hf.find_holes()
-	print 'number of holes', len(hf['holes'])
+	print('number of holes', len(hf['holes']))
 	for h in hf['holes']:
-		print h.stats
+		print(h.stats)
 	if hf['holes2']:
-		print ''
-		print 'number of holes2 after processing', len(hf['holes2'])
+		print('')
+		print('number of holes2 after processing', len(hf['holes2']))
 		for h in hf['holes2']:
-			print h.stats
+			print(h.stats)

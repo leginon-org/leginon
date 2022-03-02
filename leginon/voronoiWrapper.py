@@ -10,9 +10,9 @@ import numpy
 
 try:
 	from scipy.spatial import Voronoi
-	#print "scipy voronoi found"
+	#print("scipy voronoi found")
 except ImportError:
-	#print "scipy voronoi not found"
+	#print("scipy voronoi not found")
 	def Voronoi(points):
 		raise NotImplementedError("This function requires scipy version 0.12 or newer")
 

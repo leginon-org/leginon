@@ -222,7 +222,7 @@ class RemoteSessionServer(object):
 		param_str = self._processParamsToSend(data)
 		url = self._makeUrl(router_name, param_str=param_str)
 		answer = requests.get(url=url, auth=self.leg_remote_auth)
-		#print 'got answer from ', url
+		#print('got answer from ', url)
 		queryset = self._processResponse(answer)
 		if hasattr(queryset,'keys') and 'results' in list(queryset.keys()):
 			# success results
@@ -241,7 +241,7 @@ class RemoteSessionServer(object):
 			data = self._processDataToSend(data)
 		#print('post url ',url)
 		answer = requests.post(url=url, json=data, auth=self.leg_remote_auth)
-		#print 'got answer from post', url
+		#print('got answer from post', url)
 		return self._processResponse(answer)
 
 	def userHasControl(self, log_error=False):
@@ -483,7 +483,7 @@ class ClickTool(Tool):
 				self.handling_attr()
 				self.resetTrigger()
 			time.sleep(SLEEP_TIME)
-		#print "click tracking of %s.%s deactivated" % (self.toolbar.node_name, self.name)
+		#print("click tracking of %s.%s deactivated" % (self.toolbar.node_name, self.name))
 
 	def hasRemoteTrigger(self):
 		'''
@@ -731,7 +731,7 @@ class RemoteTargetingServer(RemoteNodeServer):
 			# FIX ME: This will keep looping
 			# if node is exited but still waiting for remote InTargets.
 			time.sleep(0.5)
-			# print 'looping checking targetdata and user has control with self.active=', self.active
+			# print('looping checking targetdata and user has control with self.active=', self.active)
 		xys = self.filterInTargets(xys)
 		return xys
 

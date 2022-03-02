@@ -276,25 +276,25 @@ def sortPoints(coords, numiter=3, maxeval=70000, writepng=False, msg=False):
 	#startorder = lambda: init_random_tour(len(coords)) #random
 	startorderfunc = lambda: list(range(len(coords))) #ordered
 	bestorder = startorderfunc()
-	#print "startorder=",startorderfunc()
+	#print("startorder=",startorderfunc())
 
 	#setup distance matrix
 	matrix = cartesian_matrix(coords)
 	startscore = -tour_length1(matrix, startorderfunc())
-	#print "beginning distance="+str(round(-1*startscore,2))+" pixels"
+	#print("beginning distance="+str(round(-1*startscore,2))+" pixels")
 	bestscore = startscore
 
 	#setup fitness function: total distance
 	fitnessfunc = lambda tour: -tour_length1(matrix, tour)
 
-	#print "###################"
-	#print "reversed sections"
-	#print "###################"
+	#print("###################")
+	#print("reversed sections")
+	#print("###################")
 	method = reversed_sections
 	for i in range(numiter):
 		iters, score, order = run_hillclimb(startorderfunc, method, fitnessfunc, 1, maxeval)
 		if score > bestscore:
-			#print "new best score:", score
+			#print("new best score:", score)
 			bestiters = iters
 			bestscore = score
 			bestorder = order	
@@ -302,15 +302,15 @@ def sortPoints(coords, numiter=3, maxeval=70000, writepng=False, msg=False):
 				outfile = str(int(abs(score)))+".png"
 				write_tour_to_img(coords, order, str(score), file(outfile,'w'))
 
-	#print "###################"
-	#print "shift cities"
-	#print "###################"
+	#print("###################")
+	#print("shift cities")
+	#print("###################")
 	method = shift_cities
 	for i in range(2):
 		startorderfunc = lambda: bestorder
 		iters, score, order = run_hillclimb(startorderfunc, method, fitnessfunc, 1, maxeval)
 		if score > bestscore:
-			#print "new best score:", score
+			#print("new best score:", score)
 			bestiters = iters
 			bestscore = score
 			bestorder = order

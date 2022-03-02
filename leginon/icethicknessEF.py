@@ -157,7 +157,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		was_filtered = bool(camdata0['energy filter']) 
 		was_time = float(camdata0['exposure time'])
 		was_binning = camdata0['binning']
-#		print (was_binning)
+#		print(was_binning)
 		## deactivate frame saving and align frame flags
 		camdata0['save frames'] = False
 		camdata0['align frames'] = False
@@ -169,7 +169,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		camdata1['exposure time'] = exp_time
 		for key in camdata1['binning']:
 			camdata1['binning'][key] = int(binning)
-#		print camdata1['binning']
+#		print(camdata1['binning'])
 
 		try:
 			self.instrument.setCCDCamera(camdata1['ccdcamera']['name'])  #select the right camera!!!!

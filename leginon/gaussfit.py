@@ -16,7 +16,7 @@ def gaussian_residual(unknowns, r, c, z):
 	sigma,a,b,dr,dc = unknowns
 	#r,c,z = args
 	x = gaussian(sigma, a, b, dr, dc, r, c) - z
-	#print 'X', x
+	#print('X', x)
 	return x.flat
 
 def gaussfit(im):
@@ -43,7 +43,7 @@ if __name__ == '__main__':
 	print('TESTIM', testim)
 	'''
 	testim[4,4] += 1.1
-	print 'TESTIM', testim
+	print('TESTIM', testim)
 	'''
 	solution = gaussfit(testim)
 	print('SOLUTION', solution)

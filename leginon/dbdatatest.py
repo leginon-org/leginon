@@ -128,7 +128,7 @@ def testfunc(mydata):
 	retval = leginondata.DataReference()
 	retval['id'] = rnum
 	retval['classname'] = mydata.__class__.__name__
-	#print '    RETURNING',  retval
+	#print('    RETURNING',  retval)
 	return retval
 
 # this executes testfunc on children of mydata

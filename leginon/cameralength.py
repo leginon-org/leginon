@@ -47,7 +47,7 @@ class DiffrCalibrator(object):
 		except Exception as e:
 			print(('Failed %s with %s' % (image['filename'], e)))
 			return center, []
-		#print image['filename'], center, cam_lengths
+		#print(image['filename'], center, cam_lengths)
 		return center, cam_lengths
 
 	def isHidden(self, image):

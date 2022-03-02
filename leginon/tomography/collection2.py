@@ -233,7 +233,7 @@ class Collection2(Collection):
 						
 				elif self.fulltrack or not ispredict:	
 						
-					print "****TRACKING****"	
+					print("****TRACKING****")
 					istot = self.get_istot(seq)		# history of previous shifts
 															 
 					# tilt to current tilt angle. 
@@ -249,13 +249,13 @@ class Collection2(Collection):
 					predicted_position['y'] = tracked_shift['y'] + sum(istot['y'])
 					# TODO: actually implement something for z heights
 					predicted_position['z'] = tracked_shift['z'] + self.preset['defocus']/image_pixel_size
-					print 'previous x: %f, y: %f' %(position['x'],position['y'])
-					print 'tracked x: %f, y: %f' %(predicted_position['x'],predicted_position['y'])
-					print 'tracked shift x: %f, y: %f' %(tracked_shift['x'],tracked_shift['y'])
-					print 
+					print('previous x: %f, y: %f' %(position['x'],position['y']))
+					print('tracked x: %f, y: %f' %(predicted_position['x'],predicted_position['y']))
+					print('tracked shift x: %f, y: %f' %(tracked_shift['x'],tracked_shift['y']))
+					print()
 				else:
 					# tilt to current tilt angle. 
-					print "****PREDICTING****"
+					print("****PREDICTING****")
 					istot = self.get_istot(seq)									# history of previous shifts
 					
 					self.tilt(tilt)
@@ -276,10 +276,10 @@ class Collection2(Collection):
 							self.settings['use tilt'], channel=channel, wiener=False, taper=0)	
 						self.reset_ntrack(seq)
 						
-					print 'previous x: %f, y: %f' %(position['x'],position['y'])
-					print 'predicted x: %f, y: %f' %(predicted_position['x'],predicted_position['y'])
-					print 'predicted shift x: %f, y: %f' %(predicted_shift['x'], predicted_shift['y'])
-					print 
+					print('previous x: %f, y: %f' %(position['x'],position['y']))
+					print('predicted x: %f, y: %f' %(predicted_position['x'],predicted_position['y']))
+					print('predicted shift x: %f, y: %f' %(predicted_shift['x'], predicted_shift['y']))
+					print()
 					
 			except TrackingError:
 				self.logger.error('Failed to track. Aborting tilt series')
@@ -425,14 +425,14 @@ class Collection2(Collection):
 				'y': predicted_position['y']
 			}
 			
-			print "****AFTER IMAGE CORRELATION****"
+			print("****AFTER IMAGE CORRELATION****")
 			if ispredict:
-				print 'predicted x: %f, y: %f' %(predicted_position['x'],predicted_position['y'])
+				print('predicted x: %f, y: %f' %(predicted_position['x'],predicted_position['y']))
 			else:
-				print 'tracked x: %f, y: %f' %(predicted_position['x'],predicted_position['y'])
-			print 'correlation x: %f, y: %f' %((correlation['x']),(correlation['y']))
-			print 'measured position x: %f, y: %f' %(measured_position['x'],measured_position['y'])
-			print 'measured shift x: %f, y: %f' %(measured_shift['x'],measured_shift['y'])
+				print('tracked x: %f, y: %f' %(predicted_position['x'],predicted_position['y']))
+			print('correlation x: %f, y: %f' %((correlation['x']),(correlation['y'])))
+			print('measured position x: %f, y: %f' %(measured_position['x'],measured_position['y']))
+			print('measured shift x: %f, y: %f' %(measured_shift['x'],measured_shift['y']))
 
 			if not ispredict:
 				predicted_shift = self.prediction.predict(tilt,seq)						# still predict position, just don't rely on it. 				
@@ -690,7 +690,7 @@ class Collection2(Collection):
 			ht = self.instrument.tem.HighTension	
 			p1 = [correlation['x'], correlation['y']]
 			
-			##print "CORRELATION x: %f y: %f" %(correlation['x'], correlation['y'])
+			##print("CORRELATION x: %f y: %f" %(correlation['x'], correlation['y']))
 
 			myscope = leginon.leginondata.ScopeEMData()
 			myscope.friendly_update(mypreset)
@@ -729,7 +729,7 @@ class Collection2(Collection):
 			
 			correlation['x'] = p2_shift['col']
 			correlation['y'] = p2_shift['row']
-			##print "CORRELATION after pixelToPixel x: %f y: %f" %(correlation['x'], correlation['y'])
+			##print("CORRELATION after pixelToPixel x: %f y: %f" %(correlation['x'], correlation['y']))
 			
 			result = {
 				'x': -correlation['x'],			# This is in exposure pixels. 

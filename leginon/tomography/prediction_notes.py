@@ -4,7 +4,7 @@ import scipy.optimize
 from scipy.linalg import lstsq
 
 def debug_print(msg):
-	#print msg
+	#print(msg)
 	pass
 
 class TiltSeries(object):
@@ -114,7 +114,7 @@ class Prediction(object):
 		tilt_series = self.getCurrentTiltSeries()
 		# Fix me: WHY prevent adding new group if nothing is there ?
 		#if tilt_series.tilt_groups and len(tilt_series.tilt_groups[-1]) < 1:
-		#	print 'previous tilt group has no value, tiltgroup not added. But why?'
+		#	print('previous tilt group has no value, tiltgroup not added. But why?)
 		#	return
 		tilt_group = TiltGroup()
 		tilt_series.addTiltGroup(tilt_group)

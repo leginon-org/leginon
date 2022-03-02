@@ -403,6 +403,6 @@ if __name__ == "__main__":
 	print(param)
 	app = ImportExport(**param)
 	app.importApplication(appfile)
-#	print app.getMessageLog()
+#	print(app.getMessageLog())
 	#dump = app.exportApplication(appname)
-	#print dump
+	#print(dump)

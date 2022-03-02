@@ -146,12 +146,12 @@ if __name__ == "__main__":
 	"""
 	projdata = ProjectData()
 
-	#print projdata.getGridName(111)
+	#print(projdata.getGridName(111))
 	gridid = 751
 	grids = projdata.getGrids()
 	gridsindex = grids.Index(['gridId'])
 	grid = gridsindex[gridid].fetchone()
-	print grid
+	print(grid)
 	if grid is None:
 		print
 	gridtrayid = 58
@@ -161,10 +161,10 @@ if __name__ == "__main__":
 	gridlocationsindex = gridlocations.Index(['gridId'])
 	gridlocation = gridlocationsindex[gridid].fetchone()
 	if gridlocation is None:
-		print
+		print()
 	if gridlocation['gridboxId'] != gridtrayid:
-		print
-	print gridlocation
+		print()
+	print(gridlocation)
 	#return int(gridlocation['location'])
 
 	for i in range(1, 97):
@@ -173,7 +173,7 @@ if __name__ == "__main__":
 	gridboxes = projdata.getGridBoxes()
 	labelindex = gridboxes.Index(['label'])
 	gridboxlabels = map(lambda d: d['label'], gridboxes.getall())
-	print gridboxlabels
+	print(gridboxlabels)
 	gridbox = labelindex['Simple Test Tray'].fetchone()
 	gridboxid = gridbox['gridboxId']
 	gridlocations = projdata.getGridLocations()
@@ -186,24 +186,24 @@ if __name__ == "__main__":
 		grid = grididindex[gridlocation['gridId']].fetchone()
 		gridmapping[grid['label']] = {'gridId': gridlocation['gridId'],
 																	'location': gridlocation['location']}
-	print gridmapping
+	print(gridmapping)
 
 	projdata1 = ProjectData()
 	projects = projdata1.getProjects()
-	print projects.getall()
+	print(projects.getall())
 	projdata2 = ProjectData()
 	projects = projdata2.getProjects()
 	allprojects = projects.getall()
 
-	print allprojects
+	print(allprojects)
 
 	# getall experiment name with his projectId
 	projectexperiments = projdata.getProjectExperiments()
 	allprojectexperiments = projectexperiments.getall()
-	print allprojectexperiments
+	print(allprojectexperiments)
 
 	#getall experiments with projectId=5
-	print projectexperiments.projectId[5].fetchall()
+	print(projectexperiments.projectId[5].fetchall())
 
 	# insert a new session into the Test  Project database
 	newsession = ProjectExperiment(5, 'testexp')
@@ -212,6 +212,6 @@ if __name__ == "__main__":
 	# the existing primary will be returned. The function 
 	# returns the last inserted id for a new insert
 	key = projectexperiments.insert([newsession.dumpdict()])
-	print key
+	print(key)
 	"""
 

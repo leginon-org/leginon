@@ -224,7 +224,7 @@ class Manager(node.Node):
 	def setSessionByName(self, name):
 		new_session = self.getSessionByName(name)
 		if not new_session:
-			print 'Cannot find existing session %s to set' % (name,)
+			print('Cannot find existing session %s to set' % (name,))
 		self.session = new_session
 		## do every node
 		do = list(self.initializednodes)

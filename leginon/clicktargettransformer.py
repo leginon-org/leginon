@@ -317,7 +317,7 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		#Child
 #		previoustransformedtargets = []
 #		previoustransformedtargets.extend(self.researchTargets(image=self.childimagedata, type='transformed'))
-#		print "ancestor",imagedata.dbid," child",self.childimagedata.dbid
+#		print("ancestor",imagedata.dbid," child",self.childimagedata.dbid)
 #		self.previoustargets = previoustransformedtargets
 #		previoustargets.extend(self.childTargetsOnAncestor(previoustransformedtargets))
 #		self.displayTargets(imagedata,previoustargets, self.displayedtargetnames)

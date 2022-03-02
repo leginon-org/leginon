@@ -161,7 +161,7 @@ class Application(object):
 	def launchNode(self, args):
 		if not hasattr(self.node, 'launchNode'):
 			raise RuntimeError('Application node unable to launch node')
-		#print 'launching %s' % str(args)
+		#print('launching %s' % str(args))
 		newname = self.node.launchNode(*args)
 		return newname
 

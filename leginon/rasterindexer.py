@@ -94,7 +94,7 @@ class RasterIndexer(object):
 			point_2d_index = self.rasterindices[best_list_index]
 			point_2d_indices.append(point_2d_index)
 			point_list_indices.append(best_list_index)
-			#print best_list_index, point_2d_index, point,'(%.0f,%.0f)' % (self.rasterpoints[best_list_index][0],self.rasterpoints[best_list_index][1])
+			#print(best_list_index, point_2d_index, point,'(%.0f,%.0f)' % (self.rasterpoints[best_list_index][0],self.rasterpoints[best_list_index][1]))
 		return point_2d_indices, point_list_indices
 
 	def getSpacingGuess(self, center):
@@ -143,9 +143,9 @@ class RasterIndexer(object):
 				if len(set(point_list_indices[key])) > unique_number:
 					best_offset = key
 					unique_number=len(set(point_list_indices[key]))
-		# print the finale results
+		# print(the finale results)
 		#for i, point in enumerate(self.points):
-		#	print i,point_2d_indices[best_offset][i],point
+		#	print(i,point_2d_indices[best_offset][i],point)
 		print('spacing', self.spacing)
 		print('angle', self.angle)
 		return point_2d_indices[best_offset]

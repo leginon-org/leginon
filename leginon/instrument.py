@@ -124,7 +124,7 @@ class Proxy(object):
 		instrumentdata = leginondata.InstrumentData()
 		instrumentdata['name'] = name
 		#instrumentdata['type'] = dbtype
-		#print dbtype
+		#print(dbtype)
 		try:
 			instrumentdata['hostname'] = self.tems[name].Hostname
 			instrumentdata['hidden'] = False
@@ -190,7 +190,7 @@ class Proxy(object):
 		instrumentdata = leginondata.InstrumentData()
 		instrumentdata['name'] = name
 		#instrumentdata['type'] = dbtype
-		#print dbtype
+		#print(dbtype)
 		try:
 			instrumentdata['hostname'] = self.ccdcameras[name].Hostname
 			instrumentdata['hidden'] = False

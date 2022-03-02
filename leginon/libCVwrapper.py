@@ -10,9 +10,9 @@ pi = numpy.pi
 
 try:
 	import libcv
-	#print "libcv found"
+	#print("libcv found")
 except ImportError:
-	#print "libcv not found"
+	#print("libcv not found")
 	pass
 
 #-----------------------
@@ -170,7 +170,7 @@ def checkLibCVResult(self, result):
 	#elif abs(result[2][0]) > 200 or abs(result[2][1]) > 200:
 	#	#max rotation angle of 45 degrees
 	#	self.logger.warning("Bad libcv result: too much shift: "+affineToText(result))
-	#	print ("Bad libcv result: too much shift: "+affineToText(result))
+	#	print("Bad libcv result: too much shift: "+affineToText(result))
 	#	return False
 	return True
 
@@ -239,8 +239,8 @@ def planeRegression(imgarray):
 	leftmat = numpy.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]] )
 	rightmat = numpy.array( [xzsum, yzsum, zsum] )
 	resvec = linalg.solve(leftmat,rightmat)
-	#print " ... plane_regress: x-slope:",round(resvec[0]*size,5),\
-	#	", y-slope:",round(resvec[1]*size,5),", xy-intercept:",round(resvec[2],5)
+	#print(" ... plane_regress: x-slope:",round(resvec[0]*size,5),\
+	#	", y-slope:",round(resvec[1]*size,5),", xy-intercept:",round(resvec[2],5))
 	newarray = imgarray - xarray*resvec[0] - yarray*resvec[1] - resvec[2]
 	#del imgarray,xarray,yarray,resvec
 	return newarray

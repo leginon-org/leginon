@@ -551,6 +551,6 @@ if __name__ == '__main__':
 	tar = t.researchTargets(session=s, image=im)
 	print('LEN', len(tar))
 	print('DBID', tar[0].dbid)
-	#print 'TAR0', tar[0]
+	#print('TAR0', tar[0])
 	print('IM REF', tar[0].special_getitem('image', dereference=False))
 

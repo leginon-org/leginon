@@ -258,7 +258,7 @@ class TiltTracker(acquisition.Acquisition):
 	#====================
 	def trackStage(self, image0, tilt0, tilt, tilt0targets):
 		#import pprint
-		#print "SETTINGS:"
+		#print("SETTINGS:")
 		#pprint.pprint(self.settings)
 		self.logger.info('Running trackStage')
 
@@ -307,7 +307,7 @@ class TiltTracker(acquisition.Acquisition):
 				self.logger.info('Pausing %.1f seconds' %(pausetime,))
 				time.sleep(pausetime)
 			self.logger.info('Acquire intermediate tilted parent image')
-			#print 'acquire intertilt'
+			#print('acquire intertilt')
 			imagenew = self.acquireCorrectedCameraImageData(force_no_frames=True)
 			if imagedata is None:
 				return None,None
@@ -469,7 +469,7 @@ class TiltTracker(acquisition.Acquisition):
 	def apTiltShiftMethod(self, arrayold, arraynew, difftilt):
 		### pre-filter images
 		print("difftilt=", difftilt)
-		#print arrayold.shape, arraynew.shape, difftilt
+		#print(arrayold.shape, arraynew.shape, difftilt)
 		bestsnr = 0
 		bestangle = None
 		self.logger.info('Using cross-correlation method to find matrix')

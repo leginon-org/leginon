@@ -7,11 +7,11 @@ from leginon import calibrationclient
 
 class Logger(object):
 	def info(self,msg):
-		print 'INFO: %s' % msg
+		print('INFO: %s' % msg)
 	def warning(self,msg):
-		print 'WARNING: %s' % msg
+		print('WARNING: %s' % msg)
 	def error(self,msg):
-		print 'ERROR: %s' % msg
+		print('ERROR: %s' % msg)
 	def debug(self,msg):
 		pass
 
@@ -59,4 +59,4 @@ if __name__ == '__main__':
 	# Now we can use calclient on any function in there.
 	matrix = calclient.researchMatrix(tem, ccdcamera, caltype, ht, mag, probe)
 	# Do what you need with the matrix.
-	print matrix
+	print(matrix)

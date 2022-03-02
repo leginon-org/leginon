@@ -129,7 +129,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		"""
 		from center of image, generate a raster of points
 		"""
-		#print "xy raster"
+		#print("xy raster")
 		try:
 			imageshape = self.currentimagedata['image'].shape
 		except:

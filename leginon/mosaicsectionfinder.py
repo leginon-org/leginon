@@ -127,7 +127,7 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 						regiondisplaypoints = self.transpose_points(rregionarray)
 						displaypoints.extend(regiondisplaypoints)				
 						regionphi = regionpolygon[4]
-						#print regionrow,regioncol,regionaxismajor,regionaxisminor,regionphi
+						#print(regionrow,regioncol,regionaxismajor,regionaxisminor,regionphi)
 			
 			return regionarrays,regionellipses,displaypoints
 	

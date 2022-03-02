@@ -165,11 +165,11 @@ class EpuMetaMapping(MetaMapping):
 		return self.dataMapping(datadict,matrix_map)
 
 	def run(self):
-		#print self.getTemData(self.meta_data_dict['microscopeData'])
-		#print self.getCCDCameraData(self.meta_data_dict['microscopeData'])
+		#print(self.getTemData(self.meta_data_dict['microscopeData']))
+		#print(self.getCCDCameraData(self.meta_data_dict['microscopeData']))
 		print(self.getScopeEMData(self.meta_data_dict['microscopeData']))
-		#print self.getCameraEMData(self.meta_data_dict['microscopeData'])
-		#print self.getMatrix(self.meta_data_dict)
+		#print(self.getCameraEMData(self.meta_data_dict['microscopeData']))
+		#print(self.getMatrix(self.meta_data_dict))
 
 if __name__=='__main__':
 	xml_file='/Users/acheng/nis/epu_transfer/epu_data/WBG1G20JUN15S/Images-Disc1/GridSquare_15025733/GridSquare_20200615_184111.xml'

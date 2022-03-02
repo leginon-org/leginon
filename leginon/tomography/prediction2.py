@@ -11,7 +11,7 @@ from leginon.tomography.prediction import Prediction
 from leginon.tomography.prediction import PredictionError
 
 def debug_print(msg):
-	#print msg
+	#print(msg)
 	pass
 
 class TiltSeries2(TiltSeries):
@@ -113,11 +113,11 @@ class Prediction2(Prediction):
 		tilt_group = self.getCurrentTiltGroup()
 		error = self.getPreviousError()
 		
-		print "cutoff: %f" % self.cutoff
-		print "Std_error:"		
-		print np.sqrt(sum(np.array(fit_values['std_error'])**2))
-		print "Previous error: %f" % error
-		print
+		print("cutoff: %f" % self.cutoff)
+		print("Std_error:")
+		print(np.sqrt(sum(np.array(fit_values['std_error'])**2)))
+		print("Previous error: %f" % error)
+		print()
 		
 		if np.sqrt(sum(np.array(fit_values['std_error'])**2)) < self.cutoff and error < self.cutoff:
 			return True
@@ -203,9 +203,9 @@ class Prediction2(Prediction):
 		except Exception as e:
 			import traceback
 			traceback.print_exc()
-			print "OIHEOIHEOIHE"
+			print("OIHEOIHEOIHE")
 			rpdb.set_trace()
-			print 	
+			print()
 		
 		return {'slope':(xslope,yslope), 'intercept':(xintercept,yintercept), 'std_error':(xstd,ystd)}
 	
@@ -300,5 +300,5 @@ if __name__ == "__main__":
 		predicted_position = pred.predict(0,sequence[i])
 		pred.addPosition(0, measured_positions[i], predicted_position) 	# Add measured and predicted position.
 
-		print pred.ispredict()
+		print(pred.ispredict())
 

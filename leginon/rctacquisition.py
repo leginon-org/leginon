@@ -556,7 +556,7 @@ class RCTAcquisition(acquisition.Acquisition):
 	def apTiltShiftMethod(self, arrayold, arraynew, difftilt):
 		### pre-filter images
 		print("difftilt=", difftilt)
-		#print arrayold.shape, arraynew.shape, difftilt
+		#print(arrayold.shape, arraynew.shape, difftilt)
 		bestsnr = 0
 		bestangle = None
 		self.logger.info('Using cross-correlation method to find matrix')

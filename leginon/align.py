@@ -195,7 +195,7 @@ if __name__ == '__main__':
 			rotation, scale, shift, value, image = result
 			Mrc.numeric_to_mrc(image, '%d_%d.mrc' % (749 + i, j + 1))
 			string = 'rotation: %g, scale: %g, shift: (%g, %g), value: %g'
-			print string % ((rotation, scale) + shift + (value,))
+			print(string % ((rotation, scale) + shift + (value,)))
 			'''
 
 			result = findRotationScale(image1, image2)
