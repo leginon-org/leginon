@@ -74,13 +74,13 @@ class Tomography2(Tomography):
 								 exposure_min=exposure_min,
 								 exposure_max=exposure_max,
 								 fixed_exposure= not self.settings['cosine dose'],)
-		except leginon.tomography.exposure.LimitError, e:
+		except leginon.tomography.exposure.LimitError as e:
 			self.logger.warning('Exposure dose out of range: %s.' % e)
 			self.logger.warning('Adjust total exposure dose Or')
 			msg = self.exposure.getExposureTimeLimits()
 			self.logger.warning(msg)
 			raise LimitError('Exposure limit error')
-		except leginon.tomography.exposure.Default, e:
+		except leginon.tomography.exposure.Default as e:
 			self.logger.warning('Using preset exposure time: %s.' % e)
 		else:
 			try:
@@ -296,25 +296,25 @@ class Tomography2(Tomography):
 				try:
 					self.logger.info('Processing target id %d' % adjustedtarget.dbid)
 					process_status = self.processTargetData(adjustedtarget, attempt=attempt)
-				except BypassException, e:
+				except BypassException as e:
 					self.logger.error(str(e) + '... Bypass this target and pretend it is done')
 					process_status = 'bypass'
-				except PauseRestartException, e:
+				except PauseRestartException as e:
 					self.player.pause()
 					self.logger.error(str(e) + '... Fix it, then resubmit targets from previous step to repeat')
 					self.beep()
 					process_status = 'repeat'
-				except PauseRepeatException, e:
+				except PauseRepeatException as e:
 					#TODO: NoMoveCalibration is a subclass of this. It is not handled now.
 					self.player.pause()
 					self.logger.error(str(e) + '... Fix it, then press play to repeat target')
 					self.beep()
 					process_status = 'repeat'
-				except PublishError, e:
+				except PublishError as e:
 					self.player.pause()
 					self.logger.exception('Saving image failed: %s' % e)
 					process_status = 'repeat'
-				except Exception, e:
+				except Exception as e:
 					self.logger.exception('Process target failed: %s' % e)
 					process_status = 'exception'
 				finally:

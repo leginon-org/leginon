@@ -120,8 +120,7 @@ class Node(correctorclient.CorrectorClient):
 
 		self.initializeSettings()
 		# Manager is also a node subclass but does not need status report
-		if False:
-		#if not remoteserver.NO_REQUESTS and self.__class__.__name__ not in ('Manager','Launcher','EM') and session is not None:
+		if not remoteserver.NO_REQUESTS and self.__class__.__name__ not in ('Manager','Launcher','EM') and session is not None:
 			self.remote = remoteserver.RemoteServerMaster(self.logger, session, self)
 			self.remote_status = remoteserver.RemoteStatusbar(self.logger, session, self, self.remote.leginon_base)
 			self.remote_pmlock = remoteserver.PresetsManagerLock(self.logger, session, self)

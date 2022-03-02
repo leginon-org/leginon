@@ -897,7 +897,6 @@ class Manager(node.Node):
 		self.timer = threading.Timer(timeout,self.slackTimeoutNotification)
 		self.timer.start()
 		if self.timer_debug:
-<<<<<<< HEAD
 			print('timer started with timout set to %.0f sec' % timeout)
 
 	def _addPausableNode(self, nodename):
@@ -921,7 +920,6 @@ class Manager(node.Node):
 		except ValueError:
 			# not in the list
 			pass
-			print('timer started with timeout set to %.0f sec' % timeout)
 
 	# Node Error Notification
 	def handleNodeLogError(self, ievent):

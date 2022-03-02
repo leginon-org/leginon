@@ -4,8 +4,8 @@ import numpy
 
 import leginon.leginondata
 import leginon.calibrationclient
-import tiltcorrelator
-import tiltseries
+from . import tiltcorrelator
+from . import tiltseries
 import traceback
 import pyscope.simccdcamera2 #.SimCCDCamera as simcam
 from leginon.tomography.collection import Collection
@@ -22,7 +22,7 @@ class TrackingError(Exception):
 class TrackingImgError(Exception):
 	pass
 
-from prediction import PredictionError
+from leginon.tomography.prediction import PredictionError
 
 class Collection2(Collection):
 	
@@ -132,7 +132,7 @@ class Collection2(Collection):
 			self.logger.info('Adjust target for the other tilt group...')
 			try:
 				self.emtarget, status = self.node.adjusttarget(self.preset['name'], self.target, self.emtarget)
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('Failed to adjust target: %s.' % e)
 				self.finalize()
 				raise
@@ -152,7 +152,7 @@ class Collection2(Collection):
 		self.logger.info('Removing tilt backlash...')
 		try:
 			self.node.removeStageAlphaBacklash(tilts, sequence, self.preset['name'], self.target, self.emtarget)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Failed to remove backlash: %s.' % e)
 			self.finalize()
 			raise
@@ -311,7 +311,7 @@ class Collection2(Collection):
 			"""
 			try:
 				self.node.setPosition('image shift', predicted_position)
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('Calibration error: %s' % e) 
 				self.finalize()
 				raise Fail
@@ -375,7 +375,7 @@ class Collection2(Collection):
 				try:
 					tilt_series_image_data = self.tilt_series.saveImage(image_data)
 					break
-				except Exception, e:
+				except Exception as e:
 					self.logger.warning('Retrying save image: %s.' % (e,))
 					raise
 				for tick in range(60):
@@ -394,7 +394,7 @@ class Collection2(Collection):
 				try:
 					correlation_image = self.correlator[seq[0]].correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=False, taper=0)
 					break
-				except Exception, e:
+				except Exception as e:
 					self.logger.warning('Retrying correlate image: %s.' % (e,))
 				for tick in range(15):
 					self.checkAbort()
@@ -503,7 +503,7 @@ class Collection2(Collection):
 		position = self.node.getPixelPosition('image shift')
 		try:
 			self.node.setPosition('image shift', position)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Calibration error: %s' % e) 
 			self.finalize()
 			raise Fail	
@@ -764,7 +764,7 @@ class Collection2(Collection):
 	def sendImageShift(position):
 		try:
 			self.node.setPosition('image shift', position)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Calibration error: %s' % e) 
 			self.finalize()
 			raise Fail

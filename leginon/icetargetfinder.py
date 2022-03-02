@@ -563,7 +563,7 @@ class IceTargetFinder(targetfinder.TargetFinder):
 			autofailed = False
 			try:
 				self.everything()
-			except Exception, e:
+			except Exception as e:
 				self.logger.error('auto target finder failed: %s' % (e,))
 				autofailed = True
 
