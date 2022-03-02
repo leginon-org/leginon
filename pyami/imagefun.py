@@ -236,10 +236,10 @@ if reclim < 20000:
 	sys.setrecursionlimit(20000)
 
 class Blob(object):
-	def __init__(self, image, mask, n, center, mean, stddev, moment, maxpos):
+	def __init__(self, image, mask, n, center, mean, stddev, moment, maxpos, label_index=1):
 		self.image = image
 		self.mask = mask
-		self.stats = {"center":center, "n":n, "mean":mean, "stddev":stddev, "size":0, "moment":moment, "maximum_position":maxpos}
+		self.stats = {"center":center, "n":n, "mean":mean, "stddev":stddev, "size":0, "moment":moment, "maximum_position":maxpos, "label_index":label_index}
 
 def highest_peaks(blobs, n):
 	"""
@@ -307,10 +307,15 @@ def near_center(shape, blobs, n):
 			newblobs.append(blob)
 	return newblobs
 
+
 ## using scipy.ndimage to find blobs
-labelstruct = numpy.ones((3,3))
-def scipyblobs(im,mask):
+def scipylabels(mask):
+	labelstruct = numpy.ones((3,3))
 	labels,n = scipy.ndimage.label(mask, labelstruct)
+	return labels, n
+
+def scipyblobs(im,mask):
+	labels,n = scipylabels(mask)
 	## too bad ndimage module is inconsistent with what is returned from
 	## the following functions.  Sometiems a list, sometimes a single value...
 	if n==0:
@@ -338,7 +343,7 @@ def scipyblobs(im,mask):
 
 	blobs = []
 	for i in range(n):
-		blobs.append({'center':centers[i], 'n':sizes[i], 'mean':means[i],'stddev':stds[i],'moment':moments[i], 'maximum_position':maxpos[i]})
+		blobs.append({'center':centers[i], 'n':sizes[i], 'mean':means[i],'stddev':stds[i],'moment':moments[i], 'maximum_position':maxpos[i], 'label_index':i})
 	return blobs
 
 def moment_of_inertia(input, labels, index = None):
@@ -397,11 +402,20 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 
 	blobs = scipyblobs(image,tmpmask)
 	fakeblobs = []
+	isinf = 0
+	isnan = 0
 	toobig = 0
 	toosmall = 0
 	toooblong = 0
 	for blob in blobs:
-		fakeblob = Blob(image, mask, blob['n'], blob['center'], blob['mean'], blob['stddev'], blob['moment'], blob['maximum_position'])
+		fakeblob = Blob(image, mask, blob['n'], blob['center'], blob['mean'], blob['stddev'], blob['moment'], blob['maximum_position'], blob['label_index'])
+		# scipy.ndimage.center_of_mass may return inf or nan which we don't want.
+		if math.isinf(blob['center'][0]) or math.isinf(blob['center'][1]):
+			isinf += 1
+			continue
+		if math.isnan(blob['center'][0]) or math.isnan(blob['center'][1]):
+			isnan += 1
+			continue
 		if blob['n'] >= maxblobsize:
 			toobig += 1
 			continue
@@ -414,8 +428,8 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 		fakeblobs.append(fakeblob)
 
 	if summary is True:
-		sys.stderr.write("BLOB summary: %d total / %d too big / %d too small / %d too oblong\n"
-			%(len(fakeblobs),toobig,toosmall,toooblong,))
+		sys.stderr.write("BLOB summary: %d total / %d invalid number / %d too big / %d too small / %d too oblong\n"
+			%(len(fakeblobs),isinf+isnan, toobig,toosmall,toooblong,))
 
 	## limit to maxblobs
 	if (maxblobs is not None) and (len(blobs) > maxblobs):
@@ -429,6 +443,18 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 		blobs = fakeblobs
 
 	return blobs
+
+def hasPointsInLabel(labels, n, points_of_interest):
+	'''
+	Return a list of boolean.
+	Value is True if any of pointis_of_interest is in the labeled area.
+	Input is a list of points in (row,col)
+	'''
+	p_labels = []
+	for p in points_of_interest:
+		# row, col
+		p_labels.append(labels[p[0],p[1]])
+	return list(map((lambda x: x+1 in p_labels), range(n)))
 
 def mark_image(image, coord, value, size=15):
 	'''
@@ -544,6 +570,38 @@ def bin3f(a, factor):
 	cutfft = numpy.fft.fftshift(cutfft)
 	binned = old_div(ffteng.itransform(cutfft),float(factor**3))
 	return binned
+
+def shrink_factor(shape):
+	'''
+	Return the binning to keep correlation efficient.
+	'''
+	max_dim = max(shape)
+	for b in (1,2,4,8):
+		if max_dim // b <= 1440: # based on k3 dimension
+			break
+	return b
+
+def shrink_offset(oldshape):
+	'''
+	Return the offset for shrinking to keep correlation efficient.
+	'''
+	b = shrink_factor(oldshape)
+	if b > 1:
+		newshape = (b*(oldshape[0]//b), b*(oldshape[1]//b))
+		offset = ((oldshape[0] - newshape[0]) // 2, (oldshape[1] - newshape[1]) // 2)
+	else:
+		offset = (0,0)
+	return offset
+
+def shrink(image):
+	oldshape = image.shape
+	offset = (0,0)
+	b = shrink_factor(oldshape)
+	if b > 1:
+		newshape = (b*(oldshape[0]//b), b*(oldshape[1]//b))
+		offset = shrink_offset(oldshape)
+		image = image[offset[0]:offset[0]+newshape[0], offset[0]:offset[1]+newshape[1]]
+	return bin(image, b)
 
 def crop_at(im, center, shape, mode='wrap', cval=None):
 	'''

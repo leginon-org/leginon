@@ -6,9 +6,10 @@
   This allows more complex query such those
 	require in, group by etc.
 """
-
+import time
 from sinedon import dbconfig
 from sinedon import sqldb
+import _mysql_exceptions
 
 connections = {}
 

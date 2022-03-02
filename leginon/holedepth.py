@@ -380,11 +380,5 @@ class HoleDepth(holefinder.HoleFinder):
 			self.userpause.clear()
 			self.userpause.wait()
 			self.panel.targetsSubmitted()
-			self.setStatus('processing')
-
-		self.logger.info('Publishing targets...')
-		### publish targets from goodholesimage
-		self.publishTargets(imdata, 'focus', targetlist)
-		self.publishTargets(imdata, 'acquisition', targetlist)
 		self.setStatus('idle')
 

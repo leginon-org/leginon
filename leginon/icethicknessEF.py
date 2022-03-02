@@ -60,6 +60,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		'process_obj_thickness': False,
 		'obj mean free path': 300.0, #nm
 		'vacuum intensity': -1.0, #counts 
+		'binning': 1,  # binning for image, will throw uncorrected warning if not match exposure binning, but can significantly speed up with no effect on result
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation, **kwargs)
@@ -87,9 +88,9 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		if self.settings['process'] and not modulus:
 			exp_preset = imagedata['preset']
 			acquirestr = 'Itot'
-			noslitimagedata=  self._acquireSpecialImage(exp_preset, acquirestr, self.settings['exposure time'], False, self.settings['slit width'])
+			noslitimagedata=  self._acquireSpecialImage(exp_preset, acquirestr, self.settings['exposure time'], False, self.settings['slit width'], self.settings['binning'])
 			acquirestr = 'Izlp'
-			zlpimagedata =  self._acquireSpecialImage(exp_preset, acquirestr, self.settings['exposure time'], True, self.settings['slit width'])
+			zlpimagedata =  self._acquireSpecialImage(exp_preset, acquirestr, self.settings['exposure time'], True, self.settings['slit width'], self.settings['binning'])
 
 			try: 
 				imagearray_tot = noslitimagedata['image']
@@ -136,7 +137,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 			
 			objth.insert()
 
-	def _acquireSpecialImage(self, preset, acquirestr, exp_time, filtered, slit_width):
+	def _acquireSpecialImage(self, preset, acquirestr, exp_time, filtered, slit_width, binning):
 		# acquire an image by only changing camera params, not microscope. 
 						#leginon/leginondata.py: ('energy filtered', bool),
 						#leginon/leginondata.py: ('energy filter', bool),
@@ -155,6 +156,8 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		was_slit_width = float(camdata0['energy filter width']) 
 		was_filtered = bool(camdata0['energy filter']) 
 		was_time = float(camdata0['exposure time'])
+		was_binning = camdata0['binning']
+#		print (was_binning)
 		## deactivate frame saving and align frame flags
 		camdata0['save frames'] = False
 		camdata0['align frames'] = False
@@ -164,6 +167,9 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		camdata1['energy filter'] = filtered
 		camdata1['energy filter width'] = slit_width
 		camdata1['exposure time'] = exp_time
+		for key in camdata1['binning']:
+			camdata1['binning'][key] = int(binning)
+#		print camdata1['binning']
 
 		try:
 			self.instrument.setCCDCamera(camdata1['ccdcamera']['name'])  #select the right camera!!!!
@@ -188,6 +194,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 			camdata0['energy filter'] = was_filtered
 			camdata0['energy filter width'] = was_slit_width
 			camdata0['exposure time'] = was_time
+			camdata0['binning'] = was_binning
 			self.instrument.setData(camdata0)
 		except:
 			estr = 'Return to orginial camera state failed: %s'
@@ -212,9 +219,9 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		'''
 		Check that exposure will wait for this node to finish
 		'''
-		if self.last_acq_node:
-			settingsclassname = self.last_acq_node['class string']+'SettingsData'
-			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.last_acq_node['alias'])
+		if type(self.last_acq_node) == type({}) and self.last_acq_node['is_direct_bound'] == True:
+			settingsclassname = self.last_acq_node['node']['class string']+'SettingsData'
+			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.last_acq_node['node']['alias'])
 			if not results:
 				# default acquisition settings waiting is False. However, admin default
 				# should be o.k.
@@ -222,8 +229,8 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 			else:
 				last_acq_wait = results[0]['wait for process']
 			if settings['process'] and not last_acq_wait:
-				return [('error','"%s" node "wait for process" setting must be True when ice thickness measurements are taken' % (self.last_acq_node['alias'],))]
+				return [('error','"%s" node "wait for process" setting must be True when EF ice thickness measurements are taken' % (self.last_acq_node['node']['alias'],))]
 			if not (settings['process'] or settings['process_obj_thickness'])  and last_acq_wait:
-				return [('error','"%s" node "wait for process" setting must be False when ice thickness measurements are not taken' % (self.last_acq_node['alias'],))]
+				return [('error','"%s" node "wait for process" setting must be False when ice thickness measurements are not taken' % (self.last_acq_node['node']['alias'],))]
 		return []
 

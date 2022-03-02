@@ -15,6 +15,7 @@ class HitachiSimu(object):
 
 	def setDataTypes(self):
 		self.data_types = {
+			"Beam": [int,],
 			"Coil BH": ['hexdec','hexdec'],
 			"Coil BT": ['hexdec','hexdec'],
 			"Coil ISF": ['hexdec','hexdec'],
@@ -27,7 +28,9 @@ class HitachiSimu(object):
 			"Column Magnification": [int,],
 			"Column Mode": ['hexdec','hexdec'],
 			"COND_APT Position": [int,int],
+			"EmissionCurrent": [float,],
 			"EvacValve": [int,],
+			"EvacGauge": [float,],
 			"HighVoltage": [float,],
 			"Lens C1": ['hexdec',],
 			"Lens C2": ['hexdec',],
@@ -48,6 +51,7 @@ class HitachiSimu(object):
 	def setDataValues(self):
 		half = int('3FFC00',16)/2
 		self.data_values = {
+			"Beam": [int,],
 			"Coil BH": [hex(half),hex(half)],
 			"Coil BT": [hex(half),hex(half)],
 			"Coil ISF": [hex(half),hex(half)],
@@ -57,11 +61,13 @@ class HitachiSimu(object):
 			"Coil OS": [hex(half),hex(half)],
 			"Coil IS": [hex(half),hex(half)],
 			"Column": ['BrightnessFree',],
-			"Column Magnification": [5000,],
-			"Column Mode": [hex(0),hex(0)], #???
+			"Column Magnification": [120000,],
+			"Column Mode": [hex(15),hex(2)], #???
 			"COND_APT Position": [0,0],
+			"EmissionCurrent": [0.1,],
+			"EvacGauge": [0.1,],
 			"EvacValve": [0,],
-			"HighVoltage": [120.0,],
+			"HighVoltage": [100.0,],
 			"Lens C1": [hex(0),],
 			"Lens C2": [hex(0),],
 			"Lens C3": [hex(0),],

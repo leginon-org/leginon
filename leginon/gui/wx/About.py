@@ -10,7 +10,10 @@ import leginon.version
 import sys
 import wx
 import numpy
-import _mysql
+try:
+	import pymysql
+except:
+	pass
 from PIL import Image
 
 class Dialog(leginon.gui.wx.Dialog.Dialog):
@@ -72,10 +75,10 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, v)
 		sz.Add(label, (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		label = wx.StaticText(self, -1, 'mysql-python:')
+		label = wx.StaticText(self, -1, 'python-mysql:')
 		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		try:
-			v = _mysql.__version__
+			v = pymysql.__version__
 		except:
 			v = 'Unknown'
 		label = wx.StaticText(self, -1, v)

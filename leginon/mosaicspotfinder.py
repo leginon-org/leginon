@@ -79,7 +79,7 @@ class MosaicSpotFinder(mosaictargetfinder.MosaicClickTargetFinder):
 			return False
 		return True
 
-	def getTargetDataList(self, typename):
+	def publishNewTargetsOfType(self, typename):
 		'''
 		create self.displayedtargetdata which is a dictionary
 		with (column,row) target position as keys, and targetdata

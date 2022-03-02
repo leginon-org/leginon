@@ -672,6 +672,7 @@ function newfile(view){
 	nlink = (eval(view+"dd_bt_st")) ? nddlink: nmaplink
 	ninfolink = "imgreport.php?id="+jsimgId+"&preset="+selpreset
 	ndeqlink = "javascript:popUpW('removequeue.php?id="+jsimgId+"&preset="+selpreset+"')"
+	nsortlink = "javascript:popUpSortW('sorttargets.php?id="+jsimgId+"')"
 	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft+cdwdformat+sb
 	nexportlink = "getfilenames.php?sessionId="+jsSessionId+"&pre="+selpreset
 
@@ -688,6 +689,8 @@ function newfile(view){
 		infolink.href = ninfolink
 	if (deqlink = document.getElementById("deq"+view+"_bthref"))
 		deqlink.href = ndeqlink
+	if (sortlink = document.getElementById("sort"+view+"_bthref"))
+		sortlink.href = nsortlink
 	if (downloadlink = document.getElementById("download"+view+"_bthref"))
 		downloadlink.href = ndownloadlink
 	if (exportlink = document.getElementById("export"+view))
@@ -1087,6 +1090,10 @@ function popUpMap(URL) {
 
 function popUpW(URL) {
 	window.open(URL, "deq", "left=0,top=0,height=512,width=300,toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,alwaysRaised=yes")
+}
+
+function popUpSortW(URL) {
+	window.open(URL, "sort", "left=0,top=0,height=512,width=400,toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,alwaysRaised=yes")
 }
 
 

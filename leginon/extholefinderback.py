@@ -15,7 +15,6 @@ import scipy.ndimage
 import math
 from pyami import imagefun, peakfinder, convolver, correlator, mrc, arraystats
 from leginon import ice
-from leginon import multihole
 
 hole_template_files = {}
 hole_templates = {}

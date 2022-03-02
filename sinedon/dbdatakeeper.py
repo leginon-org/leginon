@@ -13,7 +13,7 @@ pymysql.install_as_MySQLdb()
 from sinedon import sqldict
 import threading
 import logging
-import MySQLdb.constants.CR
+import pymysql.err
 from sinedon import dbconfig
 
 columns_created = {}
@@ -35,10 +35,17 @@ class DBDataKeeper(object):
 		self.logger = logger
 		try:
 			self.dbd = sqldict.SQLDict(**kwargs)
-		except MySQLdb.OperationalError as e:
+		except pymysql.err.OperationalError as e:
 			raise DatabaseError(e.args[-1])
 		#self.mysqldb = self.dbd.db
 		self.lock = threading.RLock()
+
+	def getErrorNumber(self, e):
+			errno = e.args[0]
+			## some version of mysqlpython parses the exception differently
+			if not isinstance(errno, int):
+				errno = errno.args[0]
+			return errno
 
 	def connect_kwargs(self):
 		return self.dbd.connect_kwargs()
@@ -82,7 +89,7 @@ class DBDataKeeper(object):
 	def _reconnect(self):
 		try:
 			self.dbd = sqldict.SQLDict()
-		except MySQLdb.OperationalError as e:
+		except pymysql.err.OperationalError as e:
 			raise DatabaseError(e.args[-1])
 
 	def query(self, idata, results=None, readimages=False, timelimit=None):
@@ -112,8 +119,9 @@ class DBDataKeeper(object):
 		self.dbd.ping()
 		try:
 			result  = self.dbd.multipleQueries(queryinfo, readimages=readimages)
-		except MySQLdb.OperationalError as e:
-			if e.args[0] == MySQLdb.constants.CR.SERVER_LOST:
+		except pymysql.err.OperationalError as e:
+			errno = self.getErrorNumber(e)
+			if errno in (2006,):
 				raise Reconnect(e.args[-1])
 			raise QueryError(e.args[-1])
 
@@ -287,8 +295,8 @@ class DBDataKeeper(object):
 		self.dbd.ping()
 		try:
 			return self.recursiveInsert(newdata, force=force)
-		except MySQLdb.OperationalError as e:
-			if e.args[0] == MySQLdb.constants.CR.SERVER_LOST:
+		except pymysql.err.OperationalError as e:
+			if int(e.args[0]) in (2006, ): # server_gone
 				raise Reconnect(e.args[-1])
 			raise InsertError(e.args[-1])
 

@@ -29,8 +29,10 @@ class TEMController(node.Node):
 	panelclass = leginon.gui.wx.TEMController.Panel
 	settingsclass = leginondata.TEMControllerSettingsData
 	defaultsettings = {
+		'retract obj ap on grid changing':False,
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs
+	eventinputs.append(event.LoadAutoLoaderGridEvent)
 	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs \
 									+ [event.ManagerPauseEvent, event.ManagerContinueEvent,
 										]
@@ -39,6 +41,7 @@ class TEMController(node.Node):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.instrument = instrument.Proxy(self.objectservice, self.session,
 																				self.panel)
+		self.addEventInput(event.LoadAutoLoaderGridEvent, self.handleLoadAutoLoaderGrid)
 		self.presetsclient = presets.PresetsClient(self)
 		self.loaded_grid_slot = None
 		self.grid_slot_numbers = []
@@ -80,6 +83,18 @@ class TEMController(node.Node):
 		if not self.remote or not self.remote_toolbar.remote_server_active:
 			return
 		self._activateClickTools()
+
+	def handleLoadAutoLoaderGrid(self,evt):
+		# Hope instrument is loaded by now.
+		self.grid_slot_numbers = self.researchLoadableGridSlots()
+		grid_slot_name = evt['slot name']
+		t0 = time.time()
+		is_successful = self.loadGrid(grid_slot_name)
+		if is_successful:
+			self.confirmEvent(evt)
+		else:
+			# Will need restart to clear confirm event.
+			self.logger.error('Failer auto loading.  Please restart.')
 
 	def _toScope(self,name, stagedict):
 		try:
@@ -247,7 +262,9 @@ class TEMController(node.Node):
 		'''
 		try:
 			total_grids = self.instrument.tem.getGridLoaderNumberOfSlots()
-			return list(map((lambda x:x+1),list(range(total_grids))))
+			slot_number_list = list(map((lambda x:x+1),range(total_grids)))
+			slot_number_list.reverse()
+			return slot_number_list
 		except Exception as e:
 			if hasattr(e,'args') and len(e.args) > 0:
 				self.logger.warning(e.args[0])
@@ -311,6 +328,15 @@ class TEMController(node.Node):
 		if not self.instrument.tem.hasGridLoader():
 			self.logger.error('TEM has no auto grid loader')
 			return
+		self.setStatus('processing')
+		is_success = self._unloadGrid()
+		self.setStatus('idle')
+		return is_success
+
+	def _unloadGrid(self):
+		'''
+		Internal function to load a grid to the first empty slot.
+		'''
 		# Must have empty slot in range
 		empty_slot_name = self.findFirstEmptySlotName()
 		if empty_slot_name is None:
@@ -331,6 +357,7 @@ class TEMController(node.Node):
 			self.loaded_grid_slot = None
 		self.logger.info('Done unLoading grid from column')
 		self.panel.setTEMParamDone()
+		return is_success
 
 	def loadGrid(self, slot_name):
 		'''
@@ -339,6 +366,38 @@ class TEMController(node.Node):
 		if slot_name not in self.grid_slot_names:
 			self.logger.error('Selected slot is not valid for this project')
 			return
+		self.setStatus('processing')
+		is_success = self._loadGrid(slot_name)
+		self.setStatus('idle')
+		return is_success
+
+	def _retractObjectiveAperture(self):
+		'''
+		Retract objective aperture and return the old state.
+		This is used before grid exchange and in-pair with
+		reinsertObjectiveAperture.
+		'''
+		old_state = self._getApertureStateDisplayByName('objective')
+		old_state='unknown'
+		if old_state != 'unknown':
+			self.selectAperture('objective', 'open')
+		else:
+			self.logger.error('Aperture not retracted during grid exchange due to unknown state')
+		return old_state
+
+	def _reinsertObjectiveAperture(self, old_state):
+		'''
+		Insert the old objective aperture selection.
+		This is used after grid exchange and in-pair with
+		retractObjectiveAperture.
+		'''
+		if old_state != 'unknown':
+			self.selectAperture('objective', old_state)
+
+	def _loadGrid(self, slot_name):
+		'''
+		Internal function to load a grid by slot name string.
+		'''
 		try:
 			slot_number = int(slot_name)
 		except:
@@ -372,9 +431,15 @@ class TEMController(node.Node):
 			self.logger.warning('Invalid grid slot state. Can not load.')
 			self.panel.setTEMParamDone()
 			return False
-		return self._loadGrid(slot_number)
+		# Finished all validation. We are now sure that we need to load.
+		if self.settings['retract obj ap on grid changing']:
+			old_selection = self._retractObjectiveAperture()
+		is_success = self.__loadGrid(slot_number)
+		if self.settings['retract obj ap on grid changing'] and old_selection != 'unknown':
+			self._reinsertObjectiveAperture(old_selection)
+		return is_success
 
-	def _loadGrid(self, slot_number):
+	def __loadGrid(self, slot_number):
 		'''
 		Load grid by slot number.  All validation must already be handled.
 		'''
@@ -435,21 +500,25 @@ class TEMController(node.Node):
 		names = self.getApertureMechanisms()
 		name_states = {}
 		for name in names:
-			try:
-				state = self.instrument.tem.getApertureSelection(name)
-			except ValueError as e:
-				self.logger.warning(e)
-				state = 'unknown'
-			except RuntimeError as e:
-				self.logger.error(e)
-				state = 'unknown'
-			try:
-				if state is None or state=='' or state not in self.instrument.tem.getApertureSelections(name):
-					state = 'unknown'
-			except:
-					state = 'unknown'
+			state = self._getApertureStateDisplayByName(name)
 			name_states[name] = state
 		return name_states
+
+	def _getApertureStateDisplayByName(self, name):
+		try:
+			state = self.instrument.tem.getApertureSelection(name)
+		except ValueError as e:
+			self.logger.warning(e)
+			state = 'unknown'
+		except RuntimeError as e:
+			self.logger.error(e)
+			state = 'unknown'
+		try:
+			if state is None or state=='' or state not in self.instrument.tem.getApertureSelections(name):
+				state = 'unknown'
+		except:
+			state = 'unknown'
+		return state
 
 	def uiPause(self):
 		'''

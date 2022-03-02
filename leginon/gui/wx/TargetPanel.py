@@ -293,7 +293,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 		'''
 		Draw a circle without filling.
 		'''
-		radius = int(radius)
+		radius = max([1,int(radius)])
 		p1 = (row,col-radius)
 		p2 = (row,col-radius)
 		for r in range(-radius,radius+1):
@@ -750,7 +750,7 @@ if __name__ == '__main__':
 	import sys
 	import numpy
 	from pyami import mrc 
-	
+
 	try:
 		filename = sys.argv[1]
 	except IndexError:

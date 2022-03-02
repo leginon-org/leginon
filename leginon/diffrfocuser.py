@@ -113,6 +113,8 @@ class DiffrFocuser(singlefocuser.SingleFocuser):
 		q.insert()
 
 	def getTiltMovieFilename(self, emtarget):
+		if emtarget['target']['image'] is None:
+			raise RuntimeError('This node should not be run from simulation')
 		parent_id = emtarget['target']['image'].dbid
 		target_number = emtarget['target']['number']
 		filename = '%d_%d.bin' % (parent_id, target_number)

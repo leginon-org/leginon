@@ -481,10 +481,19 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 	def addSettings(self):
 		sz = wx.GridBagSizer(5, 10)
+		pos = self.createRetractObjApOnGridChangingCheckBox(sz, (0,0))
+		sz.Add(wx.StaticLine(self,-1),pos,(1,2), wx.EXPAND|wx.TOP|wx.BOTTOM)
 		but = wx.Button(self, -1, 'Reconnect Remote')
-		sz.Add(but, (0, 0), (1, 1), wx.ALIGN_RIGHT)
+		sz.Add(but, (pos[0]+1,pos[1]), (1, 2), wx.ALIGN_LEFT)
 		self.Bind(wx.EVT_BUTTON, self.onReconnect, but)
 		return sz
+
+	def createRetractObjApOnGridChangingCheckBox(self, sz, start_position):
+		self.widgets['retract obj ap on grid changing'] = wx.CheckBox(self, -1,
+			'Retract objective aperture during grid exchange')
+		# sz is changed in-place
+		sz.Add(self.widgets['retract obj ap on grid changing'], (start_position[0],0), (1,2))
+		return (1,0)
 
 	def onReconnect(self, evt):
 		self.node.uiClickReconnectRemote()

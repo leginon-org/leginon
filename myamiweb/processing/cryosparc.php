@@ -221,7 +221,7 @@ function display($id) {
 	                
 	            var oReq = new XMLHttpRequest();    
 	            
-	            oReq.open("GET", "../proxy.php?csurl=http://'.CRYOSPARC.':39000/download_result_file/'.$job[0][projectId].'/'.$job[0][jobId].'.volume.map", true);
+	            oReq.open("GET", "../proxy.php?csurl=http://'.$job[0][IP].':39000/download_result_file/'.$job[0][projectId].'/'.$job[0][jobId].'.volume.map", true);
 	            oReq.responseType = "arraybuffer";            
 	            oReq.onload = function(oEvent) {
 	              var blob = new Blob([oReq.response],  { type: "application/octet-binary"} );
@@ -237,15 +237,15 @@ function display($id) {
 	
 	    </script>
 	    <div id="viewport" style="width:500px; height:300px;"></div>';
-	    echo "<p style='text-align:center'><a href='http://".$job[0][IP].":39000/download_result_file/".$job[0][projectId]."/".$job[0][jobId].".volume.map'>Download Map</a></p>";
-	    echo "</td><td><img src='http://".$job[0][IP].":39000/file/".$fcs->imgfiles[0]->fileid."'>";
+	    echo "<p style='text-align:center'><a href='../proxy.php?csurl=http://".$job[0][IP].":39000/download_result_file/".$job[0][projectId]."/".$job[0][jobId].".volume.map'>Download Map</a></p>";
+	    echo "</td><td><img src='../proxy.php?csurl=http://".$job[0][IP].":39000/file/".$fcs->imgfiles[0]->fileid."'>";
 	    echo "</td></tr></table>";
 	    $return_array = array("fsc.png"=>"http://".$job[0][IP].":39000/file/".$fcs->imgfiles[0]->fileid);
     }
     else{
     	echo "<table border=1 CLASS=tableborder CELLPADDING=15>
 	        <tr><td>";
-    	echo "<img width='100%' src='http://".$job[0][IP].":39000/file/".$classes->imgfiles[0]->fileid."'>";
+    	echo "<img width='100%' src='../proxy.php?csurl=http://".$job[0][IP].":39000/file/".$classes->imgfiles[0]->fileid."'>";
     	echo "</td></tr></table>";
     	$return_array = array("2dclasses.png"=>"http://".$job[0][IP].":39000/file/".$classes->imgfiles[0]->fileid);
     	global $class_info;

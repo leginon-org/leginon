@@ -64,32 +64,46 @@ class Corrector(imagewatcher.ImageWatcher):
 		if ccdcameraname is None or camsettings is None:
 			return None
 		cameradata = leginondata.CameraEMData()
+		if ccdcameraname == 'None':
+			# when real camera is not ready, the settings name reverts to
+			# to the string 'None'
+			return None
 		try:
 			cameradata['ccdcamera'] = self.instrument.getCCDCameraData(ccdcameraname)
-		except:
+			cameradata.update(camsettings)
+			cdata = self.instrument.getData(leginondata.CameraEMData)
+			cameradata['gain index'] = cdata['gain index']
+			scopedata = self.instrument.getData(leginondata.ScopeEMData)
+			imdata = self.retrieveCorrectorImageData(reftype, scopedata, cameradata, channel)
+			# returns None if there is no reference found
+			return imdata
+		except Exception as e:
+			self.logger.error(e)
 			return None
-		cameradata.update(camsettings)
-		cdata = self.instrument.getData(leginondata.CameraEMData)
-		cameradata['gain index'] = cdata['gain index']
-		scopedata = self.instrument.getData(leginondata.ScopeEMData)
-		imdata = self.retrieveCorrectorImageData(reftype, scopedata, cameradata, channel)
-		return imdata
 
 	def retrieveCorrectorPlanFromSettings(self):
 		ccdcameraname = self.settings['instruments']['ccdcamera']
 		camsettings = self.settings['camera settings']
 		if ccdcameraname is None or camsettings is None:
+			# settings never set
 			return None
-		cameradata = leginondata.CameraEMData()
+		if ccdcameraname == 'None':
+			# when real camera is not ready, the settings name reverts to
+			# to the string 'None'
+			return None
 		try:
+			cameradata = leginondata.CameraEMData()
 			cameradata['ccdcamera'] = self.instrument.getCCDCameraData(ccdcameraname)
-		except:
-			return None
-		cameradata.update(camsettings)
-		cdata = self.instrument.getData(leginondata.CameraEMData)
-		cameradata['gain index'] = cdata['gain index']
-		plan, plandata = self.retrieveCorrectorPlan(cameradata)
-		return plan
+			cameradata.update(camsettings)
+			cdata = self.instrument.getData(leginondata.CameraEMData)
+			cameradata['gain index'] = cdata['gain index']
+			plan, plandata = self.retrieveCorrectorPlan(cameradata)
+			return plan
+		except Exception as e:
+			# catch error but not raise so it can be initialized.
+			# most cases there is no plan anyway.
+			self.logger.error(e)
+			return formatCorrectorPlan(None)
 
 	def changeScreenPosition(self,state):
 		try:
@@ -178,10 +192,20 @@ class Corrector(imagewatcher.ImageWatcher):
 
 		if reftype != 'dark-subtracted':
 			imdata = self.retrieveCorrectorImageFromSettings(reftype, channel)
+			if imdata == None:
+				self.logger.error('Camera settings not valid.  Please check')
+				self.beep()
+				self.setStatus('idle')
+				return
 			imarray = imdata['image']
 		else:
 			brightdata = self.retrieveCorrectorImageFromSettings('bright', channel)
 			darkdata = self.retrieveCorrectorImageFromSettings('dark', channel)
+			if brightdata == None or darkdata == None:
+				self.logger.error('Camera settings not valid.  Please check')
+				self.beep()
+				self.setStatus('idle')
+				return
 			imarray = brightdata['image'] - darkdata['image']
 		self.maskimg = numpy.zeros(imarray.shape)
 		self.displayImage(imarray)
@@ -267,7 +291,7 @@ class Corrector(imagewatcher.ImageWatcher):
 				return True
 			else:
 				try:
-					calc_on_dark = self.instrument.ccdcamera.getCalulateNormOnDark()
+					calc_on_dark = self.instrument.ccdcamera.getCalculateNormOnDark()
 					return calc_on_dark
 				except:
 					self.logger.warning('Camera host pyscope update recommended')
@@ -394,10 +418,15 @@ class Corrector(imagewatcher.ImageWatcher):
 		self.storeCorrectorImageData(normdata, 'norm', channel)
 
 	def onAddPoints(self):
+		'''
+		Analyze the image and add points to the plan.
+		'''
 		imageshown = self.currentimage
 		plan = self.retrieveCorrectorPlanFromSettings()
-		if plan is not None:
-			self.fixBadPixels(imageshown, plan)
+		if plan is None:
+			self.logger.error('no valid correction plan, aborted. Check camera settings.')
+			return
+		self.fixBadPixels(imageshown, plan)
 		imagemean = imageshown.mean()
 		badpixelcount = len(plan['pixels'])
 		newbadpixels = plan['pixels']
@@ -445,6 +474,9 @@ class Corrector(imagewatcher.ImageWatcher):
 			return
 		badpixels = polygon.indicesInsidePolygon(self.maskimg.shape,vertices)
 		plan = self.retrieveCorrectorPlanFromSettings()
+		if plan is None:
+			self.logger.error('no valid correction plan, aborted. Check camera settings.')
+			return
 		oldbadpixels = plan['pixels']
 		fullbadpixelset = set()
 		fullbadpixelset = fullbadpixelset.union(oldbadpixels)

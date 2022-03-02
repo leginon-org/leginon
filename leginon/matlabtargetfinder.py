@@ -108,11 +108,7 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 		pymat.put(self.handle, 'image', [])
 		pymat.put(self.handle, 'focus', [])
 		pymat.put(self.handle, 'acquisition', [])
-
-		self.publishTargets(imdata, 'focus', targetlist)
-		self.publishTargets(imdata, 'acquisition', targetlist)
-
-		self.logger.info('Targets have been submitted')
+		self.setStatus('idle')
 
 	def targetTestImage(self):
 		usercheck = self.settings['user check']

@@ -162,11 +162,4 @@ class FileTargetFinder(targetfinder.ClickTargetFinder):
 			if not self.processPreviewTargets(imdata, targetlist):
 				break
 		self.panel.targetsSubmitted()
-		self.setStatus('processing')
-		self.logger.info('Publishing targets...')
-		for i in self.targetnames:
-			if i == 'reference':
-				self.publishReferenceTarget(imdata)
-			else:
-				self.publishTargets(imdata, i, targetlist)
 		self.setStatus('idle')

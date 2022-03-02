@@ -51,9 +51,18 @@ def printError(text,raised=True):
 	"""
 	standardized error message
 	"""
-	# release appionLoop image locks so that it can be reprocessed
+	# TODO: need a better way to release appionLoop image locks
+	# from only this appion command so that it can be reprocessed
+	'''
 	for lockfile in glob.glob('_lock*'):
+		# This would unlock images other parallel run is processing.
+		# Bad idea.
+		printWarning('removing %s' % lockfile)
+		try:
 			os.remove(lockfile)
+		except OSError as e:
+			printWarning('unlock %s failed: %s.' % (lockfile, e))
+	'''
 	if writeOut is True:
 		try:
 			f = open(outFile, "a")

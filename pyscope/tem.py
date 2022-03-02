@@ -46,6 +46,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'BeamShift', 'type': 'property'},
 		{'name': 'BeamTilt', 'type': 'property'},
 		{'name': 'BeamstopPosition', 'type': 'property'},
+		{'name': 'ColdFegFlashing', 'type': 'property'},
 		{'name': 'ColumnValvePosition', 'type': 'property'},
 		{'name': 'CorrectedStagePosition', 'type': 'property'},
 		{'name': 'DarkFieldMode', 'type': 'property'},
@@ -186,6 +187,13 @@ class TEM(baseinstrument.BaseInstrument):
 
 	def getBeamBlankedDuringCameraExchange(self):
 		return True
+
+	def getColdFegFlashing(self):
+		return 'off'
+
+	def setColdFegFlashing(self,state):
+		# 'on' starts flashing, 'off' stops flashing
+		pass
 
 	def getRefrigerantLevel(self,id=0):
 		'''
@@ -365,5 +373,6 @@ class TEM(baseinstrument.BaseInstrument):
 								'y':(-0.001,0.001),
 								'z':(-0.0004,0.0004),
 								'a':(math.radians(-70),math.radians(70)),
+								'b':(math.radians(-90),math.radians(90)), # no limit
 		}
 		return limits

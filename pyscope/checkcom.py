@@ -11,6 +11,7 @@ items = [
 		('Tecnai Low Dose Kit', ('LDServer.LdSrv',)),
 		#('Gatan CCD Camera', ('TecnaiCCD.GatanCamera.2',)),
 		('TIA', ('ESVision.Application',)),
+		('TVIPS EmMenu', ('EMMENU4.EMMENUApplication.1',)),
 
 ]
 

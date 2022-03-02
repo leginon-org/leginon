@@ -198,6 +198,10 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			# move first if needed
 			# TODO: figure out how drift monitor behaves in RCT if doing this
 			self.conditionalMoveAndPreset(presetname, emtarget)
+			# apply pause time as if it is an image acquisition
+			presetdata = self.presetsclient.getPresetFromDB(presetname)
+			self.preAcquire(presetdata, emtarget, 0, reduce_pause=False)
+			self.is_firstimage = False
 			driftresult = self.checkDrift(presetname, emtarget, driftthresh, btilt1dict)
 			if setting['recheck drift'] and driftresult['status'] == 'drifted':
 				# See Issue #3990
@@ -218,6 +222,10 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		## send the autofocus preset to the scope
 		## drift check may have done this already
 		self.conditionalMoveAndPreset(presetname,emtarget)
+		# apply pause time as if it is an image acquisition
+		presetdata = self.presetsclient.getPresetFromDB(presetname)
+		self.preAcquire(presetdata, emtarget, 0, reduce_pause=False)
+		self.is_firstimage = False
 
 		## set to eucentric focus if doing Z correction
 		## WARNING:  this assumes that user will not change
@@ -286,6 +294,13 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 
 		#####################################################################
 
+	def _handleDefocusCorrectionFailure(self):
+		self.logger.info('Setting eucentric focus...')
+		self.eucentricFocusToScope()
+		self.logger.info('Eucentric focus set')
+		self.eucset = True
+		self.resetDefocus()
+
 	def validateMeasurementResult(self, setting, resultdata):
 		fitmin = resultdata['min']
 		focustype = setting['correction type']
@@ -306,11 +321,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			logmessage = 'Focus measurement failed: fit = %s (fit limit = %s)' % (fitmin, fitlimit)
 			self.logger.warning(logmessage)
 			if focustype == 'Defocus':
-				self.logger.info('Setting eucentric focus...')
-				self.eucentricFocusToScope()
-				self.logger.info('Eucentric focus set')
-				self.eucset = True
-				self.resetDefocus()
+				self._handleDefocusCorrectionFailure()
 			else:
 				self.eucset = False
 		### check change limit
@@ -321,6 +332,10 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			validdefocus = False
 			logmessage = 'Focus measurement failed: change = %s (change limit = %s to %s)' % (defoc, delta_min, delta_max)
 			self.logger.warning(logmessage)
+			if focustype == 'Defocus':
+				self._handleDefocusCorrectionFailure()
+			else:
+				self.eucset = False
 		else:
 			self.logger.info(logmessage)
 
@@ -348,6 +363,8 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 	def correctDefocusStig(self, setting, resultdata):
 		correction_type = setting['correction type']
 		fitmin = resultdata['min']
+		stigx = resultdata['stigx']
+		stigy = resultdata['stigy']
 		if resultdata['stig correction']:
 			self.correctStig(stiglens, stigx, stigy)
 			resultstring = resultstring + ', corrected stig by x,y=%.4f,%.4f' % (stigx, stigy)
@@ -380,6 +397,10 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		## send the autofocus preset to the scope
 		## drift check or melting may have done this already
 		self.conditionalMoveAndPreset(presetname,emtarget)
+		# apply pause time as if it is an image acquisition
+		presetdata = self.presetsclient.getPresetFromDB(presetname)
+		self.preAcquire(presetdata, emtarget, 0, reduce_pause=False)
+		self.is_firstimage = False
 		target = emtarget['target']
 		orig_a = self.instrument.tem.StagePosition['a']
 		self.logger.info('Current stage alpha is %.1f degrees' % (math.degrees(orig_a),))

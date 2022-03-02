@@ -87,9 +87,9 @@ class Tecnai(tem.TEM):
 		self.tem_constants = comtypes.client.Constants(self.tecnai)
 		try:
 			self.tom = comtypes.client.CreateObject('TEM.Instrument.1')
-		except com_module.COMError as xxx_todo_changeme:
-			(hr, msg, exc, arg) = xxx_todo_changeme.args
-			print('unable to initialize TOM Moniker interface, %s' % msg)
+		except com_module.COMError:
+			self.tom = None
+		except WindowsError:
 			self.tom = None
 
 		try:
@@ -174,6 +174,9 @@ class Tecnai(tem.TEM):
 			value=self.getFeiConfig('phase plate','autoit_exe_path')
 		return value
 
+	def getAutoitGetBeamstopExePath(self):
+		return self.getFeiConfig('beamstop','autoit_get_exe_path')
+
 	def getAutoitBeamstopInExePath(self):
 		return self.getFeiConfig('beamstop','autoit_in_exe_path')
 
@@ -192,7 +195,7 @@ class Tecnai(tem.TEM):
 	def getStageLimits(self):
 		limits = self.getFeiConfig('stage','stage_limits')
 		if limits is None:
-			limits = {}
+			limits = super(Tecnai, self).getStageLimits()
 		return limits
 
 	def getXYZStageBacklashDelta(self):
@@ -220,7 +223,34 @@ class Tecnai(tem.TEM):
 	def getCorrectedStagePosition(self):
 		return self.correctedstage
 
+	def checkStageLimits(self, position):
+		self._checkStageXYZLimits(position)
+		self._checkStageABLimits(position)
+
+	def _checkStageXYZLimits(self, position):
+		limit = self.getStageLimits()
+		intersection = set(position.keys()).intersection(('x','y','z'))
+		for axis in intersection:
+			self._validateStageAxisLimit(position[axis], axis)
+
+	def _checkStageABLimits(self, position):
+		limit = self.getStageLimits()
+		intersection = set(position.keys()).intersection(('a','b'))
+		for axis in intersection:
+			self._validateStageAxisLimit(position[axis], axis)
+
+	def _validateStageAxisLimit(self, p, axis):
+		limit = self.getStageLimits()
+		if not (limit[axis][0] < p and limit[axis][1] > p):
+			if axis in ('x','y','z'):
+				um_p = p*1e6
+				raise ValueError('Requested %s axis position %.1f um out of range.' % (axis,um_p))
+			else:
+				deg_p = math.degrees(p)
+				raise ValueError('Requested %s axis position %.1f degrees out of range.' % (axis,deg_p))
+
 	def checkStagePosition(self, position):
+		self.checkStageLimits(position)
 		current = self.getStagePosition()
 		bigenough = {}
 		minimum_stage = self.getMinimumStageMovement()
@@ -245,12 +275,14 @@ class Tecnai(tem.TEM):
 			for axis in ('x','y','z'):
 				if axis in value:
 					prevalue[axis] = value[axis] - delta
+					self._validateStageAxisLimit(prevalue[axis],axis)
 		# relax xy
 		relax = self.getXYStageRelaxDistance()
 		if abs(relax) > 1e-9:
 			for axis in ('x','y'):
 				if axis in value:
 					prevalue2[axis] = value[axis] + relax
+					self._validateStageAxisLimit(prevalue2[axis],axis)
 		# preposition a
 		if self.corrected_alpha_stage:
 			# alpha tilt backlash only in one direction
@@ -258,6 +290,7 @@ class Tecnai(tem.TEM):
 			if 'a' in list(value.keys()):
 					axis = 'a'
 					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
+					self._validateStageAxisLimit(prevalue[axis],axis)
 		if prevalue:
 			# set all axes in value
 			for axis in list(value.keys()):
@@ -958,8 +991,8 @@ class Tecnai(tem.TEM):
 			value['x'] = float(self.tecnai.Stage.Position.X)
 			value['y'] = float(self.tecnai.Stage.Position.Y)
 			value['z'] = float(self.tecnai.Stage.Position.Z)
-		except:
-			pass
+		except Exception as e:
+			raise RuntimeError('get stage error: %s' % (e,))
 		try:
 			value['a'] = float(self.tecnai.Stage.Position.A)
 		except:
@@ -1022,6 +1055,7 @@ class Tecnai(tem.TEM):
 		
 		pos = self.tecnai.Stage.Position
 
+		short_pos_str = ''
 		axes = 0
 		stage_limits = self.getStageLimits()
 		for key, value in list(position.items()):
@@ -1030,12 +1064,13 @@ class Tecnai(tem.TEM):
 				nidaq.setBeta(deg)
 				continue
 			if key in list(stage_limits.keys()) and (value < stage_limits[key][0] or value > stage_limits[key][1]):
-				raise ValueError('position %s beyond stage limit at %.2e' % (key, value))
+				raise ValueError('low-level position %s beyond stage limit at %.2e' % (key, value))
 			setattr(pos, key.upper(), value)
 			axes |= getattr(self.tem_constants, 'axis' + key.upper())
 
 			setattr(pos, key.upper(), value)
 			axes |= getattr(self.tem_constants, 'axis' + key.upper())
+			short_pos_str +='%s %d' % (key,int(value*1e6))
 
 		if axes == 0:
 			return
@@ -1056,14 +1091,14 @@ class Tecnai(tem.TEM):
 				# but Issue 4794 got 'need more than 3 values to unpack' error'.
 				# simplify the error handling so that it can be raised with messge.
 				msg = e.text
-				raise ValueError('Stage.Goto failed: %s' % (msg,))
+				raise RuntimeError('Stage.Goto %s failed: %s' % (short_pos_str,msg))
 			except:
-				raise ValueError('COMError in _setStagePosition: %s' % (e,))
+				raise RuntimeError('COMError in _set %s: %s' % (short_pos_str,e))
 		except:
 			if self.getDebugStage():
 				print(datetime.datetime.now())
 				print('Other error in going to %s' % (position,))
-			raise RuntimeError('_setStagePosition Unknown error')
+			raise RuntimeError('_set %s Unknown error' % (short_pos_str,))
 		self.waitForStageReady('after setting %s' % (position,))
 
 	def _setTomStagePosition(self, position, relative = 'absolute'):
@@ -1103,9 +1138,9 @@ class Tecnai(tem.TEM):
 					# but Issue 4794 got 'need more than 3 values to unpack' error'.
 					# simplify the error handling so that it can be raised with messge.
 					msg = e.text
-					raise ValueError('Stage.Goto failed: %s' % (msg,))
+					raise RuntimeError('Stage.Goto failed: %s' % (msg,))
 				except:
-					raise ValueError('COMError in _setStagePosition: %s' % (e,))
+					raise RuntimeError('COMError in _setStagePosition: %s' % (e,))
 			except:
 				if self.getDebugStage():
 					print(datetime.datetime.now())
@@ -1114,6 +1149,7 @@ class Tecnai(tem.TEM):
 		self.waitForStageReady('after setting %s' % (position,))
 
 	def setDirectStagePosition(self,value):
+		self.checkStageLimits(value)
 		self._setStagePosition(value)
 
 	def getLowDoseStates(self):
@@ -1899,11 +1935,25 @@ class Tecnai(tem.TEM):
 		'''
 		return self.setApertureSelection(mechanism_name, aperture_name)
 
+	def getBeamstopPosition(self):
+		methodname = 'getAutoitGetBeamstopExePath'
+		exepath = getattr(self,methodname)()
+		if exepath and os.path.isfile(exepath):
+			subprocess.call(exepath)
+			error = self._checkAutoItError()
+			result = self._getAutoItResult()
+			if result:
+				return result
+		# all counted as invalid state
+		return 'unknown'
+
 	def setBeamstopPosition(self, value):
 		"""
 		Possible values: ('in','out','halfway')
 		Tecnically tecnai has no software control on this.
 		"""
+		if value == self.getBeamstopPosition():
+			return
 		valuecap = value[0].upper()+value[1:]
 		methodname = 'getAutoitBeamstop%sExePath' % (valuecap)
 		exepath = getattr(self,methodname)()

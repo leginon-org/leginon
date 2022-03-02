@@ -12,6 +12,7 @@ import leginon.leginondata
 import leginon.projectdata
 import leginon.leginonconfig
 import leginon.project
+import leginon.ddinfo
 
 projectdata = leginon.project.ProjectData()
 
@@ -64,7 +65,6 @@ class Reservation(object):
 		## make new reservation
 		sessionres = leginon.leginondata.SessionReservationData(name=name, reserved=True)
 		sessionres.insert(force=True)
-	
 		return True
 
 	def cancel(self):
@@ -84,26 +84,59 @@ def getSessionPrefix():
 		raise ValueError('session prefix needs to be in "name" section and item "prefix"')
 	return prefix
 
+def makeSuffix(t):
+	'''
+	make alphabet suffix at base 26
+	'''
+	alphabet = 'abcdefghijklmnopqrstuvwxyz'
+	remainders = []
+	base = len(alphabet)
+	remainders.append(t%base)
+	while t // base > 0:
+		t = (t // base) - 1
+		remainders.append(t%base)
+	suffix = ''
+	remainders.reverse()
+	for r in remainders:
+		suffix += alphabet[r]
+	return suffix
+
 def suggestName():
+	'''
+	Suggest a session name.
+	'''
 	prefix = getSessionPrefix()
-	for suffix in 'abcdefghijklmnopqrstuvwxyz':
-		maybe_name = prefix + time.strftime('%y%b%d'+suffix).lower()
+	date_str = time.strftime('%y%b%d').lower()
+	prefix_date_str = prefix + date_str
+	#
+	alphabet = 'abcdefghijklmnopqrstuvwxyz'
+	trial = 0
+	session_name = None
+	# keep trying until a non-reserved or saved session name is found.
+	while not session_name:
+		suffix = makeSuffix(trial)
+		maybe_name = prefix + date_str + suffix
 		try:
 			makeReservation(maybe_name)
-		except ReservationFailed:
+		except ReservationFailed as e:
+			trial += 1
 			continue
 		else:
 			session_name = maybe_name
 			break
 	return session_name
 
-def createSession(user, name, description, directory):
+def createSession(user, name, description, directory, holder=None):
 	imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
+	framedirectory = leginon.ddinfo.getRawFrameSessionPathFromSessionPath(imagedirectory)
 	initializer = {
 		'name': name,
 		'comment': description,
 		'user': user,
 		'image path': imagedirectory,
+		'frame path': framedirectory,
+		'hidden': False,
+		'holder': holder,
 	}
 	return leginon.leginondata.SessionData(initializer=initializer)
 
@@ -146,3 +179,14 @@ def getSessions(userdata, n=None):
 		if n is None:
 			break
 	return names, sessiondatalist
+
+def hasGridHook():
+	try:
+		server_configs = moduleconfig.getConfigured('gridhook.cfg', 'leginon')
+	except IOError as e:
+		return False
+	return True
+
+def createGridHook(session_dict, project_dict):
+	from leginon import gridserver
+	return gridserver.GridHookServer(session_dict,project_dict)

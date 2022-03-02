@@ -53,7 +53,6 @@ import datetime
 import re
 import six
 from sinedon import sqldict
-import pymysql as MySQLdb
 from sinedon import newdict
 import pickle
 from sinedon import dbconfig
@@ -485,9 +484,12 @@ class AlterTable(SQLExpression):
 		if 'Null' in self.column.keys() and self.column['Null']=='YES':
 			str_null = "NULL"
 		default = ""
-		if 'Default' in self.column.keys() and self.column['Default'] is not None:
-			default = "DEFAULT '%s'" % (self.column['Default'])
-
+		if self.column.has_key('Default') and self.column['Default'] is not None:
+			# current_timestamp should not be quoted
+			if self.column['Default'] == 'current_timestamp()':
+				default = "DEFAULT %s" % (self.column['Default'])
+			else:
+				default = "DEFAULT '%s'" % (self.column['Default'])
 		if not self.column:
 			return ''
 		elif self.operation=='DROP':

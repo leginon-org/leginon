@@ -133,7 +133,7 @@ class EmMenuF416(ccdcamera.CCDCamera):
 		return self.vp1.SelectedCamera
 
 	def _getConfigObject(self, name):
-		print((self.instr))
+		print(self.instr)
 		for c in range(self.instr.CameraConfigurations.Count):
 			if self.instr.CameraConfigurations.Item(c+1).Name == name:
 				return self.instr.CameraConfigurations.Item(c+1)
@@ -411,5 +411,11 @@ class EmMenuF416(ccdcamera.CCDCamera):
 class EmMenuXF416E_GPU(EmMenuF416):
 	name = 'TVIPS-XF416'
 	camera_name = 'TietzXF416E_GPU'
+	intensity_averaged = False
+	binning_limits = [1,2,4]
+
+class EmMenuF216(EmMenuF416):
+	name = 'TVIPS-F216'
+	camera_name = 'TietzF216'
 	intensity_averaged = False
 	binning_limits = [1,2,4]

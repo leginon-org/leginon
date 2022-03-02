@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+'''
+Config file selection and parameter parsing.
+It choose one file in the three possible locations according
+to pyami.fileutil.
+There are three levels of dictionary structure.
+'''
 import copy
 import sys
 import configparser
@@ -25,6 +31,14 @@ class ModuleConfigParser(object):
 		return copy.deepcopy(d[len(keys)])
 
 	def formatValue(self,name, key):
+		'''
+		Return value in python format.
+		Integer
+		Float
+		Boolean : True/False
+		List: comma-seperated values
+		String: anything else.
+		'''
 		value = None
 		try:
 			value = int(self.configparser.get(name, key))
@@ -98,6 +112,8 @@ class ModuleConfigParser(object):
 		# read instruments.cfg
 		confdirs = pyami.fileutil.get_config_dirs(package_name=self.package)
 		filenames = [os.path.join(confdir, self.config_filename) for confdir in confdirs]
+		# refs Issue #10221. Use the last filename if exists.
+		filenames.reverse()
 		one_exists = False
 		for filename in filenames:
 			if os.path.exists(filename):
@@ -108,6 +124,10 @@ class ModuleConfigParser(object):
 			raise IOError('please configure at least one of these:  %s' % (filenames,))
 
 	def parse(self):
+		'''
+		Select one of the three possible filepath and parse
+		for parameters.
+		'''
 		configpath = self.getConfigPath()
 		try:
 			self.configfiles = self.configparser.read([configpath,])
@@ -128,11 +148,17 @@ class ModuleConfigParser(object):
 		return self.configured
 
 def getConfigPath(config_file='jeol.cfg', package='pyscope'):
+	'''
+	External call for getting the config path to use.
+	'''
 	app = ModuleConfigParser(config_file, package=package)
 	configpath = app.getConfigPath()
 	return configpath
 
 def getConfigured(config_file='jeol.cfg', package='pyscope'):
+	'''
+	External call for getting the parameter dictionary from config_file.
+	'''
 	app = ModuleConfigParser(config_file, package=package)
 	configured = app.configured
 	if not configured:

@@ -359,8 +359,11 @@ class ImportExport:
 			result = self.db.selectone(q)
 			if not result:
 				return
-		except sqldb.MySQLdb.ProgrammingError as e:
+		except sqldb.pymysql.ProgrammingError as e:
 			return e
+		except Exception:
+			# Not sure how to handle
+			raise
 
 		applicationId = result['DEF_id']
 		name = result['name']

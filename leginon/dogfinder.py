@@ -634,15 +634,4 @@ class DoGFinder(targetfinder.TargetFinder):
 				if not self.processPreviewTargets(imdata, targetlist):
 					break
 			self.panel.targetsSubmitted()
-
-		self.logger.info('Publishing targets...')
-		self.setStatus('processing')
-
-		# set self.last_focused for target publishing
-		self.setLastFocusedTargetList(targetlist)
-		self.publishTargets(imdata, 'focus', targetlist)
-		self.publishTargets(imdata, 'acquisition', targetlist)
-
-		self.logger.info('Targets have been submitted')
 		self.setStatus('idle')
-

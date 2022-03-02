@@ -27,6 +27,9 @@ OVERWRITE_FRAME_ORIENTATION = False
 FRAME_FLIP_TO_OVERWRITE_WITH = True
 # raw frame base directory. Use '\' as path separator
 RAW_FRAME_DIR = D:\frames\
+# optional timestamped frame file prefix. Required only if multiple
+# frame-saving camera is used on the same leginon database.
+FRAME_NAME_PREFIX =
 # return camera call before file is saved
 DO_EARLY_RETURN = False
 # max number of frames to sum when return early

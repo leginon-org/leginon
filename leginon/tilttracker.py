@@ -267,6 +267,8 @@ class TiltTracker(acquisition.Acquisition):
 		emtarget = image0['emtarget']
 		pausetime = self.settings['pause']
 		self.presetsclient.toScope(presetname, emtarget)
+		if self.presetsclient.stage_targeting_failed:
+			return None,None
 		### reset the tilt, just in case user changed it while picking targets
 		self.instrument.tem.StagePosition = {'a': tilt0}
 		if pausetime > 0.1:

@@ -1,0 +1,43 @@
+#########
+# Example of gridhook.cfg for linking leginon with a
+# grid management django system with rest api.
+#########
+[web server]
+url: http://127.0.0.1:8000
+[rest auth]
+user: my_rest_user
+password: my_rest_password
+# include a model name that will make the link url more specific
+# such model needs to have rest api defined for get
+[weblink group]
+model: project
+# a testing url route to see if the django server is up
+[test api router]
+path: api/project/1/
+# leginon session record on the django rest api using
+# session name as the identifier.
+[session api router]
+path: api/leginon_session
+name_field: name
+id_field: leginon_id
+# group_id_field is required if weblink group is specified
+group_id_field: project
+# use grid to session mapping rest api to get the a grid string for display
+[gridmap api router]
+path: api/grid_session
+session_field: leginon
+grid_field: grid
+grid_display_field: grid_str
+
+######
+# Below is an example that project is used as weblink group model
+#####
+[project api router]
+path: api/project
+name_field: some_name
+
+# grid model rest api to get the project the grid belong to.
+[grid api router]
+path: api/grid
+grid_display_field: grid_str
+project_field: grid_project_pk

@@ -384,17 +384,16 @@ if (SAMPLE_TRACK) {
 		$showHidden = False;
 	}
 	
-	$experimentIds = $project->getExperiments($projectId);
+	$experiments = $project->getExperiments($projectId);
 	echo divtitle(count($experimentIds).' Experiments '.$toggleHidden);
 	if ($is_admin)
 		echo '<a alt="upload" target="_blank" class="header" href="'.UPLOAD_URL.'?projectId='.$selectedprojectId.'">upload images to new session</a>';
 
 	$sessions=array();
 	$experiments=array();
-	foreach ($experimentIds as $k=>$exp) {
-		//projectdata.projectexperiments.experimentId is not a referenced index of leginon.SessionData DEF_id, in general, and therefore can not be used for getting sessioninfo. Use name instead)
-		$sessionname = $exp['name'];
-		$info = $leginondata->getSessionInfo($sessionname);
+	foreach ($experiments as $k=>$exp) {
+		$sessionid = $exp['leginonId'];
+		$info = $leginondata->getSessionInfo($sessionid);
 		//print_r($info);
 
 		if (empty($info['SessionId']))

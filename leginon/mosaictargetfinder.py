@@ -17,12 +17,16 @@ import threading
 from leginon import node
 from leginon import targethandler
 from pyami import convolver, imagefun, mrc, ordereddict, affine
+from pyami import groupfun
 import numpy
 import pyami.quietscipy
 import scipy.ndimage as nd
 import leginon.gui.wx.MosaicClickTargetFinder
 import os
 import math
+import random
+import json
+
 from leginon import polygon
 from leginon import raster
 from leginon import presets
@@ -37,12 +41,12 @@ except NameError:
 	set = sets.Set
 
 
+
 class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.ImageHandler):
 	panelclass = leginon.gui.wx.MosaicClickTargetFinder.Panel
 	settingsclass = leginondata.MosaicClickTargetFinderSettingsData
 	defaultsettings = dict(targetfinder.ClickTargetFinder.defaultsettings)
-	defaultsettings.update({
-
+	mosaictarget_defaultsettings = {
 		# unlike other targetfinders, no wait is default
 		'wait for done': False,
 		#'no resubmit': True,
@@ -51,6 +55,15 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		'scale image': True,
 		'scale size': 512,
 		'create on tile change': 'all',
+		'autofinder': False,
+		'target grouping': {
+			'total targets': 10,
+			'classes': 1,
+		},
+		'target multiple':1,
+	}
+	defaultsettings.update(mosaictarget_defaultsettings)
+	auto_square_finder_defaultsettings = {
 		'lpf': {
 			'on': True,
 			'size': 5,
@@ -67,11 +80,16 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			'max mean': 20000,
 			'min stdev': 10,
 			'max stdev': 500,
+			'min filter size': 10,
+			'max filter size': 10000,
 		},
-	})
+	}
+	defaultsettings.update(auto_square_finder_defaultsettings)
 
-	eventoutputs = targetfinder.ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
-	targetnames = ['acquisition','focus','preview','reference','done','Blobs']
+	eventoutputs = targetfinder.ClickTargetFinder.eventoutputs + [
+			event.MosaicDoneEvent]
+	targetnames = ['acquisition','focus','preview','reference','done','Blobs', 'example']
+
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.mosaicselections = {}
 		targetfinder.ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -92,26 +110,37 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		parameter = self.settings['calibration parameter']
 		self.mosaic = mosaic.EMMosaic(self.calclients[parameter])
 		self.oldmosaic = mosaic.EMMosaic(self.calclients[parameter])
+		self.finder_mosaic = mosaic.EMMosaic(self.calclients[parameter])
 		self.mosaicimagelist = None
 		self.oldmosaicimagelist = None
 		self.mosaicimage = None
 		self.mosaicname = None
 		self.mosaicimagescale = None
 		self.mosaicimagedata = None
+		self.finder_mosaicimage = None
+		self.finder_scale_factor = 1
 		self.convolver = convolver.Convolver()
+		self.multihole = multihole.TemplateConvolver()
 		self.currentposition = []
+		self.target_order = []
+		self.sq_prefs = None
 		self.mosaiccreated = threading.Event()
+		self.autofinderlock = threading.Lock()
 		self.presetsclient = presets.PresetsClient(self)
 
 		self.mosaic.setCalibrationClient(self.calclients[parameter])
+		self.finder_mosaic.setCalibrationClient(self.calclients[parameter])
 		self.oldmosaic.setCalibrationClient(self.calclients[parameter])
 		self.oldsession = self.session
 
 		self.existing_targets = {}
+		self.last_xys = [] # last acquisition targets found in autofinder
 		self.clearTiles()
 
 		self.reference_target = None
 		self.setRefreshTool(self.settings['check method']=='remote')
+
+		self.addEventInput(event.SubmitMosaicTargetsEvent, self.handleSubmitMosaicTargets)
 
 		if self.__class__ == MosaicClickTargetFinder:
 			self.start()
@@ -122,16 +151,104 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.logger.debug('%s did not insert done on %d' % (self.name,targetlistdata.dbid))
 		pass
 
+	def handleSubmitMosaicTargets(self, evt):
+		self.notifyTargetReceiver()
+		self.autoSubmitTargets()
+
+	def notifyTargetReceiver(self):
+			'''
+			Notify Manager where the targets are sent to.
+			'''
+			evt = event.MosaicTargetReceiverNotificationEvent()
+			evt['receiver'] = self.next_acq_node['node']['alias']
+			self.outputEvent(evt)
+
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
-		if self.settings['create on tile change'] == 'final':
-			self.logger.debug('create final')
+		if targetlistdoneevent:
+			self.logger.warning('Got real targetlistdone event')
+		else:
+			self.logger.warning('Handle fake targetlistdone event')
+		# wait until addTile thread is finished.
+		while self.autofinderlock.locked():
+			time.sleep(0.5)
+		if self.settings['create on tile change'] in ('final',):
 			self.createMosaicImage()
-			self.logger.debug('done create final')
+		if not self.hasNewImageVersion():
+			self.targetsFromDatabase()
+			# fresh atlas without acquisition targets (done or not) should run autofinder
+			count = sum(map((lambda x: len(self.targetmap[x]['acquisition'])), self.targetmap.keys()))
+			if count == 0 and self.settings['autofinder']:
+				self.logger.debug('auto target finder')
+				self.autoTargetFinder()
 		# trigger activation of submit button in the gui.
 		self.panel.doneTargetList()
+		# TODO: auto submit targets if from auto run.
+		self.notifyAutoDone('atlas')
 
-	def getTargetDataList(self, typename):
+	def autoTargetFinder(self):
+		"""
+		automated target finder.  This includes general finder and then ranker to filter
+		and sample the targets.
+		"""
+		if self.mosaicimage is None:
+			self.logger.error('Must have atlas display to find squares')
+			return
+		self.publishMosaicImage()
+		try:
+			# get blobs at finder scale with stats
+			blobs = self.findSquareBlobs()
+		except ValueError as e:
+			self.logger.error(e)
+			return
+		targets = self.blobStatsTargets(blobs, self.finder_scale_factor)
+		self.logger.info('Number of blobs: %s' % (len(targets),))
+		self.setTargets(targets, 'Blobs')
+		##################################
+		# TODO: This clear targets thread won't complete before
+		# getPanelTargets is called below
+		self.setTargets([], 'acquisition')
+		###################################
+		time.sleep(2)
+		# get ranked and filtered acquisition
+		mosaic_image_shape = self.mosaicimage.shape
+		self.refreshDatabaseDisplayedTargets()
+		xytargets = self.getPanelTargets(mosaic_image_shape)
+		##################################
+		# HACKING: disgard all acquisition targets because the
+		# above threading problem
+		xytargets['acquisition']=[]
+		###################################
+		#
+		xys = self.runBlobRankFilter(blobs, xytargets)
+		message = 'found %s squares' % (len(xys),)
+		self.last_xys = xys
+		## display them
+		# IMPORTANT: Don't put back unprocessed but submitted targets
+		# because they will get duplicated.
+		# It will also cause autoSubmitTargets break its while loop
+		# to break too early
+		self.setTargets(xys, 'acquisition')
+		self.setTargets([], 'example')
+		self.logger.info(message)
+
+	def autoSubmitTargets(self):
+		"""
+		Submit autofinder targets.
+		"""
+		# Target display is in a separate thread and has slight lag.
+		while 1:
+			time.sleep(0.1)
+			try:
+				# Check the display to make sure the targets are displayed as found.
+				target_positions_from_image = self.panel.getTargetPositions('acquisition')
+			except ValueError:
+				pass
+			if len(target_positions_from_image) == len(self.last_xys):
+				break
+		self.submitTargets()
+
+	def publishNewTargetsOfType(self, typename):
 		'''
 		Get positions of the typename targets from atlas, publish the new ones,
 		and then update self.existing_position_targets with the published one added.
@@ -150,10 +267,13 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 				# This is a new position, publish it
 				c,r = coord_tuple
 				targetdata = self.mosaicToTarget(typename, r, c)
+			# Both new and old targetdata get put into displayedtargetdata
 			if coord_tuple not in displayedtargetdata:
 				displayedtargetdata[coord_tuple] = []
+			if targetdata['number'] not in self.target_order:
+				self.target_order.append(targetdata['number'])
 			displayedtargetdata[coord_tuple].append(targetdata)
-		# update self.existing_position_targets,  This is still a bit strange.
+		# update self.existing_position_targets.
 		for coord_tuple in displayedtargetdata:
 			self.existing_position_targets[coord_tuple] = displayedtargetdata[coord_tuple]
 
@@ -176,15 +296,11 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return self.newReferenceTarget(imagedata, delta_row, delta_column)
 
 	def submitTargets(self):
+		"""
+		Overwrite TargetFinder submitTargets.
+		"""
 		self.terminated_remote = False
 		self.userpause.set()
-		try:
-			if self.settings['autofinder']:
-				# trigger onTargetsSubmitted in the gui.
-				self.panel.targetsSubmitted()
-				return
-		except:
-			pass
 
 		if self.targetlist is None:
 			self.targetlist = self.newTargetList()
@@ -215,11 +331,16 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.finishSubmitTarget()
 
 	def finishSubmitTarget(self):
-		# create target list
+		"""
+		The real submit target part. targetlist should be created by now.
+		"""
+		# create a list of targets of each type
 		self.logger.info('Submitting targets...')
-		self.getTargetDataList('acquisition')
-		self.getTargetDataList('focus')
-		self.getTargetDataList('preview')
+		self.target_order = self.getTargetOrder(self.targetlist)
+		self.publishNewTargetsOfType('acquisition')
+		self.publishNewTargetsOfType('focus')
+		self.publishNewTargetsOfType('preview')
+		self.publishTargetOrder(self.targetlist,self.target_order)
 		try:
 			self.publish(self.targetlist, pubevent=True)
 		except node.PublishError as e:
@@ -240,23 +361,37 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.panel.targetsSubmitted()
 
 	def clearTiles(self):
+		self.clearAllTargets()
 		self.tilemap = {}
 		self.imagemap = {}
 		self.targetmap = {}
 		self.mosaic.clear()
+		self.finder_mosaic.clear()
 		self.targetlist = None
 		if self.settings['create on tile change'] in ('all', 'final'):
 			self.clearMosaicImage()
 
 	def addTile(self, imagedata):
+		'''
+		Add tile into mosaic and various mappings. Lock autofinder
+		in handleTargetListDone so that this is done before that event
+		is handled.
+		'''
 		self.logger.debug('addTile image: %s' % (imagedata.dbid,))
 		imid = imagedata.dbid
 		if imid in self.tilemap:
 			self.logger.info('Image already in mosaic')
 			return
+		self._addTile(imagedata)
 
+	def _addTile(self, imagedata):
+		'''
+		Add tile into mosaic and various mappings.
+		'''
 		self.logger.info('Adding image to mosaic')
+		imid = imagedata.dbid
 		newtile = self.mosaic.addTile(imagedata)
+		self.finder_mosaic.addTile(imagedata)
 		self.tilemap[imid] = newtile
 		self.imagemap[imid] = imagedata
 		self.targetlist, onetargetmap = self._makeTargetMap(imagedata, self.targetlist)
@@ -353,7 +488,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.currentposition = [vcoord]
 
 	def refreshDatabaseDisplayedTargets(self):
-		self.logger.info('Getting targets from database...')
+		self.logger.info('Refreshing targets from database and ignoring unsaved ones...')
 		if not self.hasNewImageVersion():
 			self.targetsFromDatabase()
 		else:
@@ -441,6 +576,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.updateCurrentPosition()
 		self.setTargets(self.currentposition, 'position')
 		self.setTargets([], 'preview')
+		self.setTargets([], 'example')
 		n = 0
 		for type in ('acquisition','focus'):
 			n += len(targets[type])
@@ -494,12 +630,14 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.setMosaicNameFromImageList(imagelist)
 		self.logger.debug('published MosaicTileData')
 		self.currentimagedata = imagedata
+		self.autofinderlock.acquire()
 		self.addTile(imagedata)
 
 		if self.settings['create on tile change'] == 'all':
 			self.logger.debug('create all')
 			self.createMosaicImage()
 			self.logger.debug('done create all')
+		self.autofinderlock.release()
 
 		self.logger.debug('Image data processed')
 
@@ -529,6 +667,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.publish(mosaicimagedata, database=True)
 		self.mosaicimagedata = mosaicimagedata
 		self.logger.info('Mosaic saved')
+		self.writeMosaicInfo(self.mosaic, self.mosaicimagedata)
 
 	def _researchMosaicTileData(self,imagelist=None, session=None):
 		if session is None:
@@ -605,6 +744,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		if not ntotal:
 			self.logger.info('no tiles in selected list')
 			return
+		self.autofinderlock.acquire()
 		for i, tile in enumerate(tiles):
 			# create an instance model to query
 			self.logger.info('Finding image %i of %i' % (i + 1, ntotal))
@@ -616,6 +756,11 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.logger.info('Mosaic loaded (%i of %i images loaded successfully)' % (i+1, ntotal))
 		if self.settings['create on tile change'] in ('all', 'final'):
 			self.createMosaicImage()
+		# use currentimagedata to set TargetImageVectors for target multiple
+		self.setTargetImageVectors(self.currentimagedata)
+		self.autofinderlock.release()
+		# hacking
+		self.handleTargetListDone(None)
 
 	def targetToMosaic(self, tile, targetdata):
 		scalepos = self._targetToMosaic(tile, targetdata, self.mosaic)
@@ -626,6 +771,11 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		drow = targetdata['delta row']
 		dcol = targetdata['delta column']
 		tilepos = drow+shape[0]/2, dcol+shape[1]/2
+		return self._tile2MosaicPosition(tile, tilepos, mosaic_instance)
+
+	def _tile2MosaicPosition(self, tile, tilepos, mosaic_instance):
+		# tilepos is written as (r, c)
+		# scalepos is written as (r, c)
 		mospos = mosaic_instance.tile2mosaic(tile, tilepos)
 		scaledpos = mosaic_instance.scaled(mospos)
 		return scaledpos
@@ -646,13 +796,13 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return self._mosaicToTargetOnMosaic(row, col, self.mosaic)
 
 	def _mosaicToTargetOnMosaic(self, row, col, mosaic_instance):
-		self.logger.debug('mosaicToTarget r %s, c %s' % (row, col))
+		self.logger.info('mosaicToTarget r %s, c %s' % (row, col))
 		unscaled = mosaic_instance.unscaled((row,col))
 		tile, pos = mosaic_instance.mosaic2tile(unscaled)
 		shape = tile.image.shape
 		drow,dcol = pos[0]-shape[0]/2.0, pos[1]-shape[1]/2.0
 		imagedata = tile.imagedata
-		self.logger.debug('target tile image: %s, pos: %s' % (imagedata.dbid,pos))
+		self.logger.info('target tile image: %s, pos: %s' % (imagedata.dbid,pos))
 		return imagedata, drow, dcol
 
 	def mosaicToTarget(self, typename, row, col, **kwargs):
@@ -684,7 +834,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			maxdim = None
 		self.mosaicimagescale = maxdim
 		try:
-			self.mosaicimage = self.mosaic.getMosaicImage(maxdim)
+			self.createFinderMosaicImage()
 		except Exception as e:
 			self.logger.error('Failed Creating mosaic image: %s' % e)
 		self.mosaicimagedata = None
@@ -692,8 +842,6 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.logger.info('Displaying mosaic image')
 		self.setImage(self.mosaicimage, 'Image')
 		self.logger.info('image displayed, displaying targets...')
-		## imagedata would be full mosaic image
-		#self.clickimage.imagedata = None
 		self.displayTargets()
 		self.beep()
 
@@ -871,8 +1019,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		prefs['threshold'] = self.settings['threshold']
 		prefs['border'] = self.settings['blobs']['border']
 		prefs['maxblobs'] = self.settings['blobs']['max']
-		prefs['minblobsize'] = self.settings['blobs']['min size']
-		prefs['maxblobsize'] = self.settings['blobs']['max size']
+		prefs['minblobsize'] = self.settings['blobs']['min filter size']
+		prefs['maxblobsize'] = self.settings['blobs']['max filter size']
 		prefs['mean-min'] = self.settings['blobs']['min mean']
 		prefs['mean-max'] = self.settings['blobs']['max mean']
 		prefs['std-min'] = self.settings['blobs']['min stdev']
@@ -880,70 +1028,296 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.publish(prefs, database=True)
 		return prefs
 
+	def getExampleAndPanelTargets(self, xytargets):
+		existing_targets = xytargets['done']
+		existing_targets.extend(xytargets['acquisition'])
+		return xytargets['example'], existing_targets
 
-	def findSquares(self):
-		if self.mosaicimagedata is None:
-			message = 'You must save the current mosaic image before finding squares on it.'
-			self.logger.error(message)
-			return
-		original_image = self.mosaicimagedata['image']
+	def createFinderMosaicImage(self):
+		'''
+		Downsize mosaicimage so that it does not use too much
+		resource in blob finding.
+		'''
+		old_maxdim = self.mosaicimagescale
+		if old_maxdim is None:
+			old_maxdim = max(self.mosaicimage.shape)
+		# no bigger than 2048
+		scale_factor = int(math.ceil(old_maxdim / 2048.0))
+		new_maxdim = old_maxdim // scale_factor
+		self.logger.info('Scale down mosaic to finder max dimension of %d' % new_maxdim)
+		self.finder_mosaicimage = self.finder_mosaic.getMosaicImage(new_maxdim)
+		self.finder_scale_factor = scale_factor
+		# This is not exact but appears good enough.
+		self.logger.debug('Scaling  Target mapping from shape %s to %s with setting of max size of %d' % (self.finder_mosaicimage.shape, self.mosaicimage.shape, self.settings['scale size']))
 
+	def writeMosaicInfo(self, m_inst, mosaicimagedata):
+		scale = m_inst.scale
+		shape = mosaicimagedata.imageshape()
+		pos=m_inst.positionByCalibration({'x':0.0,'y':0.0})
+		pixel_pos = (pos[0]+shape[0]/(2*scale), pos[1]+shape[1]/(2*scale))
+		center_tile = m_inst.getNearestTile(pixel_pos[0], pixel_pos[1])
+		info = {}
+		label = mosaicimagedata['list']['targets']['label']
+		json_name = '%s_' % (self.session['name'])
+		if label:
+			json_name += label
+		json_path = os.path.join(self.session['image path'],json_name+'.json')
+		info['session image path'] = self.session['image path']
+		info['mosaic_label'] = mosaicimagedata['list']['targets']['label']
+		info['full_mosaic_shape'] = {'rows':m_inst.mosaicshape[0],'cols':m_inst.mosaicshape[1]}
+		info['mosaic_image'] = {}
+		info['mosaic_image']['filename'] = mosaicimagedata['filename']+'.mrc'
+		info['mosaic_image']['scale'] = scale
+		info['center_tile_filename'] = center_tile.imagedata['filename']+'.mrc'
+		info['tiles'] = []
+		for t in m_inst.tiles:
+			tinfo = {}
+			tinfo['filename'] = t.imagedata['filename']+'.mrc'
+			tinfo['corner_pos'] = {'row': t.corner_pos[0],'col':t.corner_pos[1]}
+			info['tiles'].append(tinfo)
+		info_str = json.dumps(info)
+		f = open(json_path,'w')
+		f.write(info_str)
+		f.close()
+
+	def findSquareBlobs(self):
 		message = 'finding squares'
 		self.logger.info(message)
 
 		sigma = self.settings['lpf']['sigma']
 		kernel = convolver.gaussian_kernel(sigma)
 		self.convolver.setKernel(kernel)
-		image = self.convolver.convolve(image=original_image)
-		self.setImage(image, 'Filtered')
+		finder_image = self.convolver.convolve(image=self.finder_mosaicimage)
+		self.setImage(finder_image, 'Filtered')
 
 		## threshold grid bars
 		squares_thresh = self.settings['threshold']
-		image = imagefun.threshold(image, squares_thresh)
-		self.setImage(image, 'Thresholded')
+		self.logger.info('squares threshhold is %.1f' % float(squares_thresh))
+		finder_image = imagefun.threshold(finder_image, squares_thresh)
+		self.setImage(finder_image, 'Thresholded')
+		# mask for label
+		self.finder_mask = finder_image
 
 		## find blobs
-		blobs = imagefun.find_blobs(original_image, image,
+		blobs = imagefun.find_blobs(self.finder_mosaicimage, self.finder_mask,
 																self.settings['blobs']['border'],
 																self.settings['blobs']['max'],
 																self.settings['blobs']['max size'],
-																self.settings['blobs']['min size'])
+																self.settings['blobs']['min size'],
+																method='biggest',
+																)
+		return blobs
 
-		# show blob target and stats
-		targets = self.blobStatsTargets(blobs)
-		self.logger.info('Number of blobs: %s' % (len(targets),))
-		self.setTargets(targets, 'Blobs')
+	def setFilterSettings(self, example_blobs):
+		if example_blobs:
+			# use the stats of the example blobs
+			means = map((lambda x: x.stats['mean']), example_blobs)
+			mean_min = min(means)
+			mean_max = max(means)
+			stddevs = map((lambda x: x.stats['stddev']), example_blobs)
+			std_min = min(stddevs)
+			std_max = max(stddevs)
+			sizes = map((lambda x: x.stats['n']), example_blobs)
+			size_min = min(sizes)
+			size_max = max(sizes)
+			self.settings['blobs']['min mean'] = mean_min
+			self.settings['blobs']['max mean'] = mean_max
+			self.settings['blobs']['min stdev'] = std_min
+			self.settings['blobs']['max stdev'] = std_max
+			self.settings['blobs']['min filter size'] = size_min
+			self.settings['blobs']['max filter size'] = size_max
+			self.setSettings(self.settings, False)
+			return
 
-		## use stats to find good ones
+	def runBlobRankFilter(self, finder_blobs, xytargets):
+		'''
+		Filter the blobs at finder image scale to get final targets.
+		xytargets are dictionary of existing targets on the mosaic image.
+		When examples are present in this dictionary, the blob contain
+		them are placed at the top rank.
+		'''
+		if not finder_blobs:
+			return []
+		example_xys=xytargets['example']
+		# These xy tuples are those in the database on self.mosaic scale.
+		database_xys=self.existing_position_targets.keys()
+		##############
+		# blobs and filtering are done at smaller dimension to save memory usage.
+		##############
+		s = self.finder_scale_factor
+		finder_example_points = map((lambda x: (x[1]//s,x[0]//s)),example_xys)
+		finder_database_points = map((lambda x: (x[1]//s,x[0]//s)),database_xys)
+		priority_blobs, other_blobs, finder_display_array = self._runBlobRankFilter(finder_blobs, finder_example_points, finder_database_points)
+		if finder_display_array is not None:
+			self.setImage(finder_display_array, 'Thresholded')
+		# filter out blobs with stats settings.
+		other_blobs = self.filterStats(other_blobs)
+		# sample some non-priority blobs
+		non_priority_total = self.settings['target grouping']['total targets']-len(priority_blobs)
+		other_blobs = self.sampleBlobs(other_blobs, non_priority_total)
+		combined_blobs = priority_blobs+other_blobs
+		################
+		# turn combined blobs into targets at the original mosaic dimension
+		################
+		targets = map((lambda x: self.blobToDisplayTarget(x,self.finder_scale_factor)), combined_blobs)
+		# flat list of multihole convolution at the original mosaic dimension
+		targets = self.multiHoleConvolution(targets)
+		# TODO save SquareStatsData
+		return targets
+
+	def multiHoleConvolution(self, targets):
+		'''
+		Convolute targets using a lattice based on next acquisition
+		targetimagevectors
+		'''
+		target_groups = map((lambda x: self._multihole_list(x)), targets)
+		# return a flat list of targets
+		return [t for tgroup in target_groups for t in tgroup] 
+
+	def _multihole_list(self, original_target):
+		'''
+		Returns a list of convoluted targets
+		'''
+		npoint = self.settings['target multiple']
+		if not npoint:
+			npoint = 1
+		self.multihole.setConfig(npoint, single_scale=1.0)
+		axis_vectors = numpy.array([self.targetimagevectors['y'],self.targetimagevectors['x']])
+		self.multihole.setUnitVector(axis_vectors)
+		lattice_vectors = self.multihole.makeLatticeVectors()
+		targets = numpy.ndarray.tolist(lattice_vectors)
+		# shift based on original_target
+		targets = map((lambda x: (x[0]+original_target[0],x[1]+original_target[1])), targets)
+		# [(row0,col0),(row1,col1),....]
+		return targets
+
+	def _runBlobRankFilter(self, blobs, example_points, panel_points):
+		'''
+		Rank blobs and filter them by some filter.  All
+		input and output are at finder image scale.
+		'''
+		example_blobs = []
+		example_blob_indices = []
+
+		# display_array is at finder shape
+		has_priority, to_avoid, display_array =  self.filterPoints(blobs, example_points, panel_points)
+		# save examples for ranking and filtering
+		for i, b in enumerate(blobs):
+			l = b.stats['label_index']
+			# TODO: for this to work blobs, has_priority must ordered like blobs
+			if has_priority[l]:
+				# blobs that contains example_points
+				example_blobs.append(b)
+				example_blob_indices.append(i)
+		## use example_blobs stats to find good ones
+		self.setFilterSettings(example_blobs)
+		#
+		#
+		blob_sizes = numpy.array(map((lambda x: x.stats['n']),blobs))
+		self.logger.info('Mean blob size is %.1f' % ( blob_sizes.mean(),))
+		example_blob_indices.sort()
+		# move the examples to front of the targetlist
+		for i in example_blob_indices:
+			blobs.insert(0, blobs.pop(i))
+		# filter out blobs to avoid
+		def is_false(b):
+			return not to_avoid[b.stats['label_index']]
+		# set aside example blobs not need to be avoided
+		priority_blobs = filter(is_false, example_blobs)
+		# remove any to_avoid blobs from the rest of the blobs
+		blobs = filter(is_false, blobs[len(priority_blobs):])
+		return priority_blobs, blobs, display_array
+
+	def filterPoints(self, blobs, example_points, panel_points):
+		'''
+		Return boolean for each blob. All input and output are
+		at image scale of the smaller a.k.a. finder scale.
+		has_priority: at least one example_point is in the blob
+		to_avoid: at least one panel_point is in the blob
+		display_array: some image array to display in the gui as
+				Thresholded image.
+		'''
+		return self.filterPointsByLabel(blobs, example_points, panel_points)
+
+	def filterPointsByLabel(self, blobs, example_points, panel_points):
+		'''
+		filter points at finder image scale.
+		'''
+		labels, n = imagefun.scipylabels(self.finder_mask)
+		has_priority = imagefun.hasPointsInLabel(labels, n, example_points)
+		to_avoid = imagefun.hasPointsInLabel(labels, n, panel_points)
+		return has_priority, to_avoid, labels
+
+
+	def blobToDisplayTarget(self, blob, finder_scale):
+			row = blob.stats['center'][0]*finder_scale
+			column = blob.stats['center'][1]*finder_scale
+			return (column, row)
+
+	def filterStats(self, blobs):
+		'''
+		filter based on blob stats
+		'''
+		self.sq_prefs = self.storeSquareFinderPrefs()
 		mean_min = self.settings['blobs']['min mean']
 		mean_max = self.settings['blobs']['max mean']
 		std_min = self.settings['blobs']['min stdev']
 		std_max = self.settings['blobs']['max stdev']
-		targets = []
-		prefs = self.storeSquareFinderPrefs()
-		rows, columns = image.shape
-		if blobs:
-			blob_sizes = numpy.array(list(map((lambda x: x.stats['n']),blobs)))
-			self.logger.info('Mean blob size is %.1f' % ( blob_sizes.mean(),))
+		size_min = self.settings['blobs']['min filter size']
+		size_max = self.settings['blobs']['max filter size']
+		good_blobs = []
 		for blob in blobs:
 			row = blob.stats['center'][0]
 			column = blob.stats['center'][1]
 			mean = blob.stats['mean']
 			std = blob.stats['stddev']
-			stats = leginondata.SquareStatsData(prefs=prefs, row=row, column=column, mean=mean, stdev=std)
-			if (mean_min <= mean <= mean_max) and (std_min <= std <= std_max):
-				stats['good'] = True
-				## create a display target
-				targets.append((column,row))
+			size = blob.stats['n']
+			if (mean_min <= mean <= mean_max) and (std_min <= std <= std_max) and (size_min <= size <= size_max):
+				good_blobs.append(blob)
 			else:
+				stats = leginondata.SquareStatsData(prefs=self.sq_prefs, row=row, column=column, mean=mean, stdev=std, size=size)
 				stats['good'] = False
-			self.publish(stats, database=True)
+				# only publish bad stats
+				self.publish(stats, database=True)
+		return good_blobs
 
-		## display them
-		self.setTargets(targets, 'acquisition')
+	def sampleBlobs(self, blobs, total_targets_need):
+		'''
+		filter based on blob stats
+		'''
+		total_blobs = len(blobs)
+		if total_blobs <= total_targets_need:
+			# Nothing to do
+			return blobs
+		n_class = self.settings['target grouping']['classes']
+		index_groups = self.groupBlobsBySize(blobs, n_class)
+		# get a list at least as long as total_targets_need
+		sampling_order = range(n_class)*int(math.ceil(total_targets_need/float(n_class)))
+		# truncate the list
+		sampling_order = sampling_order[:total_targets_need]
+		samples = []
+		sample_indices =[]
+		for s in sampling_order:
+			# random sample without replacement
+			pick = random.sample(range(len(index_groups[s])),1)[0]
+			index = index_groups[s].pop(pick)
+			samples.append(blobs[index])
+			sample_indices.append(index)
+		return samples
 
-		message = 'found %s squares' % (len(targets),)
-		self.logger.info(message)
+	def groupBlobsBySize(self, blobs, n_class):
+		codes = list(map((lambda x: '%08d@%05d' % (blobs[x].stats['size'],x)), range(len(blobs))))
+		codes.sort()
+		sorted_indices = list(map((lambda x: int(x.split('@')[-1])), codes))
+		if n_class == 1:
+			return [sorted_indices,]
+		total_blobs = len(blobs)
+		range_list = groupfun.calculateIndexRangesInClassEvenDistribution(total_blobs, n_class)
+		blob_index_in_bins = []
+		for c in range(n_class):
+			start, end = range_list[c]
+			blob_index_in_bins.append(sorted_indices[start:end])
+		return blob_index_in_bins
 
 	def checkSettings(self,settings):
 		# always queuing. No need to check "wait for process" conflict

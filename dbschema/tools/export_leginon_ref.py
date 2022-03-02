@@ -15,14 +15,18 @@ class ReferenceJsonMaker(jsonfun.DataJsonMaker):
 			self.close(1)
 
 	def validateInput(self, params):
-		if len(params) != 4:
-			print "Usage export_leginon_ref.py source_database_hostname source_camera_hosthame camera_name"
+		if len(params) < 4:
+			print "Usage export_leginon_ref.py source_database_hostname source_camera_hosthame camera_name <limit_storage_path>"
 			self.close(1)
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:
 			raise ValueError('leginondata in sinedon.cfg not set to %s' % params[1])
 		self.tem = None
 		self.cam = self.getSourceCameraInstrumentData(params[2],params[3])
+		if len(params) > 4:
+			self.storage_path = params[4]
+		else:
+			self.storage_path = None
 
 	def getSourceCameraInstrumentData(self, from_hostname,from_camname):
 		kwargs = {'hostname':from_hostname,'name':from_camname}
@@ -62,13 +66,18 @@ class ReferenceJsonMaker(jsonfun.DataJsonMaker):
 			camq = leginondata.CameraEMData(ccdcamera=self.cam, binning=binning)
 			# get 10 results and see if it is enough to catch some with offset.
 			# if this does not work, will need to determine common camera configurations.
-			results = leginondata.NormImageData(camera=camq).query(results=10)
+			results = leginondata.NormImageData(camera=camq).query(results=20)
+			if not results:
+				continue
 			for r in results:
+				if self.storage_path and self.storage_path not in r['session']['image path']:
+					continue
 				if '%d-%d' % (r['camera']['offset']['x'], r['channel']) not in offset_channels:
 					offset_channels.append('%d-%d' % (r['camera']['offset']['x'],r['channel']))
 					normids.append(r.dbid)
 			print "bin and number of normids", b, normids
 			print 'offset and channel: ', offset_channels
+			print 'limit storage: ', self.storage_path
 			for dbid in normids:
 				normdata = leginondata.NormImageData().direct_query(dbid)
 				try:

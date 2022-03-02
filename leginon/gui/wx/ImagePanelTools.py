@@ -356,6 +356,10 @@ class ImageTool(object):
 		pass
 
 	#--------------------
+	def OnShiftCtrlLeftClick(self, evt):
+		pass
+
+	#--------------------
 	def OnRightClick(self, evt):
 		pass
 

@@ -40,6 +40,9 @@ class Proxy(object):
 		self.objectservice._addDescriptionHandler(add=self.onAddDescription,
 																							remove=self.onRemoveDescription)
 
+	def setSession(self, session):
+		self.session = session
+
 	def onAddDescription(self, nodename, name, description, types):
 		if 'TEM' in types:
 			proxy = self.objectservice.getObjectProxy(nodename, name)
@@ -433,6 +436,7 @@ parametermapping = (
 	('frames name', 'PreviousRawFramesName'),
 	('use frames', 'UseFrames'),
 	('frame time', 'FrameTime'),
+	('request nframes', 'RequestNFrames'),
 	('frame flip', 'FrameFlip'),
 	('frame rotate', 'FrameRotate'),
 	('readout delay', 'ReadoutDelay'),

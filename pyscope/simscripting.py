@@ -56,7 +56,11 @@ class CameraSingleAcquisition(object):
 		if nframes > 0:
 			if not os.path.isdir(self.CameraSettings.PathToImageStorage):
 				raise RuntimeError('Intermediate File Path Not exists.')
-			file_path = os.path.join(self.CameraSettings.PathToImageStorage,self.CameraSettings.SubPathPattern+'.mrc')
+			if self.CameraSettings.EER:
+				movie_format = 'eer'
+			else:
+				movie_format = 'mrc'
+			file_path = os.path.join(self.CameraSettings.PathToImageStorage,self.CameraSettings.SubPathPattern+'.'+movie_format)
 			for i in range(nframes):
 				if i == 0:
 					mrc.write(ar,file_path)
@@ -128,6 +132,7 @@ class CameraSettings(object):
 		self.ElectronCounting = True
 		self.base_time = 0.025
 		self.Capabilities = Capabilities()
+		self.EER = False
 
 	def CalculateNumberOfFrames(self):
 		print('calculate',self.ExposureTime, self.base_time)
@@ -153,6 +158,7 @@ class Connection(object):
 class Capabilities(object):
 	def __init__(self):
 		self.SupportedBinnings = self.makeBinningList()
+		self.SupportsEER = True
 
 	def makeBinningList(self):
 		b_list = ListWithCount()

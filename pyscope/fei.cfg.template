@@ -7,6 +7,9 @@ CAMERA = False
 [version]
 SOFTWARE_TYPE = Titan
 TFS_SOFTWARE_VERSION = 2.15.2
+# This scripting version is not necessarily in sync with software version.
+# Falcon3 and 4 should use version 2
+TEM_ADVANCED_SCRIPTING_VERSION = 2
 [optics]
 # Lens normalization is usually set in TUI but there are cases that
 # they are not desirable, for example on Talos column. This force
@@ -52,6 +55,10 @@ HAS_FALCON_PROTECTOR = True
 FALCON_IMAGE_STORAGE_PATH = z:\TEMScripting\BM-Falcon\
 # Falcon III subpath. Must exists and writable
 FRAME_SUBPATH = leginonframes
+# Falcon EC EER
+SAVE_EER = False
+# Falcon frame filename prefix. Default is empty string
+FRAME_NAME_PREFIX =
 # Falcon protector may be too slow
 EXTRA_PROTECTOR_SLEEP_TIME = 0
 # Location of tui acquire start/stop AutoIt executable
@@ -69,6 +76,7 @@ AUTOIT_PHASE_PLATE_EXE_PATH = C:\Program Files\AutoIt3\NextPhasePlate.exe
 
 [beamstop]
 # Location of beamstop AutoIt executable
+AUTOIT_GET_EXE_PATH =  to_be_added
 AUTOIT_IN_EXE_PATH =  to_be_added
 AUTOIT_OUT_EXE_PATH = to_be_added
 [stage]
@@ -88,5 +96,12 @@ MINIMUM_STAGE_MOVEMENT%Z = 5.0e-8
 MINIMUM_STAGE_MOVEMENT%A = 6.0e-5
 MINIMUM_STAGE_MOVEMENT%B = 6.0e-5
 
+# Stage limit to return with value error
+# XYZ in meters, AB in radians.
+STAGE_LIMITS%X = -9.999e-4, 9.999e-4
+STAGE_LIMITS%Y = -9.999e-4, 9.999e-4
+STAGE_LIMITS%Z = -4.0e-4, 4.00e-4
+STAGE_LIMITS%A = -1.2217, 1.2217
+STAGE_LIMITS%B = -1.58, 1.58
 # Relax distance
 #XY_STAGE_RELAX_DISTANCE = 10.0e-8

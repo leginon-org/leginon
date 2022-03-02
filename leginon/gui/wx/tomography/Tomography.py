@@ -328,6 +328,11 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 															allownone=False,
 															chars=5,
 															value='1.0')
+		self.widgets['backlash pause time'] = FloatEntry(self, -1, min=0.0,
+															allownone=False,
+															chars=5,
+															value='2.5')
+		self.widgets['disable backlash correction'] = wx.CheckBox(self, -1, 'Disable backlash correction')
 #		self.widgets['measure defocus'] = wx.CheckBox(self, -1, 'Measure defocus')
 		self.widgets['use lpf'] = wx.CheckBox(self, -1, 'Use lpf in peak finding of tilt image correlation')
 		self.widgets['use tilt'] = wx.CheckBox(self, -1, 'Stretch images according to the tilt before correlation')
@@ -369,15 +374,25 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		label = wx.StaticText(self, -1, 'seconds before each tilt image.')
 		tptsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+		bptsz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Pause')
+		bptsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		bptsz.Add(self.widgets['backlash pause time'],
+				   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'seconds before measuring backlash error.')
+		bptsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
 		miscsz = wx.GridBagSizer(5, 10)
 		miscsz.Add(intsz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		miscsz.Add(mtsz, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		miscsz.Add(ctsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		miscsz.Add(tptsz, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		miscsz.Add(self.widgets['use lpf'], (4, 0), (1, 1), wx.ALIGN_CENTER)
-		miscsz.Add(self.widgets['use tilt'], (5, 0), (1, 1), wx.ALIGN_CENTER)
-		#miscsz.Add(tapersz, (7, 0), (1, 1), wx.ALIGN_CENTER)
-		#miscsz.Add(self.widgets['measure defocus'], (5, 0), (1, 1), wx.ALIGN_CENTER)
+		miscsz.Add(self.widgets['disable backlash correction'], (4, 0), (1, 1), wx.ALIGN_LEFT)
+		miscsz.Add(bptsz, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		miscsz.Add(self.widgets['use lpf'], (6, 0), (1, 1), wx.ALIGN_LEFT)
+		miscsz.Add(self.widgets['use tilt'], (7, 0), (1, 1), wx.ALIGN_LEFT)
+		#miscsz.Add(tapersz, (8, 0), (1, 1), wx.ALIGN_CENTER)
+		#miscsz.Add(self.widgets['measure defocus'], (6, 0), (1, 1), wx.ALIGN_CENTER)
 		miscsbsz.Add(miscsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
 
 		modelmags = self.getMagChoices()
@@ -937,6 +952,11 @@ class ScrolledSettings2(ScrolledSettings):
 															allownone=False,
 															chars=5,
 															value='1.0')
+		self.widgets['backlash pause time'] = FloatEntry(self, -1, min=0.0,
+															allownone=False,
+															chars=5,
+															value='2.5')
+		self.widgets['disable backlash correction'] = wx.CheckBox(self, -1, 'Disable backlash correction')
 		self.widgets['measure defocus'] = wx.CheckBox(self, -1, 'Measure defocus')
 		self.widgets['use lpf'] = wx.CheckBox(self, -1, 'Use lpf in peak finding of tilt image correlation')
 		self.widgets['use tilt'] = wx.CheckBox(self, -1, 'Stretch images according to the tilt before correlation')
@@ -978,15 +998,25 @@ class ScrolledSettings2(ScrolledSettings):
 		label = wx.StaticText(self, -1, 'seconds before each tilt image.')
 		tptsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+		bptsz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Pause')
+		bptsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		bptsz.Add(self.widgets['backlash pause time'],
+				   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'seconds before measuring backlash error.')
+		bptsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
 		miscsz = wx.GridBagSizer(5, 10)
 		miscsz.Add(intsz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		miscsz.Add(mtsz, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		miscsz.Add(ctsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		miscsz.Add(tptsz, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		miscsz.Add(self.widgets['use lpf'], (4, 0), (1, 1), wx.ALIGN_CENTER)
-		miscsz.Add(self.widgets['use tilt'], (5, 0), (1, 1), wx.ALIGN_CENTER)
-		#miscsz.Add(tapersz, (7, 0), (1, 1), wx.ALIGN_CENTER)
-		miscsz.Add(self.widgets['measure defocus'], (6, 0), (1, 1), wx.ALIGN_CENTER)
+		miscsz.Add(self.widgets['disable backlash correction'], (4, 0), (1, 1), wx.ALIGN_LEFT)
+		miscsz.Add(bptsz, (5, 0), (1, 1), wx.ALIGN_CENTER)
+		miscsz.Add(self.widgets['use lpf'], (6, 0), (1, 1), wx.ALIGN_CENTER)
+		miscsz.Add(self.widgets['use tilt'], (7, 0), (1, 1), wx.ALIGN_CENTER)
+		#miscsz.Add(tapersz, (8, 0), (1, 1), wx.ALIGN_CENTER)
+		miscsz.Add(self.widgets['measure defocus'], (8, 0), (1, 1), wx.ALIGN_CENTER)
 		miscsbsz.Add(miscsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
 		
 		modelmags = self.getMagChoices()

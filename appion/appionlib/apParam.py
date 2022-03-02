@@ -686,6 +686,37 @@ def tc(string):
 			out = string
 	return out
 
+#================
+def ts(key, value, usage_key):
+	"""
+	return command substring according to python key value pair and the
+	key used in constructing the command
+	"""
+	if value == '' or value == None:
+		# None means not defined or default. No need to convert
+		return ''
+	if key == 'wait':
+		# wait usage_key is only used on False case
+		if  value == True:
+			# there is no --wait option, only --no-wait
+			return ''
+		else:
+			return '--no-wait'
+	if type(value) == type(True):
+		# usage_key is the flag for boolean type value
+		return '--%s' % usage_key
+	if key != usage_key:
+		apDisplay.printDebug('using %s instead of %s' % (usage_key, key))
+	# value conversion
+	if type(value) == type(all):
+		output = '--%s=%s' % (usage_key, value.__name__)
+	elif type(value) in (type([]),type(())):
+		output = '--%s=%s' % (usage_key, value)
+	else:
+		if ' ' in '%s' % value:
+			value = '"%s"' % value
+		output = '--%s=%s' % (usage_key, value)
+	return output
 ####
 # This is a low-level file with NO database connections
 # Please keep it this way

@@ -33,6 +33,7 @@ class Mosaic(object):
 		self.automaticpriority = ['correlation']
 		#self.positionmethod = self.positionmethods.keys()[0]
 		self.positionmethod = 'automatic'
+		self.boundaries = {'min':(0,0),'max':(1,1)}
 
 	def clear(self):
 		self.tiles = []
@@ -70,7 +71,6 @@ class Mosaic(object):
 					mosaicmax = list(max)
 				elif max[i] > mosaicmax[i]:
 					mosaicmax[i] = max[i]
-
 		return {'min': (int(round(mosaicmin[0])), int(round(mosaicmin[1]))), 
 						'max': (int(round(mosaicmax[0])), int(round(mosaicmax[1])))}
 
@@ -78,6 +78,7 @@ class Mosaic(object):
 		if not self.tiles:
 			return None
 		bbox = self.getMosaicImageBoundaries()
+		self.boundaries = bbox
 		imageshape = [bbox['max'][0] - bbox['min'][0], 
 									bbox['max'][1] - bbox['min'][1]]
 
@@ -92,7 +93,6 @@ class Mosaic(object):
 			for i, value in enumerate(imageshape):
 				imageshape[i] = int(numpy.ceil(scale*value))
 #				scaleoffset[i] = int(numpy.floor((maxdimension - imageshape[i])/2.0))
-
 		if self.tiles:
 			numtype = self.tiles[0].image.dtype
 		mosaicimage = numpy.zeros(imageshape, numtype)
@@ -359,8 +359,10 @@ class EMMosaic(object):
 			center['x'] += tileparam['x']
 			center['y'] += tileparam['y']
 		n = len(self.tiles)
+		# float math here
 		center['x'] /= n
 		center['y'] /= n
+		# center of the mosaic in scope parameter such as stage position.
 		self.center = center
 
 		## Calculate pixel vector on final image to center of 
@@ -393,7 +395,7 @@ class EMMosaic(object):
 
 			## pixel shift from center of mosaic to corners of tile
 			shape = tile.image.shape
-			# integer math used here
+			# These are integer math
 			corner_vect = center2center[0]-shape[0]//2, center2center[1]-shape[1]//2
 			corner1_vect = corner_vect[0]+shape[0], corner_vect[1]+shape[1]
 			tile.corner_vect = corner_vect
@@ -408,9 +410,6 @@ class EMMosaic(object):
 					mosaic1[axis] = corner1_vect[axis]
 		## mosaic shape at full scale
 		self.mosaicshape = mosaic1[0]-mosaic0[0], mosaic1[1]-mosaic0[1]
-
-		## center of mosaic image
-		mosaic_center = self.mosaicshape[0]//2, self.mosaicshape[1]//2
 
 		## position of corner and center
 		for tile in self.tiles:
@@ -437,8 +436,7 @@ class EMMosaic(object):
 			scale = 1.0
 		else:
 			maxdim = max(self.mosaicshape)
-			self.scale = float(maxdimension) / float(maxdim)
-			## this is stupid, but avoids rounding problems
+			## restore old stupid patch. It avoids rounding problem
 			## and misaligned matrices errors
 			scale = float(maxdimension-1) / float(maxdim)
 		self.scale = scale
@@ -461,6 +459,7 @@ class EMMosaic(object):
 				maxrow = rowslice1[1]
 			if colslice1[1] > maxcol:
 				maxcol = colslice1[1]
+		### mosaic image shape
 		mshape = (maxrow,maxcol)
 
 		### create mosaic image

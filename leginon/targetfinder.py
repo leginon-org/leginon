@@ -54,6 +54,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'allow append': False,
 		'multifocus': False,
 		'allow no focus': False,
+		'allow no acquisition': False,
 	}
 	eventinputs = imagewatcher.ImageWatcher.eventinputs \
 									+ [event.AcquisitionImagePublishEvent] \
@@ -87,8 +88,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.targetimagevectors = {'x':(0,0),'y':(0,0)}
 		self.targetbeamradius = 0
 		self.resetLastFocusedTargetList(None)
-		if False:
-		#if not remoteserver.NO_REQUESTS and session is not None:
+		self.ignore_focus_targets = False
+		if not remoteserver.NO_REQUESTS and session is not None:
 			self.remote_targeting = remoteserver.RemoteTargetingServer(self.logger, session, self, self.remote.leginon_base)
 			self.remote_toolbar = remoteserver.RemoteToolbar(self.logger, session, self, self.remote.leginon_base)
 			self.remote_queue_count = remoteserver.RemoteQueueCount(self.logger, session, self, self.remote.leginon_base)
@@ -101,6 +102,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.onQueueCheckBox(self.settings['queue'])
 		# assumes needing focus. Overwritten by subclasses
 		self.foc_activated = True
+
+		# shrink image to save memory usage
+		self.shrink_factor = 1
+		self.shrink_offset = (0,0)
 
 	def onInitialized(self):
 		super(TargetFinder, self).onInitialized()
@@ -128,9 +133,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'''
 		Check that depth-first tree travelsal won't break
 		'''
-		if self.last_acq_node:
-			settingsclassname = self.last_acq_node['class string']+'SettingsData'
-			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.last_acq_node['alias'])
+		if type(self.last_acq_node)==type({}):
+			settingsclassname = self.last_acq_node['node']['class string']+'SettingsData'
+			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.last_acq_node['node']['alias'])
 			if not results:
 				# default acquisition settings waiting is False. However, admin default
 				# should be o.k.
@@ -138,7 +143,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			else:
 				last_acq_wait = results[0]['wait for process']
 			if not settings['queue'] and not last_acq_wait:
-				return [('error','"%s" node "wait for process" setting must be True when queue is not activated in this node' % (self.last_acq_node['alias'],))]
+				return [('error','"%s" node "wait for process" setting must be True when queue is not activated in this node' % (self.last_acq_node['node']['alias'],))]
 		return []
 
 	def readImage(self, filename):
@@ -148,25 +153,34 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if imagedata is None:
 			if filename == '':
 				if self.name in ['Hole Targeting','Subsquare Targeting']:
-					filename = os.path.join(version.getInstalledLocation(),'sq_example.jpg')
+					filepath = os.path.join(version.getInstalledLocation(),'sq_example.jpg')
 				elif self.name in ['Square Targeting']:
-					filename = os.path.join(version.getInstalledLocation(),'gr_example.jpg')
+					filepath = os.path.join(version.getInstalledLocation(),'gr_example.jpg')
 				else:
-					filename = os.path.join(version.getInstalledLocation(),'hl_example.jpg')
+					filepath = os.path.join(version.getInstalledLocation(),'hl_example.jpg')
+			else:
+				# a full path that is not part of leginon data was entered.
+				filepath = filename
 			try:
-				orig = mrc.read(filename)
+				orig = mrc.read(filepath)
 			except Exception as e:
 				try:
-					orig = numpil.read(filename)
+					orig = numpil.read(filepath)
 				except:
 					self.logger.exception('Read image failed: %s' % e[-1])
 					return
-			self.currentimagedata = {'image':orig} 
+			# include in the facke imagedata the filename 
+			# without .mrc extension to mimic database entry
+			filenamebase = '.'.join(filename.split('.')[:-1])
+			self.currentimagedata = {'image':orig,'filename':filenamebase}
 		else:
 			orig = imagedata['image']
 			self.currentimagedata = imagedata
 
-		self.setImage(orig, 'Original')
+		shrunk = imagefun.shrink(orig)
+		self.shrink_factor = imagefun.shrink_factor(orig.shape)
+		self.shrink_offset = imagefun.shrink_offset(orig.shape)
+		self.setImage(shrunk, 'Original')
 		return orig
 
 	def getImageFromDB(self, filename):
@@ -183,8 +197,34 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	def findTargets(self, imdata, targetlist):
 		'''
 		Virtual function, inheritting classes implement creating targets
+		on panel, but not publish them.
+		preview targets are handled in here, too.
 		'''
 		raise NotImplementedError()
+
+	def publishFoundTargets(self, imdata, targetlist):
+		'''
+		General handling of publish targets found on panel or
+		the image and targetlist.
+		'''
+		self.setStatus('processing')
+		self.logger.info('Publishing targets...')
+		# set self.last_focused for target publishing
+		self.setLastFocusedTargetList(targetlist)
+		# set whether to ignore focus in absence of acquisition targets
+		self.setIgnoreFocusTargets(imdata.imageshape())
+		self._publishFoundTargets(imdata, targetlist)
+		self.logger.info('all targets published')
+		self.setStatus('idle')
+
+	def _publishFoundTargets(self, imdata, targetlist):
+		'''
+		Publish targets found on panel or the image and targetlist.
+		'''
+		### publish just focus and acquisition targets from goodholesimage
+		# preview targets are handled in findTargets
+		self.publishTargets(imdata, 'focus', targetlist)
+		self.publishTargets(imdata, 'acquisition', targetlist)
 
 	def getCheckMethods(self):
 		return self.checkmethods
@@ -351,6 +391,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.logger.info("will append targets")
 			for imagedata in images:
 				self.findTargets(imagedata, targetlist)
+				self.publishFoundTargets(imagedata, targetlist)
 				if self.settings['queue']:
 					self.sendQueueCount()
 		self.makeTargetListEvent(targetlist)
@@ -426,31 +467,65 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			imagetargets = self.getCenterTargets(imagetargets, imageshape)
 		return imagetargets
 
+	def setIgnoreFocusTargets(self, imageshape):
+		'''
+		Set whether to ignore focus target when acquisition targets are empty.
+		Call this right before publish Targets.
+		'''
+		acqtargets = self.getTargetsFromPanel('acquisition', imageshape)
+		self.ignore_focus_targets = False
+		if len(acqtargets)==0:
+			if self.settings['allow no acquisition']:
+				self.ignore_focus_targets = False
+			else:
+				self.ignore_focus_targets = True
+		return
+
 	#--------------------
 	def publishTargets(self, imagedata, typename, targetlist):
 		'''
 		Publish specific type of targets on ImagePanel bound to an 
 		AcquisitionImageData and TargetListData
 		'''
-		imagearray = imagedata['image']
-		imageshape = imagearray.shape
+		imageshape = imagedata.imageshape()
 		imagetargets = self.getTargetsFromPanel(typename, imageshape)
 
 		if not imagetargets:
+			return
+		if typename == 'focus' and self.ignore_focus_targets:
+			self.logger.info('focus targets ignored without acquisition targets')
 			return
 		if self.settings['sort target']:
 			imagetargets = self.sortTargets(imagetargets)
 		# advance to next target number
 		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
 		number = lastnumber + 1
+		# get current order
+		target_order = self.getTargetOrder(targetlist)
 		for imagetarget in imagetargets:
 			column, row = imagetarget
-			drow = row - imageshape[0]/2
-			dcol = column - imageshape[1]/2
+			drow = row*self.shrink_factor + self.shrink_offset[0] - imageshape[0]/2
+			dcol = column*self.shrink_factor + self.shrink_offset[1] - imageshape[1]/2
 
 			targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist, number=number,last_focused=self.last_focused)
 			self.publish(targetdata, database=True)
+			target_order.append(number)
 			number += 1
+		self.publishTargetOrder(targetlist, target_order)
+
+	def getTargetOrder(self, targetlist):
+		q = leginondata.TargetOrderData(session=self.session, list=targetlist)
+		r=q.query(results=1)
+		if r:
+			return list(r[0]['order'])
+		else:
+			return []
+
+	def publishTargetOrder(self, targetlist, target_order):
+		if target_order:
+			q = leginondata.TargetOrderData(session=self.session, list=targetlist)
+			q['order'] = target_order
+			q.insert(force=True)
 
 	def getCenterTargets(self, imagetargets, imageshape):
 		'''
@@ -471,11 +546,11 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		done = []
 		acq = []
 		foc = []
-		halfrows = targetlistdata['image']['camera']['dimension']['y'] / 2
-		halfcols = targetlistdata['image']['camera']['dimension']['x'] / 2
+		halfrows = (targetlistdata['image']['camera']['dimension']['y']//self.shrink_factor) / 2
+		halfcols = (targetlistdata['image']['camera']['dimension']['x']//self.shrink_factor) / 2
 		for target in targets:
-			drow = target['delta row']
-			dcol = target['delta column']
+			drow = target['delta row'] / self.shrink_factor
+			dcol = target['delta column'] / self.shrink_factor
 			x = dcol + halfcols
 			y = drow + halfrows
 			disptarget = x,y
@@ -528,6 +603,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 		if self.settings['allow append'] or len(previouslists)==0:
 			self.findTargets(imagedata, targetlist)
+			self.publishFoundTargets(imagedata, targetlist)
 			if self.settings['queue']:
 				self.sendQueueCount()
 		self.logger.debug('Publishing targetlist...')
@@ -652,7 +728,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'''
 		Get next acquisition target image size and beam diameter displayed on imagedata
 		'''
-		if not self.next_acq_node:
+		if type(self.next_acq_node) != type({}):
 			return {'x':(0,0),'y':(0,0)},0
 		try:
 			image_pixelsize = self.calclients['image shift'].getImagePixelSize(imagedata)
@@ -688,8 +764,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	def _getTargetDisplayInfo(self,image_pixelsize):
 		try:
 			# get settings for the next Acquisition node
-			settingsclassname = self.next_acq_node['class string']+'SettingsData'
-			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['alias'])
+			settingsclassname = self.next_acq_node['node']['class string']+'SettingsData'
+			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['node']['alias'])
 			acqsettings = results[0]
 			# use first preset in preset order for display
 			presetlist = acqsettings['preset order']
@@ -699,10 +775,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			# get next acquisition pixel vectors on the image
 			vectors = {}
 			for axis in ('x','y'):
-				vectors[axis] = self.getPresetAxisVector(acq_presetdata, axis)
+				vectors[axis] = map((lambda x: x / self.shrink_factor), self.getPresetAxisVector(acq_presetdata, axis))
 			# get Beam diameter on image
 			beam_diameter = self.getBeamDiameter(acq_presetdata)
-			beam_diameter_on_image = int(beam_diameter/min(image_pixelsize.values()))
+			beam_diameter_on_image = int((beam_diameter/min(image_pixelsize.values()))//self.shrink_factor)
 			return vectors, beam_diameter_on_image
 		except:
 			# Set Length to 0 in case of any exception
@@ -749,16 +825,24 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		state = (method == 'remote' and self.settings['queue'])
 		self._setQueueTool(state)
 
-	def blobStatsTargets(self, blobs):
+	def blobStatsTargets(self, blobs, image_scale=1.0):
 		targets = []
 		for blob in blobs:
 			target = {}
-			target['x'] = blob.stats['center'][1]
-			target['y'] = blob.stats['center'][0]
+			c = blob.stats['center']
+			# scipy.ndimage.center_of_mass may return inf or nan.
+			if math.isinf(c[0]) or math.isinf(c[1]) or math.isnan(c[0]) or math.isnan(c[1]):
+				self.logger.error('skip invalid blob center %s, %s' % (c[0],c[1]))
+				continue
+			target['x'] = blob.stats['center'][1]*image_scale
+			target['y'] = blob.stats['center'][0]*image_scale
 			target['stats'] = ordereddict.OrderedDict()
 			target['stats']['Size'] = blob.stats['n']
 			target['stats']['Mean'] = blob.stats['mean']
-			target['stats']['Std. Dev.'] = blob.stats['stddev']
+			if 'stdev' in blob.stats.keys():
+				target['stats']['Std. Dev.'] = blob.stats['stddev']
+			if 'score' in blob.stats.keys():
+				target['stats']['Score'] = blob.stats['score']
 			targets.append(target)
 		return targets
 
@@ -785,15 +869,6 @@ class ClickTargetFinder(TargetFinder):
 			if not self.processPreviewTargets(imdata, targetlist):
 				break
 		self.panel.targetsSubmitted()
-		self.setStatus('processing')
-		self.logger.info('Publishing targets...')
-
-		for i in self.targetnames:
-			if i == 'reference':
-				self.publishReferenceTarget(imdata)
-			else:
-				self.publishTargets(imdata, i, targetlist)
-		self.logger.info('all targets published')
 		self.setStatus('idle')
 
 	def publishReferenceTarget(self, image_data):
@@ -811,4 +886,16 @@ class ClickTargetFinder(TargetFinder):
 			self.logger.error('Submitting reference target failed')
 		else:
 			self.logger.info('Reference target submitted')
+
+	def _publishFoundTargets(self, imdata, targetlist):
+		'''
+		Publish targets found on panel or the image and targetlist.
+		ClickTargetFinder and its derivatives handles reference publishing, too.
+		'''
+		### publish targets by targetnames
+		for i in self.targetnames:
+			if i == 'reference':
+				self.publishReferenceTarget(imdata)
+			else:
+				self.publishTargets(imdata, i, targetlist)
 

@@ -68,6 +68,9 @@ noderegistry.registerNodeClass(DTFinder,classtype)
 from leginon.mosaictargetfinder import MosaicClickTargetFinder
 noderegistry.registerNodeClass(MosaicClickTargetFinder,classtype)
 
+from leginon.mosaicexternalfinder import MosaicScoreTargetFinder
+noderegistry.registerNodeClass(MosaicScoreTargetFinder,classtype)
+
 from leginon.mosaicquiltfinder import MosaicQuiltFinder
 noderegistry.registerNodeClass(MosaicQuiltFinder,classtype)
 
@@ -102,7 +105,7 @@ noderegistry.registerNodeClass(TomoClickTargetFinder,classtype)
 from leginon.tomography.tomography import Tomography
 noderegistry.registerNodeClass(Tomography,classtype)
 
-from leginon.tomography.tomography import Tomography2
+from leginon.tomography.tomography2 import Tomography2
 noderegistry.registerNodeClass(Tomography2,classtype)
 
 from leginon.acquisition import Acquisition
@@ -146,6 +149,9 @@ noderegistry.registerNodeClass(SampleTargetFilter,classtype)
 
 from leginon.jahcfinder import JAHCFinder
 noderegistry.registerNodeClass(JAHCFinder,classtype)
+
+from leginon.scorefinder import ScoreTargetFinder
+noderegistry.registerNodeClass(ScoreTargetFinder,classtype)
 
 from leginon.extholefinder import ExtHoleFinder
 noderegistry.registerNodeClass(ExtHoleFinder,classtype)

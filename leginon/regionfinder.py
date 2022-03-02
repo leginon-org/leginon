@@ -121,11 +121,5 @@ class RegionFinder(targetfinder.TargetFinder):
 			self.userpause.clear()
 			self.userpause.wait()
 			self.panel.targetsSubmitted()
-			self.setStatus('processing')
+		self.setStatus('idle')
 
-		## the new way
-		self.logger.info('Publishing targets...')
-		self.publishTargets(imdata, 'focus', targetlist)
-		self.publishTargets(imdata, 'acquisition', targetlist)
-		#if self.settings['publish polygon']:
-		#	self.publishTargets(imdata, 'Polygon Vertices', targetlist)

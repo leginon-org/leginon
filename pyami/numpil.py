@@ -4,11 +4,11 @@ from PIL import ImageDraw
 from PIL import ImageSequence
 from PIL import ImageStat
 import numpy
-from . import imagefun
-from . import arraystats
+from pyami import imagefun
+from pyami import arraystats
 import sys
 import scipy.ndimage
-from . import tifffile
+from pyami import tifffile
 pilformats = [
 	'BMP',
 	'GIF',
@@ -80,6 +80,7 @@ def readInfo(imfile):
 	extrema = im.getextrema()
 	number_of_bands = len(im.getbands())
 	if number_of_bands > 1:
+		print(number_of_bands)
 		# multibands, use the most extreme value. Don't know what to do.
 		info['amin'] = min(list(map((lambda x:x[0],extrema))))
 		info['amax'] = min(list(map((lambda x:x[1],extrema))))
@@ -192,7 +193,10 @@ def tiff2numpy_array(filename, section):
 Image2 = Image
 ###temporary hack for FSU
 import PIL
-if hasattr(PIL, 'PILLOW_VERSION'):
+if hasattr(PIL, '__version__'):
+	if int(PIL.__version__[0]) >= 3:
+		Image2.fromstring = Image.frombytes
+elif hasattr(PIL, 'PILLOW_VERSION'):
 	if int(PIL.PILLOW_VERSION[0]) >= 3:
 		Image2.fromstring = Image.frombytes
 

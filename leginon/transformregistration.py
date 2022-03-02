@@ -8,7 +8,7 @@
 #       see  http://leginon.org
 #
 
-from pyami import correlator, peakfinder, ordereddict
+from pyami import correlator, peakfinder
 import math
 import numpy
 import scipy.ndimage
@@ -79,7 +79,7 @@ class CorrelationRegistration(Registration):
 	'''Register using peak found in phase correlation image.  Good for shift'''
 	def __init__(self, *args, **kwargs):
 		super(CorrelationRegistration, self).__init__(*args, **kwargs)
-		self.correlator = correlator.Correlator()
+		self.correlator = correlator.Correlator(shrink=True)
 		self.peakfinder = peakfinder.PeakFinder()
 
 	def register(self, array1, array2):
@@ -87,13 +87,14 @@ class CorrelationRegistration(Registration):
 		self.correlator.setImage(1,array2)
 		corrimage = self.correlator.phaseCorrelate()
 		corrimage = scipy.ndimage.gaussian_filter(corrimage,1)
+		shrink_factor = self.correlator.shrink_factor
 		self.node.setImage(corrimage, 'Correlation')
 		peak = self.peakfinder.subpixelPeak(newimage=corrimage)
 		self.node.setTargets([(peak[1],peak[0])], 'Peak')
 		shift = correlator.wrap_coord(peak, corrimage.shape)
 		matrix = numpy.matrix(numpy.identity(3, numpy.float))
-		matrix[2,0] = shift[0]
-		matrix[2,1] = shift[1]
+		matrix[2,0] = shift[0]*shrink_factor
+		matrix[2,1] = shift[1]*shrink_factor
 		return matrix
 
 class KeyPointsRegistration(Registration):

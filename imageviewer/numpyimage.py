@@ -34,6 +34,8 @@ def numpy2Image(array):
 
 def scaleImage(image, fromrange, torange):
     try:
+        if fromrange[0] == fromrange[1]:
+            raise ZeroDivisionError
         scale = float(torange[1] - torange[0])/float(fromrange[1] - fromrange[0])
     except ZeroDivisionError:
         scale = 0.0

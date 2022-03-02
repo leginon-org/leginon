@@ -11,7 +11,7 @@
 from leginon import leginondata
 from leginon import targetfinder
 from leginon import holefinderback
-from pyami import ordereddict
+from pyami import imagefun, ordereddict
 import threading
 from leginon import ice
 from leginon import instrument
@@ -428,8 +428,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		for hole in holes:
 			stats = hole.stats
 			holestats = leginondata.HoleStatsData(session=self.session, prefs=prefs)
-			holestats['row'] = stats['center'][0]
-			holestats['column'] = stats['center'][1]
+			holestats['row'] = stats['center'][0] * self.shrink_factor + self.shrink_offset[0]
+			holestats['column'] = stats['center'][1] * self.shrink_factor + self.shrink_offset[1]
 			holestats['mean'] = stats['hole_mean']
 			holestats['stdev'] = stats['hole_std']
 			holestats['thickness-mean'] = stats['thickness-mean']
@@ -479,9 +479,15 @@ class HoleFinder(targetfinder.TargetFinder):
 		autofailed = None
 
 		## auto or not?
-		self.hf['original'] = imdata['image']
 		self.currentimagedata = imdata
-		self.setImage(imdata['image'], 'Original')
+		orig = imdata['image']
+		# shrink image in holefinding to save memory usage
+		shrunk = imagefun.shrink(orig)
+		self.shrink_factor = imagefun.shrink_factor(orig.shape)
+		self.shrink_offset = imagefun.shrink_offset(orig.shape)
+		self.hf['original'] = imdata['image']
+		self.setImage(shrunk, 'Original')
+		#
 		if not self.settings['skip']:
 			if self.isFromNewParentImage(imdata):
 				self.logger.debug('Reset focus counter')
@@ -502,12 +508,10 @@ class HoleFinder(targetfinder.TargetFinder):
 				if not ptargets:
 					break
 				self.panel.targetsSubmitted()
+		self.setStatus('idle')
 
-		# set self.last_focused for target publishing	
-		self.setLastFocusedTargetList(targetlist)
+	def _publishFoundTargets(self, imdata, targetlist):
 		### publish targets from goodholesimage
-		self.logger.info('Publishing targets...')
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)
-		self.setStatus('idle')
 

@@ -98,12 +98,6 @@ class TestTargetFinder(targetfinder.TargetFinder):
 		# tell gui panel to change tool activation states after submission
 		self.panel.targetsSubmitted()
 
-		self.logger.info('Publishing targets...')
-		# publish targets to be sent to the next node
-		self.publishTargets(imdata, 'focus', targetlist)
-		self.publishTargets(imdata, 'acquisition', targetlist)
-
-		self.logger.info('Targets have been submitted')
 		# set node processing status to idle so that the gui goes back to standby and remote is not blocked.
 		self.setStatus('idle')
 
