@@ -51,7 +51,7 @@ def pointsInBlobs(blobs, points):
 class StatsBlob(object):
 	def __init__(self, info_dict, index):
 		'''Simple blob object with image and stats as attribute
-			center = (row, col) on image
+			both input and output center/vertices = (row, col) on image
 		'''
 		mean = info_dict['brightness']
 		stddev = 1.0
@@ -173,7 +173,12 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		line = f.readlines()[0]
 		blob_dicts = json.loads(line)
 		blobs = []
+		def _revindex(value_tuple):
+			return value_tuple[1],value_tuple[0]
 		for n, b in enumerate(blob_dicts):
+			#ptolemy write its coordinates in (col, row) modify them first.
+			b['center'] = _revindex(b['center'])
+			b['vertices'] = list(map((lambda x: _revindex(x)),b['vertices']))
 			blobs.append(StatsBlob(b, n)) # (row, col)
 		self.ext_blobs[label] = blobs
 
@@ -344,11 +349,12 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 					s = self.finder_scale_factor
 					for b in self.tileblobmap[imid]:
 						#statistics are calculated on finder_mosaic
-						vertices = map((lambda x: self._tile2MosaicPosition(tile, (x[1],x[0]*s), self.finder_mosaic)), b.vertices)
+						vertices = map((lambda x: self._tile2MosaicPosition(tile, (x[0]*s,x[1]*s), self.finder_mosaic)), b.vertices)
 						r,c = self._tile2MosaicPosition(tile, b.stats['center'], self.finder_mosaic)
 						new_info_dict = dict(b.info_dict)
-						new_info_dict['vertices'] = map((lambda x: (x[1],x[0])),vertices)
+						new_info_dict['vertices'] = list(vertices)
 						# center of the blob on finder_mosaic coordinate
+						# _tile2MosaicPosition standard is (row, col)
 						new_info_dict['center'] = r,c
 						self.finder_blobs.append(StatsBlob(new_info_dict, len(self.finder_blobs)))
 
