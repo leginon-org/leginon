@@ -443,7 +443,6 @@ class HoleFinder(icefinderback.IceFinder):
 if __name__ == '__main__':
 	from pyami import numpil
 	hf = HoleFinder()
-	score_key = 'probability'
 	leginon_dir = os.path.dirname(os.path.abspath(__file__))
 	hf = HoleFinder(is_testing=True)
 	hf['original'] = numpil.read(os.path.join(leginon_dir,'sq_example.jpg'))

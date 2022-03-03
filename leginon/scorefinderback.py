@@ -61,7 +61,7 @@ class HoleFinder(icefinderback.IceFinder):
 		## some default configuration parameters
 		super(HoleFinder, self).setDefaults()
 		self.save_mrc = False
-		self.holefinder_config = {'script': '','job_name':'hole','in_path':None,'out_dir':None, 'score_key':'probability','threshold':0}
+		self.holefinder_config = {'script': '','job_name':'hole','in_path':None,'out_dir':None, 'score_key':'score','threshold':0}
 		self.holestats_config = {'radius': 20}
 		self.filter_config = {'tmin': -10, 'tmax': 20}
 		self.convolve_config = {'conv_vect':None}
@@ -121,7 +121,7 @@ class HoleFinder(icefinderback.IceFinder):
 			self.holefinder_config['score_key']= score_key
 		else:
 			# default score_key is probability in ptolemy med2high
-			self.holefinder_config['score_key']='probability'
+			self.holefinder_config['score_key']='score'
 		if threshold is not None:
 			self.holefinder_config['threshold']=threshold
 		else:
@@ -177,6 +177,8 @@ class HoleFinder(icefinderback.IceFinder):
 		holes = []
 		score_key = self.holefinder_config['score_key']
 		for n, h in enumerate(hole_dicts):
+			if score_key not in h.keys():
+				raise ValueError('Score key "%s" not valid. Please change in Hole Settings' % score_key)
 			# convert to r,c
 			h['center'] = self.jsonCenterToHoleCenter(h['center'])
 			h['convolved'] = False
@@ -315,7 +317,7 @@ if __name__ == '__main__':
 	from pyami import mrc
 	hf = HoleFinder()
 	mrc_path = '/Users/acheng/testdata/leginon/21aug27y/rawdata/21aug27y_i_00005gr_00023sq.mrc'
-	score_key = 'probability'
+	score_key = 'score'
 	hf['original'] = mrc.read(mrc_path)
 	hf.configure_holefinder('/Users/acheng/hl_finding.sh', 'test', mrc_path, out_dir='.', score_key=score_key, threshold=0.0)
 	hf.configure_filter(tmin=-1, tmax=10) # score filter

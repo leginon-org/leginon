@@ -105,7 +105,6 @@ class IceTargetFinder(targetfinder.TargetFinder):
 			targets = []
 		# set targets found in self._results['holes']
 		self.logger.info('Number of holes: %s' % (len(targets),))
-		print 'findHoles', targets
 		self.setTargets(targets, 'Hole')
 
 	def calcHoleStats(self):
