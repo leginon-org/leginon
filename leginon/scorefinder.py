@@ -30,7 +30,7 @@ class ScoreTargetFinder(icetargetfinder.IceTargetFinder):
 	defaultsettings = dict(icetargetfinder.IceTargetFinder.defaultsettings)
 	defaultsettings.update({
 				'script':'hole_finding.sh',
-				'score key':'probability',
+				'score key':'score',
 				'score threshold':0,
 	})
 	targetnames = icetargetfinder.IceTargetFinder.targetnames
