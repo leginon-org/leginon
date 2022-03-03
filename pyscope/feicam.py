@@ -17,7 +17,7 @@ try:
 except ImportError:
 	USE_SAFEARRAY_AS_NDARRAY = False
 
-SIMULATION = False
+SIMULATION = True
 class FEIAdvScriptingConnection(object):
 	instr = None
 	csa = None
@@ -95,6 +95,24 @@ class FeiCam(ccdcamera.CCDCamera):
 	camera_name = 'FEI_CAM'
 	intensity_averaged = False
 
+	base_fake_image = numpy.array(
+[[-1.19424753,  1.4246904 , -0.93985889,  0.60135849,  0.27857971,
+        -1.65301365,  1.04678336, -1.52532131],
+       [-1.31055292, -1.64913688, -0.02365123,  0.66956679, -0.65988101,
+         0.9513427 , -0.13423738,  0.33800944],
+       [-1.1071589 ,  0.88239252,  0.10997026, -1.18640795,  0.61022063,
+         0.81224024, -0.16747269,  0.00719223],
+       [-0.90773998,  1.7711954 , -0.22341715,  1.77620855, -1.31179014,
+         0.41032037,  0.0359722 ,  0.54127201],
+       [-0.93403768, -0.68054982,  0.91282793, -0.3759068 , -0.90186899,
+         0.25927322,  0.45464985,  0.45113749],
+       [ 0.90185984,  0.61578781, -0.6812698 , -0.51314294,  1.5032234 ,
+        -0.65909159,  2.16388489, -0.68847963],
+       [-0.85829773, -2.44494674, -0.50517834,  0.6213358 ,  0.9792851 ,
+         0.44794129,  0.76906529,  1.45588215],
+       [ 0.43612393, -0.27890367, -0.11642871, -0.15955607, -2.52247377,
+         0.62344606,  0.42410922,  1.02661867]])
+
 	def __init__(self):
 		self.unsupported = []
 		ccdcamera.CCDCamera.__init__(self)
@@ -141,6 +159,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.end_frame_number = None
 		self.display_name = None
 		self.frame_format = 'mrc'
+		self.save8x8 = False
 
 	def setReadoutLimits(self):
 		readout_dicts = {READOUT_FULL:1,READOUT_HALF:2,READOUT_QUARTER:4}
@@ -217,6 +236,14 @@ class FeiCam(ccdcamera.CCDCamera):
 	def getExposureTime(self):
 		# milliseconds
 		return float(self.exposure)
+
+	def getFastSave(self):
+		# Fastsave saves a small image arrary for frame camera to reduce handling time.
+		return self.save8x8
+
+	def setFastSave(self, state):
+		# Fastsave saves a smaller image arrary for frame camera to reduce handling time.
+		self.save8x8 = state
 
 	def getCamera(self):
 		for c in self.csa.SupportedCameras:
@@ -486,6 +513,9 @@ class FeiCam(ccdcamera.CCDCamera):
 			self.image_metadata = self.getMetaDataDict(self.im.MetaData)
 		else:
 			self.image_metadata = {}
+		if self.save_frames or self.align_frames and self.save8x8:
+			arr = self.base_fake_image*arr.std() + arr.mean()*numpy.ones((8,8))
+			return arr
 		if self.getDebugCamera():
 			print 'got arr and to modify'
 		arr = self.modifyImage(arr)
