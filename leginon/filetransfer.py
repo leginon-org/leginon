@@ -10,10 +10,10 @@ import numpy
 import leginon.leginondata
 import leginon.ddinfo
 import pyami.fileutil, pyami.mrc
+import pyami.scriptrun
 
-class FileTransfer(object):
+class FileTransfer(pyami.scriptrun.ScriptRun):
 	def __init__(self):
-		self.is_win32 = sys.platform == 'win32'
 		# image classes that will be transferred
 		self.image_classes = [
 			leginon.leginondata.AcquisitionImageData,
@@ -21,43 +21,10 @@ class FileTransfer(object):
 			leginon.leginondata.BrightImageData,
 			leginon.leginondata.NormImageData,
 		]
+		super(FileTransfer, self).__init__()
 		self.refcopy = None
 		if not self.is_win32:
 			self.refcopy = ReferenceCopier()
-
-	def parseParams(self):
-		'''
-		Use OptionParser to get parameters
-		'''
-		parser = self._createParser()
-		self.setOptions(parser)
-		# parsing options
-		(options, optargs) = parser.parse_args(sys.argv[1:])
-		if len(optargs) > 0:
-			print "Unknown commandline options: "+str(optargs)
-		if not self.use_gui and len(sys.argv) < 2:
-			parser.print_help()
-			sys.exit()
-		params = {}
-		for i in parser.option_list:
-			if isinstance(i.dest, str):
-				params[i.dest] = getattr(options, i.dest)
-		self.checkOptionConflicts(params)
-		return params
-
-	def _createParser(self):
-		if len(sys.argv) == 1 and self.is_win32:
-			try:
-				from optparse_gui import OptionParser
-				self.use_gui = True
-			except:
-				raw_input('Need opparse_gui to enter options on Windows')
-				sys.exit()
-		else:
-			from optparse import OptionParser
-			self.use_gui = False
-		parser = OptionParser()
-		return parser
 
 	def setOptions(self, parser):
 		# options
@@ -80,13 +47,6 @@ class FileTransfer(object):
 			if not r:
 				sys.stderr.write('Camera host %s not in Leginon database\n' % (params['camera_host']))
 				sys.exit(1)
-
-	def getAndValidatePath(self,key):
-		pathvalue = self.params[key]
-		if pathvalue and not os.access(pathvalue, os.R_OK):
-			sys.stderr.write('%s not exists or not readable\n' % (pathvalue,))
-			sys.exit(1)
-		return pathvalue
 
 	def get_source_path(self):
 		return self.getAndValidatePath('source_path')
@@ -276,7 +236,6 @@ class FileTransfer(object):
 		return uid, gid
 
 	def run(self):
-		self.params = self.parseParams()
 		method = self.params['method']
 		mode_str = self.params['mode_str']
 		src_path = self.get_source_path()
