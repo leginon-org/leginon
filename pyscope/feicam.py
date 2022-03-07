@@ -513,7 +513,7 @@ class FeiCam(ccdcamera.CCDCamera):
 			self.image_metadata = self.getMetaDataDict(self.im.MetaData)
 		else:
 			self.image_metadata = {}
-		if self.save_frames or self.align_frames and self.save8x8:
+		if (self.save_frames or self.align_frames) and self.save8x8:
 			arr = self.base_fake_image*arr.std() + arr.mean()*numpy.ones((8,8))
 			return arr
 		if self.getDebugCamera():
