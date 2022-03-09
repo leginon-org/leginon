@@ -1,6 +1,6 @@
 #! /usr/bin/env python
-# script to give  a gui for making tilt groups from an appion ctf star file
-# allows for filtering based on best CTF fit value
+# script to give  agui for making tilt groups from an appion ctf star file
+# allows for filtering based on best CTF fir value
 # allws replacement of enn-a with enn-a-DW
 # write relion 3 starfile output
 
@@ -27,8 +27,11 @@ except: #python 2.7
 import os
 import re
 import numpy as np
-import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
+import matplotlib
+matplotlib.use("TkAgg")  #use TKinter framework
+import matplotlib.pyplot as plt
+
 
 rln_ctfstring = '_rlnCtfMaxResolution'
 rln_micstring = '_rlnMicrographName'
@@ -106,12 +109,8 @@ class Window:
 		self.outstar.trace('w', self.toggle_state)    #this should toggle the state of the read and write  button depending on this variable	
 		self.outfile_relion3_button = Tk.Button(self.root, text = "Write Relion 3.0", command=self.relion3write, state=Tk.DISABLED)
 		self.outfile_relion3_button.grid(row=7, column=3, padx=10, pady=10)
-		self.mtf_label = Tk.Label(self.root, text="MTF file for Relion 3.1")
-		self.mtf_label.grid(row=8, column=1, padx=10, pady=10)
-		self.mtf_label_entry = Tk.Entry(self.root, textvariable=self.mtffile, width=20, borderwidth=5)
-		self.mtf_label_entry.grid(row=8, column=2, padx=10, pady=10)
 		self.outfile_relion31_button = Tk.Button(self.root, text = "Write Relion 3.1", command=self.relion31write, state=Tk.DISABLED)
-		self.outfile_relion31_button.grid(row=8, column=3, padx=10, pady=10)
+		self.outfile_relion31_button.grid(row=7, column=4, padx=10, pady=10)
 		self.mtffile.trace('w', self.toggle_state)    #this should toggle the state of the read and write  button depending on this variable	
 
 		self.cryosparc_button = Tk.Button(self.root, text="Export to cryosparc data", command=self.cryosparc_export, background='teal')
@@ -182,7 +181,7 @@ class Window:
 				response=messagebox.showinfo("IMPORTANT","CTF information is in the passthrough file.\n Replace that file in cryosparc directory")
 			elif 'ctf/exp_group_id' in self.particleset.data.keys():
 				response=messagebox.showinfo("IMPORTANT","CTF information is in the particleset file.\n Replace that file in cryosparc directory")
- 			else:
+			else:
 				response=messagebox.showerror("ERROR","No CTF information found! Cannot group")
 			groupdata={}
 			for i, dataline in enumerate(self.stardata):
@@ -217,7 +216,73 @@ class Window:
 		self.readcsp_entry.insert(0,f)
 
 	def relion31write(self):
-		response=messagebox.showinfo("Sorry", "Not yet implemented!")
+		starfile=self.outfile_entry.get()	
+		try:
+			f=open(starfile, "w")
+		except IOError:
+			# error warning
+			response=messagebox.showerror("ERROR", "Cannot open " + starfile + " for writing")
+		else:
+			with f:	
+				f.write("# optics table \n")
+				f.write("# version 30001\n\n")
+				f.write("data_optics\n\n")
+				f.write("loop_ \n")
+				f.write("_rlnOpticsGroupName #1 \n")
+				f.write("_rlnOpticsGroup #2 \n")
+				f.write("_rlnMicrographPixelSize #3 \n")
+				f.write("_rlnMicrographOriginalPixelSize #4 \n")
+				f.write("_rlnVoltage #5 \n")
+				f.write("_rlnSphericalAberration #6 \n")
+				f.write("_rlnAmplitudeContrast #7 \n")
+				i=0
+
+				voltage = self.stardata[0][self.voltindex]
+				sa = self.stardata[0][self.sa_index]
+				amp_cntrst = self.stardata[0][self.amp_index]
+				pix_size = self.stardata[0][self.pix_index]
+				
+				if self.tiltxindex >= 0:
+					for i in range(self.numgroups):
+						groupname = "opticsGroup" + str(i + 1) 	
+						line = "   ".join((groupname,str(i + 1),pix_size,pix_size,voltage,sa,amp_cntrst,"\n"))
+						f.write(line)
+				else:
+					line = "   ".join(("opticsGroup1",str(1),pix_size,pix_size,voltage,sa,amp_cntrst,"\n"))
+					f.write(line)
+				
+				f.write("\n# version 30001\n\n")
+				f.write("data_micrographs\n\n")
+				f.write("loop_ \n")
+				f.write("_rlnMicrographName #1\n")
+				f.write("_rlnOpticsGroup #2\n")
+				f.write("_rlnCtfImage #3\n") 
+				f.write("_rlnDefocusU #4\n") 
+				f.write("_rlnDefocusV #5\n") 
+				f.write("_rlnCtfAstigmatism #6\n") 
+				f.write("_rlnDefocusAngle #7\n") 
+				f.write("_rlnCtfFigureOfMerit #8\n") 
+				f.write("_rlnCtfMaxResolution #9\n") 
+	
+				i=0
+				for dataline in self.stardata:
+					name=dataline[self.micnameindex]
+					ctfname=dataline[self.ctfimage_index]
+					dfu=dataline[self.dfu_index]
+					dfv=dataline[self.dfv_index]
+					dfa=dataline[self.dfa_index]
+					fom=dataline[self.fom_index]
+					ctfmax=dataline[self.maxctfindex]
+					astig = str(abs(float(dfu)-float(dfv)))
+					if self.tiltxindex >= 0:
+						ogroup=str(self.grouplabels[i] + 1)
+					else:
+						ogroup="1"
+					f.write("   ".join((name,ogroup,ctfname,dfu,dfv,astig,dfa,fom,ctfmax,"\n")))
+					i += 1
+				response=messagebox.showinfo("Success", "Wrote " + starfile)
+
+
 	def freeplot(self):
 		response=messagebox.showinfo("Sorry", "Not yet implemented!")
 
@@ -237,7 +302,7 @@ class Window:
 					f.write(header + " #" + str(i) + "\n")
 					i += 1
 				if self.tiltxindex >= 0:
-					f.write("_rlnBeamTiltClass " + str(i) + "\n")
+					f.write("_rlnBeamTiltClass #" + str(i) + "\n")
 	
 				if 1==1:  # zero out the tilt values, keep as string for simplicity
 					for i in range (len(self.stardata)):
@@ -287,7 +352,8 @@ class Window:
 			xval.append(float(micrograph[self.tiltxindex]))
 			yval.append(float(micrograph[self.tiltyindex]))
 		self.X=np.array(list(zip(xval,yval)))
-		self.kmeans=KMeans(n_clusters=self.tiltgroupslider.get())
+		self.numgroups =self.tiltgroupslider.get() 
+		self.kmeans=KMeans(n_clusters=self.numgroups)
 		self.kmeans=self.kmeans.fit(self.X)
 		self.grouplabels=self.kmeans.predict(self.X)
 		self.clusters=self.kmeans.cluster_centers_
@@ -315,10 +381,10 @@ class Window:
 			self.readfile_button['state'] = 'disabled'
 		if self.outstar.get():
 			self.outfile_relion3_button['state'] = 'normal'
-			if self.mtffile.get():
-				self.outfile_relion31_button['state'] = 'normal'
+			self.outfile_relion31_button['state'] = 'normal'
 		else:
 			self.outfile_relion3_button['state'] = 'disabled'
+			self.outfile_relion31_button['state'] = 'disabled'
 
 	def selectfile(self):
 		f = filedialog.askopenfilename(initialdir="./", title="Select a file", filetypes=(("star files", "*.star"), ("all files", "*.*")))
@@ -403,6 +469,31 @@ class Window:
 					self.tiltxindex = i
 				elif self.starlabels[i] == rln_tiltystring:
 					self.tiltyindex = i
+				elif self.starlabels[i] == "_rlnVoltage":
+					self.voltindex = i
+				elif self.starlabels[i] == "_rlnSphericalAberration":
+					self.sa_index = i
+				elif self.starlabels[i] == "_rlnAmplitudeContrast":
+					self.amp_index=i
+				elif self.starlabels[i] == "_rlnDetectorPixelSize":
+					self.pix_index=i
+				elif self.starlabels[i] == "_rlnBeamTiltX":
+					self.btiltx_index=i
+				elif self.starlabels[i] == "_rlnBeamTiltY":
+					self.btilty_index=i
+				elif self.starlabels[i] == "_rlnDefocusU":
+					self.dfu_index=i
+				elif self.starlabels[i] == "_rlnDefocusV":
+					self.dfv_index=i
+				elif self.starlabels[i] == "_rlnDefocusAngle":
+					self.dfa_index=i
+				elif self.starlabels[i] == "_rlnCtfFigureOfMerit":
+					self.fom_index=i
+				elif self.starlabels[i] == "_rlnCtfMaxResolution":
+					self.ctfmax_index=i
+				elif self.starlabels[i] == "_rlnCtfImage":
+					self.ctfimage_index=i
+
 			if self.maxctfindex >=0:
 				self.filterctf_button['state'] = 'normal' 
 				self.ctfmaxplot_button['state'] = 'normal' 
