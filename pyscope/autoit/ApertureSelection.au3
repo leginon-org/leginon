@@ -165,7 +165,7 @@ Func getFeiConfigPath()
    $aArray[0] = $sCfgPath
    $aArray[1] = @userprofiledir
    $aArray[2] = "c:\Program Files\myami\"
-   $aArray[2] = "c:\Program Files (x86)\myami\"
+   $aArray[3] = "c:\Program Files (x86)\myami\"
 
    For $configdir in $aArray
       $configpath = $configdir & 'fei.cfg'
@@ -186,6 +186,7 @@ EndFunc
 Func getFeiConfigModuleLines($configpath, $module)
    Local $bInModule = False
    ; declare array must have at least one item
+   Local $h2 = FileOpen($configpath, 0)
    Local $Lines[1]=['dummy']
    While 1
       Local $sLine = FileReadLine($h2)
