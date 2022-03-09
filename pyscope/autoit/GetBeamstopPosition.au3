@@ -21,6 +21,7 @@
 #ce ----------------------------------------------------------------------------
 
 ; Script Start - Add your code below here
+#include <AutoItConstants.au3>
 #include <MsgBoxConstants.au3>
 #include <Array.au3>
 Global $error_log = @UserProfileDir & "\myami_log\autoit_error.log"
