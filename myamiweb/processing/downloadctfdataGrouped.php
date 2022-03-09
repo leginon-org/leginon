@@ -12,7 +12,8 @@ $expId = $_GET['expId'];
 $runId = $_GET['runId'];
 $relion = (int)$_GET['relion'];
 $preset = $_GET['preset'];
-$ncluster = $_POST['ncluster'];
+$ncluster = $_POST['ncluster']; //n_kmeans
+$rversion = $_POST['rversion']; //Relion version
 checkExptAccessPrivilege($expId,'data');
 $appiondb = new particledata();
 $leginon = new leginondata();
@@ -133,6 +134,7 @@ $expt_runname = sprintf("%05d", $expId);
 $expt_runname .= (empty($runId) ) ? '' : sprintf("-run%04d", $runId);
 if ($relion >= 1) $downname = sprintf("micrographs_ctf-%s.star",$expt_runname);
 else $downname = sprintf("ctfdata-session%s.dat", $expt_runname);
+if ($rversion == '3.1') $rversion = 'relion31'; //otherwise for Relion 3.0
 header("Content-Disposition: attachment; filename=$downname;");
 
 $dir = sys_get_temp_dir();
@@ -142,7 +144,7 @@ foreach ($data as $line) {
     fwrite($handle, $line);
 }
 fclose($handle);
-$output = exec('cd '.$dir.'; /usr/local/bin/tiltgroup_wrangler_cli.py '.$tmp.' '.$ncluster);
+$output = exec('cd '.$dir.'; /usr/local/bin/tiltgroup_wrangler_cli.py '.$tmp.' -n_kmeans='.$ncluster.' -r_version='.$rversion );
 $file = file_get_contents($dir.'/tw_out.star');
 echo $file;
 ?>

@@ -14,6 +14,8 @@ import os, sys
 import re
 import numpy as np
 from sklearn.cluster import KMeans
+import argparse
+
 rln_ctfstring = '_rlnCtfMaxResolution'
 rln_micstring = '_rlnMicrographName'
 rln_tiltxstring = '_rlnBeamTiltX'
@@ -58,6 +60,73 @@ class TiltWrangler:
 						f.write(" ".join(dataline))
 						f.write(" " + str(self.grouplabels[i]) + "\n")
 						i += 1
+				sys.stdout.write("Success: Wrote " + starfile+ "\n")
+
+	def relion31write(self):
+		starfile="tw_out.star"	
+		try:
+			f=open(starfile, "w")
+		except IOError:
+			# error warning
+			sys.stderr.write("ERROR", "Cannot open " + starfile + " for writing")
+		else:
+			with f:	
+				f.write("# optics table \n")
+				f.write("# version 30001\n\n")
+				f.write("data_optics\n\n")
+				f.write("loop_ \n")
+				f.write("_rlnOpticsGroupName #1 \n")
+				f.write("_rlnOpticsGroup #2 \n")
+				f.write("_rlnMicrographPixelSize #3 \n")
+				f.write("_rlnMicrographOriginalPixelSize #4 \n")
+				f.write("_rlnVoltage #5 \n")
+				f.write("_rlnSphericalAberration #6 \n")
+				f.write("_rlnAmplitudeContrast #7 \n")
+				i=0
+
+				voltage = self.stardata[0][self.voltindex]
+				sa = self.stardata[0][self.sa_index]
+				amp_cntrst = self.stardata[0][self.amp_index]
+				pix_size = self.stardata[0][self.pix_index]
+				
+				if self.tiltxindex >= 0:
+					for i in range(N_CLUSTERS):
+						groupname = "opticsGroup" + str(i + 1) 	
+						line = "   ".join((groupname,str(i + 1),pix_size,pix_size,voltage,sa,amp_cntrst,"\n"))
+						f.write(line)
+				else:
+					line = "   ".join(("opticsGroup1",str(1),pix_size,pix_size,voltage,sa,amp_cntrst,"\n"))
+					f.write(line)
+				
+				f.write("\n# version 30001\n\n")
+				f.write("data_micrographs\n\n")
+				f.write("loop_ \n")
+				f.write("_rlnMicrographName #1\n")
+				f.write("_rlnOpticsGroup #2\n")
+				f.write("_rlnCtfImage #3\n") 
+				f.write("_rlnDefocusU #4\n") 
+				f.write("_rlnDefocusV #5\n") 
+				f.write("_rlnCtfAstigmatism #6\n") 
+				f.write("_rlnDefocusAngle #7\n") 
+				f.write("_rlnCtfFigureOfMerit #8\n") 
+				f.write("_rlnCtfMaxResolution #9\n") 
+	
+				i=0
+				for dataline in self.stardata:
+					name=dataline[self.micnameindex]
+					ctfname=dataline[self.ctfimage_index]
+					dfu=dataline[self.dfu_index]
+					dfv=dataline[self.dfv_index]
+					dfa=dataline[self.dfa_index]
+					fom=dataline[self.fom_index]
+					ctfmax=dataline[self.maxctfindex]
+					astig = str(abs(float(dfu)-float(dfv)))
+					if self.tiltxindex >= 0:
+						ogroup=str(self.grouplabels[i] + 1)
+					else:
+						ogroup="1"
+					f.write("   ".join((name,ogroup,ctfname,dfu,dfv,astig,dfa,fom,ctfmax,"\n")))
+					i += 1
 				sys.stdout.write("Success: Wrote " + starfile+ "\n")
 				
 	def findtiltgroups(self):
@@ -104,18 +173,49 @@ class TiltWrangler:
 					self.tiltxindex = i
 				elif self.starlabels[i] == rln_tiltystring:
 					self.tiltyindex = i
+				elif self.starlabels[i] == "_rlnVoltage":
+					self.voltindex = i
+				elif self.starlabels[i] == "_rlnSphericalAberration":
+					self.sa_index = i
+				elif self.starlabels[i] == "_rlnAmplitudeContrast":
+					self.amp_index=i
+				elif self.starlabels[i] == "_rlnDetectorPixelSize":
+					self.pix_index=i
+				elif self.starlabels[i] == "_rlnBeamTiltX":
+					self.btiltx_index=i
+				elif self.starlabels[i] == "_rlnBeamTiltY":
+					self.btilty_index=i
+				elif self.starlabels[i] == "_rlnDefocusU":
+					self.dfu_index=i
+				elif self.starlabels[i] == "_rlnDefocusV":
+					self.dfv_index=i
+				elif self.starlabels[i] == "_rlnDefocusAngle":
+					self.dfa_index=i
+				elif self.starlabels[i] == "_rlnCtfFigureOfMerit":
+					self.fom_index=i
+				elif self.starlabels[i] == "_rlnCtfMaxResolution":
+					self.ctfmax_index=i
+				elif self.starlabels[i] == "_rlnCtfImage":
+					self.ctfimage_index=i					
 			if l2 < 5:
 				sys.stderr.write("WARNING", "Only " +str(l2) + " columns in star file!")
 				
 if __name__ == '__main__':
-	if len(sys.argv) < 2:
-		sys.stderr.write("Usage: python tiltgroup_wrangler_cli.py input_star_file n_kmeans (optional: defaults to 50)\n")
-		sys.exit(1)
-	elif len(sys.argv) > 2:
-		N_CLUSTERS = int(sys.argv[2])
-	input_star = sys.argv[1]	
+	parser = argparse.ArgumentParser(description='Tiltgroup Wrangler CLI for making lilt groups from an Appion ctf star file')
+	parser.add_argument('input_star_file', help='path to input star file')
+	parser.add_argument('-n_kmeans', type=int, default=50, help='number of cluster for k-means (defaults to 50)')
+	parser.add_argument('-r_version', choices=['relion31', 'relion3'], default='relion31', help='write output for Relion 3.1 (relion31) or 3.0 (relion3')
+		
+	args = parser.parse_args()
+	input_star = args.input_star_file		
+	N_CLUSTERS = args.n_kmeans
+	r_version = args.r_version
+	
 	tilt_wrangler = TiltWrangler(input_star)
 	tilt_wrangler.Readstar()
 	tilt_wrangler.replaceDW()
 	tilt_wrangler.findtiltgroups()
-	tilt_wrangler.relion3write()
+	if r_version == "relion31":
+		tilt_wrangler.relion31write()
+	else:
+		tilt_wrangler.relion3write()
