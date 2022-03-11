@@ -134,7 +134,8 @@ $expt_runname = sprintf("%05d", $expId);
 $expt_runname .= (empty($runId) ) ? '' : sprintf("-run%04d", $runId);
 if ($relion >= 1) $downname = sprintf("micrographs_ctf-%s.star",$expt_runname);
 else $downname = sprintf("ctfdata-session%s.dat", $expt_runname);
-if ($rversion == '3.1') $rversion = 'relion31'; //otherwise for Relion 3.0
+if ($rversion == '3.1') $rversion = 'relion31';
+else $rversion = 'relion3';
 header("Content-Disposition: attachment; filename=$downname;");
 
 $dir = sys_get_temp_dir();
@@ -144,6 +145,7 @@ foreach ($data as $line) {
     fwrite($handle, $line);
 }
 fclose($handle);
+#var_dump('cd '.$dir.'; /usr/local/bin/tiltgroup_wrangler_cli.py '.$tmp.' -n_kmeans='.$ncluster.' -r_version='.$rversion );
 $output = exec('cd '.$dir.'; /usr/local/bin/tiltgroup_wrangler_cli.py '.$tmp.' -n_kmeans='.$ncluster.' -r_version='.$rversion );
 $file = file_get_contents($dir.'/tw_out.star');
 echo $file;
