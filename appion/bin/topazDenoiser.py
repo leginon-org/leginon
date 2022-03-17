@@ -37,7 +37,7 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 		return
 
 	def processImage(self, imgdata):
-		command = "topaz-dev denoise "
+		command = "topaz denoise "
 		
 		image_path = imgdata['session']['image path']
 		out_path = self.params['rundir']
