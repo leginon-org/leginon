@@ -19,6 +19,11 @@ from appionlib import apDDLoop
 from appionlib import apK2process
 
 from pyami import mrc
+
+#this assumes  topaz is available via `module load topaz`
+cmd = os.popen("csh -c 'modulecmd python load topaz'")
+exec(cmd)
+
 class TopazDenoiser(appionLoop2.AppionLoop):
 
 	#======================
