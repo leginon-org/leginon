@@ -56,7 +56,8 @@ class TargetHandler(object):
 			return False
 		all_new = leginondata.AcquisitionImageTargetData(status='new',list=targetlistdata).query()
 		preview_new = leginondata.AcquisitionImageTargetData(type='preview',status='new',list=targetlistdata).query()
-		return len(all_new) == len(preview_new)
+		# if there are new targets, and not all of them  are not preview targets
+		return len(all_new) > 0 and len(all_new) == len(preview_new)
 
 	def reportTargetListDone(self, targetlistdata, status):
 		listid = targetlistdata.dbid
@@ -67,8 +68,8 @@ class TargetHandler(object):
 		if self.isPreviewOnly(targetlistdata):
 			# targetlist containing only preview needs to avoid being marked as done.
 			return
-		# mosaic quilt finder and mosaic target finder
-		# should not do this so more targets can be submitted
+		# DoneTargetList should not be inserted on targetlist originated from mosaic finders.
+		# This is so that more targets can be submitted
 		if targetlistdata['node']:
 			if not targetlistdata['node']['class string'].startswith('Mosaic'):
 				# TODO: using class string text to test is not a good idea. Need better solutions.
