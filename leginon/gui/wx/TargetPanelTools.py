@@ -259,6 +259,7 @@ class TargetType(object):
 		if self.unique and len(targets) > 1:
 			raise ValueError
 		if targets is None:
+			self.targets = []
 			return
 		self.targets = []
 		for target in targets:
@@ -275,7 +276,7 @@ class TargetType(object):
 				else:
 					self.targets.append(Target(target[0], target[1], self))
 			else:
-				print "unknown target type: ",target,"type:",type(target)
+				print "unknown target type for ",self.name,": ",target,"type:",type(target)
 
 	#--------------------
 	def getTargetPositions(self):

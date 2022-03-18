@@ -113,6 +113,9 @@ class Manager(node.Node):
 		self.autogridslot = None
 		self.autostagez = None
 		self.auto_task = None
+		self.square_finder_class_names = []
+		self.mosaic_target_receiver = None
+		self.auto_atlas_done = threading.Event()
 		self.auto_done = threading.Event()
 		# manager pause
 		self.pausable_nodes = []
@@ -140,6 +143,7 @@ class Manager(node.Node):
 		self.addEventInput(event.DeactivateNotificationEvent, self.handleNotificationStatus)
 		self.addEventInput(event.NodeBusyNotificationEvent, self.handleNodeBusyNotification)
 		self.addEventInput(event.AutoDoneNotificationEvent, self.handleAutoDoneNotification)
+		self.addEventInput(event.MosaicTargetReceiverNotificationEvent, self.handleMosaicTargetReceiverNotification)
 		self.addEventInput(event.ManagerPauseAvailableEvent, self.handleManagerPauseAvailable)
 		self.addEventInput(event.ManagerPauseNotAvailableEvent, self.handleManagerPauseNotAvailable)
 		self.addEventInput(event.ManagerContinueAvailableEvent, self.handleManagerContinueAvailable)
@@ -778,6 +782,8 @@ class Manager(node.Node):
 			# group into another function
 			self.removeNode(nodename)
 
+##############################
+# Leginon Remote Requirement
 	def handleManagerPauseAvailable(self, ievent):
 		self._addPausableNode(ievent['node'])
 		self._removePausedNode(ievent['node'])
@@ -806,7 +812,30 @@ class Manager(node.Node):
 				out = event.ContinueEvent()
 				self.sendManagerNotificationEvent(to_node, out)
 
-	# Timeout Timer
+	def _addPausableNode(self, nodename):
+		if nodename not in self.pausable_nodes:
+			self.pausable_nodes.append(nodename)
+
+	def _removePausableNode(self, nodename):
+		try:
+			self.pausable_nodes.remove(nodename)
+		except ValueError:
+			# not in the list
+			pass
+
+	def _addPausedNode(self, nodename):
+		if nodename not in self.paused_nodes:
+			self.paused_nodes.append(nodename)
+
+	def _removePausedNode(self, nodename):
+		try:
+			self.paused_nodes.remove(nodename)
+		except ValueError:
+			# not in the list
+			pass
+
+##############################
+# Timeout Timer/Error SlackNotification
 	def handleNodeBusyNotification(self, ievent):
 		self.restartTimeoutTimer()
 
@@ -816,13 +845,22 @@ class Manager(node.Node):
 				if self.timer_debug:
 					print 'timer canceled'
 
-	def slackTimeoutNotification(self):
+	def slackTimeoutNotification(self, msg = ''):
 		timeout = self.timeout_minutes*60.0
-		msg = 'Leginon has been idle for %.1f minutes' % self.timeout_minutes
+		if not msg:
+			msg = 'Leginon has been idle for %.1f minutes' % self.timeout_minutes
 		self.slackNotification(msg)
 		evt = event.IdleNotificationEvent(destination='')
 		self.distributeEvents(evt)
 		self.timer = False
+
+	def setTimeoutTimerStatus(self, status):
+		'''
+		Set timeout timer/error notification active status to True or False.
+		'''
+		evt = event.SetNotificationStatusEvent(destination='')
+		evt['active'] = status
+		self.distributeEvents(evt)
 
 	def restartTimeoutTimer(self):
 		'''
@@ -860,29 +898,7 @@ class Manager(node.Node):
 		self.timer = threading.Timer(timeout,self.slackTimeoutNotification)
 		self.timer.start()
 		if self.timer_debug:
-			print 'timer started with timout set to %.0f sec' % timeout
-
-	def _addPausableNode(self, nodename):
-		if nodename not in self.pausable_nodes:
-			self.pausable_nodes.append(nodename)
-
-	def _removePausableNode(self, nodename):
-		try:
-			self.pausable_nodes.remove(nodename)
-		except ValueError:
-			# not in the list
-			pass
-
-	def _addPausedNode(self, nodename):
-		if nodename not in self.paused_nodes:
-			self.paused_nodes.append(nodename)
-
-	def _removePausedNode(self, nodename):
-		try:
-			self.paused_nodes.remove(nodename)
-		except ValueError:
-			# not in the list
-			pass
+			print 'timer started with timeout set to %.0f sec' % timeout
 
 	# Node Error Notification
 	def handleNodeLogError(self, ievent):
@@ -898,6 +914,8 @@ class Manager(node.Node):
 		if isinstance(ievent, event.ActivateNotificationEvent):
 			self.tem_host = ievent['tem_host']
 			self.timeout_minutes = ievent['timeout_minutes']
+			msg = '%.1f minutes timeout and error notification is activated' % (self.timeout_minutes)
+			self.slackNotification(msg)
 			# reset
 			self.notifyerror = True
 			# first allow timer to restart, if was set to false by completing a timeout
@@ -922,8 +940,17 @@ class Manager(node.Node):
 	# application methods
 
 	def handleAutoDoneNotification(self, ievent):
-		if ievent['task'] == self.auto_task:
-			self.auto_done.set() 
+		if ievent['task'] == 'atlas':
+			self.auto_atlas_done.set()
+		if self.auto_task == 'full':
+			# since all acquisition node send this event, make sure it is the right one.
+			if self.mosaic_target_receiver and ievent['node'] == self.mosaic_target_receiver:
+				self.auto_done.set()
+
+	def handleMosaicTargetReceiverNotification(self, ievent):
+		# set node alias that mosaic click target finder that sends targets to.  The targetlist done
+		# from there signals end of full auto task
+		self.mosaic_target_receiver = ievent['receiver']
 
 	def getBuiltinApplications(self):
 		apps = [appdict['application'] for appdict in applications.builtin.values()]
@@ -1084,6 +1111,7 @@ class Manager(node.Node):
 				raise
 			self.auto_class_names = ['PresetsManager', 'TEMController','MosaicTargetMaker']
 			self.auto_class_aliases = self.getAutoStartNodeNames(app)
+			self.setTimeoutTimerStatus(True)
 			self.autoStartApplication(self.auto_task)
 
 	def getAutoStartNodeNames(self, app):
@@ -1091,7 +1119,9 @@ class Manager(node.Node):
 		Get node alias for the node classes that auto start will
 		send event to.
 		'''
-		self.auto_class_names = ['PresetsManager', 'TEMController','MosaicTargetMaker']
+		self.square_finder_class_names = ['MosaicClickTargetFinder','MosaicScoreTargetFinder']
+		self.auto_class_names = ['PresetsManager', 'TEMController','MosaicTargetMaker',]
+		self.auto_class_names.extend(self.square_finder_class_names)
 		auto_class_aliases = {}
 		for key in self.auto_class_names:
 			auto_class_aliases[key] = None
@@ -1115,7 +1145,7 @@ class Manager(node.Node):
 		time.sleep(2)
 		ievent = event.ChangePresetEvent()
 		# TODO determine which preset name to set.
-		ievent['name'] = 'en'
+		ievent['name'] = 'gr'
 		ievent['emtarget'] = None
 		ievent['keep image shift'] = False
 		self.outputEvent(ievent, node_name, wait=True, timeout=None)
@@ -1134,15 +1164,19 @@ class Manager(node.Node):
 			ievent['grid'] = None
 			ievent['stagez'] = self.autostagez
 			self.outputEvent(ievent, node_name, wait=False, timeout=None)
-		# TODO: Listen to all tasks finished
-		self.auto_done.clear()
-		print 'listen to AutoDoneNotificationEvent.'
-		self.auto_done.wait()
-		# next
-		print 'done waiting'
+		self.auto_atlas_done.clear()
+		# TODO: Listen to atlas finished
+		self.auto_atlas_done.wait()
 		if task == 'full':
-			#TODO pick square targets and move on.
-			pass
+			#submit auto square target and move on.
+			class_names = filter((lambda x: self.auto_class_aliases[x] is not None), self.square_finder_class_names)
+			if class_names:
+				node_name = self.auto_class_aliases[class_names[0]]
+				self.auto_done.clear()
+				ievent = event.SubmitMosaicTargetsEvent()
+				self.outputEvent(ievent, node_name, wait=False, timeout=None)
+				self.auto_done.wait()
+		# next grid session
 		next_auto_task = self.tasker.nextAutoTask()
 		if next_auto_task:
 			next_auto_session = next_auto_task['auto session']
@@ -1152,6 +1186,10 @@ class Manager(node.Node):
 			self.setSessionByName(next_auto_session['session']['name'])
 			# run it
 			self.autoStartApplication(self.auto_task)
+		else:
+			# finishing
+			self.timeout_minutes = 0
+			self.slackTimeoutNotification('autotasks all finished')
 
 	def killApplication(self):
 		self.cancelTimeoutTimer()

@@ -90,6 +90,8 @@ class Tecnai(tem.TEM):
 		except com_module.COMError, (hr, msg, exc, arg):
 			print 'unable to initialize TOM Moniker interface, %s' % msg
 			self.tom = None
+		except WindowsError:
+			self.tom = None
 
 		try:
 			self.lowdose = comtypes.client.CreateObject('LDServer.LdSrv')
@@ -172,6 +174,9 @@ class Tecnai(tem.TEM):
 			# back compatibility pre 3.5
 			value=self.getFeiConfig('phase plate','autoit_exe_path')
 		return value
+
+	def getAutoitGetBeamstopExePath(self):
+		return self.getFeiConfig('beamstop','autoit_get_exe_path')
 
 	def getAutoitBeamstopInExePath(self):
 		return self.getFeiConfig('beamstop','autoit_in_exe_path')
@@ -1085,9 +1090,9 @@ class Tecnai(tem.TEM):
 				# but Issue 4794 got 'need more than 3 values to unpack' error'.
 				# simplify the error handling so that it can be raised with messge.
 				msg = e.text
-				raise ValueError('Stage.Goto failed: %s' % (msg,))
+				raise RuntimeError('Stage.Goto failed: %s' % (msg,))
 			except:
-				raise ValueError('COMError in _setStagePosition: %s' % (e,))
+				raise RuntimeError('COMError in _setStagePosition: %s' % (e,))
 		except:
 			if self.getDebugStage():
 				print datetime.datetime.now()
@@ -1132,9 +1137,9 @@ class Tecnai(tem.TEM):
 					# but Issue 4794 got 'need more than 3 values to unpack' error'.
 					# simplify the error handling so that it can be raised with messge.
 					msg = e.text
-					raise ValueError('Stage.Goto failed: %s' % (msg,))
+					raise RuntimeError('Stage.Goto failed: %s' % (msg,))
 				except:
-					raise ValueError('COMError in _setStagePosition: %s' % (e,))
+					raise RuntimeError('COMError in _setStagePosition: %s' % (e,))
 			except:
 				if self.getDebugStage():
 					print datetime.datetime.now()
@@ -1929,11 +1934,25 @@ class Tecnai(tem.TEM):
 		'''
 		return self.setApertureSelection(mechanism_name, aperture_name)
 
+	def getBeamstopPosition(self):
+		methodname = 'getAutoitGetBeamstopExePath'
+		exepath = getattr(self,methodname)()
+		if exepath and os.path.isfile(exepath):
+			subprocess.call(exepath)
+			error = self._checkAutoItError()
+			result = self._getAutoItResult()
+			if result:
+				return result
+		# all counted as invalid state
+		return 'unknown'
+
 	def setBeamstopPosition(self, value):
 		"""
 		Possible values: ('in','out','halfway')
 		Tecnically tecnai has no software control on this.
 		"""
+		if value == self.getBeamstopPosition():
+			return
 		valuecap = value[0].upper()+value[1:]
 		methodname = 'getAutoitBeamstop%sExePath' % (valuecap)
 		exepath = getattr(self,methodname)()

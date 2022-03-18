@@ -29,6 +29,7 @@ class SimTEM(tem.TEM):
 		tem.TEM.__init__(self)
 
 		self.high_tension = 120000.0
+		self.cfeg_flashing = 0
 
 		self.magnifications = [
 			50,
@@ -57,7 +58,8 @@ class SimTEM(tem.TEM):
 			'x': (-1e-3, 1e-3),
 			'y': (-1e-3, 1e-3),
 			'z': (-5e-4, 5e-4),
-			'a': (-math.pi/2, math.pi/2),
+			'a':(math.radians(-70),math.radians(70)),
+			'b':(math.radians(-90),math.radians(90)), # no limit
 		}
 		self.minimum_stage = {
 			'x':5e-8,
@@ -181,6 +183,32 @@ class SimTEM(tem.TEM):
 	def setHighTension(self, value):
 		self.high_tension = value
 
+	def getColdFegFlashing(self):
+		value = self.cfeg_flashing
+		value_map = [('error', -1), ('off',0),('on',1)]
+		if value == -1:
+			raise RuntimeError('CFEG Flashing in error state')
+		values = map((lambda x: x[1]), value_map)
+		state = value_map[values.index(value)][0]
+		return state
+
+	def setColdFegFlashing(self, state):
+		# On starts flashing, Off stops flashing
+		if state == self.getColdFegFlashing():
+			# do nothing
+			return
+		value_map = [('off',0), ('on',1)]
+		states = map((lambda x: x[0]), value_map)
+		value = value_map[states.index(state)][1]
+		self.cfeg_flashing = value
+		# TODO: how long before the the state change in get ?
+		time.sleep(5)
+		if state == 'on':
+			while self.getColdFegFlashing() == 'on':
+				time.sleep(5)
+				self.cfeg_flashing = 0
+		return
+
 	def getStagePosition(self):
 		try:
 			beta = nidaq.getBeta()
@@ -191,10 +219,12 @@ class SimTEM(tem.TEM):
 		return copy.copy(self.stage_position)
 
 	def getStageLimits(self):
-		limits = super(SimTEM, self).getStageLimits()
+		limits = self.stage_range
 		return limits
 
 	def _setStagePosition(self,value):
+		# check limit here so that direct move will also be caught
+		self.checkStageLimits(value)
 		keys = value.keys()
 		keys.sort()
 		for axis in keys:
@@ -256,18 +286,6 @@ class SimTEM(tem.TEM):
 	def setStagePosition(self, value):
 		self.printStageDebug(value.keys())
 		value = self.checkStagePosition(value)
-		for axis in self.stage_axes:
-			if axis == 'b':
-				pass
-			else:
-				try:
-					if value[axis] < self.stage_range[axis][0]:
-						raise ValueError('Stage position %s out of range' % axis)
-					if value[axis] > self.stage_range[axis][1]:
-						m = 'invalid stage position for %s axis'
-						raise ValueError(m % axis)
-				except KeyError:
-					pass
 
 		for axis in value.keys():
 			if axis == 'b' and value['b'] is not None:
@@ -725,3 +743,45 @@ class SimDiffrTEM300(SimDiffrTEM):
 		SimDiffrTEM.__init__(self)
 		# to use with SimTEM300
 		self.high_tension = 300000.0
+
+class SimGlacios(SimTEM):
+	name = 'SimGlacios'
+	def __init__(self):
+		SimTEM.__init__(self)
+
+		self.high_tension = 200000.0
+
+		self.magnifications = [
+			155,
+			1250,
+			8500,
+			150000
+		]
+		self.magnification_index = 0
+
+		self.probe_modes = [
+			'micro',
+			'nano',
+		]
+
+	def findMagnifications(self):
+		# fake finding magnifications and set projection submod mappings
+		self.setProjectionSubModeMap({})
+		for mag in self.magnifications:
+			if mag < 1000:
+				self.addProjectionSubModeMap(mag,'LM',1)
+			elif mag < 2600:
+				self.addProjectionSubModeMap(mag,'Mi',2)
+			else:
+				self.addProjectionSubModeMap(mag,'SA',3)
+
+class SimDiffrGlacios(SimDiffrTEM):
+	name = 'SimDiffrGlacios'
+	projection_mode = 'diffraction'
+	def __init__(self):
+		SimDiffrTEM.__init__(self)
+		self.high_tension = 200000.0
+		self.magnifications = [
+			1100,
+			2750,
+		]

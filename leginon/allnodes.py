@@ -68,8 +68,8 @@ noderegistry.registerNodeClass(DTFinder,classtype)
 from mosaictargetfinder import MosaicClickTargetFinder
 noderegistry.registerNodeClass(MosaicClickTargetFinder,classtype)
 
-#from mosaicexternalfinder import MosaicClickTargetFinder
-#noderegistry.registerNodeClass(MosaicClickTargetFinder,classtype)
+from mosaicexternalfinder import MosaicScoreTargetFinder
+noderegistry.registerNodeClass(MosaicScoreTargetFinder,classtype)
 
 from mosaicquiltfinder import MosaicQuiltFinder
 noderegistry.registerNodeClass(MosaicQuiltFinder,classtype)
@@ -149,6 +149,9 @@ noderegistry.registerNodeClass(SampleTargetFilter,classtype)
 
 from jahcfinder import JAHCFinder
 noderegistry.registerNodeClass(JAHCFinder,classtype)
+
+from scorefinder import ScoreTargetFinder
+noderegistry.registerNodeClass(ScoreTargetFinder,classtype)
 
 from extholefinder import ExtHoleFinder
 noderegistry.registerNodeClass(ExtHoleFinder,classtype)

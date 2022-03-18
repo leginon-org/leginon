@@ -429,11 +429,20 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 
 	blobs = scipyblobs(image,tmpmask)
 	fakeblobs = []
+	isinf = 0
+	isnan = 0
 	toobig = 0
 	toosmall = 0
 	toooblong = 0
 	for blob in blobs:
 		fakeblob = Blob(image, mask, blob['n'], blob['center'], blob['mean'], blob['stddev'], blob['roundness'], blob['maximum_position'], blob['label_index'])
+		# scipy.ndimage.center_of_mass may return inf or nan which we don't want.
+		if math.isinf(blob['center'][0]) or math.isinf(blob['center'][1]):
+			isinf += 1
+			continue
+		if math.isnan(blob['center'][0]) or math.isnan(blob['center'][1]):
+			isnan += 1
+			continue
 		if blob['n'] >= maxblobsize:
 			toobig += 1
 			continue
@@ -447,8 +456,8 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 			continue
 		fakeblobs.append(fakeblob)
 	if summary is True:
-		sys.stderr.write("BLOB summary: %d total / %d too big / %d too small / %d too oblong\n"
-			%(len(fakeblobs),toobig,toosmall,toooblong,))
+		sys.stderr.write("BLOB summary: %d total / %d invalid number / %d too big / %d too small / %d too oblong\n"
+			%(len(fakeblobs),isinf+isnan, toobig,toosmall,toooblong,))
 
 	## limit to maxblobs
 	if (maxblobs is not None) and (len(blobs) > maxblobs):
@@ -589,6 +598,38 @@ def bin3f(a, factor):
 	cutfft = numpy.fft.fftshift(cutfft)
 	binned = ffteng.itransform(cutfft)/float(factor**3)
 	return binned
+
+def shrink_factor(shape):
+	'''
+	Return the binning to keep correlation efficient.
+	'''
+	max_dim = max(shape)
+	for b in (1,2,4,8):
+		if max_dim // b <= 1440: # based on k3 dimension
+			break
+	return b
+
+def shrink_offset(oldshape):
+	'''
+	Return the offset for shrinking to keep correlation efficient.
+	'''
+	b = shrink_factor(oldshape)
+	if b > 1:
+		newshape = (b*(oldshape[0]//b), b*(oldshape[1]//b))
+		offset = ((oldshape[0] - newshape[0]) // 2, (oldshape[1] - newshape[1]) // 2)
+	else:
+		offset = (0,0)
+	return offset
+
+def shrink(image):
+	oldshape = image.shape
+	offset = (0,0)
+	b = shrink_factor(oldshape)
+	if b > 1:
+		newshape = (b*(oldshape[0]//b), b*(oldshape[1]//b))
+		offset = shrink_offset(oldshape)
+		image = image[offset[0]:offset[0]+newshape[0], offset[0]:offset[1]+newshape[1]]
+	return bin(image, b)
 
 def crop_at(im, center, shape, mode='wrap', cval=None):
 	'''

@@ -138,9 +138,26 @@ class AutoDoneNotificationEvent(NotificationEvent):
 		)
 	typemap = classmethod(typemap)
 
+class MosaicTargetReceiverNotificationEvent(NotificationEvent):
+	'''Event sent by mosaic target finder node to indicate the targetwatcher
+	node that receives the targets'''
+	def typemap(cls):
+		return NotificationEvent.typemap() + (
+			('receiver', str), # node alias
+		)
+	typemap = classmethod(typemap)
+
 class IdleNotificationEvent(NotificationEvent):
 	'Event sent to presets manager from manager to notify that Idle is timed out'
 	pass
+
+class SetNotificationStatusEvent(NotificationEvent):
+	'Event sent to presets manager from manager to set the timer active status'
+	def typemap(cls):
+		return NotificationEvent.typemap() + (
+			('active', bool),
+		)
+	typemap = classmethod(typemap)
 
 class ManagerPauseAvailableEvent(NotificationEvent):
 	'''Event sent by node such as Acquisition when it is in a pausable status
@@ -445,6 +462,11 @@ class MakeTargetListEvent(ControlEvent):
 		)
 	typemap = classmethod(typemap)
 
+class SubmitMosaicTargetsEvent(ControlEvent):
+	'Event that signals mosaic target finder to submit target'
+	pass
+
+
 class EmailEvent(Event):
 	'Event to send email'
 	def typemap(cls):
@@ -478,6 +500,7 @@ class PresetChangedEvent(Event):
 		return Event.typemap() + (
 			('name', str),
 			('preset', leginondata.PresetData),
+			('has_error', bool),
 		)
 	typemap = classmethod(typemap)
 

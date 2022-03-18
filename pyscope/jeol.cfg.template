@@ -19,6 +19,10 @@ LM1_MAG_MAX = 200
 #normalize by set to this lowmag mag each time changing from mag1 to lowmag
 LOWMAG_NORMALIZATION_MAG = 200
 
+[feg]
+# has cold feg
+HAS_COLD_FEG = False
+
 [n2filler]
 # simple nitrogen filler timer
 # set sequence of FILL_STARTS (in minutes since midnight)

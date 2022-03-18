@@ -58,9 +58,12 @@ class TargetHandler(object):
 		self.outputEvent(e)
 		# mosaic quilt finder and mosaic target finder
 		# should not do this so more targets can be submitted
-		if hasattr(targetlistdata['node'],'class string') and not targetlistdata['class string'].startswith('Mosaic'):
-			# TODO: using class string text to test is not a good idea. Need better solutions.
-			self.insertDoneTargetList(targetlistdata)
+		if targetlistdata['node']:
+			if not targetlistdata['node']['class string'].startswith('Mosaic'):
+				# TODO: using class string text to test is not a good idea. Need better solutions.
+				self.insertDoneTargetList(targetlistdata)
+			else:
+				self.notifyAutoDone('full')
 
 	def insertDoneTargetList(self, targetlistdata):
 		if targetlistdata:
@@ -235,6 +238,10 @@ class TargetHandler(object):
 				self.postQueueCount(self.total_queue_left_in_loop)
 				donetargetlist = leginondata.DequeuedImageTargetListData(session=self.session, list=targetlist, queue=self.targetlistqueue)
 				self.publish(donetargetlist, database=True)
+				if targetlist['image']:
+					self.logger.info('dequeued targetlist from %s' % targetlist['image']['filename'])
+				else:
+					self.logger.info('dequeued targetlist id=%d without parent' % targetlist,dbid)
 			self.player.play()
 			if self.settings['reset tilt']:
 				# FIX ME: reset tilt and xy at the end of queue.  This is different

@@ -220,7 +220,11 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		required_bin = self.binning['x']
 		this_bin_files = []
 		for f in files:
-			this_bin = int(f[3])
+			try:
+				this_bin = int(f[3])
+			except ValueError:
+				# ignore those not named as bin*
+				continue
 			if mag not in self.current_image_count:
 				self.current_image_count[mag]={}
 			if this_bin not in self.current_image_count[mag]:
@@ -691,6 +695,9 @@ class SimOtherCCDCamera(SimCCDCamera):
 		im = SimCCDCamera._getImage(self)
 		im = 10 * im
 		return im
+
+class SimCeta(SimCCDCamera):
+	name = 'SimCeta'
 
 class SimK2CountingCamera(SimFrameCamera):
 	name = 'SimK2CountingCamera'

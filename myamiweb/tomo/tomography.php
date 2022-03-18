@@ -199,6 +199,7 @@ class Tomography {
 
 		$query = 'SELECT '
 			.'a.DEF_id AS id, '
+			.'UNIX_TIMESTAMP(a.DEF_timestamp) AS timestamp, '
 			.'DEGREES(s.`SUBD|stage position|a`) AS alpha, '
 			#.'DEGREES(s.`SUBD|stage position|b`) AS beta '
 			.'s.`SUBD|stage position|x` AS stage_x, '
@@ -207,12 +208,16 @@ class Tomography {
 			.'s.`SUBD|image shift|x` AS shift_x, '
 			.'s.`SUBD|image shift|y` AS shift_y, '
 			.'s.defocus AS defocus, '
+			.'s.`intended defocus` AS intended_defocus, '
 			.'s.magnification AS magnification, '
+			.'s.`spot size` AS spot_size, '
 			.'c.`SUBD|dimension|x` AS dimension_x, '
 			.'c.`SUBD|dimension|y` AS dimension_y, '
 			.'c.`SUBD|binning|x` AS binning_x, '
 			.'c.`SUBD|binning|y` AS binning_y, '
 			.'c.`exposure time` AS exposure_time, '
+			.'c.`nframes` AS nframes, '
+			.'c.`nframes` AS nframes, '
 			#.'DEGREES(TomographyPredictionData.`SUBD|predicted position|theta`) AS tilt_axis, '
 			.'AcquisitionImageStatsData.mean AS mean, '
 			.'a.filename, '
@@ -369,7 +374,7 @@ class Tomography {
 			.'ON a.`REF|PresetData|preset` = p.`DEF_id` '
 			.'WHERE a.`DEF_id` = '.$image_id.' ';
 		$results = $this->mysql->getSQLResult($query);
-		return $results[0];
+		return ($results ? $results[0]:array('dose'=>null));
 	}
 
 	function getTiltSeriesDose($tiltSeriesData) {

@@ -11,6 +11,7 @@ import threading
 import leginon.gui.wx.TargetPanel
 import leginon.gui.wx.Settings
 import leginon.gui.wx.AutoTargetFinder
+import leginon.gui.wx.IceTargetFinder
 import leginon.gui.wx.Rings
 from leginon.gui.wx.Choice import Choice
 from leginon.gui.wx.Entry import Entry, IntEntry, FloatEntry
@@ -403,143 +404,8 @@ class FinalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return FinalScrolledSettings(self,self.scrsize,False)
 
-class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
-	def initialize(self):
-		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, 'Ice Thickness Threshold')
-		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sb = wx.StaticBox(self, -1, 'Focus Template Thickness')
-		sbszftt = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sb = wx.StaticBox(self, -1, 'Target Template')
-		sbsztt = wx.StaticBoxSizer(sb, wx.VERTICAL)
-
-		self.widgets['ice min mean'] = FloatEntry(self, -1, chars=6)
-		self.widgets['ice max mean'] = FloatEntry(self, -1, chars=6)
-		self.widgets['ice max std'] = FloatEntry(self, -1, chars=6)
-		self.widgets['ice min std'] = FloatEntry(self, -1, chars=6)
-		self.widgets['focus hole'] = Choice(self, -1, choices=self.node.focustypes)
-		self.widgets['target template'] = wx.CheckBox(self, -1,
-			'Use target template')
-		self.widgets['filter ice on convolved'] = wx.CheckBox(self, -1,
-			'Apply ice thickness threshold on template-convolved acquisiton targets')
-		self.widgets['focus template'] = leginon.gui.wx.TargetTemplate.Panel(self,
-			'Focus Target Template', autofill=True)
-		self.widgets['acquisition template'] = leginon.gui.wx.TargetTemplate.Panel(self,
-			'Acquisition Target Template', autofill=True)
-		self.widgets['focus template thickness'] = wx.CheckBox(self, -1,
-			'Use focus template thickness and limit to one focus target')
-		self.widgets['focus stats radius'] = IntEntry(self, -1, chars=6)
-		self.widgets['focus min mean thickness'] = FloatEntry(self, -1, chars=6)
-		self.widgets['focus max mean thickness'] = FloatEntry(self, -1, chars=6)
-		self.widgets['focus min stdev thickness'] = FloatEntry(self, -1, chars=6)
-		self.widgets['focus max stdev thickness'] = FloatEntry(self, -1, chars=6)
-
-		szice = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Min. mean:')
-		szice.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szice.Add(self.widgets['ice min mean'], (0, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Max. mean:')
-		szice.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szice.Add(self.widgets['ice max mean'], (1, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Min. stdev.:')
-		szice.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szice.Add(self.widgets['ice min std'], (2, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Max. stdev.:')
-		szice.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szice.Add(self.widgets['ice max std'], (3, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Focus hole selection:')
-		szice.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szice.Add(self.widgets['focus hole'], (4, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		szice.Add(self.createFocusOffsetSizer(), (5,0), (1,2),
-										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		szice.AddGrowableCol(1)
-
-		sbszice.Add(szice, 1, wx.EXPAND|wx.ALL, 5)
-
-		szftt = wx.GridBagSizer(5, 5)
-		szftt.Add(self.widgets['focus template thickness'], (0, 0), (1, 2),
-										wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Stats. radius:')
-		szftt.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szftt.Add(self.widgets['focus stats radius'], (1, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Min. mean thickness:')
-		szftt.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szftt.Add(self.widgets['focus min mean thickness'], (2, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Max. mean thickness:')
-		szftt.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szftt.Add(self.widgets['focus max mean thickness'], (3, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Min. std. thickness:')
-		szftt.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szftt.Add(self.widgets['focus min stdev thickness'], (4, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Max. std. thickness:')
-		szftt.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szftt.Add(self.widgets['focus max stdev thickness'], (5, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		szftt.AddGrowableCol(1)
-
-		sbszftt.Add(szftt, 1, wx.EXPAND|wx.ALL, 5)
-
-		sztt = wx.GridBagSizer(5, 5)
-		sztt.Add(self.widgets['target template'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztt.Add(self.widgets['filter ice on convolved'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztt.Add(sbszftt, (2, 0), (4, 1), wx.ALIGN_CENTER)
-		sztt.Add(self.widgets['focus template'], (0, 1), (3, 1), wx.ALIGN_CENTER|wx.EXPAND)
-		sztt.Add(self.widgets['acquisition template'], (3, 1), (2, 1), wx.ALIGN_CENTER|wx.EXPAND)
-		sztt.AddGrowableCol(1)
-		sztt.AddGrowableRow(0)
-		sztt.AddGrowableRow(5)
-
-		sbsztt.Add(sztt, 1, wx.EXPAND|wx.ALL, 5)
-
-		self.bice = wx.Button(self, -1, '&Test targeting')
-		self.cice = wx.Button(self, -1, '&Clear targets')
-		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(self.cice, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
-		szbutton.Add(self.bice, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		szbutton.AddGrowableCol(1)
-		
-		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.bice)
-		self.Bind(wx.EVT_BUTTON, self.onClearButton, self.cice)
-
-		self.growrows = [False, True, False,]
-
-		return [sbszice, sbsztt, szbutton]
-
-	def createFocusOffsetSizer(self):
-		# set widgets
-		self.widgets['focus offset row'] = IntEntry(self, -1, chars=4)
-		self.widgets['focus offset col'] = IntEntry(self, -1, chars=4)
-		# make sizer
-		sz_offset = wx.BoxSizer(wx.HORIZONTAL)
-		sz_offset.Add(wx.StaticText(self, -1, 'Focus offset x:'),0,wx.ALIGN_CENTER_VERTICAL)
-		sz_offset.Add(self.widgets['focus offset col'])
-		sz_offset.AddSpacer(10)
-		sz_offset.Add(wx.StaticText(self, -1, 'y:'),0,wx.ALIGN_CENTER_VERTICAL)
-		sz_offset.Add(self.widgets['focus offset row'])
-		return sz_offset
-
-	def onTestButton(self, evt):
-		self.dialog.setNodeSettings()
-		threading.Thread(target=self.node.ice).start()
-		self.panel.imagepanel.hideTypeToolDisplays(['Blobs','Template','Threshold'])
-		self.panel.imagepanel.showTypeToolDisplays(['acquisition','focus','Original'])
-
-	def onClearButton(self, evt):
-		self.dialog.setNodeSettings()
-		self.node.clearTargets('Blobs')
-		self.node.clearTargets('acquisition')
-		self.node.clearTargets('focus')
-
-
+class FinalScrolledSettings(leginon.gui.wx.IceTargetFinder.FinalScrolledSettings):
+	this = 'ScoreTargetFinder'
 
 if __name__ == '__main__':
 	class App(wx.App):

@@ -117,6 +117,10 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		except:
 			settings['frame time'] = None
 		try:
+			settings['request nframes'] = self.getRequestNFrames()
+		except:
+			settings['request nframes'] = self.getNumberOfFrames()
+		try:
 			settings['use frames'] = self.getUseFrames()
 		except:
 			settings['use frames'] = ()
@@ -147,6 +151,10 @@ class CCDCamera(baseinstrument.BaseInstrument):
 			pass
 		try:
 			self.setFrameTime(settings['frame time'])
+		except:
+			pass
+		try:
+			self.setRequestNFrames(settings['request nframes'])
 		except:
 			pass
 		try:

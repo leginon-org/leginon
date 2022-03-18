@@ -88,6 +88,7 @@ class CorrectorClient(cameraclient.CameraClient):
 			self.logger.warning('Searching only reference in %s' % ref_path)
 			ref = self.researchReferenceOnlyInPath(refimageq, ref_path)
 		if not hasattr(ref,'imagereadable') or not ref.imagereadable():
+			self.logger.error('%s data id=%d found but its image array not readable' % (type, ref.dbid))
 			return None
 
 		shape = ref.imageshape() # read shape without loading the array
@@ -289,6 +290,8 @@ class CorrectorClient(cameraclient.CameraClient):
 		Assuming exposure time of each frame (or frame time) is constant.
 		'''
 		darkarray = dark['image']
+		if darkarray is None:
+			return darkarray
 		try:
 			## NEED TO FIX
 			dark_exptime = len(dark['use frames']) * float(dark['camera']['frame time'])
@@ -351,11 +354,14 @@ class CorrectorClient(cameraclient.CameraClient):
 		return normarray
 
 	def normalizeImageArray(self, rawarray, darkarray, normarray, is_counting=False):
-		diff = rawarray - darkarray
-		r = diff * normarray
-		## remove nan and inf
-		r = numpy.where(numpy.isfinite(r), r, 0)
-		return r
+		try:
+			diff = rawarray - darkarray
+			r = diff * normarray
+			## remove nan and inf
+			r = numpy.where(numpy.isfinite(r), r, 0)
+			return r
+		except TypeError:
+			ValueError('reference image array loaded as None')
 
 	def normalizeCameraImageData(self, imagedata, channel):
 		cameradata = imagedata['camera']
@@ -368,8 +374,15 @@ class CorrectorClient(cameraclient.CameraClient):
 		rawarray = imagedata['image'] # This will read image if not in memory
 		if not self.isFakeImageObj(imagedata):
 			self.logger.info('reading reference array for normalization')
+			# cached reference may lose its file access at this point
 			darkarray = self.prepareDark(dark, imagedata)
+			if darkarray is None:
+				raise RuntimeError('lost %s.mrc' % dark['filename'])
+			# cached reference may lose its file access at this point
 			normarray = norm['image']
+			if normarray is None:
+				raise RuntimeError('lost %s.mrc' % norm['filename'])
+
 			self.logger.info('done reading reference array')
 			r = self.normalizeImageArray(rawarray,darkarray,normarray, 'GatanK2' in cameradata['ccdcamera']['name'])
 		else:
@@ -695,7 +708,11 @@ class CorrectorClient(cameraclient.CameraClient):
 		import instrument
 		camsettings = self.settings['camera settings']
 		ccdname = self.settings['instruments']['ccdcamera']
-		ccdcamera = self.instrument.getCCDCameraData(ccdname)
+		try:
+			ccdcamera = self.instrument.getCCDCameraData(ccdname)
+		except Exception as e:
+			self.logger.error('failed to store corrector plan:%s' % e)
+			return
 		cameradata = leginondata.CameraEMData()
 		cameradata.update(self.settings['camera settings'])
 		cameradata['ccdcamera'] = ccdcamera

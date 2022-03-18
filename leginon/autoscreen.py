@@ -206,7 +206,7 @@ if __name__ == "__main__":
 		app.setComment(comment_map[i][1])
 		app.createSession()
 		auto_session = app.saveGridSessionMap(i, slot_number, stagez)
-		task = app.saveTask(auto_session,'atlas')
+		task = app.saveTask(auto_session,'full')
 		task_order.append(task.dbid)
 		if i == 0:
 			first_session = app.session
