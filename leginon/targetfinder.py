@@ -776,6 +776,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			target['stats']['Size'] = blob.stats['n']
 			target['stats']['Mean'] = blob.stats['mean']
 			target['stats']['Std. Dev.'] = blob.stats['stddev']
+			target['stats']['Roundness'] = blob.stats['roundness']    # wjr
 			targets.append(target)
 		return targets
 

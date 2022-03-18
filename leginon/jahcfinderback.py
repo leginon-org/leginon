@@ -130,7 +130,7 @@ class HoleFinder(object):
 		self.correlation_config = {'cortype': 'cross', 'corfilt': (1.0,),'cor_image_min':0.0}
 		self.threshold = 3.0
 		self.threshold_method = "Threshold = mean + A * stdev"
-		self.blobs_config = {'border': 20, 'maxblobsize': 50, 'maxblobs':100, 'minblobsize':0}
+		self.blobs_config = {'border': 20, 'maxblobsize': 50, 'maxblobs':100, 'minblobsize':0, 'minblobroundness':0.8}  #wjr
 		self.lattice_config = {'tolerance': 0.1, 'vector': 100.0, 'minspace': 20, 'extend': 'off'}
 		self.holestats_config = {'radius': 20}
 		self.ice_config = {'i0': None, 'min': 0.0, 'max': 0.1, 'std': 0.05}
@@ -306,7 +306,7 @@ class HoleFinder(object):
 		if self.save_mrc:
 			mrc.write(t, 'threshold.mrc')
 
-	def configure_blobs(self, border=None, maxblobs=None, maxblobsize=None, minblobsize=None):
+	def configure_blobs(self, border=None, maxblobs=None, maxblobsize=None, minblobsize=None, minblobroundness=None):
 		if border is not None:
 			self.blobs_config['border'] = border
 		if maxblobsize is not None:
@@ -315,6 +315,8 @@ class HoleFinder(object):
 			self.blobs_config['minblobsize'] = minblobsize
 		if maxblobs is not None:
 			self.blobs_config['maxblobs'] = maxblobs
+		if minblobroundness is not None:
+			self.blobs_config['minblobroundness'] = minblobroundness   #wjr
 
 	def find_blobs(self, picks=None):
 		'''
@@ -329,7 +331,8 @@ class HoleFinder(object):
 			maxsize = self.blobs_config['maxblobsize']
 			minsize = self.blobs_config['minblobsize']
 			maxblobs = self.blobs_config['maxblobs']
-			blobs = imagefun.find_blobs(im, mask, border, maxblobs, maxsize, minsize)
+			minroundness = self.blobs_config['minblobroundness']
+			blobs = imagefun.find_blobs(im, mask, border, maxblobs, maxsize, minsize, minroundness)   #wjr
 		else:
 			picks = self.swapxy(picks)
 			blobs = self.points_to_blobs(picks)

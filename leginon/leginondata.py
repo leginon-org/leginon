@@ -1295,6 +1295,7 @@ class HoleFinderPrefsData(InSessionData):
 			('blob-max-number', int),
 			('blob-max-size', int),
 			('blob-min-size', int),
+			('blob-min-roundness', float),
 			('lattice-spacing', float),
 			('lattice-tolerance', float),
 			('stats-radius', float),
@@ -1337,6 +1338,7 @@ class HoleDepthFinderPrefsData(InSessionData):
 			('blob-max-number', int),
 			('blob-max-size', int),
 			('blob-min-size', int),
+			('blob-min-roundness', float),
 			('stats-radius', float),
 			('ice-zero-thickness', float),
 		)
@@ -1679,6 +1681,7 @@ class TemplateTargetFinderSettingsData(TargetFinderSettingsData):
 			('blobs max', int),
 			('blobs max size', int),
 			('blobs min size', int),
+			('blobs min roundness', float),
 			('lattice spacing', float),
 			('lattice tolerance', float),
 			('lattice hole radius', float),
@@ -1741,6 +1744,7 @@ class HoleDepthFinderSettingsData(TargetFinderSettingsData):
 			('blobs max', int),
 			('blobs max size', int),
 			('blobs min size', int),
+			('blobs min roundness', float),
 			('pickhole radius', float),
 			('pickhole zero thickness', float),
 		)
@@ -1886,6 +1890,7 @@ class BlobFinderSettingsData(Data):
 			('max', int),
 			('min size', int), # rough cutoff in blob finding
 			('max size', int), # rough cutoff in blob finding
+			('min roundness', float), # rough cutoff in blob finding
 			('min mean', float),
 			('max mean', float),
 			('min stdev', float),
@@ -3104,6 +3109,7 @@ class ZeroLossIceThicknessSettingsData(SettingsData):
 			('exposure time', float),
 			('slit width', float),
 			('mean free path', float),   #nm
+			('binning', int),
 			('decimate', int),
 			('process_obj_thickness', bool),
 			('obj mean free path', float),
