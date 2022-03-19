@@ -38,7 +38,7 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 			help="Specific head destination frame path to transfer if multiple frame transfer is run for one source to frame paths not all mounted on the same computer, e.g. --destination_head=/data1", metavar="PATH", default='')
 		parser.add_option("--path_mode", dest="mode_str", 
 			help="recursive session permission modification by chmod if specified, default means not to modify e.g. --path_mode=g-w,o-rw")
-		parser.add_option("--check_days", dest="check_days", help="Number of days to query database", type="int", default=1)
+		parser.add_option("--check_days", dest="check_days", help="Number of days to query database", type="int", default=10)
 
 
 	def checkOptionConflicts(self,params):
