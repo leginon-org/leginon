@@ -6,6 +6,7 @@ Leginon clients, presets, and application of an old session.
 import os
 import sys
 import time
+import wx
 from leginon import leginondata
 from leginon import projectdata
 from leginon import gridserver
@@ -15,16 +16,19 @@ import leginon.ddinfo
 import leginon.nodesimu
 import leginon.presets
 from pyami import mysocket
+from leginon.gui.wx import AutoScreenProject
 
 class Options(object):
 	pass
 
-class SessionCreator(object):
+class SessionSetCreator(object):
 	def __init__(self):
 		self.old_session = None
 		self.session_set = None
+		self.old_project = None
 		self.comment = None
 		self.stagez = None
+		self.all_grid_info = []
 
 	def saveAutoSessionSet(self,old_session_name):
 		self._setOldSession(old_session_name)
@@ -43,9 +47,59 @@ class SessionCreator(object):
 			raise ValueError('Error: old session not found')
 			sys.exit(1)
 		self.old_session = r[0]
+		self.old_project = self.getProjectFromSession(self.old_session)
+
+	def getProjectFromSession(self,old_session):
+		q = projectdata.projectexperiments(session=old_session)
+		r = q.query()
+		if len(r) != 1:
+			print 'Project link of the old session is not unique'
+			sys.exit(1)
+		return r[0]['project']
+
+	def getOldSessionStageZ(self):
+		old_session = self.old_session
+		scopes = leginondata.ScopeEMData(session=old_session).query(results=1)
+		stagez = 0.0
+		if scopes:
+			stagez = scopes[0]['stage position']['z']
+		return stagez
+
+	def confirmCommentProjectWithGui(self, all_grid_info):
+		'''
+		Start gui to modify session comment and project assignment for each grid.
+		'''
+		project_choices = {}
+		projects = projectdata.projects().query()
+		projects.reverse()
+		app = wx.App()
+		AutoScreenProject.ScreenInfoMap(self, self.old_session,self.old_project,all_grid_info, projects)
+		app.MainLoop()
+
+	def uiSetGridMap(self, all_grid_info):
+		self.all_grid_info = all_grid_info
+
+	def setGridMap(self, all_grid_info):
+		'''
+		Set all_grid_info without gui.  project_id == None is converted to old_project
+		'''
+		for g in all_grid_info:
+			if g['project_id'] is None:
+				g['project_id'] = self.old_project.dbid
+			self.all_grid_info.append(g)
+
+class SessionCreator(object):
+	def __init__(self, session_set):
+		self.session_set = session_set
+		self.old_session = session_set['base session']
+		self.project = None
 
 	def setComment(self, comment):
 		self.comment = comment
+
+	def setProjectId(self, projectid):
+		self.project_id = projectid
+		self.project = projectdata.projects().direct_query(projectid)
 
 	def createSession(self):
 		old_session = self.old_session
@@ -53,9 +107,7 @@ class SessionCreator(object):
 		if not old_session or not comment:
 			raise ValueError('old session or comment not valid')
 		self.session = self.makeNewSessionFromOld(old_session, comment)
-		# TODO: need gui to allow linking sessions from different project
-		pid = self.getProjectIdFromSession(old_session)
-		self.project = self.linkSessionProject(pid)
+		self.project = self.linkSessionProject(self.project_id)
 		self.setDataFromOld('C2ApertureSizeData',old_session)
 		self.clients = self.setDataFromOld('ConnectToClientsData',old_session)['clients']
 		self.setDataFromOld('LaunchedApplicationData',old_session)
@@ -75,14 +127,6 @@ class SessionCreator(object):
 		name = leginon.session.suggestName()
 		return name
 
-	def getProjectIdFromSession(self,old_session):
-		q = projectdata.projectexperiments(session=old_session)
-		r = q.query()
-		if len(r) != 1:
-			print 'Project link of the old session is not unique'
-			sys.exit(1)
-		return r[0]['project'].dbid
-		
 	def linkSessionProject(self,projectid):
 		name = self.session['name']
 		projeq = leginon.session.linkSessionProject(name, projectid)
@@ -126,14 +170,6 @@ class SessionCreator(object):
 			q['session'] = self.session
 			q.insert()
 
-	def getOldSessionStageZ(self):
-		old_session = self.old_session
-		scopes = leginondata.ScopeEMData(session=old_session).query(results=1)
-		stagez = 0.0
-		if scopes:
-			stagez = scopes[0]['stage position']['z']
-		return stagez
-
 	def saveGridSessionMap(self, order, slot_number, stagez):
 		q = leginondata.AutoSessionData()
 		q['session set'] = self.session_set
@@ -156,17 +192,25 @@ class SessionCreator(object):
 		q.insert(force=True)
 
 def readMapFile(filepath):
+	'''
+	Read tab separated text file for slot number, comment, and project_id passing.
+	# TODO: make gui to allow linking sessions from different project
+	'''
 	f = open(filepath,'r')
 	lines = f.readlines()
-	comment_map = []
+	grid_info_map = []
 	for l in lines:
+		l = l.split('\n')[0]
 		bits = l.split('\t')
-		if len(bits) == 2:
+		if len(bits) >= 2:
 			# list of slot number and comment so that it is ordered
-			comment_map.append((int(bits[0]),bits[1].split('\n')[0]))
+			info = {'slot_number':int(bits[0]),'comment':bits[1],'project_id':None}
+			if len(bits) == 3:
+				info['project_id']=int(bits[2])
+			grid_info_map.append(info)
 		else:
 			raise ValueError('Incorrect file format.  Must use tab to separate slot_number and session_description')
-	return comment_map
+	return grid_info_map
 
 def start(sessionname, clientlist, gridslot,z, task='atlas'):
 	if clientlist:
@@ -180,7 +224,6 @@ def start(sessionname, clientlist, gridslot,z, task='atlas'):
 	if not gridslot:
 		z = None
 	option_dict = {'version':None, 'session': sessionname, 'clients': clients,'prevapp':True, 'gridslot':gridslot, 'stagez':z, 'task':task}
-	print option_dict
 	# options need to be set as attributes
 	options = Options()
 	for k in option_dict.keys():
@@ -188,22 +231,24 @@ def start(sessionname, clientlist, gridslot,z, task='atlas'):
 	from leginon import start
 	start.start(options)
 
+
 if __name__ == "__main__":
-	answer = raw_input('Enter autoloader cassette-grid mapping filename=')
+	answer = raw_input('Enter autoloader cassette-grid mapping filename (leave it blank to use gui): ')
+	grid_info_map = []
 	if answer:
 		if not os.path.isfile(answer):
 			print 'Error: file not found'
 			sys.exit(1)
-		comment_map = readMapFile(answer)
+		use_gui = False
+		grid_info_map = readMapFile(answer)
 	else:
-		comment_map = []
-		ganswer = raw_input('Grid loader slot number for the grid= ')
-		if not ganswer:
-			print 'Error: Invalid grid loader slot number'
+		slot_list = raw_input('List comma-separated slot number to screen, i.e., 1,11,12: ')
+		slots = slot_list.split(',')
+		if not slots:
 			sys.exit(1)
-		answer = raw_input('Session comment field entry: ')
-		# grid slot, comment
-		comment_map.append((int(ganswer),answer))
+		use_gui = True
+		for s in slots:
+			grid_info_map.append({'slot_number':int(s),'comment':'','project_id':None})
 	# workflow choice
 	wanswer = raw_input('Full workflow or atlas only (full/atlas): ')
 	while wanswer.lower() not in ('full','atlas'):
@@ -213,10 +258,14 @@ if __name__ == "__main__":
 	answer = raw_input('Enter an old session name to base new sessions on: ')
 	if not answer:
 		sys.exit(0)
-	app = SessionCreator()
-	app.saveAutoSessionSet(answer)
+	app1 = SessionSetCreator()
+	try:
+		app1.saveAutoSessionSet(answer)
+	except Exception as e:
+		print('Error: %s' % e)
+		sys.exit(1)
 	# z value
-	stagez = app.getOldSessionStageZ()
+	stagez = app1.getOldSessionStageZ()
 	zanswer = raw_input('Enter Z stage height to return to in um (default: the old sessionvalue %.1f): ' % (stagez*1e6,))
 	if zanswer != '':
 		try:
@@ -224,24 +273,36 @@ if __name__ == "__main__":
 		except ValueError:
 			print('Invalid number entry: %s' % zanswer)
 			sys.exit(1)
-	# create by the order of the comment_map
-	slot_order = map((lambda x:x[0]),comment_map)
+	# confirm session project assignment
+	if use_gui:
+		app1.confirmCommentProjectWithGui(grid_info_map)
+	else:
+		app1.setGridMap(grid_info_map)
+
+	if app1.all_grid_info == False:
+		sys.exit(1)
+	# create by the order of the confirmed all_grid_info
+	# app.all_grid_info may have been modified by the gui.
+	slot_order = map((lambda x:x['slot_number']),app1.all_grid_info)
 	task_order = []
 
 	# SessionData are created before starting.
+	app2 = SessionCreator(app1.session_set)
 	for i, slot_number in enumerate(slot_order):
-		app.setComment(comment_map[i][1])
-		app.createSession()
-		# TODO: create gridhook link in grid server
-		app.linkGridServerSession()
+		# project_id and comment are set before creating the session
+		app2.setProjectId(app1.all_grid_info[i]['project_id'])
+		app2.setComment(app1.all_grid_info[i]['comment'])
+		app2.createSession()
+		# create gridhook link in grid server
+		app2.linkGridServerSession()
 		# save grid session map in leginondb
-		auto_session = app.saveGridSessionMap(i, slot_number, stagez)
-		task = app.saveTask(auto_session,workflow)
+		auto_session = app2.saveGridSessionMap(i, slot_number, stagez)
+		task = app2.saveTask(auto_session,workflow)
 		task_order.append(task.dbid)
 		if i == 0:
-			first_session = app.session
+			first_session = app2.session
 			first_slot = slot_number
 		time.sleep(1.0) # to prevent session out of order on the viewer.
-	app.saveAutoTaskOrder(task_order)
-	#TODO: start the first session.  The rest will be set from there.
-	start(first_session['name'],app.clients,first_slot,stagez, task['task'])
+	app2.saveAutoTaskOrder(task_order)
+	#start the first session.  The rest will be set from Manager.
+	start(first_session['name'],app2.clients,first_slot,stagez, task['task'])

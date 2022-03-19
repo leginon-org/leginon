@@ -21,6 +21,4 @@ def getBestHoleMeanIntensity(imarray):
 		qarray = imarray[s[0]:s[0]+qshape[0],s[1]:s[1]+qshape[1]]
 		means.append(arraystats.mean(qarray))		
 		stds.append(arraystats.std(qarray))
-	print 'means', means
-	print 'stds', stds
 	return max(means)	

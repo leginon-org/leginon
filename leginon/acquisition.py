@@ -354,6 +354,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if self.inDoneTargetList(newdata):
 			# most likely aborted from myamiweb
 			self.logger.info('target list ID: %d found in DoneImageTargetList' % (listid,))
+			# send event so waiting stops.
+			status='success'
+			e = event.TargetListDoneEvent(targetlistid=listid, status=status, targetlist=newdata)
+			self.outputEvent(e)
+			self.logger.info('TargetListDoneEvent sent')
 			return
 		targetwatcher.TargetWatcher.processData(self, newdata)
 		self.publish(self.imagelistdata, pubevent=True)
