@@ -19,6 +19,11 @@ from appionlib import apDDLoop
 from appionlib import apK2process
 
 from pyami import mrc
+
+#this assumes  topaz is available via `module load topaz`
+cmd = os.popen("csh -c 'modulecmd python load topaz'")
+exec(cmd)
+
 class TopazDenoiser(appionLoop2.AppionLoop):
 
 	#======================
@@ -37,7 +42,7 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 		return
 
 	def processImage(self, imgdata):
-		command = "topaz-dev denoise "
+		command = "topaz denoise "
 		
 		image_path = imgdata['session']['image path']
 		out_path = self.params['rundir']
