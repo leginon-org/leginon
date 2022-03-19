@@ -839,6 +839,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			target['stats'] = ordereddict.OrderedDict()
 			target['stats']['Size'] = blob.stats['n']
 			target['stats']['Mean'] = blob.stats['mean']
+			if 'Roundness' in blob.stats.keys():
+				target['stats']['Roundness'] = blob.stats['roundness']   
 			if 'stdev' in blob.stats.keys():
 				target['stats']['Std. Dev.'] = blob.stats['stddev']
 			if 'score' in blob.stats.keys():

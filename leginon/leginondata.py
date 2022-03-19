@@ -1758,6 +1758,7 @@ class TemplateTargetFinderSettingsData(IceTargetFinderSettingsData):
 			('blobs max', int),
 			('blobs max size', int),
 			('blobs min size', int),
+			('blobs min roundness', float),
 			('lattice spacing', float),
 			('lattice tolerance', float),
 		)

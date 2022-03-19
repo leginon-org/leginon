@@ -49,6 +49,7 @@ class JAHCFinder(icetargetfinder.IceTargetFinder):
 		'blobs max': 300,
 		'blobs max size': 1000,
 		'blobs min size': 10,
+		'blobs min roundness': 0.8,
 		'lattice spacing': 150.0,
 		'lattice tolerance': 0.1,
 		'lattice hole radius': 15.0,
@@ -165,11 +166,13 @@ class JAHCFinder(icetargetfinder.IceTargetFinder):
 		blobsize = self.settings['blobs max size']
 		minblobsize = self.settings['blobs min size']
 		maxblobs = self.settings['blobs max']
-		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs, minblobsize=minblobsize)
+		minblobroundness = self.settings['blobs min roundness']   #wjr
+		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs, minblobsize=minblobsize, minblobroundness=minblobroundness)   #wjr
 		try:
 			self.hf.find_blobs()
 		except Exception, e:
 			self.logger.error(e)
+			self.logger.error('was in FindBlobs')
 			return
 		blobs = self.hf['blobs']
 		targets = self.blobStatsTargets(blobs)
@@ -268,6 +271,7 @@ class JAHCFinder(icetargetfinder.IceTargetFinder):
 			'blob-max-number': self.settings['blobs max'],
 			'blob-max-size': self.settings['blobs max size'],
 			'blob-min-size': self.settings['blobs min size'],
+#			'blob-min-roundness': self.settings['blobs min roundness'],    # wjr don not store yet in database
 			'lattice-spacing': self.settings['lattice spacing'],
 			'lattice-tolerance': self.settings['lattice tolerance'],
 			'stats-radius': self.settings['lattice hole radius'],
