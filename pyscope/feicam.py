@@ -159,6 +159,8 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.end_frame_number = None
 		self.display_name = None
 		self.frame_format = 'mrc'
+		self.save_frames = False
+		self.align_frames = False
 		self.save8x8 = False
 
 	def setReadoutLimits(self):
@@ -513,7 +515,7 @@ class FeiCam(ccdcamera.CCDCamera):
 			self.image_metadata = self.getMetaDataDict(self.im.MetaData)
 		else:
 			self.image_metadata = {}
-		if (self.save_frames or self.align_frames) and self.save8x8:
+		if hasattr(self, 'save_frames') and hasattr(self,'align_frames') and (self.save_frames or self.align_frames) and self.save8x8:
 			arr = self.base_fake_image*arr.std() + arr.mean()*numpy.ones((8,8))
 			return arr
 		if self.getDebugCamera():
