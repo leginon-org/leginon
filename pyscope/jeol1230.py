@@ -268,6 +268,7 @@ class Jeol1230(tem.TEM):
 		value['y'] = float(pos['y']/1e6)
 		value['z'] = float(pos['z']/1e6)
 		value['a'] = float(pos['a']/57.3)
+		value['b'] = float(0.0)
 		return value
 
 	def checkStagePosition(self, position):
