@@ -233,6 +233,7 @@ camera_params = (
 	('save frames', bool),
 	('align frames', bool),
 	('tiff frames', bool),
+	('eer frames', bool),
 	('align filter', str),
 	('frames name', str),
 	('use frames', tuple),
@@ -244,7 +245,10 @@ camera_params = (
 	('temperature status', str),
 	('readout delay', int),
 	('gain index', int),
-	('system corrected', bool),
+	('system corrected', bool), # deprecated in v3.6
+	('sum gain corrected', bool),
+	('frame gain corrected', bool),
+	('system dark subtracted', bool),
 	('use cds', bool),
 	('fast save', bool),
 )
@@ -1754,6 +1758,7 @@ class TemplateTargetFinderSettingsData(IceTargetFinderSettingsData):
 			('blobs max', int),
 			('blobs max size', int),
 			('blobs min size', int),
+			('blobs min roundness', float),
 			('lattice spacing', float),
 			('lattice tolerance', float),
 		)

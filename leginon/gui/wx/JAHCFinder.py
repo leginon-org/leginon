@@ -286,7 +286,7 @@ class BlobsScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['blobs max'] = IntEntry(self, -1, min=0, chars=6)
 		self.widgets['blobs max size'] = IntEntry(self, -1, min=0, chars=6)
 		self.widgets['blobs min size'] = IntEntry(self, -1, min=0, chars=6)
-		#self.widgets['blobs max moment'] = IntEntry(self, -1, min=1, chars=6)
+		self.widgets['blobs min roundness'] = FloatEntry(self, -1, min=0, chars=6) #wjr uncomment and change 'max moment' to 'min roundness'
 
 		szblobs = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Border:')
@@ -305,10 +305,10 @@ class BlobsScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szblobs.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szblobs.Add(self.widgets['blobs min size'], (3, 1), (1, 1),
 			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		#label = wx.StaticText(self, -1, 'Max. blob moment (elongation):')
-		#szblobs.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		#szblobs.Add(self.widgets['blobs max moment'], (4, 1), (1, 1),
-		#	wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Min. blob roundness :')	#wjr uncomment and change Max to Min in the text
+		szblobs.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)	#wjr uncomment, did renaming of variable to avoid program confusuon
+		szblobs.Add(self.widgets['blobs min roundness'], (4, 1), (1, 1),	#wjr uncomment
+			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)	#wjr uncomment
 		szblobs.AddGrowableCol(1)
 
 		sbszblobs.Add(szblobs, 1, wx.EXPAND|wx.ALL, 5)

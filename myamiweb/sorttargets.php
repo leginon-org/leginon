@@ -87,11 +87,12 @@
 						if ($status && $status != 'done' && $status != 'aborted')
 							$leginondata->updateTargetStatus($t['tid'],'aborted');
 					}
+				} else {
+					//insert as DoneImageTargetListData will eliminate pre-processing stuff
+					// such as revertStageZ
+					$leginondata->saveDoneTargetList($sessionId, $targets[0]['tlist']);
 				}
 				$leginondata->saveTargetOrder($sessionId, $targets[0]['tlist'], '()');
-				//insert as DoneImageTargetListData will eliminate pre-processing stuff
-				// such as revertStageZ
-				$leginondata->saveDoneTargetList($sessionId, $targets[0]['tlist']);
 			}
 		}
 		$order_array = currentTargetOrder($leginondata, $sessionId, $targets);

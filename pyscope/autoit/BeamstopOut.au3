@@ -9,6 +9,7 @@
 #ce ----------------------------------------------------------------------------
 
 ; Script Start - Add your code below here
+#include <AutoItConstants.au3>
 #include <MsgBoxConstants.au3>
 ; Define the action, index, and waittime for the script
 Local $mAction = "retract"

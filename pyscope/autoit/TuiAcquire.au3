@@ -9,6 +9,7 @@
 #ce ----------------------------------------------------------------------------
 
 ; Script Start - Add your code below here
+#include <AutoItConstants.au3>
 #include <Misc.au3>
 If _Singleton("TuiAcquire", 1) == 0 Then
    Exit

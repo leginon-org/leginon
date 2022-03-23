@@ -13,7 +13,7 @@ class InstallData(install_data):
 setup(
 	name='Leginon',
 	version=str(version.getVersion()),
-	url='http://nramm.nysbc.org/',
+	url='https://nramm.nysbc.org/',
 	description=
 		'Automated data acquisition for transmission electron microscopes',
 	cmdclass={'install_data': InstallData},
@@ -27,6 +27,6 @@ setup(
 		('leginon/icons/processing', glob.glob('icons/processing/*.png')),
 		('leginon/applications', glob.glob('applications/*.xml')),
 	],
-	scripts=['install-leginon.py', 'start-leginon.py', 'rawtransfer.py', 'transfermonitor.sh'],
+	scripts=['install-leginon.py', 'start-leginon.py', 'rawtransfer.py', 'transfermonitor.sh', 'autoscreen.py'],
 )
 

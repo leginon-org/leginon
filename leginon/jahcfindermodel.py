@@ -55,6 +55,7 @@ class JAHCFinderModel(object):
 		'blobs max': 300,
 		'blobs max size': 1000,
 		'blobs min size': 10,
+		'blobs min roundness': 0.8,    #wjr
 		'lattice spacing': 150.0,
 		'lattice tolerance': 0.1,
 		'lattice hole radius': 15.0,
@@ -219,8 +220,9 @@ class JAHCFinderModel(object):
 		border = self.settings['blobs border']
 		blobsize = self.settings['blobs max size']
 		minblobsize = self.settings['blobs min size']
+		minblobroundness = self.settings['blobs min roundness']
 		maxblobs = self.settings['blobs max']
-		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs, minblobsize=minblobsize)
+		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs, minblobsize=minblobsize,minblobroundness=minblobroundness)   #wjr
 		try:
 			self.hf.find_blobs()
 		except Exception, e:
@@ -244,6 +246,7 @@ class JAHCFinderModel(object):
 			target['stats']['Size'] = blob.stats['n']
 			target['stats']['Mean'] = blob.stats['mean']
 			target['stats']['Std. Dev.'] = blob.stats['stddev']
+			target['stats']['Roundness'] = blob.stats['roundness']    # wjr
 			targets.append(target)
 		return targets
 
@@ -555,6 +558,7 @@ class JAHCFinderModel(object):
 			'blob-max-number': self.settings['blobs max'],
 			'blob-max-size': self.settings['blobs max size'],
 			'blob-min-size': self.settings['blobs min size'],
+#			'blob-min-roundness': self.settings['blobs min roundness'],   #wjr don't add yet
 			'lattice-spacing': self.settings['lattice spacing'],
 			'lattice-tolerance': self.settings['lattice tolerance'],
 			'stats-radius': self.settings['lattice hole radius'],

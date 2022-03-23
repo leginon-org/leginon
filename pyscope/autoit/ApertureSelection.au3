@@ -21,6 +21,7 @@
 #ce ----------------------------------------------------------------------------
 
 ; Script Start - Add your code below here
+#include <AutoItConstants.au3>
 #include <MsgBoxConstants.au3>
 #include <Array.au3>
 Global $error_log = @UserProfileDir & "\myami_log\autoit_error.log"
@@ -39,8 +40,9 @@ WinActivate($my_title)
 WinWaitActive($my_title, "", 5)
 $after = WinActive($my_title)
 
-;TODO check both possible paths
-Global $sFeiConfigPath = "c:\Program Files\myami\fei.cfg"
+;Check all possible paths
+Global $sFeiConfigPath = getFeiConfigPath()
+;MsgBox(0,'fei.cfg', $sFeiConfigPath)
 
 ; Set Default
 Local $sTem = GetFeiConfigTem($sFeiConfigPath)
@@ -154,19 +156,38 @@ Func SetApertureSelection($aIndices, $sSelection)
    EndIf
 EndFunc
 
-Func getFeiConfigModuleLines($configpath, $module)
-   ; Read lines under a module in fei.cfg
-   Local $h2 = FileOpen($configpath, 0)
-   If $h2 == -1 Then
-      $configx86path = StringReplace($configpath, "Program Files", "Program Files (x86)", 1)
-      $h2 = FileOpen($configx86path, 0)
+Func getFeiConfigPath()
+   Local $sCfgPath = EnvGet('PYSCOPE_CFG_PATH')
+   Local $configpath = ''
+   Local $aArray[4]
+   Local $sError = "can not open fei.cfg in:"
+   Local $h2 = -1
+
+   $aArray[0] = $sCfgPath
+   $aArray[1] = @userprofiledir
+   $aArray[2] = "c:\Program Files\myami\"
+   $aArray[3] = "c:\Program Files (x86)\myami\"
+
+   For $configdir in $aArray
+      $configpath = $configdir & 'fei.cfg'
+      ; Read lines under a module in fei.cfg
+      $h2 = FileOpen($configpath, 0)
       If $h2 == -1 Then
-         _WriteError("can not open " & $configpath & " nor " & $configx86path)
-         Exit
+         $sError = $sError & $configdir & '; '
+      Else
+         return $configpath
       EndIf
+   Next
+   If $h2 == -1 Then
+      _WriteError($sError)
+      Exit
    EndIf
+EndFunc
+
+Func getFeiConfigModuleLines($configpath, $module)
    Local $bInModule = False
    ; declare array must have at least one item
+   Local $h2 = FileOpen($configpath, 0)
    Local $Lines[1]=['dummy']
    While 1
       Local $sLine = FileReadLine($h2)

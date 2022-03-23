@@ -33,20 +33,22 @@ class Focuser(singlefocuser.SingleFocuser):
 		self.current_target = target
 		return target
 
+
 	def simulateTarget(self):
 		self.setStatus('processing')
 		# no need to pause longer for simulateTarget
 		self.is_firstimage = False
+		# current preset is used to create a target for this node.
 		currentpreset = self.presetsclient.getCurrentPreset()
 		if currentpreset is None:
+			# self.validatePresets() exception is caught by parent class of this.
+			# it is not useful in this case.
 			try:
-				self.validatePresets()
+				currentpreset = self.useFirstPresetOrderPreset()
 			except acquisition.InvalidPresetsSequence:
-				self.logger.error('Configure at least one preset in the settings for this node.')
+				self.logger.error('Configure a valid preset in the settings to allow initialization')
 				self.setStatus('idle')
 				return
-			presetnames = self.settings['preset order']
-			currentpreset = self.presetsclient.getPresetByName(presetnames[0])
 		targetdata = self.newSimulatedTarget(preset=currentpreset,grid=self.grid)
 		self.publish(targetdata, database=True)
 		## change to 'processing' just like targetwatcher does

@@ -327,6 +327,16 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 	#	raise NotImplementedError
 
 	def getSystemGainDarkCorrected(self):
+		# deprecated in v3.6
+		return False
+
+	def getSystemDarkSubtracted(self):
+		return False
+
+	def getFrameGainCorrected(self):
+		return False
+
+	def getSumGainCorrected(self):
 		return False
 
 	def getCalculateNormOnDark(self):
@@ -345,6 +355,10 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 
 	def getSaveLzwTiffFrames(self):
 		# Lzw Tiff file saving for frames
+		return False
+
+	def getSaveEer(self):
+		# EERfile saving for frames
 		return False
 
 	def requireRecentDarkCurrentReferenceOnBright(self):

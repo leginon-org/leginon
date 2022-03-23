@@ -363,36 +363,67 @@ class CorrectorClient(cameraclient.CameraClient):
 		except TypeError:
 			ValueError('reference image array loaded as None')
 
+	def gainCorrectImageArray(self, diffarray, normarray, is_counting=False):
+		try:
+			r = diffarray * normarray
+			## remove nan and inf
+			r = numpy.where(numpy.isfinite(r), r, 0)
+			return r
+		except TypeError:
+			ValueError('reference image array loaded as None')
+
+	def darkSubtractImageArray(self, rawarray, darkarray, is_counting=False):
+		try:
+			r = rawarray - darkarray
+			return r
+		except TypeError:
+			ValueError('reference image array loaded as None')
+
 	def normalizeCameraImageData(self, imagedata, channel):
 		cameradata = imagedata['camera']
 		scopedata = imagedata['scope']
-		dark = self.retrieveCorrectorImageData('dark', scopedata, cameradata, channel)
-		norm = self.retrieveCorrectorImageData('norm', scopedata, cameradata, channel)
-		if dark is None or norm is None:
-			self.logger.warning('Cannot find references, image will not be normalized')
-			return
+		dark = None
+		norm = None
+		if not cameradata['system dark subtracted']:
+			dark = self.retrieveCorrectorImageData('dark', scopedata, cameradata, channel)
+			if dark is None:
+				self.logger.warning('Cannot find references, image will not be normalized')
+				return
+		if not cameradata['sum gain corrected'] or (cameradata['save frames'] and not cameradata['frame gain corrected']):
+			# find norm data to save in imagedata for later frame processing
+			#even though no correction needed on the sum image
+			norm = self.retrieveCorrectorImageData('norm', scopedata, cameradata, channel)
+			if norm is None:
+				self.logger.warning('Cannot find references, image will not be normalized')
+				return
 		rawarray = imagedata['image'] # This will read image if not in memory
 		if not self.isFakeImageObj(imagedata):
-			self.logger.info('reading reference array for normalization')
-			# cached reference may lose its file access at this point
-			darkarray = self.prepareDark(dark, imagedata)
-			if darkarray is None:
-				raise RuntimeError('lost %s.mrc' % dark['filename'])
-			# cached reference may lose its file access at this point
-			normarray = norm['image']
-			if normarray is None:
-				raise RuntimeError('lost %s.mrc' % norm['filename'])
-
-			self.logger.info('done reading reference array')
-			r = self.normalizeImageArray(rawarray,darkarray,normarray, 'GatanK2' in cameradata['ccdcamera']['name'])
+			r = rawarray
+			if dark:
+				self.logger.info('preparing dark array')
+				# cached reference may lose its file access at this point
+				darkarray = self.prepareDark(dark, imagedata)
+				if darkarray is None:
+					raise RuntimeError('lost %s.mrc' % dark['filename'])
+				self.logger.info('done reading dark array')
+				r = self.darkSubtractImageArray(rawarray,darkarray,'GatanK2' in cameradata['ccdcamera']['name'])
+			if not cameradata['sum gain corrected'] and norm:
+				self.logger.info('reading norm array')
+				# cached reference may lose its file access at this point
+				normarray = norm['image']
+				if normarray is None:
+					raise RuntimeError('lost %s.mrc' % norm['filename'])
+				self.logger.info('done reading norm array')
+				r = self.gainCorrectImageArray(r,normarray, 'GatanK2' in cameradata['ccdcamera']['name'])
 		else:
 			# normalize the fake array, too, but faking it to speed up
 			fake_dark = numpy.zeros((8,8))
 			fake_norm = numpy.ones((8,8))
-			r = self.normalizeImageArray(rawarray,fake_dark,fake_norm, 'GatanK2' in cameradata['ccdcamera']['name'])
+			r = self.gainCorrectImageArray(rawarray,fake_norm, 'GatanK2' in cameradata['ccdcamera']['name'])
 		imagedata['image'] = r
 		imagedata['dark'] = dark
-		imagedata['bright'] = norm['bright']
+		if norm:
+			imagedata['bright'] = norm['bright']
 		imagedata['norm'] = norm
 		imagedata['correction channel'] = channel
 
@@ -433,7 +464,10 @@ class CorrectorClient(cameraclient.CameraClient):
 		'''
 		this puts an image through a pipeline of corrections
 		'''
-		if not 'system corrected' in imagedata['camera'].keys() or not imagedata['camera']['system corrected']:
+		no_correction = False
+		if ('sum gain corrected' in imagedata['camera'].keys() and imagedata['camera']['sum gain corrected']) and ('frame gain corrected' in imagedata['camera'].keys() and imagedata['camera']['frame gain corrected']):
+			no_correction = True
+		else:
 			try:
 				self.normalizeCameraImageData(imagedata, channel)
 				imagedata['correction channel'] = channel
@@ -443,14 +477,21 @@ class CorrectorClient(cameraclient.CameraClient):
 
 		cameradata = imagedata['camera']
 		plan, plandata = self.retrieveCorrectorPlan(cameradata)
-		# save corrector plan for easy post-processing of raw frames
-		imagedata['corrector plan'] = plandata
+		if no_correction:
+			# ignore corrector plan completely.
+			plan = None
+			imagedata['corrector plan'] = None
+		else:
+			# save corrector plan for easy post-processing of raw frames
+			imagedata['corrector plan'] = plandata
 		# Escape if image is None
 		if imagedata.imageshape() is None or self.isFakeImageObj(imagedata):
 			# in-place change.  Nothing to return
 			return
 		# correct plan
-		if plan is not None:
+		if plan is not None and 'sum gain corrected' in cameradata.keys() and not cameradata['sum gain corrected'] and not self.isFakeImageObj(imagedata):
+			# only apply to this sum image if camera has not done so.
+			self.logger.info('fix bad pixels')
 			self.fixBadPixels(imagedata['image'], plan) #This will read image
 
 		pixelmax = imagedata['camera']['ccdcamera']['pixelmax']
@@ -504,13 +545,22 @@ class CorrectorClient(cameraclient.CameraClient):
 
 	def getCameraDefectMap(self, cameradata):
 		plan, plandata = self.retrieveCorrectorPlan(cameradata)
+		return self._makeDefectMap(cameradata, plan)
+
+	def getImageDefectMap(self, imagedata):
+		plandata = imagedata['corrector plan']
+		plan = self.formatCorrectorPlan(plandata)
+		cameradata = imagedata['camera']
+		return self._makeDefectMap(cameradata, plan)
+
+	def _makeDefectMap(self, cameradata, plan):
 		dx = cameradata['dimension']['x']
 		dy = cameradata['dimension']['y']
 		map_array = numpy.zeros((dy,dx),dtype=numpy.int8)
 		for r in plan['rows']:
 			map_array[r,:] = 1
 		for c in plan['columns']:
-			map_array[c,:] = 1
+			map_array[:,c] = 1
 		for p in plan['pixels']:
 			px, py = p
 			map_array[py,px] = 1
@@ -747,7 +797,6 @@ class CorrectorClient(cameraclient.CameraClient):
 		import datetime
 		if not ccdcamera:
 			ccdcamera = self.instrument.getCCDCameraData()
-		print ccdcamera
 		camera_host = ccdcamera['hostname']
 		# query by hostname since different modes of camera is count as different cameras
 		darks = leginondata.CameraDarkCurrentUpdatedData(hostname=camera_host).query(results=1)
