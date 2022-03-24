@@ -1434,6 +1434,8 @@ class leginondata {
 		$gridjoin = ($gridtable) ?
 			"left join GridData grid "
 			."on (grid.`DEF_id`=a.`REF|GridData|grid`) " : '';
+		$cameraemfields = $this->mysql->getFields('CameraEMData');
+		$eer_select =	in_array('eer frames', $cameraemfields) ? "c.`eer frames`, ":"";
 		// --- check if image has a parent
 		$parentinfo = $this->getParent($imgId);
 		$parentId = ($parentinfo['parentId']) ? $parentinfo['parentId'] : false;
@@ -1508,7 +1510,7 @@ class leginondata {
 			."c.`exposure time`, "
 			."c.`save frames`, "
 			."c.`nframes`, "
-			."c.`eer frames`, "
+			.$eer_select
 			."pi.pixelsize as pixelsize, "
 			."scope.magnification, "
 			."scope.`SUBD|beam tilt|x` as `beam tilt x`, "
