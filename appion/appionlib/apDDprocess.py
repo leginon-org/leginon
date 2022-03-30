@@ -1344,7 +1344,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		framelist = self.getAlignedSumFrameList()
 		nframes = self.getNumberOfFrameSaved()
 		# see Issue 12298
-		if framelist and framelist != range(nframes)
+		if framelist and framelist != range(nframes):
 			camdata['use frames'] = framelist
 		else:
 			# assume all frames that are saved are used by not defining the list
