@@ -178,12 +178,25 @@ class DirectDetectorProcessing(object):
 		self.square_output = value
 
 	def getUsedFramesFromImageData(self,imagedata):
-		return imagedata['camera']['use frames']
+		used_frames = imagedata['camera']['use frames']
+		if used_frames:
+			return used_frames
+		else:
+			# all frames used
+			# see Issue 12298
+			# With fast rolling shutter frame rate such as Falcon eer format,
+			# the use frames field becomes very long.  Since frame removing is not done
+			# in most modern approach, we will assume all frames used if not specified.
+			return range(imagedata['camera']['nframes'])
 
 	def checkFrameListRange(self,framelist):
 		# check parameter
 		if not self.image:
 			apDisplay.printError("You must set an image for the operation")
+		if framelist is None:
+			# handle default all frames used
+			framelist = range(self.totalframe)
+			return framelist
 		if min(framelist) not in range(self.totalframe):
 			apDisplay.printError("Starting Frame not in saved raw frame range, can not be processed")
 		framelength_original = len(framelist)
@@ -1329,11 +1342,13 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			camdata['binning'][axis] = added_bin*old_bin
 			camdata['offset'][axis] = (camerasize[axis]/newbin -camdata['dimension'][axis])/2
 		framelist = self.getAlignedSumFrameList()
-		if framelist:
+		nframes = self.getNumberOfFrameSaved()
+		# see Issue 12298
+		if framelist and framelist != range(nframes)
 			camdata['use frames'] = framelist
 		else:
-			# DE camera might not use all frames in the original sum image
-			camdata['use frames'] = range(self.totalframe)
+			# assume all frames that are saved are used by not defining the list
+			camdata['use frames'] = None
 		self.aligned_camdata = camdata
 
 	def getAlignedCameraEMData(self):
