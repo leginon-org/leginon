@@ -1977,7 +1977,7 @@ class Tecnai(tem.TEM):
 				if self.getDebugAll() and trial > 1:
 					print('beamstop positioning trial %d' % trial)
 				if trial > max_trials:
-					raise RuntimeError('Beamstop setting to %s failed %d times' % (value, trials))
+					raise RuntimeError('Beamstop setting to %s failed %d times' % (value, trial))
 				trial += 1
 
 		else:
