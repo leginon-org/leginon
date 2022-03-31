@@ -323,9 +323,11 @@ class HoleFinder(icefinderback.IceFinder):
 		else:
 			if spacing > 0:
 				best_lattice = lattice.pointsToLattice(points, spacing, tolerance)
+				accept_all = False
 			else:
 				# accept all points
 				best_lattice = lattice.pointsToFakeLattice(points)
+				accept_all = True
 
 		self.__update_result('lattice', best_lattice)
 		if best_lattice is None:
@@ -335,9 +337,13 @@ class HoleFinder(icefinderback.IceFinder):
 			self.__update_result('holes', [])
 			return
 		if extend == 'full':
+			if accept_all:
+				raise ValueError('Can not extend unspecified lattice to full')
 			best_lattice_points = best_lattice.raster(shape)
 			best_lattice_points = best_lattice.optimizeRaster(best_lattice_points,best_lattice.points)
 		elif extend == '3x3':
+			if accept_all:
+				raise ValueError('Can not extend unspecified lattice to 3x3')
 			best_lattice_points = self.convolve3x3WithBlobPoints(points)
 		else:
 			best_lattice_points = best_lattice.points
