@@ -1968,9 +1968,18 @@ class Tecnai(tem.TEM):
 		valuecap = value[0].upper()+value[1:]
 		methodname = 'getAutoitBeamstop%sExePath' % (valuecap)
 		exepath = getattr(self,methodname)()
+		max_trials = 5
 		if exepath and os.path.isfile(exepath):
-			subprocess.call(exepath)
-			time.sleep(2.0)
+			trial = 1
+			while value != self.getBeamstopPosition():
+				subprocess.call(exepath)
+				time.sleep(2.0)
+				if self.getDebugAll() and trial > 1:
+					print('beamstop positioning trial %d' % trial)
+				if trial > max_trials:
+					raise RuntimeError('Beamstop setting to %s failed %d times' % (value, trial))
+				trial += 1
+
 		else:
 			pass
 

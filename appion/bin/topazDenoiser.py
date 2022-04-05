@@ -48,7 +48,7 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 		out_path = self.params['rundir']
 		correctedImagePath = ""
 		if self.params['earlyreturn']:
-			if not imgdata['use frames']:
+			if not imgdata['save frames']:
 				apDisplay.printMsg(imgdata.filename()+ " does not have frames.")
 			else:
 				dd = apK2process.GatanK2Processing()
