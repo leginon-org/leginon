@@ -883,6 +883,9 @@ class GatanK2Counting(GatanK2Base):
 	else:
 		hw_proc = 'dark+gain'
 
+	def getSystemDarkSubtracted(self):
+		return True
+
 	def modifyDarkImage(self,image):
 		'''
 		in-place modification of image array
@@ -962,6 +965,16 @@ class GatanK3(GatanK2Base):
 			return 'gain normalized'
 
 	def getSystemGainDarkCorrected(self):
+		# deprecated in v3.6
+		return self.dm_processing == 'gain normalized'
+
+	def getSystemDarkSubtracted(self):
+		return self.dm_processing in ('dark subtracted', 'gain normalized')
+
+	def getFrameGainCorrected(self):
+		return self.dm_processing == 'gain normalized'
+
+	def getSumGainCorrected(self):
 		return self.dm_processing == 'gain normalized'
 
 	def requireRecentDarkCurrentReferenceOnBright(self):

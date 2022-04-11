@@ -115,6 +115,9 @@ class stackPolisherScript(appionScript.AppionScript):
 
 		# micrograph & frame info
 		frames = qimage['camera']['use frames']
+		if not frames:
+			#Issue 12298 workaround
+			frames = range(qimage['camera']['nframes'])
 		nframes = len(frames)
 		if self.params['framelastali'] is None:
 			self.params['framelastali'] = frames[-1]

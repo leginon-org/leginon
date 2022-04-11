@@ -37,6 +37,7 @@ class LatticeScrolledSettings(leginon.gui.wx.IceTargetFinder.LatticeScrolledSett
 		sbszcmd = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['script'] = Entry(self, -1, chars=20)
+		self.widgets['score key'] = Entry(self, -1, chars=15)
 		self.widgets['score threshold'] = FloatEntry(self, -1,
 																		min=-10000.0,
 																		allownone=False,
@@ -50,6 +51,13 @@ class LatticeScrolledSettings(leginon.gui.wx.IceTargetFinder.LatticeScrolledSett
 			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szcmd.AddGrowableCol(1)
 
+		szsck = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Script output key to threshold on')
+		szsck.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsck.Add(self.widgets['score key'], (1, 0), (1, 2),
+			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		szsck.AddGrowableCol(1)
+
 		szt = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Min. score to accept')
 		szt.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -58,6 +66,7 @@ class LatticeScrolledSettings(leginon.gui.wx.IceTargetFinder.LatticeScrolledSett
 		szt.AddGrowableCol(1)
 
 		sbszcmd.Add(szcmd, 1, wx.EXPAND|wx.ALL, 5)
+		sbszcmd.Add(szsck, 1, wx.EXPAND|wx.ALL, 5)
 		sbszcmd.Add(szt, 1, wx.EXPAND|wx.ALL, 5)
 		return sbszcmd
 

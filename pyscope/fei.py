@@ -446,8 +446,10 @@ class Tecnai(tem.TEM):
 	
 	def getMinimumIntensityMovement(self):
 		value = self.getFeiConfig('optics','minimum_intensity_movement')
-		if value is None:
+		if value is None or value < 1e-8:
 			return 1e-8
+		else:
+			return value
 
 	def getIntensity(self):
 		intensity = getattr(self.tecnai.Illumination, self.intensity_prop)
@@ -462,6 +464,10 @@ class Tecnai(tem.TEM):
 			raise ValueError
 		prev_int = self.getIntensity()
 		intensity_step = self.getMinimumIntensityMovement()
+		if self.getDebugAll():
+				print 'prev_int', prev_int
+				print 'minimum_intensity_movement', intensity_step
+				print 'target_intensity', intensity
 		if abs(prev_int-intensity) > intensity_step:
 			self.int_changed = True
 			setattr(self.tecnai.Illumination, self.intensity_prop, intensity)
@@ -469,6 +475,10 @@ class Tecnai(tem.TEM):
 			self.int_changed = False
 		# Normalizations
 		if self.normalize_all_after_setting:
+			if self.getDebugAll():
+				print 'mag_changed', self.mag_changed
+				print 'spotsize_changed', self.spotsize_changed
+				print 'int_changed', self.int_changed
 			if self.mag_changed or self.spotsize_changed or self.int_changed:
 				if self.getDebugAll():
 					print 'normalize all'
@@ -1958,9 +1968,18 @@ class Tecnai(tem.TEM):
 		valuecap = value[0].upper()+value[1:]
 		methodname = 'getAutoitBeamstop%sExePath' % (valuecap)
 		exepath = getattr(self,methodname)()
+		max_trials = 5
 		if exepath and os.path.isfile(exepath):
-			subprocess.call(exepath)
-			time.sleep(2.0)
+			trial = 1
+			while value != self.getBeamstopPosition():
+				subprocess.call(exepath)
+				time.sleep(2.0)
+				if self.getDebugAll() and trial > 1:
+					print('beamstop positioning trial %d' % trial)
+				if trial > max_trials:
+					raise RuntimeError('Beamstop setting to %s failed %d times' % (value, trial))
+				trial += 1
+
 		else:
 			pass
 

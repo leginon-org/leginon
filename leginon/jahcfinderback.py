@@ -81,7 +81,7 @@ class HoleFinder(icefinderback.IceFinder):
 		self.correlation_config = {'cortype': 'cross', 'corfilt': (1.0,),'cor_image_min':0.0}
 		self.threshold = 3.0
 		self.threshold_method = "Threshold = mean + A * stdev"
-		self.blobs_config = {'border': 20, 'maxblobsize': 50, 'maxblobs':100, 'minblobsize':0}
+		self.blobs_config = {'border': 20, 'maxblobsize': 50, 'maxblobs':100, 'minblobsize':0, 'minblobroundness':0.8}  #wjr
 		self.lattice_config = {'tolerance': 0.1, 'vector': 100.0, 'minspace': 20, 'extend': 'off'}
 		self.holestats_config = {'radius': 20}
 		self.filter_config = {'tmin': -10, 'tmax': 20}
@@ -217,7 +217,7 @@ class HoleFinder(icefinderback.IceFinder):
 		self.__update_result('threshold', t)
 		self.saveTestMrc(t, 'threshold.mrc')
 
-	def configure_blobs(self, border=None, maxblobs=None, maxblobsize=None, minblobsize=None):
+	def configure_blobs(self, border=None, maxblobs=None, maxblobsize=None, minblobsize=None, minblobroundness=None):
 		if border is not None:
 			self.blobs_config['border'] = border
 		if maxblobsize is not None:
@@ -226,6 +226,8 @@ class HoleFinder(icefinderback.IceFinder):
 			self.blobs_config['minblobsize'] = minblobsize
 		if maxblobs is not None:
 			self.blobs_config['maxblobs'] = maxblobs
+		if minblobroundness is not None:
+			self.blobs_config['minblobroundness'] = minblobroundness   #wjr
 
 	def find_blobs(self, picks=None):
 		'''
@@ -240,7 +242,8 @@ class HoleFinder(icefinderback.IceFinder):
 			maxsize = self.blobs_config['maxblobsize']
 			minsize = self.blobs_config['minblobsize']
 			maxblobs = self.blobs_config['maxblobs']
-			blobs = imagefun.find_blobs(im, mask, border, maxblobs, maxsize, minsize)
+			minroundness = self.blobs_config['minblobroundness']
+			blobs = imagefun.find_blobs(im, mask, border, maxblobs, maxsize, minsize, minroundness)   #wjr
 		else:
 			picks = self.swapxy(picks)
 			blobs = self.points_to_blobs(picks)
@@ -320,9 +323,11 @@ class HoleFinder(icefinderback.IceFinder):
 		else:
 			if spacing > 0:
 				best_lattice = lattice.pointsToLattice(points, spacing, tolerance)
+				accept_all = False
 			else:
 				# accept all points
 				best_lattice = lattice.pointsToFakeLattice(points)
+				accept_all = True
 
 		self.__update_result('lattice', best_lattice)
 		if best_lattice is None:
@@ -332,9 +337,13 @@ class HoleFinder(icefinderback.IceFinder):
 			self.__update_result('holes', [])
 			return
 		if extend == 'full':
+			if accept_all:
+				raise ValueError('Can not extend unspecified lattice to full')
 			best_lattice_points = best_lattice.raster(shape)
 			best_lattice_points = best_lattice.optimizeRaster(best_lattice_points,best_lattice.points)
 		elif extend == '3x3':
+			if accept_all:
+				raise ValueError('Can not extend unspecified lattice to 3x3')
 			best_lattice_points = self.convolve3x3WithBlobPoints(points)
 		else:
 			best_lattice_points = best_lattice.points
@@ -443,7 +452,6 @@ class HoleFinder(icefinderback.IceFinder):
 if __name__ == '__main__':
 	from pyami import numpil
 	hf = HoleFinder()
-	score_key = 'probability'
 	leginon_dir = os.path.dirname(os.path.abspath(__file__))
 	hf = HoleFinder(is_testing=True)
 	hf['original'] = numpil.read(os.path.join(leginon_dir,'sq_example.jpg'))

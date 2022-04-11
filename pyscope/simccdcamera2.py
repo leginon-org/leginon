@@ -71,11 +71,26 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		return object.__getattribute__(self, attr_name)
 
 	def getSystemGainDarkCorrected(self):
-		# Default to not do gain dark correction if have simulated images
+		# deprecated in v3.6
+		return self.getSumGainCorrected()
+
+	def getSystemDarkSubtracted(self):
+		# Default to not do dark subtraction if have simulated images
 		if self.simpar_dir is None:
 			return False
 		else:
 			return True
+
+	def getSumGainCorrected(self):
+		# Default to not do gain correction if have simulated images
+		if self.simpar_dir is None:
+			return False
+		else:
+			return True
+
+	def getFrameGainCorrected(self):
+		# frames don't use simpar
+		return False
 
 	def getRetractable(self):
 		return True
@@ -707,6 +722,9 @@ class SimK2CountingCamera(SimFrameCamera):
 		self.binmethod = 'floor'
 		self.pixel_size = {'x': 5e-6, 'y': 5e-6}
 
+	def getSystemDarkSubtracted(self):
+		return True
+
 	def getFrameFlip(self):
 		# flip before? rotation
 		return False
@@ -715,7 +733,13 @@ class SimK2CountingCamera(SimFrameCamera):
 		# rotation in multiple of 90 degrees
 		return 0
 
-class SimK2SuperResCamera(SimFrameCamera):
+	def getSystemDarkSubtracted(self):
+		return True
+
+	def getFrameGainCorrected(self):
+		return False
+
+class SimK2SuperResCamera(SimK2CountingCamera):
 	name = 'SimK2SuperResCamera'
 	def __init__(self):
 		super(SimK2SuperResCamera,self).__init__()
@@ -737,8 +761,11 @@ class SimK3Camera(SimFrameCamera):
 		self.tempoffset = dict(self.offset)
 		self.pixel_size = {'x': 2.5e-6, 'y': 2.5e-6}
 
-	def getSystemGainDarkCorrected(self):
+	def getSystemDarkSubtracted(self):
 		return True
+
+	def getFrameGainCorrected(self):
+		return False
 
 	def setOffset(self, value):
 		# Work around

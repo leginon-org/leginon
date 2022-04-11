@@ -431,6 +431,7 @@ parametermapping = (
 	('nframes', 'NumberOfFrames'),
 	('align frames', 'AlignFrames'),
 	('tiff frames', 'SaveLzwTiffFrames'),
+	('eer frames', 'SaveEer'),
 	('align filter', 'AlignFilter'),
 	('save frames', 'SaveRawFrames'),
 	('frames name', 'PreviousRawFramesName'),
@@ -445,6 +446,9 @@ parametermapping = (
 	('binned multiplier', 'BinnedMultiplier'),
 	('gain index', 'GainIndex'),
 	('system corrected', 'SystemGainDarkCorrected'),
+	('sum gain corrected', 'SumGainCorrected'),
+	('frame gain corrected', 'FrameGainCorrected'),
+	('system dark subtracted', 'SystemDarkSubtracted'),
 	('use cds', 'UseCds'),
 	('fast save', 'FastSave'),
 )

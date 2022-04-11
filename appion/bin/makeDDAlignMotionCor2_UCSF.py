@@ -52,6 +52,11 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		self.parser.add_option("--force_cpu_flat", dest="force_cpu_flat", default=False,
 			action="store_true", help="Use cpu to make frame flat field corrrection")
 
+		self.parser.add_option("--rendered_frame_size", dest="rendered_frame_size", type="int", default=1,
+			help="Sum this number of saved frames as a rendered frame in alignment", metavar="INT")
+		self.parser.add_option("--eer_sampling", dest="eer_sampling", type="int", default=1,
+			help="Upsampling eer frames. Fourier binning will be added to returnthe results back", metavar="INT")
+
 	def addBinOption(self):
 		self.parser.add_option("--bin",dest="bin",metavar="#",type=float,default="1.0",
 			help="Binning factor relative to the dd stack. MotionCor2 takes float value (optional)")
@@ -96,18 +101,25 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		super(MotionCor2UCSFAlignStackLoop,self).setOtherProcessImageResultParams()
 		self.temp_aligned_dw_sumpath = 'temp%s.gpuid_%d_sum_DW.mrc' % (self.hostname, self.gpuid)
 		#self.temp_aligned_stackpath = 'temp%s.gpuid_%d_aligned_st.mrc' % (self.hostname, self.gpuid)
+		# NOTE: self.params in self.framealigner alignparam mapping are directly transferred.
 		self.framealigner.setKV(self.dd.getKVFromImage(self.dd.image))
-		self.framealigner.setTotalFrames(self.dd.getNumberOfFrameSaved())
+		self.framealigner.setTotalRawFrames(self.dd.getNumberOfFrameSaved())
+		is_eer = self.dd.image['camera']['eer frames']
+		self.framealigner.setIsEer(is_eer)
 		if self.params['totaldose'] is not None:
 			totaldose = self.params['totaldose']
 		else:
 			totaldose = apDatabase.getDoseFromImageData(self.dd.image)
 		self.framealigner.setTotalDose(totaldose)
-		if totaldose is None and self.params['doseweight']:
-			self.has_dose = False
-			apDisplay.printWarning('No total dose estimated. Dose weighted alignment will be skipped')
+		self.has_dose = True
+		if not is_eer:
+			if totaldose is None and self.params['doseweight']:
+				self.has_dose = False
+				apDisplay.printWarning('No total dose estimated. Dose weighted alignment will be skipped')
 		else:
-			self.has_dose = True
+			if totaldose is None:
+				apDisplay.printWarning('Per frame dose of 0.03 e/p is assumed on eer raw frames since no value is entered.')
+
 #		self.temp_aligned_dw_sumpath = 'temp%s.gpuid_%d_sum_DW.mrc' % (self.hostname, self.params['gpuid'])
 		if self.isUseFrameAlignerFlat() and not self.params['force_cpu_flat']:
 			frame_flip, frame_rotate=self.dd.getImageFrameOrientation()
@@ -134,7 +146,14 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		temp_aligned_sumpath = self.temp_aligned_sumpath
 		temp_aligned_dw_sumpath = self.temp_aligned_dw_sumpath
 		gain_flip, gain_rotate = self.framealigner.getGainModification()
+		need_flip = False
+		if 'eer' in self.dd.__class__.__name__.lower():
+			# output from -InEer is y-flipped even though gain in mrc
+			# format is not relative to the eer file
+			need_flip = True
 		if gain_flip:
+			need_flip = not need_flip
+		if need_flip:
 			apDisplay.printMsg('Flipping the aligned sum back')
 			self.imageYFlip(temp_aligned_sumpath)
 			self.imageYFlip(temp_aligned_dw_sumpath)
