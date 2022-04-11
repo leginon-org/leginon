@@ -40,7 +40,7 @@ def pointsInBlobs(blobs, points):
 	total_points = len(points)
 	total = 0
 	for i, b in enumerate(blobs):
-		result_map = map(lambda x: pointInPolygon(x[1],x[0],b.vertices), points)
+		result_map = map(lambda x: pointInPolygon(x[0],x[1],b.vertices), points)
 		if max(result_map):
 			total += 1
 			has_point[i] = True
