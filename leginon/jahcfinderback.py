@@ -129,16 +129,16 @@ class HoleFinder(icefinderback.IceFinder):
 		'''
 		configuration for holefinder to run. Each non-None kwarg is added.
 		'''
-		if not in_path and self.__results['original']:
+		if not in_path and self.get_result('original'):
 			self.temp_in_path = '%s.mrc' % job_name
-			mrc.write(self.__results['original'], self.temp_in_path)
+			mrc.write(self.get_result('original'), self.temp_in_path)
 			in_path = self.temp_in_path
 
 	def run_holefinder(self):
 		'''
 		Return external hole finder holes found
 		'''
-		if self.__results['original'] is None:
+		if self.get_result('original') is None:
 			raise RuntimeError('need original image to run hole finding')
 		self.create_template()
 		self.correlate_template()
@@ -151,7 +151,7 @@ class HoleFinder(icefinderback.IceFinder):
 
 	def create_template(self):
 		fromimage = self.correlator_from_result
-		if self.__results[fromimage] is None:
+		if self.get_result(fromimage) is None:
 			raise RuntimeError('need image %s before creating template' % (fromimage,))
 		template = self.template.create_template(self.im_shape)
 		#self.logger.info('invert template for correlation')
@@ -183,11 +183,11 @@ class HoleFinder(icefinderback.IceFinder):
 		Correlate template that is already created and configured.
 		'''
 		fromimage = self.correlator_from_result
-		if self.__results[fromimage] is None or self.__results['template'] is None:
+		if self.get_result(fromimage) is None or self.get_result('template') is None:
 			raise RuntimeError('need image %s and template before correlation' % (fromimage,))
-		edges = self.__results[fromimage]
+		edges = self.get_result(fromimage)
 		edges = self.maskBlack(edges)
-		template = self.__results['template']
+		template = self.get_result('template')
 		cortype = self.correlation_config['cortype']
 		corfilt = self.correlation_config['corfilt']
 		if cortype == 'cross':
@@ -214,9 +214,9 @@ class HoleFinder(icefinderback.IceFinder):
 		'''
 		Threshold the correlation image.
 		'''
-		if self.__results['correlation'] is None:
+		if self.get_result('correlation') is None:
 			raise RuntimeError('need correlation image to threshold')
-		cc = self.__results['correlation']
+		cc = self.get_result('correlation')
 
 		meth = self.threshold_method
 		if meth == "Threshold = mean + A * stdev":
@@ -247,10 +247,10 @@ class HoleFinder(icefinderback.IceFinder):
 		find blobs on a thresholded image
 		'''
 		if picks is None:
-			if self.__results['threshold'] is None or self.__results['correlation'] is None:
+			if self.get_result('threshold') is None or self.get_result('correlation') is None:
 				raise RuntimeError('need correlation image and threshold image to find blobs')
-			im = self.__results['correlation']
-			mask = self.__results['threshold']
+			im = self.get_result('correlation')
+			mask = self.get_result('threshold')
 			border = self.blobs_config['border']
 			maxsize = self.blobs_config['maxblobsize']
 			minsize = self.blobs_config['minblobsize']
@@ -290,7 +290,7 @@ class HoleFinder(icefinderback.IceFinder):
 		if len(points) < 2:
 			self.logger.warning('Need at least 2 point to determine 3x3 patter orientation')
 			return []
-		shape = self.__results['original'].shape
+		shape = self.get_result('original').shape
 		tolerance = self.lattice_config['tolerance']
 		spacing = self.lattice_config['spacing']
 		total_lattice_points = []
@@ -309,12 +309,12 @@ class HoleFinder(icefinderback.IceFinder):
 		return total_lattice_points
 			
 	def blobs_to_lattice(self, tolerance=None, spacing=None, minspace=None, extend=None):
-		if self.__results['blobs'] is None:
+		if self.get_result('blobs') is None:
 			raise RuntimeError('need blobs to create lattice')
 		self.configure_lattice(tolerance=tolerance,spacing=spacing,minspace=minspace, extend=extend)
 
-		shape = self.__results['original'].shape
-		blobs = self.__results['blobs']
+		shape = self.get_result('original').shape
+		blobs = self.get_result('blobs')
 		tolerance = self.lattice_config['tolerance']
 		spacing = self.lattice_config['spacing']
 		extend = self.lattice_config['extend']
@@ -367,12 +367,12 @@ class HoleFinder(icefinderback.IceFinder):
 		'''
 		Mark locations of the holes found on image.  This is a test function.
 		'''
-		if self.__results['holes'] is None or self.__results['original'] is None:
+		if self.get_result('holes') is None or self.get_result('original') is None:
 			raise RuntimeError('need original image and holes before marking holes')
-		image = self.__results['original']
+		image = self.get_result('original')
 		im = image.copy()
 		value = arraystats.min(im)
-		for hole in self.__results['holes']:
+		for hole in self.get_results('holes'):
 			coord = hole.stats['center']
 			imagefun.mark_image(im, coord, value)
 		self.update_result('markedholes', im)
