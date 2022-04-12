@@ -293,7 +293,7 @@ class JAHCFinder(icetargetfinder.IceTargetFinder):
 			'file-diameter': self.settings['file diameter'],
 			'template-filename': self.settings['template filename'],
 		})
-		return hrprefs
+		return hfprefs
 
 	def storeHoleFinderPrefsData(self, imagedata):
 		hfprefs = self._getHolePrefs(imagedata)
