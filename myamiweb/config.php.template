@@ -67,6 +67,8 @@ define('DB_USER', "");		// DB User name
 define('DB_PASS', "");		// DB Password
 define('DB_LEGINON', "");	// Leginon database name
 define('DB_PROJECT', "");	// Project database name
+//DB table storage engine. MyISAM, InnoDB, etc. Leave empty for default of the server.
+define('DB_ENGINE',"");
 
 // --- default URL for project section --- //
 define('VIEWER_URL', BASE_URL."3wviewer.php?expId=");
