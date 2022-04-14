@@ -243,11 +243,17 @@ class IceTargetFinder(targetfinder.TargetFinder):
 			onehole = self.settings['focus hole']
 			if centers and onehole != 'Off':
 				## if only one hole, this is useless
-				if len(allcenters) < 2:
+				if len(allcenters) < 2 and onehole != 'Center':
 					self.logger.info('need more than one hole if you want to focus on one of them')
 					centers = []
 				elif onehole == 'Center':
-					focus_points.append(self.centerCarbon(allcenters))
+					# Center can sometimes use prior info to guess a focus
+					try:
+						focus_points.append(self.centerCarbon(allcenters))
+					except ValueError as e:
+						# ok not to have focus position some times.
+						self.logger.warning(e)
+						centers = []
 				elif onehole == 'Any Hole':
 					fochole, index = self.focus_on_hole(centers, allcenters, True)
 					focus_points.append(fochole)
@@ -365,11 +371,11 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		Minimum of two points as input.
 		'''
 		if len(points) < 2:
-			raise ValueError('need at least two points to center on carbon in between.')
+			raise ValueError('Only one hole. Can not guess focus position')
 		temppoints = list(points)
 		# centerhole is removed from temppoints during focus_on_hole
-		centerhole, index = self.focus_on_hole(temppoints, temppoints, False)
-		centerhole2, index = self.focus_on_hole(temppoints, temppoints, False)
+		centerhole, index = self.focus_on_hole(temppoints, temppoints, True)
+		centerhole2, index = self.focus_on_hole(temppoints, temppoints, True)
 		centercarbon = tuple(
 			(int((centerhole[0] + centerhole2[0])/2.0),
 			int((centerhole[1] + centerhole2[1])/2.0),)

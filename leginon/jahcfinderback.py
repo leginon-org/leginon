@@ -35,6 +35,7 @@ class HoleFinder(icefinderback.IceFinder):
 	def __init__(self, is_testing=False):
 		self.setComponents()
 		self.setDefaults()
+		self.lattice_matrix = None
 		self.save_mrc = is_testing
 		## These are the results that are maintained by this
 		## object for external use through the __getitem__ method.
@@ -83,7 +84,7 @@ class HoleFinder(icefinderback.IceFinder):
 		self.threshold = 3.0
 		self.threshold_method = "Threshold = mean + A * stdev"
 		self.blobs_config = {'border': 20, 'maxblobsize': 50, 'maxblobs':100, 'minblobsize':0, 'minblobroundness':0.8}  #wjr
-		self.lattice_config = {'tolerance': 0.1, 'vector': 100.0, 'minspace': 20, 'extend': 'off'}
+		self.lattice_config = {'tolerance': 0.1, 'spacing': 100.0, 'minspace': 20, 'extend': 'off'}
 		self.holestats_config = {'radius': 20}
 		self.filter_config = {'tmin': -10, 'tmax': 20}
 		self.convolve_config = {'conv_vect':None}
@@ -271,6 +272,7 @@ class HoleFinder(icefinderback.IceFinder):
 			self.lattice_config['minspace'] = minspace
 		if extend is not None:
 			self.lattice_config['extend'] = extend
+		l = self.lattice_config['spacing']
 
 	def points_to_blobs(self, points):
 			blobs = []
@@ -306,8 +308,9 @@ class HoleFinder(icefinderback.IceFinder):
 			best_lattice = lattice.pointsToLattice(newpoints, spacing, tolerance, first_is_center=True)
 			best_lattice_points = best_lattice.raster(shape, layers=1)
 			total_lattice_points.extend(best_lattice_points)
+		self.lattice_matrix = best_lattice.matrix
 		return total_lattice_points
-			
+
 	def blobs_to_lattice(self, tolerance=None, spacing=None, minspace=None, extend=None):
 		if self.get_result('blobs') is None:
 			raise RuntimeError('need blobs to create lattice')
@@ -354,12 +357,14 @@ class HoleFinder(icefinderback.IceFinder):
 				raise ValueError('Can not extend unspecified lattice to full')
 			best_lattice_points = best_lattice.raster(shape)
 			best_lattice_points = best_lattice.optimizeRaster(best_lattice_points,best_lattice.points)
+			self.lattice_matrix = best_lattice.matrix
 		elif extend == '3x3':
 			if accept_all:
 				raise ValueError('Can not extend unspecified lattice to 3x3')
 			best_lattice_points = self.convolve3x3WithBlobPoints(points)
 		else:
 			best_lattice_points = best_lattice.points
+			self.lattice_matrix = best_lattice.matrix
 		holes = self.points_to_stats_holes(best_lattice_points)
 		self.updateHoles(holes)
 
@@ -372,7 +377,7 @@ class HoleFinder(icefinderback.IceFinder):
 		image = self.get_result('original')
 		im = image.copy()
 		value = arraystats.min(im)
-		for hole in self.get_results('holes'):
+		for hole in self.get_result('holes'):
 			coord = hole.stats['center']
 			imagefun.mark_image(im, coord, value)
 		self.update_result('markedholes', im)
@@ -415,5 +420,5 @@ if __name__ == '__main__':
 	hf.configure_convolve(conv_vect=[(0,0),])
 	hf.configure_sample(classes=2, samples=4, category='thickness-mean')
 	hf.find_holes()
-	print 'first holes of',len(hf['holes']),hf['holes'][0].stats
-	print 'first holes2 of',len(hf['holes2']),hf['holes2'][0].stats
+	print('first holes of',len(hf['holes']),hf['holes'][0].stats)
+	print('first holes2 of',len(hf['holes2']),hf['holes2'][0].stats)
