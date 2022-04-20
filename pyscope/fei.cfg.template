@@ -61,6 +61,11 @@ SAVE_EER = False
 EER_GAIN_REFERENCE_DIR = z:\ImagesForProcessing\BM-Falcon\300kV
 # Falcon EER render factor. Falcon 4 is 7, Falcon 4i is 9
 EER_RENDER = 7
+# Falcon EER may flip relative to mrc
+EER_FRAME_FLIP = False
+# Falcon EER may rotate relative to mrc after flip.
+#   1 rotates features on x to -y axis direction
+EER_FRAME_ROTATE = 0
 # Falcon frame filename prefix. Default is empty string
 FRAME_NAME_PREFIX =
 # Falcon protector may be too slow
