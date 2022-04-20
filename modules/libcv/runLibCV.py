@@ -37,20 +37,20 @@ def makeResult(difftilt, bestangle, shift, scale):
 			], 
 			[shift[0], shift[1], 1.0]], 
 			dtype=numpy.float32)
-	#print "result=\n", numpy.asarray(result*100, dtype=numpy.int8)
+	#print("result=\n", numpy.asarray(result*100, dtype=numpy.int8))
 	return result
 
 #-----------------------
 def diffResult(x1, c1, c2, c3):
-	#print x1
+	#print(x1)
 	result = numpy.array([c1,c2,c3], dtype=numpy.float32)
-	#print result
+	#print(result)
 	tiltangle = x1[0]
 	tiltaxis  = x1[1]
 	scale  = x1[2]
 	shift = (result[2][0], result[2][1])
 	made = makeResult(tiltangle, tiltaxis, shift, scale)
-	#print made
+	#print(made)
 	diffmat = (made - result)
 	rmsd = (diffmat**2).mean()*100.0
 	return rmsd
@@ -64,11 +64,11 @@ def findTilt(result):
 	tilt = x1[0]
 	if tilt > 90:
 		tilt -= 180.0
-	print "tilt angle=",x1[0]
-	print "tilt axis =",x1[1]
-	print "scale =",x1[2]
-	print "rmsd =",solved[1]
-	print "matrix =",makeResult(x1[0], x1[1], (0,0), x1[2])
+	print("tilt angle=",x1[0])
+	print("tilt axis =",x1[1])
+	print("scale =",x1[2])
+	print("rmsd =",solved[1])
+	print("matrix =",makeResult(x1[0], x1[1], (0,0), x1[2]))
 
 #-----------------------
 def checkLibCVResult(result):
@@ -77,18 +77,18 @@ def checkLibCVResult(result):
 	"""
 	if result[0][0] < 0.5 or result[1][1] < 0.5:
 		#max tilt angle of 60 degrees
-		print ("Bad libcv result: bad tilt in matrix: "+affineToText(result))
-		print ("Bad libcv result: bad tilt in matrix: "+affineToText(result))
+		print("Bad libcv result: bad tilt in matrix: "+affineToText(result))
+		print("Bad libcv result: bad tilt in matrix: "+affineToText(result))
 		return False
 	elif result[0][0] > 1.1 or result[1][1] > 1.1:
 		#only allow 25 degrees of expansion
-		print ("Bad libcv result: image expansion: "+affineToText(result))
-		print ("Bad libcv result: image expansion: "+affineToText(result))
+		print("Bad libcv result: image expansion: "+affineToText(result))
+		print("Bad libcv result: image expansion: "+affineToText(result))
 		return False
 	elif abs(result[0][1]) > 0.7071 or abs(result[1][0]) > 0.7071:
 		#max rotation angle of 45 degrees
-		print ("Bad libcv result: too much rotation: "+affineToText(result))
-		print ("Bad libcv result: too much rotation: "+affineToText(result))
+		print("Bad libcv result: too much rotation: "+affineToText(result))
+		print("Bad libcv result: too much rotation: "+affineToText(result))
 		return False
 	return True
 
@@ -159,14 +159,14 @@ def MatchImages(image1, image2, minsize=250, maxsize=0.9, blur=0, sharpen=0, WoB
 	"""
 
 	try:
-		print "====================="
+		print("=====================")
 		result = libcv.MatchImages(image1, image2, minsize, maxsize, blur, sharpen, WoB, BoW)
-		print "====================="
+		print("=====================")
 		return result
 	except:
 		return numpy.zeros([3,3], dtype=numpy.float32)
 
-	print ""
+	print("")
 
 
 if __name__ == "__main__":
@@ -179,15 +179,15 @@ if __name__ == "__main__":
 		result = MatchImages(image1, image2)
 		#checkLibCVResult(result)
 		#findTilt(result)
-		#print numpy.array(result*1000, dtype=numpy.int32)
+		#print(numpy.array(result*1000, dtype=numpy.int32))
 		memmeg1 = (mem.active()-startmem)/1024.0
 		memmeg2 = (mem.active()-lastmem)/1024.0
 		lastmem = mem.active()
-		print "-->\tMEM: "+str(int(memmeg1))+" MB "
+		print("-->\tMEM: "+str(int(memmeg1))+" MB ")
 		memlist.append(memmeg2)
 		time.sleep(1)
 	memarr = numpy.asarray(memlist, dtype=numpy.float32)
-	print memarr
-	print "Total: ", memarr.mean(), "+/-", memarr.std()
+	print(memarr)
+	print("Total: ", memarr.mean(), "+/-", memarr.std())
 
 

@@ -484,7 +484,7 @@ class AlterTable(SQLExpression):
 		if 'Null' in self.column.keys() and self.column['Null']=='YES':
 			str_null = "NULL"
 		default = ""
-		if self.column.has_key('Default') and self.column['Default'] is not None:
+		if 'Default' in self.column.keys() and self.column['Default'] is not None:
 			# current_timestamp should not be quoted
 			if self.column['Default'] == 'current_timestamp()':
 				default = "DEFAULT %s" % (self.column['Default'])
