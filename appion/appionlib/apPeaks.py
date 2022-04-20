@@ -405,7 +405,7 @@ def convertBlobsToPeaks(blobtree, bin=1, tmpldbid=None, tmplnum=None, diam=None,
 	return peaktree
 
 def findBlobs(ccmap, thresh, maxsize=500, minsize=1, maxpeaks=1500, border=10, 
-	  maxmoment=6.0, minblobroundness=0, elim= "highest", summary=False):
+	  minblobroundness=0, elim= "highest", summary=False):
 	"""
 	calls leginon's imagefun.find_blobs
 	"""
@@ -418,8 +418,8 @@ def findBlobs(ccmap, thresh, maxsize=500, minsize=1, maxpeaks=1500, border=10,
 		return [],percentcov
 	#apImage.arrayToJpeg(ccmap, "dogmap2.jpg")
 	#apImage.arrayToJpeg(ccthreshmap, "threshmap2.jpg")
-	blobtree = imagefun.find_blobs(ccmap, ccthreshmap, border, maxpeaks*4,
-	  maxsize, minsize, minblobroundness, elim, summary)
+	blobtree = imagefun.find_blobs(ccmap, ccthreshmap, border=border, maxblobs=maxpeaks*4,
+	  maxblobsize=maxsize, minblobsize=minsize, minblobroundness=minblobroundness, method=elim, summary=summary)
 	return blobtree, percentcov
 
 def peakTreeToPikFile(peaktree, imgname, tmpl, rundir="."):
