@@ -1764,9 +1764,24 @@ class TemplateTargetFinderSettingsData(IceTargetFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class HoleFinderSettingsData(TemplateTargetFinderSettingsData):
+class JAHCFinderSettingsData(TemplateTargetFinderSettingsData):
 	def typemap(cls):
 		return TemplateTargetFinderSettingsData.typemap() + (
+			('template diameter', int),
+			('file diameter', int),
+			('template filename', str),
+			('template invert', bool),
+			('template image min', float),
+			('lattice extend', str),
+			('template multiple', int),
+			('multihole angle', float),
+			('multihole spacing', float),
+		)
+	typemap = classmethod(typemap)
+
+class HoleFinderSettingsData(JAHCFinderSettingsData):
+	def typemap(cls):
+		return JAHCFinderSettingsData.typemap() + (
 			('edge lpf', LowPassFilterSettingsData),
 			('edge', bool),
 			('edge type', str),
@@ -1774,7 +1789,6 @@ class HoleFinderSettingsData(TemplateTargetFinderSettingsData):
 			('edge log sigma', float),
 			('edge absolute', bool),
 			('edge threshold', float),
-			('template rings', list),
 		)
 	typemap = classmethod(typemap)
 
@@ -1803,21 +1817,6 @@ class HoleDepthFinderSettingsData(TargetFinderSettingsData):
 			('blobs min size', int),
 			('pickhole radius', float),
 			('pickhole zero thickness', float),
-		)
-	typemap = classmethod(typemap)
-
-class JAHCFinderSettingsData(TemplateTargetFinderSettingsData):
-	def typemap(cls):
-		return TemplateTargetFinderSettingsData.typemap() + (
-			('template diameter', int),
-			('file diameter', int),
-			('template filename', str),
-			('template invert', bool),
-			('template image min', float),
-			('lattice extend', str),
-			('template multiple', int),
-			('multihole angle', float),
-			('multihole spacing', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -2048,7 +2047,7 @@ class MosaicSectionFinderSettingsData(ClickTargetFinderSettingsData,
 		return typemap
 	typemap = classmethod(typemap)
 
-class MosaicQuiltFinderSettingsData( JAHCFinderSettingsData):
+class MosaicQuiltFinderSettingsData(JAHCFinderSettingsData):
 	def typemap(cls):
 		typemap = JAHCFinderSettingsData.typemap()
 		typemap += (

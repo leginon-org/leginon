@@ -20,6 +20,7 @@ import math
 import gui.wx.JAHCFinder
 import version
 import itertools
+import numpy
 
 invsqrt2 = math.sqrt(2.0)/2.0
 default_template = os.path.join(version.getInstalledLocation(),'holetemplate.mrc')
@@ -95,8 +96,9 @@ class JAHCFinder(icetargetfinder.IceTargetFinder):
 
 		self.foc_counter = itertools.count()
 		self.foc_activated = False
-
-		self.start()
+		self.lattice_matrix = self.hf.lattice_matrix
+		if self.__class__ == JAHCFinder:
+			self.start()
 
 	def correlateTemplate(self):
 		'''
@@ -234,6 +236,31 @@ class JAHCFinder(icetargetfinder.IceTargetFinder):
 			self.logger.info('Number of lattice blobs: %s' % (len(targets),))
 			self.setTargets(targets, 'Lattice')
 
+	def centerCarbon(self, points):
+		'''
+		Return xy tuple half-way between the lattice points closest to the center.
+		Minimum of two points as input.
+		'''
+		if type(self.hf.lattice_matrix) != type(None):
+			self.lattice_matrix = self.hf.lattice_matrix
+		imshape = self.hf['original'].shape
+		center_point = imshape[1]//2,imshape[0]//2
+		if type(self.lattice_matrix) == type(None):
+			raise ValueError('unknow lattice for guessing focus position.')
+		cpoints = []
+		for p in points:
+			for sign in [(1,1),(-1,1),(1,-1),(-1,-1)]:
+				ij = sign[0]*0.5, sign[1]*0.5
+				dot_p = self.lattice_matrix.dot(ij)
+				#lattice_matrix is in (row,col) while points in x,y
+				c = numpy.array(p)+ numpy.array((dot_p[1],dot_p[0]))
+				cpoints.append((int(c[0]),int(c[1])))
+		if len(points) <= 2:
+			closest, focus_index =  self.closestToPoint(cpoints, center_point, True)
+			return closest
+		centerhole, index = self.focus_on_hole(cpoints, cpoints, True)
+		return centerhole
+
 	def bypass(self):
 		self.setTargets([], 'Blobs', block=True)
 		self.setTargets([], 'Lattice', block=True)
@@ -253,7 +280,7 @@ class JAHCFinder(icetargetfinder.IceTargetFinder):
 		# ice
 		self.ice()
 
-	def storeHoleFinderPrefsData(self, imagedata):
+	def _getHolePrefs(self, imagedata):
 		hfprefs = leginondata.HoleFinderPrefsData()
 		hfprefs.update({
 			'session': self.session,
@@ -292,7 +319,10 @@ class JAHCFinder(icetargetfinder.IceTargetFinder):
 			'file-diameter': self.settings['file diameter'],
 			'template-filename': self.settings['template filename'],
 		})
+		return hfprefs
 
+	def storeHoleFinderPrefsData(self, imagedata):
+		hfprefs = self._getHolePrefs(imagedata)
 		self.publish(hfprefs, database=True)
 		return hfprefs
 
