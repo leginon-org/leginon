@@ -21,6 +21,8 @@ class dogPicker(particleLoop2.ParticleLoop):
 			help="Number of slices (different sizes) to pick", metavar="FLOAT")
 		self.parser.add_option("--sizerange", dest="sizerange", type="float",
 			help="Range in size of particles to find", metavar="FLOAT")
+		self.parser.add_option("--minblobroundness", dest="minblobroundness", type="float",
+			help="Minroundness range from 0 to 1. 1 is a round object.", default=0, metavar="FLOAT")
 
 	#================
 	def checkConflicts(self):
