@@ -109,7 +109,14 @@ require_once('../inc/formValidator.php');
 				($update)? print("value='".DB_PROJECT."'") : print("value=\"\"");  		
 		?> /><br /><br />
 		<br />
-		
+		<h3>Choose Database Storage Engine:</h3>
+		<p></p>
+        <select name="db_engine" id="db_engine">
+            <option value="InnoDB">InnoDB</option>
+            <option value="MyISAM">MyISAM</option>
+		</select> 
+		<br /><br />
+		<br />
 		<input type="submit" value="NEXT" />
 	</form>
 	
