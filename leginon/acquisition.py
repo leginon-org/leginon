@@ -888,7 +888,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if self.settings['bad stats response'] != 'Continue':
 			self.recheck_counter = itertools.count()
 			# For ring collapse testing
-			#c = self.acq_counter.next()
+			#c = next(self.acq_counter)
 			#imagearray = imagedata['image'] - c*c
 			imagearray = imagedata['image']
 			self.evaluateStats(imagearray)
