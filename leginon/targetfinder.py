@@ -775,7 +775,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			# get next acquisition pixel vectors on the image
 			vectors = {}
 			for axis in ('x','y'):
-				vectors[axis] = map((lambda x: x / self.shrink_factor), self.getPresetAxisVector(acq_presetdata, axis))
+				vectors[axis] = list(map((lambda x: x / self.shrink_factor), self.getPresetAxisVector(acq_presetdata, axis)))
 			# get Beam diameter on image
 			beam_diameter = self.getBeamDiameter(acq_presetdata)
 			beam_diameter_on_image = int((beam_diameter/min(image_pixelsize.values()))//self.shrink_factor)

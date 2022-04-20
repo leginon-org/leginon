@@ -129,7 +129,7 @@ class HoleSampler(Configurer):
 
 	def _samplingInClass(self, holes_in_bins, n_class, total_targets_need):
 		# get a list at least as long as total_targets_need
-		sampling_order = range(n_class)*int(math.ceil(total_targets_need/float(n_class)))
+		sampling_order = list(range(n_class))*int(math.ceil(total_targets_need/float(n_class)))
 		# truncate the list
 		sampling_order = sampling_order[:total_targets_need]
 		samples = []

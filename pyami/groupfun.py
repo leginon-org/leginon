@@ -11,12 +11,12 @@ def calculateIndexRangesInClassEvenDistribution(total, n_class):
 	total: number of items in the list to be divided.
 	n_class: number of classes/groups to divide into.
 	'''
-	sampling_order = range(n_class)*int(math.ceil(total/float(n_class)))
+	sampling_order = list(range(n_class))*int(math.ceil(total/float(n_class)))
 	# truncate the list. This helps even distribution and garantee total number
 	# is correct.
 	sampling_order = sampling_order[:total]
 	# number_of_samples_in_classes
-	nsample_in_classes = map((lambda x: sampling_order.count(x)), range(n_class))
+	nsample_in_classes = list(map((lambda x: sampling_order.count(x)), range(n_class)))
 	last_c = 0
 	fake_list = range(total)
 	range_list = []
