@@ -483,7 +483,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		# of the good_targets.
 		valid_order = filter((lambda x: x in target_numbers), target_order)
 		index_order = map((lambda x:target_numbers.index(x)), valid_order)
-		return index_order
+		return list(index_order)
 
 	def processGoodTargets(self, good_targets):
 		good_target_count = len(good_targets)
