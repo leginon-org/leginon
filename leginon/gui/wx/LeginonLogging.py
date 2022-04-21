@@ -425,8 +425,10 @@ class MessageLogHandler(logging.Handler):
 		try:
 			evt = MessageLog.AddMessageEvent(self.window, level, message, secs)
 			self.window.GetEventHandler().AddPendingEvent(evt)
-		except wx.RuntimeError:
+		except RuntimeError:
 			self.window = None
+		except:
+			raise
 
 class DatabaseLogHandler(logging.Handler):
 	def __init__(self, node, level=logging.NOTSET):
