@@ -624,7 +624,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 
 	def onBrowseImagesTool(self, evt):
-		icon = wx.EmptyIcon()
+		icon = wx.Icon()
 		icon.CopyFromBitmap(leginon.gui.wx.Icons.icon("imagebrowser"))
 		frame = wx.Frame(None, -1, 'Image Browser')
 		frame.node = self.node

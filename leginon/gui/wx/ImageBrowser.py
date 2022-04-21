@@ -110,7 +110,7 @@ if __name__ == "__main__":
 			mysession = leginon.leginondata.SessionData()
 			mynode = node.Node('mnode', session=mysession)
 
-			icon = wx.EmptyIcon()
+			icon = wx.Icon()
 			icon.CopyFromBitmap(Icons.icon("imagebrowser"))
 			
 			frame = wx.Frame(None, -1, 'Image Browser')
