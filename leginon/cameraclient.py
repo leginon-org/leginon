@@ -197,7 +197,7 @@ class CameraClient(object):
 		else:
 			t4 = threading.Thread(target=self.dummy())
 
-		while t1.isAlive() or t2.isAlive() or t3.isAlive() or t4.isAlive():
+		while t1.is_alive() or t2.is_alive() or t3.is_alive() or t4.is_alive():
 			time.sleep(0.5)
 		## make sure shutter override is activated
 		try:
