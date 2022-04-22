@@ -2186,13 +2186,17 @@ class leginondata {
 
 	}
 
+	function getEngine() {
+		return (defined('DB_ENGINE')) ? DB_ENGINE: '';
+	}
 	function importTables($filename) {
 		$app = new XMLApplicationImport($filename);
 		$sqldef = $app->getSQLDefinitionQueries();
 		$sqldata = $app->getSQLDataQueries();
 		$fieldtypes = $app->getFieldTypes();
+		$engine = $this->getEngine();
 		if ($this->mysql->checkDBConnection()) {
-			$this->mysql->SQLAlterTables($sqldef, $fieldtypes);
+			$this->mysql->SQLAlterTables($sqldef, $fieldtypes, $engine);
 			foreach ((array)$sqldata as $table=>$queries) {
 				foreach($queries as $query) {
 					eval("\$sqlinsert= \"".addslashes($query)."\";");
