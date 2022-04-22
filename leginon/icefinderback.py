@@ -222,7 +222,7 @@ class IceFinder(object):
 			blobs.append(blob)
 		return blobs
 
-	def make_convolved(self, input_name='holes'):
+	def make_convolved(self, input_name='holes',excluding_hole=None):
 		"""
 		Make convolved results as holes2.
 		Note: Subclass needs to duplicate this because __results must be in the same module.
@@ -232,6 +232,19 @@ class IceFinder(object):
 			return
 		# convolve from these goodholes
 		goodholes = list(self.get_result(input_name))
+		# exclude holes used for making a focus point
+		centers = map((lambda x: x.stats['center']),goodholes)
+		if excluding_hole is not None:
+			excluding_index = None
+			limit = 3
+			for i, p in enumerate(centers):
+				r,c = p
+				excluding_center = excluding_hole.stats['center']
+				if abs(r-excluding_center[0]) < limit and abs(c-excluding_center[1]) < limit:
+					excluding_index = i
+					break
+			goodholes.pop(i)
+		centers = map((lambda x: x.stats['center']),goodholes)
 		conv_vect = self.convolve.configs['conv_vect'] # list of (del_r,del_c)s
 		# reset before start
 		self.update_result('holes2', [])
