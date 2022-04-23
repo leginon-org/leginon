@@ -122,7 +122,7 @@ class IceFinder(object):
 		NotImplemented
 
 	def updateHoles(self, holes):
-		self.__update_result('holes', holes)
+		self.update_result('holes', holes)
 
 	def update_result(self, key, image):
 		self.__update_result(key, image)

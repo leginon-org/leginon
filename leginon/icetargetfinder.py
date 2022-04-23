@@ -17,6 +17,7 @@ import ice
 import instrument
 import os.path
 import math
+import numpy
 import gui.wx.IceTargetFinder
 import version
 import itertools
@@ -75,6 +76,7 @@ class IceTargetFinder(targetfinder.TargetFinder):
 
 		self.foc_counter = itertools.count()
 		self.foc_activated = False
+		self.lattice_matrix = self.hf.lattice_matrix
 
 		if self.__class__ == IceTargetFinder:
 			self.start()
@@ -364,7 +366,7 @@ class IceTargetFinder(targetfinder.TargetFinder):
 			self.logger.info('Potential targets with stats: %d' % n_holes_before)
 		self.filterIce(input_name='holes2')
 
-	def centerCarbon(self, points):
+	def centerCarbonWithoutLattice(self, points):
 		'''
 		Return xy tuple half-way between the xypoint closest to the center.
 		Minimum of two points as input.
@@ -380,6 +382,31 @@ class IceTargetFinder(targetfinder.TargetFinder):
 			int((centerhole[1] + centerhole2[1])/2.0),)
 		)
 		return centercarbon
+
+	def centerCarbon(self, points):
+		'''
+		Return xy tuple half-way between the lattice points closest to the center.
+		Minimum of two points as input.
+		'''
+		if type(self.hf.lattice_matrix) != type(None):
+			self.lattice_matrix = self.hf.lattice_matrix
+		if type(self.lattice_matrix) == type(None):
+			return self.centerCarbonWithoutLattice(points)
+		imshape = self.hf['original'].shape
+		center_point = imshape[1]//2,imshape[0]//2
+		cpoints = []
+		for p in points:
+			for sign in [(1,1),(-1,1),(1,-1),(-1,-1)]:
+				ij = sign[0]*0.5, sign[1]*0.5
+				dot_p = self.lattice_matrix.dot(ij)
+				#lattice_matrix is in (row,col) while points in x,y
+				c = numpy.array(p)+ numpy.array((dot_p[1],dot_p[0]))
+				cpoints.append((int(c[0]),int(c[1])))
+		if len(points) <= 2:
+			closest, focus_index =  self.closestToPoint(cpoints, center_point, True)
+			return closest
+		centerhole, index = self.focus_on_hole(cpoints, cpoints, True)
+		return centerhole
 
 	def centroid(self, points):
 		## find centroid
