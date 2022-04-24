@@ -41,6 +41,7 @@ class IceFinder(object):
 		self.save_mrc = is_testing
 		self.setComponents()
 		self.setDefaults()
+		self.lattice_matrix = None
 
 		## These are the results that are maintained by this
 		## object for external use through the __getitem__ method.
