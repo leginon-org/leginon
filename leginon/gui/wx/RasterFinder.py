@@ -86,8 +86,8 @@ class RasterScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sb = wx.StaticBox(self, -1, 'Spacing/Angle Calculator')
 		sbszauto = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
-		self.widgets['raster spacing'] = IntEntry(self, -1, chars=4, min=1)
-		self.widgets['raster spacing asymm'] = IntEntry(self, -1, chars=4)
+		self.widgets['raster spacing'] = FloatEntry(self, -1, chars=4, min=1)
+		self.widgets['raster spacing asymm'] = FloatEntry(self, -1, chars=4)
 		self.widgets['raster limit'] = IntEntry(self, -1, chars=4, min=1)
 		self.widgets['raster limit asymm'] = IntEntry(self, -1, chars=4)
 		self.widgets['raster angle'] = FloatEntry(self, -1, chars=4)
