@@ -1410,8 +1410,9 @@ class ScoreSquareFinderPrefsData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('image', MosaicImageData),
-			('area-min', float),
-			('area-max', float),
+			('filter-min', float),
+			('filter-max', float),
+			('filter-key', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -1851,7 +1852,7 @@ class DTFinderSettingsData(TargetFinderSettingsData):
 
 class RasterFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
-		return TargetFinderSettingsData.typemap() + (
+		return IceTargetFinderSettingsData.typemap() + (
 			('publish polygon', bool),
 			('image filename', str),
 			('raster preset', str),
@@ -1867,20 +1868,6 @@ class RasterFinderSettingsData(TargetFinderSettingsData):
 			('raster limit asymm', int),
 			('raster symmetric', bool),
 			('select polygon', bool),
-			('ice box size', float),
-			('ice thickness', float),
-			('ice min mean', float),
-			('ice max mean', float),
-			('ice max std', float),
-			('ice min std', float),
-			('focus interval', int),
-			('focus convolve', bool),
-			('focus convolve template', list),
-			('focus constant template', list),
-			('focus one', bool),
-			('acquisition convolve', bool),
-			('acquisition convolve template', list),
-			('acquisition constant template', list),
 		)
 	typemap = classmethod(typemap)
 
@@ -1979,8 +1966,9 @@ class TopScoreFinderSettingsData(SettingsData):
 			('scoring script', str),
 			('target grouping', TargetGroupingSettingsData),
 			('target multiple', int),
-			('area-min', float),
-			('area-max', float),
+			('filter-min', float),
+			('filter-max', float),
+			('filter-key', str),
 		)
 	typemap = classmethod(typemap)
 

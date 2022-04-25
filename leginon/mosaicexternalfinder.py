@@ -60,6 +60,8 @@ class StatsBlob(object):
 		center = info_dict['center'][0],info_dict['center'][1]
 		vertices = info_dict['vertices']
 		self.center_modified = False
+		# n in blob is the same as size from Ptolemy. Need n for displaying stats
+		# in gui.
 		self.stats = {"label_index": index, "center":center, "n":size, "size":size, "mean":mean, "score":score}
 		self.vertices = vertices
 		self.info_dict = info_dict
@@ -88,8 +90,9 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 	# autofinder part is different
 	auto_square_finder_defaultsettings = {
 			'scoring script':'sq_finding.sh',
-			'area-min': 100,
-			'area-max': 10000,
+			'filter-min': 100,
+			'filter-max': 10000,
+			'filter-key': 'Size',
 	}
 	defaultsettings.update(auto_square_finder_defaultsettings)
 	eventoutputs = mosaictargetfinder.MosaicClickTargetFinder.eventoutputs
@@ -196,23 +199,30 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		to_avoid = pointsInBlobs(blobs, panel_points)
 		return has_priority, to_avoid, None
 
+	def _mapBlobStatsKey(self, key):
+		return key.lower()
+
 	def setFilterSettings(self, example_blobs):
 		if example_blobs:
 			# use the stats of the example blobs
-			sizes = map((lambda x: x.stats['n']), example_blobs)
-			size_min = min(sizes)
-			size_max = max(sizes)
-			self.settings['area-min'] = size_min
-			self.settings['area-max'] = size_max
-			self.setSettings(self.settings, False)
-			return
-		pass
+			settings_key = self._mapBlobStatsKey(self.settings['filter-key'])
+			if settings_key in example_blobs[0].stats.keys():
+				sizes = map((lambda x: x.stats[settings_key]), example_blobs)
+				size_min = min(sizes)
+				size_max = max(sizes)
+				self.settings['filter-min'] = size_min
+				self.settings['filter-max'] = size_max
+				self.setSettings(self.settings, False)
+				return
+			else:
+				self.logger.error('filter key %s not found in stats' % self.settings['filter-key'])
 
 	def storeScoreSquareFinderPrefs(self):
 		prefs = leginondata.ScoreSquareFinderPrefsData()
 		prefs['image'] = self.mosaicimagedata
-		prefs['area-min'] = self.settings['area-min']
-		prefs['area-max'] = self.settings['area-max']
+		prefs['filter-min'] = self.settings['filter-min']
+		prefs['filter-max'] = self.settings['filter-max']
+		prefs['filter-key'] = self.settings['filter-key']
 		self.publish(prefs, database=True)
 		return prefs
 
@@ -221,16 +231,20 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		filter based on blob stats
 		'''
 		self.sq_prefs = self.storeScoreSquareFinderPrefs()
-		size_min = self.settings['area-min']
-		size_max = self.settings['area-max']
+		value_min = self.settings['filter-min']
+		value_max = self.settings['filter-max']
+		key = self._mapBlobStatsKey(self.settings['filter-key'])
 		good_blobs = []
-		for blob in blobs:
+		for i, blob in enumerate(blobs):
+			if i == 0 and key not in blob.stats.keys():
+				self.logger.error('filter key %s not found in stats' % self.settings['filter-key'])
+				return good_blobs
 			row = blob.stats['center'][0]
 			column = blob.stats['center'][1]
 			size = blob.stats['n']
 			mean = blob.stats['mean']
 			score = blob.stats['score']
-			if (size_min <= size <= size_max):
+			if (value_min <= blob.stats[key] <= value_max):
 				good_blobs.append(blob)
 			else:
 				stats = leginondata.SquareStatsData(score_prefs=self.sq_prefs, row=row, column=column, mean=mean, size=size, score=score)
@@ -250,7 +264,8 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 			# Nothing to do. Take all.
 			return blobs
 		n_class = self.settings['target grouping']['classes']
-		index_groups = self.groupBlobsBySize(blobs, n_class)
+		key = self._mapBlobStatsKey(self.settings['filter-key'])
+		index_groups = self.groupBlobsByKey(blobs, n_class, key)
 		range_list = groupfun.calculateIndexRangesInClassEvenDistribution(total_targets_need, n_class)
 		# number_of_samples_in_classes
 		nsample_in_classes = map((lambda x: x[1]-x[0]), range_list)

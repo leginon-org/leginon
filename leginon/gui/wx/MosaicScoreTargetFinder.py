@@ -7,7 +7,7 @@
 import wx
 import wx.lib.filebrowsebutton as filebrowse
 
-from leginon.gui.wx.Entry import FloatEntry
+from leginon.gui.wx.Entry import Entry, FloatEntry
 import leginon.gui.wx.Settings
 import leginon.gui.wx.MosaicClickTargetFinder
 import leginon.gui.wx.ToolBar
@@ -76,19 +76,28 @@ class ThresholdScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb2 = wx.StaticBox(self, -1, 'Blob Filtering (Set by example targets)')
 		sbsz2 = wx.StaticBoxSizer(sb2, wx.VERTICAL)
-		self.widgets['area-min'] = FloatEntry(self, -1, chars=6)
-		self.widgets['area-max'] = FloatEntry(self, -1, chars=6)
+		self.widgets['filter-key'] = Entry(self, -1, chars=10)
+		self.widgets['filter-min'] = FloatEntry(self, -1, chars=6)
+		self.widgets['filter-max'] = FloatEntry(self, -1, chars=6)
+
+
+		keysz = wx.GridBagSizer(5,5)
+		label = wx.StaticText(self, -1, 'Filter Key Used:')
+		keysz.Add(label, (0, 0), (1, 1), wx.ALIGN_LEFT|wx.EXPAND)
+		keysz.Add(self.widgets['filter-key'], (0, 1), (1, 1), wx.ALIGN_RIGHT)
+		keysz.AddGrowableCol(0)
 
 		szrange2 = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Filter Blob Area:')
+		label = wx.StaticText(self, -1, 'Filter Range:')
 		szrange2.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		szrange2.Add(self.widgets['area-min'], (0, 1), (1, 1),
+		szrange2.Add(self.widgets['filter-min'], (0, 1), (1, 1),
 								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szrange2.Add(self.widgets['area-max'], (0, 2), (1, 1),
+		szrange2.Add(self.widgets['filter-max'], (0, 2), (1, 1),
 								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		sz2 = wx.GridBagSizer(5, 5)
-		sz2.Add(szrange2, (0, 0), (1, 2), wx.ALIGN_CENTER)
+		sz2.Add(keysz, (0, 0), (1, 2), wx.ALIGN_LEFT|wx.EXPAND)
+		sz2.Add(szrange2, (1, 0), (1, 2), wx.ALIGN_CENTER)
 		sz2.AddGrowableCol(1)
 
 		sbsz2.Add(sz2, 1, wx.EXPAND|wx.ALL, 5)

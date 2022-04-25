@@ -1294,7 +1294,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			# Nothing to do
 			return blobs
 		n_class = self.settings['target grouping']['classes']
-		index_groups = self.groupBlobsBySize(blobs, n_class)
+		index_groups = self.groupBlobsByKey(blobs, n_class, 'size')
 		# get a list at least as long as total_targets_need
 		sampling_order = range(n_class)*int(math.ceil(total_targets_need/float(n_class)))
 		# truncate the list
@@ -1309,8 +1309,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			sample_indices.append(index)
 		return samples
 
-	def groupBlobsBySize(self, blobs, n_class):
-		codes = list(map((lambda x: '%08d@%05d' % (blobs[x].stats['size'],x)), range(len(blobs))))
+	def groupBlobsByKey(self, blobs, n_class, group_key='size'):
+		codes = list(map((lambda x: '%08d@%05d' % (blobs[x].stats[group_key],x)), range(len(blobs))))
 		codes.sort()
 		sorted_indices = list(map((lambda x: int(x.split('@')[-1])), codes))
 		if n_class == 1:
