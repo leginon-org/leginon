@@ -1410,8 +1410,9 @@ class ScoreSquareFinderPrefsData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('image', MosaicImageData),
-			('area-min', float),
-			('area-max', float),
+			('filter-min', float),
+			('filter-max', float),
+			('filter-key', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -1965,8 +1966,9 @@ class TopScoreFinderSettingsData(SettingsData):
 			('scoring script', str),
 			('target grouping', TargetGroupingSettingsData),
 			('target multiple', int),
-			('area-min', float),
-			('area-max', float),
+			('filter-min', float),
+			('filter-max', float),
+			('filter-key', str),
 		)
 	typemap = classmethod(typemap)
 
