@@ -36,7 +36,7 @@ class MakeDDParticleMRCMovieLoop(apDDParticleMovie.MakeDDParticleMovieLoop):
 		for filename in files:
 			bits = framepaths_wild.split('*')
 			if bits[0] in filename:
-				print filename
+				print(filename)
 				array = mrc.read(os.path.join(self.params['rundir'],filename))
 				if os.path.isfile(moviepath):
 					mrc.append(array,moviepath)

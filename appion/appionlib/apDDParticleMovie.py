@@ -107,7 +107,7 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 		### set processing image
 		try:
 			self.dd.setImageData(imgdata)
-		except Exception, e:
+		except Exception as e:
 			raise
 			apDisplay.printWarning('%s: %s' % (e.__class__.__name__,e))
 			return
@@ -187,18 +187,18 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 		pathq = appiondata.ApPathData(path=self.params['rundir'])
 		pmparamq=appiondata.ApParticleMovieParamsData()
 
-		paramlist = pmparamq.keys()
+		paramlist = list(pmparamq.keys())
 		for p in paramlist:
 			if p.lower() in self.params:
 				pmparamq[p] = self.params[p.lower()]
 			else:
-				print "missing", p.lower()
+				print("missing", p.lower())
 		pmrunq = appiondata.ApParticleMovieRunData(path = pathq, movieRunName=self.params['runname'],session=sessiondata,movieParams=pmparamq,selectionrun=self.selectiondata)
 		r = pmrunq.insert()
 		self.rundata = pmrunq
 		
 	def commitToDatabase(self, imgdata):
-		keys = self.movieparticles.keys()
+		keys = list(self.movieparticles.keys())
 		keys.sort()
 		for p in keys:
 			q = appiondata.ApParticleMovieData(movieNumber=p,movieRun=self.rundata,particle=self.movieparticles[p],format=self.movieformat)

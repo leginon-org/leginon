@@ -113,10 +113,10 @@ class sortJunkStackScript(appionScript.AppionScript):
 		# Insert stack images
 		apDisplay.printMsg("Inserting stack particles")
 		count=0
-		total=len(fileorder.keys())
+		total=len(list(fileorder.keys()))
 		if total==0:
 			apDisplay.printError("No particles can be inserted in the sorted stack")
-		for i in fileorder.keys():
+		for i in list(fileorder.keys()):
 			count += 1
 			if count % 100 == 0:
 				sys.stderr.write("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b")

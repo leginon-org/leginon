@@ -66,17 +66,17 @@ class ApEulerJump(object):
 			medians.append(jumpdata['median'])
 			if count % 500 == 0:
 				timeremain = (time.time()-t0)/(count+1)*(numparts-count)
-				print ("particle=% 5d; median jump=% 3.2f, remain time= %s" % (stackpart['particleNumber'], jumpdata['median'],
-					apDisplay.timeString(timeremain)))
+				print(("particle=% 5d; median jump=% 3.2f, remain time= %s" % (stackpart['particleNumber'], jumpdata['median'],
+					apDisplay.timeString(timeremain))))
 		if len(medians) > 0:
 			### print stats
 			apDisplay.printMsg("complete "+str(len(stackparts))+" particles in "+apDisplay.timeString(time.time()-t0))
-			print "-- median euler jumper stats --"
+			print("-- median euler jumper stats --")
 			medians = numpy.asarray(medians, dtype=numpy.float32)
-			print ("mean/std :: "+str(round(medians.mean(),2))+" +/- "
-				+str(round(medians.std(),2)))
-			print ("min/max  :: "+str(round(medians.min(),2))+" <> "
-				+str(round(medians.max(),2)))
+			print(("mean/std :: "+str(round(medians.mean(),2))+" +/- "
+				+str(round(medians.std(),2))))
+			print(("min/max  :: "+str(round(medians.min(),2))+" <> "
+				+str(round(medians.max(),2))))
 		else:
 			apDisplay.printWarning("no Euler jumpers inserted into the database, make sure that the angles are read by the recon uploader")			
 		return
@@ -262,7 +262,7 @@ class ApEulerJump(object):
 				euler['iteration'] = int(data['refineIter']['iteration'])
 				eulertree.append(euler)
 			except:
-				print euler
+				print(euler)
 				import pprint
 				pprint.pprint(data)
 				apDisplay.printError("bad data entry")
@@ -366,7 +366,7 @@ class ApEulerJump(object):
 #==================
 if __name__ == "__main__":
 	if len(sys.argv) < 2:
-		print "Usage: ./apEulerJump.py reconid [sym]\n\te.g. ./apEulerJump.py 418"
+		print("Usage: ./apEulerJump.py reconid [sym]\n\te.g. ./apEulerJump.py 418")
 		sys.exit(1)
 	reconrunid = int(sys.argv[1].strip())
 	if len(sys.argv) > 2:

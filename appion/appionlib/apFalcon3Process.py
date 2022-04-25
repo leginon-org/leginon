@@ -39,10 +39,11 @@ class FalconProcessing(apDDprocess.DDFrameProcessing):
 			apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
 		session_frame_path = self.getSessionFramePathFromImage(imagedata)
 		# frame stackfile is image filename plus '.frames.mrc'
-		rawframedir = os.path.join(session_frame_path,'%s.frames.mrc' % imagedata['filename'])
+		apDisplay.printMsg('frame extension is %s' % self.extname)
+		rawframedir = os.path.join(session_frame_path,'%s.frames.%s' % (imagedata['filename'],self.extname))
 		if not self.waitForPathExist(rawframedir,30):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
-		apDisplay.printMsg('K2 Raw Frame Dir from image is %s' % (rawframedir,))
+		apDisplay.printMsg('Raw Frame Dir from image is %s' % (rawframedir,))
 		return rawframedir
 
 	def loadOneRawFrame(self,rawframe_path,frame_number):
@@ -91,7 +92,7 @@ class FalconProcessing(apDDprocess.DDFrameProcessing):
 		return '%s%d.raw' % (self.framename_pattern,frame_number)
 
 	def getUsedFramesFromImageData(self,imagedata):
-		return range(self.getNumberOfFrameSavedFromImageData(imagedata))
+		return list(range(self.getNumberOfFrameSavedFromImageData(imagedata)))
 
 	def correctFrameImage(self,framelist,use_full_raw_area=False):
 		return self.__correctFrameImage(framelist,use_full_raw_area)	
@@ -110,6 +111,6 @@ if __name__ == '__main__':
 	dd.setImageId(5596287)
 	start_frame = 0
 	nframe = 5
-	framelist = range(start_frame,start_frame+nframe)
+	framelist = list(range(start_frame,start_frame+nframe))
 	corrected = dd.correctFrameImage(framelist)
 	mrc.write(corrected,'corrected_frame%d_%d.mrc' % (start_frame,nframe))

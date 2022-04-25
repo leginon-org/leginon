@@ -65,7 +65,7 @@ class RadialAverageStackScript(appionScript.AppionScript):
 		if not os.path.isfile(processed_stack, ):
 			apDisplay.printError("No stack was created")
 
-		included = range(numpart)
+		included = list(range(numpart))
 		apStack.commitSubStack(self.params, newname='r_avg.hed', radial_averaged=True, included=included)
 		apStack.averageStack(stack=processed_stack)
 

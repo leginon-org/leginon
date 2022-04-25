@@ -179,7 +179,7 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 		if key not in dbdict:
 			apDisplay.printError("Key: "+key+" was not found in transformation data")
 
-	for key,val in dbdict.items():
+	for key,val in list(dbdict.items()):
 		#print key
 		if re.match("image[12]_[xy]", key):
 			transq[key] = round(val*bin,2)
@@ -235,9 +235,9 @@ def getStackParticleTiltPair(stackid, partnum, tiltstackid=None):
 		#print "image2"
 		otherpart = tiltpartdatas1[0]['particle2']
 	else:
-		print partdata
-		print tiltpartdatas1
-		print tiltpartdatas2
+		print(partdata)
+		print(tiltpartdatas1)
+		print(tiltpartdatas2)
 		apDisplay.printError("failed to get tilt pair data")
 
 	### get tilt stack particle
@@ -279,9 +279,9 @@ def getTiltTransformFromParticle(partdata):
 		transformdata = tiltpartdatas2[0]['transform']
 		otherpartdata = tiltpartdatas2[0]['particle1']
 	else:
-		print partdata
-		print tiltpartdatas1
-		print tiltpartdatas2
+		print(partdata)
+		print(tiltpartdatas1)
+		print(tiltpartdatas2)
 		apDisplay.printError("failed to get tilt pair data")
 
 	if time.time()-t0 > 1.0:
@@ -312,7 +312,7 @@ def getParticleTiltRotationAngles(stackpartdata):
 		tiltangle = tiltangle2 - tiltangle1
 	else:
 		#no particle pair info was found or some other problem
-		print partdata
+		print(partdata)
 		apDisplay.printWarning("failed to get tilt pair data or some other problem")
 		return None,None,None,None
 
@@ -351,7 +351,7 @@ def getParticleTiltRotationAnglesOTR(stackpartdata):
 		tiltangle = tiltangle2 - tiltangle1
 	else:
 		#no particle pair info was found or some other problem
-		print partdata
+		print(partdata)
 		apDisplay.printError("failed to get tilt pair data or some other problem")
 
 	if transformdata.timestamp < datetime.datetime(2009, 2, 19, 0, 0, 0):

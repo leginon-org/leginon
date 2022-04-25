@@ -163,7 +163,7 @@ class imagicClusterScript(appionScript.AppionScript):
 		self.resdict = {}
 		boxsizetuple = apFile.getBoxSize(stackfile)
 		boxsize = boxsizetuple[0]
-		for refnum in reflistsdict.keys():
+		for refnum in list(reflistsdict.keys()):
 			partlist = reflistsdict[refnum]
 			esttime = 3e-6 * len(partlist) * boxsize**2
 			apDisplay.printMsg("Ref num %d; %d parts; est time %s"
@@ -279,9 +279,9 @@ class imagicClusterScript(appionScript.AppionScript):
 		self.params['num_particles'] = self.analysisdata['alignstack']['num_particles']
 
 		starttime=time.time()
-		print self.params
-		print "... stack pixel size: "+str(self.params['apix'])
-		print "... stack box size: "+str(self.params['boxsize'])
+		print(self.params)
+		print("... stack pixel size: "+str(self.params['apix']))
+		print("... stack box size: "+str(self.params['boxsize']))
 		apDisplay.printColor("Running IMAGIC .batch file: See imagicMSAcluster log file(s) corresponding to # of classes for details", "cyan")
 
 		### insert run into database

@@ -199,7 +199,7 @@ class PhasorCTF(appionLoop2.AppionLoop):
 			return
 		f = open(self.freqfile, "w")
 		f.write("#frequency	fft file\n")
-		keys = self.freqdict.keys()
+		keys = list(self.freqdict.keys())
 		keys.sort()
 		for key in keys:
 			f.write("%.8e\t%s\n"%(self.freqdict[key], key))
@@ -209,12 +209,12 @@ class PhasorCTF(appionLoop2.AppionLoop):
 	#---------------------------------------
 	def processAndSaveFFT(self, imgdata, fftpath):
 		if os.path.isfile(fftpath):
-			print "FFT file found"
-			if fftpath in self.freqdict.keys():
-				print "Freq found"
+			print("FFT file found")
+			if fftpath in list(self.freqdict.keys()):
+				print("Freq found")
 				return False
-			print "Freq not found"
-		print "creating FFT file: ", fftpath
+			print("Freq not found")
+		print("creating FFT file: ", fftpath)
 
 		### downsize and filter leginon image
 		if self.params['uncorrected']:
@@ -334,7 +334,7 @@ class PhasorCTF(appionLoop2.AppionLoop):
 			self.bestvalues['defocus'] = defocus
 			self.bestellipse = copy.deepcopy(self.ellipseParams)
 		elif show is True:
-			print "not saving values %.2f, need an average better than %.2f"%((res8+res5), self.bestres)
+			print("not saving values %.2f, need an average better than %.2f"%((res8+res5), self.bestres))
 
 		## normalize the data
 		PSD -= (PSD[lowerBoundIndex:]).min()
@@ -379,7 +379,7 @@ class PhasorCTF(appionLoop2.AppionLoop):
 	def rotationBlur(self, imagedata, angle=1, numIter=2):
 		t0 = time.time()
 		if len(imagedata.shape) != 2:
-			print "Must be 2D array for rotBlur"
+			print("Must be 2D array for rotBlur")
 			return imagedata
 
 		arraylist = [imagedata,]
@@ -471,10 +471,10 @@ class PhasorCTF(appionLoop2.AppionLoop):
 		noisedata = mergedata
 
 		### DO THE SUBTRACTION
-		print PSD.shape, noisedata.shape
+		print(PSD.shape, noisedata.shape)
 		if noisedata.shape[0] > PSD.shape[0]:
 			noisedata = noisedata[:-1]
-		print PSD.shape, noisedata.shape
+		print(PSD.shape, noisedata.shape)
 		normexpPSD = numpy.exp(PSD) - numpy.exp(noisedata)
 		normlogPSD = numpy.log(numpy.where(normexpPSD<1, 1, normexpPSD))
 
@@ -544,10 +544,10 @@ class PhasorCTF(appionLoop2.AppionLoop):
 		envelopdata = mergedata
 
 		### DO THE DIVISION
-		print normexpPSD.shape, envelopdata.shape
+		print(normexpPSD.shape, envelopdata.shape)
 		if envelopdata.shape[0] > normexpPSD.shape[0]:
 			envelopdata = envelopdata[:-1]
-		print normexpPSD.shape, envelopdata.shape
+		print(normexpPSD.shape, envelopdata.shape)
 		normnormexpPSD = normexpPSD / numpy.exp(envelopdata)
 
 		if self.debug is True:
@@ -628,7 +628,7 @@ class PhasorCTF(appionLoop2.AppionLoop):
 		dogarray = apDog.diffOfGauss(fftarray, dograd, k=1.2)
 		#dogarray = fftarray
 
-		print "Edge range: ", minEdges, maxEdges
+		print("Edge range: ", minEdges, maxEdges)
 
 		edges = canny.canny_edges(dogarray, low_thresh=0.01,
 			minEdgeRadius=minEdgeRadius, maxEdgeRadius=maxEdgeRadius, minedges=minEdges, maxedges=maxEdges)
@@ -707,7 +707,7 @@ class PhasorCTF(appionLoop2.AppionLoop):
 		bestres = 1000.0
 		oldampcontrast = self.ctfvalues['amplitude_contrast']
 		resVals = []
-		print "Guessing %d different defocus values"%(len(invGuesses))
+		print("Guessing %d different defocus values"%(len(invGuesses)))
 		for invDefocus in invGuesses:
 			defocus = 1.0/invDefocus**2
 			ampcontrast = sinefit.refineAmplitudeContrast(raddata[lowerbound:]*1e10, defocus, 
@@ -746,7 +746,7 @@ class PhasorCTF(appionLoop2.AppionLoop):
 			if avgres < oldavgres:
 				oldavgres = avgres
 			while lowerbound >= upperbound+1:
-				print lowerbound, upperbound
+				print(lowerbound, upperbound)
 				upperbound += 10
 			if self.params['fast'] is True:
 				mindef = 1.0/(1.01/math.sqrt(defocus))**2
@@ -880,7 +880,7 @@ class PhasorCTF(appionLoop2.AppionLoop):
 		defocus = self.defocusLoop(self.bestvalues['defocus'], raddata, normPSDarray, self.lowerbound, self.upperbound)
 		avgres = self.getResolution(defocus, raddata, normPSDarray, self.lowerbound, show=False)
 		for i in range(4):
-			print "********"
+			print("********")
 		self.fminCount += 1
 		#ctfdb.getBestCtfByResolution(self.imgdata)
 		self.printBestValues()
@@ -1026,7 +1026,7 @@ class PhasorCTF(appionLoop2.AppionLoop):
 		amplitudecontrast = sinefit.refineAmplitudeContrast(raddata[lowerbound:upperbound]*1e10, defocus, 
 			flatPSDarray[lowerbound:upperbound], self.ctfvalues['cs'], self.wavelength, msg=self.debug)
 		if amplitudecontrast is not None:
-			print "amplitudecontrast", amplitudecontrast
+			print("amplitudecontrast", amplitudecontrast)
 			self.ctfvalues['amplitude_contrast'] = amplitudecontrast
 	
 		defocus = self.defocusLoop(defocus, raddata, flatPSDarray, lowerbound, upperbound)
@@ -1074,9 +1074,9 @@ class PhasorCTF(appionLoop2.AppionLoop):
 			self.ctfvalues['defocus2'] = self.ctfvalues['defocus']*ellipratio
 
 			defdiff = 1.0 - 2*self.ctfvalues['defocus']/(self.ctfvalues['defocus1']+self.ctfvalues['defocus2'])
-			print "%.3e --> %.3e,%.3e"%(self.ctfvalues['defocus'], 
-					self.ctfvalues['defocus2'], self.ctfvalues['defocus1'])
-			print defdiff*100
+			print("%.3e --> %.3e,%.3e"%(self.ctfvalues['defocus'], 
+					self.ctfvalues['defocus2'], self.ctfvalues['defocus1']))
+			print(defdiff*100)
 			if defdiff*100 > 1:
 				apDisplay.printWarning("Large astigmatism")
 				#sys.exit(1)
@@ -1109,17 +1109,17 @@ class PhasorCTF(appionLoop2.AppionLoop):
 			self.ctfvalues['amplitude_contrast'], avgres/2.0), "green")
 
 		for i in range(10):
-			print "===================================="
+			print("====================================")
 
-		print "PREVIOUS VALUES"
+		print("PREVIOUS VALUES")
 		ctfdb.getBestCtfByResolution(imgdata)
-		print "CURRENT VALUES"
+		print("CURRENT VALUES")
 		defocusratio = self.ctfvalues['defocus2']/self.ctfvalues['defocus1']
 		apDisplay.printColor("def1: %.2e | def2: %.2e | angle: %.1f | ampcontr %.2f | defratio %.3f"
 			%(self.ctfvalues['defocus1'], self.ctfvalues['defocus2'], self.ctfvalues['angle_astigmatism'],
 			self.ctfvalues['amplitude_contrast'], defocusratio), "blue")
 		self.printBestValues()
-		print "===================================="
+		print("====================================")
 
 		return
 

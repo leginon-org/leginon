@@ -312,7 +312,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 
 	#=======================
 	def start(self):
-		print self.params
+		print(self.params)
 		if self.params['clusterId'] is not None:
 			self.clusterdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
 			self.useClusterForTemplateStack()

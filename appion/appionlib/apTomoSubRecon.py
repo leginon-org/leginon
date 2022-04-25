@@ -277,7 +277,7 @@ class SubTomoETomoMaker(SubTomoMaker):
 		return size, offsetz
 
 	def updateDescription(self):
-		return raw_input('Describe the subtomogram in one line->')
+		return input('Describe the subtomogram in one line->')
 
 	def onClose(self):
 		if self.params['fulltomoId']:

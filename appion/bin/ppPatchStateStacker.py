@@ -53,9 +53,9 @@ class PhasePlateTestStacker(appionScript.AppionScript):
 	def start(self):
 		for pp_number in range(1,self.getTotalPhasePlates()+1):
 			ppimages = self.getPPTestImages(pp_number)
-			print pp_number, ppimages.keys()
-			apDisplay.printMsg('Phase Plate %d patch state test contains %d images' % (pp_number, len(ppimages.keys())))
-			if len(ppimages.keys()):
+			print(pp_number, list(ppimages.keys()))
+			apDisplay.printMsg('Phase Plate %d patch state test contains %d images' % (pp_number, len(list(ppimages.keys()))))
+			if len(list(ppimages.keys())):
 				outputfile = os.path.join(self.params['rundir'],'%s_ph%d_power.mrc' % (self.sessiondata['name'], pp_number))
 				self.stackPowerSpectra(ppimages, outputfile, (2048,2048), self.getPatchesPerPlate())
 
@@ -107,8 +107,8 @@ class PhasePlateTestStacker(appionScript.AppionScript):
 		if not ppimages:
 			return
 		for i in range(1,totalpatch+1):
-			if i in ppimages.keys():
-				print ppimages[i]['filename']
+			if i in list(ppimages.keys()):
+				print(ppimages[i]['filename'])
 				a = ppimages[i]['image'][:shape[0],:shape[1]]
 				calc_stats = True
 			else:
@@ -124,7 +124,7 @@ class PhasePlateTestStacker(appionScript.AppionScript):
 		h = mrc.readHeaderFromFile(outputfile)
 		headerdict = {'my':h['my']*images_per_row,'ny':h['ny']*images_per_row,'nz':rows}
 		mrc.update_file_header(outputfile, headerdict)
-		print outputfile
+		print(outputfile)
 
 #=====================
 #=====================

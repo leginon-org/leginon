@@ -6,7 +6,7 @@ all parameters must be in the appropriate format for the upload procedure.
 """
 
 #python
-import os, re, cPickle, glob, shutil
+import os, re, pickle, glob, shutil
 
 #appion
 from appionlib import appiondata
@@ -99,44 +99,44 @@ class generalReconUploader(appionScript.AppionScript):
 		self.runparams.update(self.readRunParameters())
 
 		### parameters recovered from runparameter file(s)
-		if not self.runparams.has_key('stackid'):
+		if 'stackid' not in self.runparams:
 			if self.params['stackid'] is not None:
 				self.runparams['stackid'] = self.params['stackid']
 			else:
 				apDisplay.printError("stack id must be specified for proper database insertion")
-		if not self.runparams.has_key('modelid'):
+		if 'modelid' not in self.runparams:
 			if self.params['modelid'] is not None:
 				self.runparams['modelid'] = self.params['modelid']
 			else:
 				apDisplay.printError("model id must be specified for proper database insertion")
-		if not self.runparams.has_key('NumberOfReferences'):
+		if 'NumberOfReferences' not in self.runparams:
 			if self.params['NumberOfReferences'] is not None:
 				self.runparams['NumberOfReferences'] = self.params['NumberOfReferences']
 			else:
 				apDisplay.printError("number of references produced during the refinement needs to be specified")
-		if not self.runparams.has_key('numiter'):
+		if 'numiter' not in self.runparams:
 			if self.params['numiter'] is not None:
 				self.runparams['numiter'] = self.params['numiter']
 			else:
 				apDisplay.printError("number of iterations run during the refinement needs to be specified")	
-		if not self.runparams.has_key('boxsize'):
+		if 'boxsize' not in self.runparams:
 			if self.params['boxsize'] is not None:
 				self.runparams['boxsize'] = self.params['boxsize']
 			else:
 				apDisplay.printError("boxsize of the map / particles submitted for refinement needs to be specified")
-		if not self.runparams.has_key('apix'):
+		if 'apix' not in self.runparams:
 			if self.params['apix'] is not None:
 				self.runparams['apix'] = self.params['apix']
 			else:
 				apDisplay.printError("pixelsize of the map / particles submitted for refinement needs to be specified")
-		if not self.runparams.has_key('symmetry'):
+		if 'symmetry' not in self.runparams:
 			if self.params['symid'] is not None:
 				self.runparams['symmetry'] = apSymmetry.getSymmetryDataFromID(self.params['symid'])
 			else:
 				apDisplay.printError("symmetry ID must be specified, you can input --symid=25 for an asymmetric reconstruction")
 		# access multiModelRefinementRun this way in case it is not present
 		if 'multiModelRefinementRun' in vars(self):
-			if not self.runparams.has_key('NumberOfReferences') and self.multiModelRefinementRun is True:
+			if 'NumberOfReferences' not in self.runparams and self.multiModelRefinementRun is True:
 				if self.params['NumberOfReferences'] is not None:
 					self.runparams['NumberOfReferences'] = self.params['NumberOfReferences']
 				else:
@@ -150,19 +150,19 @@ class generalReconUploader(appionScript.AppionScript):
 					self.multiModelRefinementRun = False
 			else:
 				apDisplay.printError("number of output models (references) in refinement needs to be specified for multi-model run")			
-		if not self.runparams.has_key('rundir'):
+		if 'rundir' not in self.runparams:
 			self.runparams['rundir'] = self.params['rundir']
-		if not self.runparams.has_key('reconstruction_working_dir'):
+		if 'reconstruction_working_dir' not in self.runparams:
 			self.runparams['reconstruction_working_dir'] = str(self.package)+"_results"
-		if not self.runparams.has_key('mask'):
+		if 'mask' not in self.runparams:
 			self.runparams['mask'] = None
-		if not self.runparams.has_key('imask'):
+		if 'imask' not in self.runparams:
 			self.runparams['imask'] = None	
-		if not self.runparams.has_key('alignmentInnerRadius'):
+		if 'alignmentInnerRadius' not in self.runparams:
 			self.runparams['alignmentInnerRadius'] = None
-		if not self.runparams.has_key('alignmentOuterRadius'):
+		if 'alignmentOuterRadius' not in self.runparams:
 			self.runparams['alignmentOuterRadius'] = None	
-		if not self.runparams.has_key('angularSamplingRate'):
+		if 'angularSamplingRate' not in self.runparams:
 			self.runparams['angularSamplingRate'] = None
 							
 		### parameters specified for upload
@@ -270,11 +270,11 @@ class generalReconUploader(appionScript.AppionScript):
 				apDisplay.printWarning("Could not find run parameters pickle file ... trying to get values from logfile")
 				try:
 					runparams = self.parseFileForRunParameters()
-				except Exception, e:
+				except Exception as e:
 					apDisplay.printError("Could not determine run parameters for refinement: %s ...you may try uploading as an external package." % e)
 			else:
 				f = open(paramfile[0], "r")
-				runparams = cPickle.load(f)
+				runparams = pickle.load(f)
 				f.close()
 		
 			return runparams
@@ -388,9 +388,9 @@ class generalReconUploader(appionScript.AppionScript):
 				resq = appiondata.ApResolutionData()
 				resq['half'] = fscRes
 				resq['fscfile'] = os.path.basename(fscfile)
-			except Exception, e:
+			except Exception as e:
 				apDisplay.printWarning("An error occured while reading fsc data: ")
-				print e
+				print(e)
 				apDisplay.printWarning("The following FSC file does not exist or is unreadable: %s " % (fscfile))
 				resq = None
 		else:
@@ -413,7 +413,7 @@ class generalReconUploader(appionScript.AppionScript):
 		iterationParamsq['alignmentOuterRadius'] = apRecon.getComponentFromVector(self.runparams['alignmentOuterRadius'], iteration-1)
 		try:
 			iterationParamsq['symmetry'] = self.runparams['symmetry']
-		except Exception, e:
+		except Exception as e:
 			symmetry = self.runparams['symmetry'].split()[0]
 			iterationParamsq['symmetry'] = apSymmetry.findSymmetry( symmetry )
 		iterationParamsq['exemplar'] = False
@@ -435,8 +435,8 @@ class generalReconUploader(appionScript.AppionScript):
 			### insert FSC data into database
 			try:
 				self.insertFSCData(fscfile, iterationParamsq)
-			except Exception, e:
-				print e
+			except Exception as e:
+				print(e)
 				apDisplay.printWarning("FSC file does not exist or is unreadable")			
 		
 		### fill in ApRefineReferenceData object
@@ -615,7 +615,7 @@ class generalReconUploader(appionScript.AppionScript):
         # symmetry was hard coded to 'c1'. why?
 		try:
 			symmetry = self.runparams['symmetry']
-		except Exception, e:
+		except Exception as e:
 			symmetry = self.runparams['symmetry'].split()[0]
 			symmetry = apSymmetry.findSymmetry( symmetry )
             
@@ -650,7 +650,7 @@ class generalReconUploader(appionScript.AppionScript):
 			else:
 				### Euler jumpers calculated from ApRefineRunData in single-model case
 				if len(uploadIterations) > 1 or \
-				(refinecomplete.itervalues().next()[-1] == self.runparams['numiter'] and len(refinecomplete.itervalues().next())>1): 
+				(iter(refinecomplete.values()).next()[-1] == self.runparams['numiter'] and len(next(iter(refinecomplete.values())))>1): 
 					apDisplay.printMsg("calculating euler jumpers for recon="+str(reconrunid))
 					eulerjump = apEulerJump.ApEulerJump()
 					eulerjump.calculateEulerJumpsForEntireRecon(reconrunid, self.runparams['stackid'])
@@ -708,9 +708,9 @@ def readParticleFileByFilePath(pdatafile,porderfile=''):
 	if porderfile and os.path.isfile(porderfile):
 		orderf = open(porderfile,'r')
 		lines = orderf.readlines()
-		orderlist = map(lambda x:int(x[:-1]),lines)
+		orderlist = [int(x[:-1]) for x in lines]
 	else:
-		orderlist = range(1,len(finfo)+1)
+		orderlist = list(range(1,len(finfo)+1))
 	# construct data
 	particledata = {}			
 	for j, info in enumerate(finfo):

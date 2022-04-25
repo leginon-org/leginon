@@ -11,8 +11,8 @@ from leginon.gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
 try:
 	import radermacher
 except:
-	print "using slow tilt angle calculator"
-	import slowmacher as radermacher
+	print("using slow tilt angle calculator")
+	from . import slowmacher as radermacher
 from appionlib import apDog
 from appionlib import apFile
 from appionlib import apPeaks
@@ -321,10 +321,10 @@ class FitAllDialog(wx.Dialog):
 		targets2 = self.parent.panel2.getTargets('Picked')
 		a2 = self.parent.targetsToArray(targets2)
 		if len(a1) > len(a2):
-			print "shorten a1"
+			print("shorten a1")
 			a1 = a1[0:len(a2),:]
 		elif len(a2) > len(a1):
-			print "shorten a2"
+			print("shorten a2")
 			a2 = a2[0:len(a1),:]
 		self.lsfit = apTiltTransform.willsq(a1, a2, theta, gamma, phi, scale, shiftx, shifty, xscale)
 		#pprint.pprint(self.lsfit)
@@ -642,7 +642,7 @@ class viewDogMapsFrame(wx.Dialog):
 		self.rightmap = os.path.join(os.getcwd(), "maps/rightimage.dogmap%d.jpg"%(self.parent.dogimgnum))
 
 		if not os.path.isfile(self.leftmap) or not os.path.isfile(self.rightmap):
-			print "failed to find DoG maps"
+			print("failed to find DoG maps")
 			return False
 
 		### left image

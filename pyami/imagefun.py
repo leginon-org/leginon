@@ -482,7 +482,7 @@ def bin2(a, factor):
 	binning factor in both dimensions.
 	'''
 	oldshape = a.shape
-	newshape = old_div(numpy.asarray(oldshape),factor)
+	newshape = old_div(numpy.asarray(oldshape),factor).astype(int)
 	tmpshape = (newshape[0], factor, newshape[1], factor)
 	f = factor * factor
 	binned = old_div(numpy.sum(numpy.sum(numpy.reshape(a, tmpshape), 1), 2), f)

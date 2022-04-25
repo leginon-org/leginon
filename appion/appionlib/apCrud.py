@@ -209,26 +209,26 @@ def mergePolygonPoints(polygons):
 def convexHullUnion(regions,clabels,testlog):
 	shape=numpy.shape(regions)
 	gpolygons=[]
-	print "making convex hulls"
+	print("making convex hulls")
 	while clabels != len(gpolygons):
 		gpolygons=findConvexHullsFromLabeledImage(regions,clabels)
 	
-		print "merging from %d convex hulls" % len(gpolygons)
+		print("merging from %d convex hulls" % len(gpolygons))
 		gpolygons=mergePolygonPoints(gpolygons)
-		print "merged to %d convex hulls" % len(gpolygons)
+		print("merged to %d convex hulls" % len(gpolygons))
 
 		#fill polygons and make a labeled image
 		polygon_image=leginon.polygon.plotPolygons(shape,gpolygons)
 		regions,clabels=nd.label(polygon_image)
 		if clabels !=len(gpolygons):
-			print "some polygons just touched, REDO!!"
+			print("some polygons just touched, REDO!!")
 
 	testlog=outputTestImage(regions,'region_labelp','Convex hull union labeled polygons',testlog)
 	return regions,clabels,gpolygons,testlog
 	
 
 def getRealLabeledMeanStdev(image,labeled_image,indices,info):
-	print "Getting real mean and stdev"
+	print("Getting real mean and stdev")
 	mean=nd.mean(image,labels=labeled_image,index=indices)
 	stdev=nd.standard_deviation(image,labels=labeled_image,index=indices)
 	ll=0
@@ -242,7 +242,7 @@ def getRealLabeledMeanStdev(image,labeled_image,indices,info):
 		except:
 			indices=[indices]
 	try:
-		info.keys()
+		list(info.keys())
 	except:
 		offset=1
 	else:
@@ -254,7 +254,7 @@ def getRealLabeledMeanStdev(image,labeled_image,indices,info):
 	return info
 	
 def getRealLabeledPerimeter(image,edge_mask,labeled_image,indices,info,testlog):
-	print "Getting real perimeter length"
+	print("Getting real perimeter length")
 	edgeimage,testlog=findEdgeSobel(edge_mask,0,0.5,1.0,False,testlog)
 	mask=ma.getmask(edgeimage)
 	length=nd.sum(mask,labels=labeled_image,index=indices)
@@ -269,7 +269,7 @@ def getRealLabeledPerimeter(image,edge_mask,labeled_image,indices,info,testlog):
 		except:
 			indices=[indices]
 	try:
-		info.keys()
+		list(info.keys())
 	except:
 		offset=1
 	else:
@@ -280,7 +280,7 @@ def getRealLabeledPerimeter(image,edge_mask,labeled_image,indices,info,testlog):
 	return info	
 
 def getRealLabeledAreaCenter(image,labeled_image,indices,info):
-	print "Getting real area and center"
+	print("Getting real area and center")
 	shape=numpy.shape(image)
 	ones=numpy.ones(shape)
 	area=nd.sum(ones,labels=labeled_image,index=indices)
@@ -297,7 +297,7 @@ def getRealLabeledAreaCenter(image,labeled_image,indices,info):
 		except:
 			indices=[indices]
 	try:
-		info.keys()
+		list(info.keys())
 	except:
 		offset=1
 	else:
@@ -329,13 +329,13 @@ def getLabeledInfo(image,alledgemask,labeled_image,indices,fast,info,testlog):
 	except:
 		ltotal=1
 		
-	print "getting region info"
+	print("getting region info")
 	
 	if len(info) != ltotal:
 		info=makeDefaultInfo(ltotal)	
 	
 	try:
-		info.keys()
+		list(info.keys())
 	except:
 		offset=1
 	else:
@@ -360,7 +360,7 @@ def getLabeledInfo(image,alledgemask,labeled_image,indices,fast,info,testlog):
 	return info,testlog
 
 def getPolygonInfo(polygons,info,testlog):
-	print "get polygon area and center info"
+	print("get polygon area and center info")
 	if len(info) != len(polygons):
 		info=makeDefaultInfo(len(polygons))	
 	polygons_arrays = leginon.polygon.polygons_tuples2arrays(polygons)
@@ -378,41 +378,41 @@ def getPolygonInfo(polygons,info,testlog):
 	return info,testlog
 		
 def pruneByLength(info,length_min,length_max,goodregions_in):
-	print "pruning by edge length"
+	print("pruning by edge length")
 	goodregions=[]
 	for l in range(1,len(info)+1):
 		length=info[l][3]
 		if (length > length_min and length < length_max):
 			if l-1 in goodregions_in:
 				goodregions.append(l-1)
-	print "pruned to %d region" %len(goodregions)
+	print("pruned to %d region" %len(goodregions))
 	return goodregions
 
 
 def pruneByArea(info,area_min,area_max,goodregions_in):
-	print "pruning by area"
+	print("pruning by area")
 	goodregions=[]
 	for l in range(1,len(info)+1):
 		area=info[l][0]
 		if (area > area_min and area < area_max):
 			if l-1 in goodregions_in:
 				goodregions.append(l-1)
-	print "pruned to %d region" %len(goodregions)
+	print("pruned to %d region" %len(goodregions))
 	return goodregions
 
 def pruneByStdev(info,stdev_min,goodregions_in):
-	print "pruning by stdev"
+	print("pruning by stdev")
 	goodregions=[]
 	for l in range(1,len(info)+1):
 		stdev=info[l][2]
 		if (stdev > stdev_min):
 			if l-1 in goodregions_in:
 				goodregions.append(l-1)
-	print "pruned to %d region" %len(goodregions)
+	print("pruned to %d region" %len(goodregions))
 	return goodregions
 	
 def makePrunedLabels(labeled_image,ltotal,info,goodlabels):
-	print "remaking %d labeled image after pruning" % len(goodlabels)
+	print("remaking %d labeled image after pruning" % len(goodlabels))
 	new_labeled_image = makeImageFromLabels(labeled_image,ltotal,goodlabels)
 
 	goodinfos=[]
@@ -453,7 +453,7 @@ def makeImageFromLabels(labeled_image,ltotal,goodlabels):
 	return new_labeled_image
 	
 def makePrunedPolygons(gpolygons,imageshape,info,goodlabels):
-	print "remaking %d polygons after pruning" % len(goodlabels)
+	print("remaking %d polygons after pruning" % len(goodlabels))
 	goodpolygons=[]
 	goodinfos=[]
 	if len(goodlabels)==0:
@@ -466,7 +466,7 @@ def makePrunedPolygons(gpolygons,imageshape,info,goodlabels):
 	equalregions = leginon.polygon.plotPolygons(imageshape,goodpolygons)
 	regions,clabels=nd.label(equalregions)
 	if clabels != len(goodpolygons):
-		print "ERROR: making %d labeled region from %d good polygons" % (clabels,len(goodpolygons))
+		print("ERROR: making %d labeled region from %d good polygons" % (clabels,len(goodpolygons)))
 		return regions,clabels,[]
 	return regions,len(goodpolygons),goodinfos
 
@@ -504,7 +504,7 @@ def getBmaskFromLabeled(labeled_regions):
 
 def makeMask(params,image):
 	filelog="\nTEST OUTPUT IMAGES\n----------------------------------------\n"
-	print "Processing"
+	print("Processing")
 		
 	bin=int(params["bin"])
 	apix=float(params["apix"])
@@ -542,7 +542,7 @@ def makeMask(params,image):
 				os.remove(os.path.join(testpath,testfilename))
 		else:
 			os.mkdir(testpath)
-		print "test directory",testpath
+		print("test directory",testpath)
 	#factors to optimize the threshold
 	pm = 0.667
 	am = 1.0
@@ -574,7 +574,7 @@ def makeMask(params,image):
 				low=(low_tn-1.0)*delta_stdev/delta_scale+1.0
 				high=(high_tn-1.0)*delta_stdev/delta_scale+1.0
 
-	print 'scaled regionhi= %.4f regionlo= %.4f' %(high,low)
+	print('scaled regionhi= %.4f regionlo= %.4f' %(high,low))
 
 	if (test):
 		testlog=outputTestImage(image,'input','input image',testlog)
@@ -602,21 +602,21 @@ def makeMask(params,image):
 
 		if (convolve_t > 0):
 			#convolve with the disk image of the particle
-			print "pradius",pradius
+			print("pradius",pradius)
 			mask,testlog=convolveDisk(mask,pradius,convolve_t,testlog)
 		
 
 		#segmentation
 		
 		labeled_regions,clabels=nd.label(mask)
-		print "starting with",clabels, "regions"
+		print("starting with",clabels, "regions")
 		testlog=outputTestImage(labeled_regions,'region_label','Segmented labeled image',testlog)
 
 		################PERIMETER PRUNING##########################
 		#pruning by length of the perimeters of the labeled regions.
 		if (do_prune_by_length):
-			allinfos,testlog=getLabeledInfo(image,mask,labeled_regions,range(1,clabels+1),True,allinfos,testlog)
-			goodregions=range(clabels)
+			allinfos,testlog=getLabeledInfo(image,mask,labeled_regions,list(range(1,clabels+1)),True,allinfos,testlog)
+			goodregions=list(range(clabels))
 			goodregions=pruneByLength(allinfos,list_t,image.size*0.5,goodregions)
 			labeled_regions,clabels,goodinfo=makePrunedLabels(labeled_regions,clabels,allinfos,goodregions)
 		
@@ -625,8 +625,8 @@ def makeMask(params,image):
 			labeled_regions,clabels,gpolygons,testlog=convexHullUnion(labeled_regions,clabels,testlog)
 				
 		if do_cv:
-			print "libCV FindRegion does not work properly at the moment."
-			print "can not detect carbon edge"
+			print("libCV FindRegion does not work properly at the moment.")
+			print("can not detect carbon edge")
 			sys.exit()
 			testlog=outputTestImage(mask,'cvin','cvin',testlog)
 			mm = mask.astype(numpy.uint8)
@@ -648,14 +648,14 @@ def makeMask(params,image):
 				else:
 					mask = leginon.polygon.plotPolygons(image.shape,gpolygons)
 					labeled_regions,clabels=nd.label(mask)
-					allinfos,testlog=getLabeledInfo(image,mask,labeled_regions,range(1,clabels+1),False,{},testlog)
+					allinfos,testlog=getLabeledInfo(image,mask,labeled_regions,list(range(1,clabels+1)),False,{},testlog)
 			else:				
 				# Regions are non-zero subimages
-				allinfos,testlog=getLabeledInfo(image,mask,labeled_regions,range(1,clabels+1),False,allinfos,testlog)
+				allinfos,testlog=getLabeledInfo(image,mask,labeled_regions,list(range(1,clabels+1)),False,allinfos,testlog)
 			saved_labeled_regions=labeled_regions
 			saved_clabels=clabels
 			testlog[0]=test
-			goodregions=range(clabels)
+			goodregions=list(range(clabels))
 
 			################AREA PRUNING##########################
 
@@ -709,7 +709,7 @@ def makeMask(params,image):
 			
 #		create final region mask
 			equalregions=getBmaskFromLabeled(labeled_regions)
-			regioninfos,testlog=getLabeledInfo(image,equalregions,labeled_regions,range(1,clabels+1),False,regioninfos,testlog)
+			regioninfos,testlog=getLabeledInfo(image,equalregions,labeled_regions,list(range(1,clabels+1)),False,regioninfos,testlog)
 			
 		else:
 			equalregions=None
@@ -723,7 +723,7 @@ def makeMask(params,image):
 				masklabel=numpy.ones(image.shape)
 			superimage=image*masklabel
 			testlog=outputTestImage(superimage,'output','Final Mask w/ image',testlog)
-			print testlog[2]
+			print(testlog[2])
 	return regioninfos,equalregions,
 
 def makeKeepMask(maskarray,keeplist1):
@@ -733,13 +733,13 @@ def makeKeepMask(maskarray,keeplist1):
 	# Remove any regions that are too small (happens with auto-masking)
 	testlog = [False,0,""]
 	infos={}	
-	infos, testlog = getLabeledInfo( maskarray, maskarray, labeled_maskarray, range(1,countlabels+1), False, infos, testlog )
-	goodregions = range(countlabels)
+	infos, testlog = getLabeledInfo( maskarray, maskarray, labeled_maskarray, list(range(1,countlabels+1)), False, infos, testlog )
+	goodregions = list(range(countlabels))
 	goodareas = pruneByArea( infos, 400, 16777216, goodregions)
 	labeled_maskarray, countlabels, infos = makePrunedLabels(labeled_maskarray, countlabels, infos, goodareas)
 	
 	# adjust the index of the regions
-	keeplist0 = map((lambda x: x-1),keeplist1)
+	keeplist0 = list(map((lambda x: x-1),keeplist1))
 	# make a new image array that only includes the regions that have not been rejected
 	labeled_maskarray = makeImageFromLabels(labeled_maskarray,countlabels,keeplist0)
 	maskarray=getBmaskFromLabeled(labeled_maskarray)
@@ -749,9 +749,9 @@ if __name__ == '__main__':
 	maskfile = '/home/acheng/testcrud/07jan05b/testa/masks/07jan05b_00018gr_00022sq_v01_00002sq_00_00002en_00_mask.png'
 	mask = apImage.PngAlphaToBinarryArray(maskfile)
 	labeled_image,ltotal = nd.label(mask)
-	print ltotal
+	print(ltotal)
 	goodlabels1 = [1]
-	keeplist0 = map((lambda x: x-1),goodlabels1)
+	keeplist0 = list(map((lambda x: x-1),goodlabels1))
 	goodmask = makeImageFromLabels(labeled_image,ltotal,keeplist0)
 	apImage.arrayToJpeg(goodmask,'test.jpg')
 	

@@ -31,7 +31,7 @@ def setJobStatus(jobid, status):
 	### cluster job data
 	clustdata = appiondata.ApAppionJobData.direct_query(jobid)
 	if not clustdata:
-		print "Did not find jobid=%d"%(jobid)
+		print("Did not find jobid=%d"%(jobid))
 		return False
 
 	### do the query
@@ -49,7 +49,7 @@ def setJobStatus(jobid, status):
 	try:
 		cursor.execute(query)
 	except:
-		print "MySQL query failed:\n======\n%s"%(query)
+		print("MySQL query failed:\n======\n%s"%(query))
 		return False
 	if getJobStatus(jobid) == newstat:
 		return True

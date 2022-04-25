@@ -42,7 +42,7 @@ def stackToHDF(infile,outfile,apix,pinfo=None):
 
 	apDisplay.printMsg("Generating '%s' with %i particles"%(outstack,imn))
 
-	for i in xrange(imn):
+	for i in range(imn):
 		a.read_image(infile,i)
 		a.set_attr_dict({'active':1})
 		t2 = EMAN2.Transform({"type":"spider","phi":0,"theta":0,"psi":0})

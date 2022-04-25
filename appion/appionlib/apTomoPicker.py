@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import division
+
 import math
 import os
 import sys
@@ -21,7 +21,7 @@ def findLocalMaxima(tomogram, dog_tomogram, dimx, dimy, dimz, sidelength, partic
 	def findStdDevs(percentile):
 		'''Consults a standard normal table to determine the number standard deviations from the mean cutoff'''
 		std_table = {'0.0': 0.5, '0.1': 0.5398, '0.2': 0.5793, '0.3': 0.6179, '0.4': 0.6554, '0.5': 0.6915, '0.6': 0.7257, '0.7': 0.758, '0.8': 0.7881, '0.9': 0.8159, '1': 0.8413, '1.1': 0.8643, '1.2': 0.8849, '1.3': 0.9032, '1.4': 0.9192, '1.5': 0.9332, '1.6': 0.9452, '1.7': 0.9554, '1.8': 0.9641, '1.9': 0.9713, '2': 0.9772, '2.1': 0.9821, '2.2': 0.9861, '2.3': 0.9893, '2.4': 0.9918, '2.5': 0.9938, '2.6': 0.9953, '2.7': 0.9965, '2.8': 0.9974, '2.9': 0.9981, '3': 0.9987, '3.1': 0.999, '3.2': 0.9993, '3.3': 0.9995, '3.4': 0.9997, '3.5': 0.9998, '3.7': 0.9999}
-		stds, value = min(std_table.items(), key=lambda (_, val): abs(val - percentile))
+		stds, value = min(list(std_table.items()), key=lambda __val: abs(__val[1] - percentile))
 		return float(stds)
 	apDisplay.printMsg("Identifying all peaks...")
 	pick_dict = []
@@ -59,13 +59,13 @@ def findLocalMaxima(tomogram, dog_tomogram, dimx, dimy, dimz, sidelength, partic
 					else:
 						thresholded_pick_dicts[i].append({'zcoord':max_loc[0], 'ycoord':max_loc[1], 'xcoord':max_loc[2], 'voxel_value':max_val, 'mean_intensity':mean_intensity})
 					i+=1
-	print range(len(thresholds),0,-1)
+	print(list(range(len(thresholds),0,-1)))
 	for j in range(len(thresholds),0,-1):
-		print j
-		print thresholds[j-1]
-		print len(pick_dicts[j-1])
+		print(j)
+		print(thresholds[j-1])
+		print(len(pick_dicts[j-1]))
 		if len(pick_dicts[j-1]) < 10*max_picks:
-			print "True"
+			print("True")
 	sys.exit()
 	
 	#heuristics if there are still too many picks
@@ -165,7 +165,7 @@ def dogPicker3D(picker_dir, tomogram, particle_diam, diam_variance, max_picks, j
 	Rasters a cube across the tomogram correlation map, finding local maxima within the search volume.
 	Written by: Alex Noble
 	"""
-	print ""
+	print("")
 	def proc3dLowpass(command):
 		try:
 			proc=subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
@@ -281,7 +281,7 @@ def dogPicker3D(picker_dir, tomogram, particle_diam, diam_variance, max_picks, j
 	apDisplay.printMsg("\033[1mTotal particles picked: %d\033[0m" % len(pick_dict))
 	apDisplay.printMsg("\033[1mDone!\033[0m")
 	apDisplay.printMsg("The picked tomogram, DoG tomogram, and picks (coords, Dynamo tbl, and Chimera bild) are here:")
-	print picker_dir
+	print(picker_dir)
 	
 	apDisplay.printMsg("You can view the picks in Dynamo by doing the following:")
 	apDisplay.printMsg("\tType dynamo x to enter the Dynamo command line,")

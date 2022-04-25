@@ -85,7 +85,7 @@ def fourierRingCorrelation(imgarray1, imgarray2, apix=1.0):
 	ringdict = getLinearIndices2d(fftshape)
 
 	### for each ring calculate the FRC
-	keys = ringdict.keys()
+	keys = list(ringdict.keys())
 	keys.sort()
 	lastfrc = 1.0
 	K = float(2)
@@ -180,7 +180,7 @@ def spectralSNR(partarray, apix=1.0):
 	ringdict = getLinearIndices2d(fftshape)
 
 	### for each ring calculate the FRC
-	keys = ringdict.keys()
+	keys = list(ringdict.keys())
 	keys.sort()
 	for key in keys:
 		sys.stderr.write(".")
@@ -255,7 +255,7 @@ def spectralSNR3d(volarray, apix=1.0):
 	shelldict = getLinearIndices3d(fftshape)
 
 	### for each shell calculate the FSC
-	keys = shelldict.keys()
+	keys = list(shelldict.keys())
 	keys.sort()
 	for key in keys:
 		sys.stderr.write(".")
@@ -270,10 +270,10 @@ def spectralSNR3d(volarray, apix=1.0):
 		ssnr = numer / ( K/(K-1.0) * denom ) - 1.0
 		fsc = ssnr / (ssnr + 1)
 		if key >= 3  and key <= 5:
-			print "======================"
-			print "numerring=", key, numer
-			print "denomring=", key, denom
-			print "ssnr=", key, ssnr
+			print("======================")
+			print("numerring=", key, numer)
+			print("denomring=", key, denom)
+			print("ssnr=", key, ssnr)
 		linear[key] = fsc
 	sys.stderr.write("\n")
 
@@ -460,12 +460,12 @@ def radialDistance(coord):
 
 #===========
 def printImageInfo(image):
-	print "+++++++++++++"
-	print image.shape
-	print image.dtype
-	print abs(image.mean()), image.std()
-	print image.min(), image.max()
-	print "============="
+	print("+++++++++++++")
+	print(image.shape)
+	print(image.dtype)
+	print(abs(image.mean()), image.std())
+	print(image.min(), image.max())
+	print("=============")
 
 #===========
 if __name__ == "__main__":
@@ -509,9 +509,9 @@ class fourierSum(apImagicFile.processStack):
 	def preLoop(self):
 		shape = (self.boxsize, self.boxsize)
 		self.ringdict = getLinearIndices2d(shape)
-		self.numrings = len(self.ringdict.keys())+1
+		self.numrings = len(list(self.ringdict.keys()))+1
 		self.fsumimg = numpy.zeros(shape, dtype=numpy.complex128)
-		self.keys = self.ringdict.keys()
+		self.keys = list(self.ringdict.keys())
 		self.keys.sort()
 		return
 
@@ -546,10 +546,10 @@ class fourierSqDiff(apImagicFile.processStack):
 	def preLoop(self):
 		shape = (self.boxsize, self.boxsize)
 		self.ringdict = getLinearIndices2d(shape)
-		self.numrings = len(self.ringdict.keys())+1
+		self.numrings = len(list(self.ringdict.keys()))+1
 		self.denomimg = numpy.zeros(shape, dtype=numpy.float64)
 		#self.denomring = numpy.zeros((self.numrings), dtype=numpy.float64)
-		self.keys = self.ringdict.keys()
+		self.keys = list(self.ringdict.keys())
 		self.keys.sort()
 		return
 

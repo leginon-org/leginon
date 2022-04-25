@@ -5,7 +5,7 @@ import sys
 import time
 import math
 import numpy
-import cPickle
+import pickle
 ## appion
 from appionlib import spyder
 from appionlib import apEMAN
@@ -134,7 +134,7 @@ def readRefFreeDocFile(docfile, picklefile):
 	apDisplay.printMsg("Shifts = %.3f +/- %.3f"%(shifts.mean(), shifts.std()))
 	docf.close()
 	picklef = open(picklefile, "w")
-	cPickle.dump(partlist, picklef)
+	pickle.dump(partlist, picklef)
 	picklef.close()
 	return partlist
 
@@ -267,8 +267,8 @@ def updateRefBasedDocFile(oldpartlist, docfile, picklefile):
 		if newpartdict['num'] == oldpartdict['num']:
 			partdict = getNewPartDict(oldpartdict, newpartdict)
 		else:
-			print oldpartdict
-			print newpartdict
+			print(oldpartdict)
+			print(newpartdict)
 			apDisplay.printError("wrong particle in update")
 		partlist.append(partdict)
 	shifts = numpy.array(shifts, dtype=numpy.float32)
@@ -277,7 +277,7 @@ def updateRefBasedDocFile(oldpartlist, docfile, picklefile):
 	apDisplay.printMsg("Shifts = %.3f +/- %.3f"%(shifts.mean(), shifts.std()))
 	docf.close()
 	picklef = open(picklefile, "w")
-	cPickle.dump(partlist, picklef)
+	pickle.dump(partlist, picklef)
 	picklef.close()
 	return partlist
 
@@ -411,7 +411,7 @@ def readRefBasedDocFile(docfile, picklefile):
 	apDisplay.printMsg("Angles = %.3f +/- %.3f"%(angs.mean(), angs.std()))
 	apDisplay.printMsg("Shifts = %.3f +/- %.3f"%(shifts.mean(), shifts.std()))
 	picklef = open(picklefile, "w")
-	cPickle.dump(partlist, picklef)
+	pickle.dump(partlist, picklef)
 	picklef.close()
 	return partlist
 

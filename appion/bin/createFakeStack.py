@@ -4,7 +4,7 @@ import os
 import sys
 import time
 import random
-import cPickle
+import pickle
 import sinedon
 from appionlib import apEMAN
 from appionlib import apDisplay
@@ -27,7 +27,7 @@ def convertSQLtoTree(results):
 			parttree.append(partpair1)
 			parttree.append(partpair2)
 		except:
-			print row
+			print(row)
 			apDisplay.printError("bad row entry")
 
 	apDisplay.printMsg("Converted "+str(len(parttree))+" particles in "+apDisplay.timeString(time.time()-t0))
@@ -80,7 +80,7 @@ def genProj(euler, tilt=False):
 def generateProjections(parttree):
 	t0 = time.time()
 	datafile = "parttree_data-"+str(stackid)+".txt"
-	dataf = open(datafile, 'w', 0666)
+	dataf = open(datafile, 'w', 0o666)
 	#eulerfile = "eulerlist-"+str(stackid)+".lst"
 	#eulerf = open(eulerfile, 'w', 0666)
 	count = 0.0
@@ -112,8 +112,8 @@ def generateProjections(parttree):
 	dataf.close()
 	sys.stderr.write("\nwriting to cache file")
 	cachefile = "parttree_cache-"+str(stackid)+".pickle"
-	cachef = open(cachefile, 'w', 0666)
-	cPickle.dump(parttree, cachef)
+	cachef = open(cachefile, 'w', 0o666)
+	pickle.dump(parttree, cachef)
 	cachef.close()
 	apDisplay.printMsg("Projected "+str(len(parttree))+" particles in "+apDisplay.timeString(time.time()-t0))
 

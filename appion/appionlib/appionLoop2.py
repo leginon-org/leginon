@@ -6,7 +6,10 @@ import sys
 import time
 import math
 import random
-import cPickle
+import pickle
+import functools
+import logging
+logging.basicConfig(filename='errors.log', encoding='utf-8', level=logging.ERROR)
 #appion
 from appionlib import apDisplay
 from appionlib import apDatabase
@@ -248,7 +251,7 @@ class AppionLoop(appionScript.AppionScript):
 		need to be inserted.
 		"""
 		if results is not None and len(results) > 0:
-			resulttypes = results.keys()
+			resulttypes = list(results.keys())
 			for resulttype in resulttypes:
 				result = results[resulttype]
 				self._writeDataToDB(result)
@@ -256,15 +259,15 @@ class AppionLoop(appionScript.AppionScript):
 	#=====================
 	def writeResultsToFiles(self, imgdata,results=None):
 		if results is not None and len(results) > 0:
-			for resulttype in results.keys():
+			for resulttype in list(results.keys()):
 				result = results[resulttype]
 				try:
 					resultkeys = self.resultkeys[resulttype]
 				except:
 					try:
-						resultkeystmp = results[resulttype].keys()
+						resultkeystmp = list(results[resulttype].keys())
 					except:
-						resultkeystmp = results[resulttype][0].keys()
+						resultkeystmp = list(results[resulttype][0].keys())
 					resultkeystmp.sort()
 					resultkeys = [resultkeystmp.pop(resultkeys.index('image'))]
 					resultkeys.extend(resultkeystmp)
@@ -437,8 +440,8 @@ class AppionLoop(appionScript.AppionScript):
 		if os.path.isfile(self.donedictfile) and self.params['continue'] == True:
 			### unpickle previously done dictionary
 			apDisplay.printMsg("Reading old done dictionary: "+os.path.basename(self.donedictfile))
-			f = open(self.donedictfile,'r')
-			self.donedict = cPickle.load(f)
+			f = open(self.donedictfile,'rb')
+			self.donedict = pickle.load(f)
 			f.close()
 			try:
 				if self.donedict['commit'] == self.params['commit']:
@@ -462,8 +465,8 @@ class AppionLoop(appionScript.AppionScript):
 		apDisplay.printMsg("Creating new done dictionary: "+os.path.basename(self.donedictfile))
 
 		### write donedict to file
-		f = open(self.donedictfile, 'w', 0666)
-		cPickle.dump(self.donedict, f)
+		f = open(self.donedictfile, 'wb', 0o676)
+		pickle.dump(self.donedict, f) 
 		f.close()
 
 		#Unlock DoneDict file
@@ -513,8 +516,8 @@ class AppionLoop(appionScript.AppionScript):
 		#Lock DoneDict file
 		self._lockDoneDict()
 
-		f = open(self.donedictfile,'r')
-		self.donedict = cPickle.load(f)
+		f = open(self.donedictfile,'rb')
+		self.donedict = pickle.load(f)
 		f.close()
 
 		#Unlock DoneDict file
@@ -529,8 +532,8 @@ class AppionLoop(appionScript.AppionScript):
 		self._lockDoneDict()
 
 		### reload donedict from file just in case two runs are running
-		f = open(self.donedictfile,'r')
-		self.donedict = cPickle.load(f)
+		f = open(self.donedictfile,'rb')
+		self.donedict = pickle.load(f)
 		f.close()
 
 		### set new parameters
@@ -539,8 +542,8 @@ class AppionLoop(appionScript.AppionScript):
 		self.donedict['commit'] = self.params['commit']
 
 		### write donedict to file
-		f = open(self.donedictfile, 'w', 0666)
-		cPickle.dump(self.donedict, f)
+		f = open(self.donedictfile, 'wb', 0o676)
+		pickle.dump(self.donedict, f)
 		f.close()
 
 		#Unlock DoneDict file
@@ -584,7 +587,7 @@ class AppionLoop(appionScript.AppionScript):
 		else:
 			# by default images are new to old
 			apDisplay.printMsg("Process images old to new")
-			self.imgtree.sort(self._reverseSortImgTree)
+			self.imgtree.sort(key=functools.cmp_to_key(self._reverseSortImgTree))
 
 		### LIMIT NUMBER
 		if self.params['limit'] is not None:
@@ -785,7 +788,7 @@ class AppionLoop(appionScript.AppionScript):
 			elif(memleak > 32):
 				self.stats['memleak'] += 1
 				apDisplay.printDebug("substantial memory leak "+str(round(memleak,2))+"MB")
-				print "(",str(n),round(slope,5),round(rho,5),round(gain,2),")"
+				print("(",str(n),round(slope,5),round(rho,5),round(gain,2),")")
 
 	#=====================
 	def skipTestOnImage(self,imgdata):
@@ -999,7 +1002,7 @@ class BinLoop(AppionLoop):
 
 #=====================
 if __name__ == '__main__':
-	print "__init__"
+	print("__init__")
 	imageiter = BinLoop()
-	print "run"
+	print("run")
 	imageiter.run()

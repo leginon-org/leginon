@@ -45,7 +45,7 @@ def fileFilter(infile, exists=True):
 class ImagicSession:
 	def __init__(self, imagicexe, nproc=1, imagicprocdir="", verbose=False, log=True):
 		# find imagic root	
-		if os.environ.has_key('IMAGIC_ROOT'):
+		if 'IMAGIC_ROOT' in os.environ:
 			self.imagicroot = os.environ['IMAGIC_ROOT']
 		else:
 			apDisplay.printError("$IMAGIC_ROOT directory is not specified, please specify this in your .cshrc / .bashrc")

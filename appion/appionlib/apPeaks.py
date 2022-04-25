@@ -1,5 +1,6 @@
 
 #pythonlib
+import functools
 import os
 import math
 import numpy
@@ -33,7 +34,7 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap", pikfile=True):
 	pixdiam =   diam/apix/float(bin)
 	pixrad =    diam/apix/2.0/float(bin)
 
-	numpyVersion = map(float,numpy.version.version.split('.'))
+	numpyVersion = list(map(float,numpy.version.version.split('.')))
 	if numpyVersion[1] > 7:
 		peaktreelist = Parallel(n_jobs=params['nproc'])(delayed(runFindPeaks)(params,
 			maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,maxpeaks,maxsizemult,
@@ -93,9 +94,9 @@ def runFindPeaks(params,maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,
 	return peaktree
 
 def printPeakTree(peaktree):
-	print "peaktree="
+	print("peaktree=")
 	for i,p in enumerate(peaktree):
-		print "  ",i,":",int(p['xcoord']),int(p['ycoord'])
+		print("  ",i,":",int(p['xcoord']),int(p['ycoord']))
 
 def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500, 
 		maxsizemult=1.0, msg=True, tmpldbid=None, mapdiam=None, bin=1, peaktype="maximum"):
@@ -285,7 +286,7 @@ def removeOverlappingPeaks(peaktree, cutoff, msg=True, doubles=False):
 
 	initpeaks = len(peaktree)
 	#orders peaks from smallest to biggest
-	peaktree.sort(_peakCompareSmallBig)
+	peaktree.sort(key=functools.cmp_to_key(_peakCompareSmallBig))
 	doublepeaktree = []
 	i=0
 	while i < len(peaktree):

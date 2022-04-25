@@ -455,7 +455,7 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 		apFile.removeFile("initial_reference.vol")
 		os.chdir(self.ml3dpath)
 		delete_projections = True
-		for reference_number, iters in complete_refinements.iteritems():
+		for reference_number, iters in complete_refinements.items():
 			apFile.removeFile("ml3d_it000000_vol%.6d.vol" % reference_number)
 			for iteration in iters:
 				for file in glob.glob("ml3d_it%.6d*.xmp" % iteration):

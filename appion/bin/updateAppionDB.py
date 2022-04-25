@@ -8,7 +8,7 @@ if __name__ == "__main__":
 	# parse options
 	projectid = None
 	if len(sys.argv) < 3:
-		print "Usage: %s jobid status [projectid]" % (sys.argv[0],)
+		print("Usage: %s jobid status [projectid]" % (sys.argv[0],))
 		sys.exit()
 
 	jobid = sys.argv[1]

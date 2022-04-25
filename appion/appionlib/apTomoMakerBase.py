@@ -130,7 +130,7 @@ class TomoMaker(appionScript.AppionScript):
 		reconname = self.seriesname+"_full"
 		if os.path.exists(os.path.join(processdir,reconname+'.rec')):
 			#insertTomograma and z projection
-			if 'bin' not in self.params.keys():
+			if 'bin' not in list(self.params.keys()):
 				self.params['bin']=1
 			bin = self.params['bin']
 			zerotiltimage = self.orig_imagelist[0]

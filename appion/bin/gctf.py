@@ -428,7 +428,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 				self.ctfvalues['ctffind4_resolution'] = float(bits[6])
 				#print 'ctffind4_resolution = '+self.ctfvalues['ctffind4_resolution']
 
-		if len(self.ctfvalues.keys()) == 0:
+		if len(list(self.ctfvalues.keys())) == 0:
 			apDisplay.printError("GCTF program did not produce valid results in the log file")
 		sourcectffile = apDisplay.short(imgdata['filename'])+'.ctf'
 		
@@ -577,7 +577,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 #		plt.colorbar()
 
 		# contour lines
-		X,Y = np.meshgrid(range(GD1.shape[1]),range(GD1.shape[0]))
+		X,Y = np.meshgrid(list(range(GD1.shape[1])),list(range(GD1.shape[0])))
 		CS = plt.contour(X,Y[::-1],GD1,15,linewidths=0.5, colors=line_color)
 		plt.clabel(CS, fontsize=9, inline=1)
 
@@ -627,7 +627,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		if self.params['fastmode'] is True:
 			### overtride the ctf insert processing steps
 			ctfq = appiondata.ApCtfData()
-			for key in ctfq.keys():
+			for key in list(ctfq.keys()):
 				ctfq[key] = self.ctfvalues.get(key, None)
 			ctfq['acerun'] = self.ctfrun
 			ctfq['image'] = imgdata

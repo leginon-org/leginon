@@ -178,7 +178,7 @@ class UploadFrealignScript(reconUploader.generalReconUploader):
 		### get symmetry info from card #5
 		apDisplay.printMsg("Found Frealign symmetry %s in card 5"%(cards[5], ))
 		symtext = apFrealign.convertFrealignSymToAppionSym(cards[5])
-		print symtext
+		print(symtext)
 		symmdata = apSymmetry.findSymmetry(symtext)
 		apDisplay.printMsg("Found symmetry %s with id %s"%(symmdata['eman_name'], symmdata.dbid))
 		iterparams['symmdata'] = symmdata
@@ -251,7 +251,7 @@ class UploadFrealignScript(reconUploader.generalReconUploader):
 
 		try: 
 			f = open(fscfile, "r")
-		except IOError, e:
+		except IOError as e:
 			apDisplay.printWarning("%s file could not be opened, data will NOT be inserted into the database" % fscfile)
 			return False
 		
@@ -313,8 +313,8 @@ class UploadFrealignScript(reconUploader.generalReconUploader):
 					apFile.removeFile(oldvol,True)
 				try:
 					os.symlink(newvol, oldvol)
-				except IOError, e:
-					print e
+				except IOError as e:
+					print(e)
 
 		### calculate Euler jumps
 		self.calculateEulerJumpsAndGoodBadParticles(uploadIterations)	

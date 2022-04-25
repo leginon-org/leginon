@@ -5,7 +5,7 @@ import json
 def returnCommand(settingsdict, command=None):
 	commandroot=command.split()[0]
 	cmdlst=[]
-	if commandroot in settingsdict['GlobalJobParameters'].keys():
+	if commandroot in list(settingsdict['GlobalJobParameters'].keys()):
 		#setup defaults
 		cmdlst.append(settingsdict['GlobalJobParameters']['defaultScheduler']['execCommand'])
 		#override defaults for app specific options
@@ -30,14 +30,14 @@ if __name__ == '__main__':
 
 	command='gctf.py --blah blah --blah2 blah2 --blah3 blah3'
 	newcommand=returnCommand(settingsdict, command=command)
-	print newcommand
-	print '\n\n'
+	print(newcommand)
+	print('\n\n')
 	
 	command='motioncor2.py --blah4 blah4 --blah5 blah5 --blah6 blah6'
 	newcommand=returnCommand(settingsdict, command=command)
-	print newcommand
-	print '\n\n'
+	print(newcommand)
+	print('\n\n')
 
 	command='makestack.py --blah7 blah7 --blah8 blah8 --blah9 blah9'
 	newcommand=returnCommand(settingsdict, command=command)
-	print newcommand
+	print(newcommand)

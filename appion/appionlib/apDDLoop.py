@@ -38,9 +38,6 @@ class DDStackLoop(appionLoop2.AppionLoop):
 		# Dosefgpu_driftcoor options
 		self.parser.add_option("--alignoffset", dest="fod", type="int", default=2,
 			help="number of frame offset in alignment in dosefgpu_driftcorr")
-		self.parser.add_option("--alignbfactor", dest="bft", type="float", default=(500.0,150.0),
-			help="alignment B-factor in pix^2 in dosefgpu_driftcorr", nargs=2)
-		
 		self.parser.add_option("--alignccbox", dest="pbx", type="int", default=128,
 			help="alignment CC search box size in dosefgpu_driftcorr")
 
@@ -113,26 +110,26 @@ def transferALSThickness(unaligned,aligned):
 # transfers aperture limited scattering measurements and parameters from the unaligned image to the aligned image
 # should it be here or in a different place???
 	obthdata = leginondata.ObjIceThicknessData(image=unaligned).query(results=1)
-        if obthdata:
-                results = obthdata[0]
-               	newobjth = leginondata.ObjIceThicknessData()
-               	newobjth['vacuum intensity'] = results['vacuum intensity']
-               	newobjth['mfp'] = results['mfp']
-               	newobjth['intensity'] = results['intensity']
-                newobjth['thickness'] = results['thickness']
-                newobjth['image'] = aligned;
-	        newobjth.insert()
+	if obthdata:
+		results = obthdata[0]
+		newobjth = leginondata.ObjIceThicknessData()
+		newobjth['vacuum intensity'] = results['vacuum intensity']
+		newobjth['mfp'] = results['mfp']
+		newobjth['intensity'] = results['intensity']
+		newobjth['thickness'] = results['thickness']
+		newobjth['image'] = aligned;
+		newobjth.insert()
 
 def transferZLPThickness(unaligned,aligned):
 # transfers zero loss peak measurements and parameters from the unaligned image to the aligned image
 # should it be here or in a different place???
 	zlpthdata = leginondata.ZeroLossIceThicknessData(image=unaligned).query(results=1)
-        if zlpthdata:
-                results = zlpthdata[0]
+	if zlpthdata:
+		results = zlpthdata[0]
 		newzlossth = leginondata.ZeroLossIceThicknessData()
-                newzlossth['no slit mean'] = results['no slit mean']
-                newzlossth['no slit sd'] = results['no slit sd']
- 		newzlossth['slit mean'] = results['slit mean']
+		newzlossth['no slit mean'] = results['no slit mean']
+		newzlossth['no slit sd'] = results['no slit sd']
+		newzlossth['slit mean'] = results['slit mean']
 		newzlossth['slit sd'] = results['slit sd']
 		newzlossth['thickness'] = results['thickness']
 		newzlossth['image'] = aligned

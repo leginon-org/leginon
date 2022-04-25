@@ -182,15 +182,15 @@ class PixelCurveMaker:
 			return self.radiiToValues
 
 		def smoothData(self):
-			for i in self.radiiToValues.keys():
-				index = self.radiiToValues.keys().index(i)
+			for i in list(self.radiiToValues.keys()):
+				index = list(self.radiiToValues.keys()).index(i)
 				pi = index-1
 				if pi<0:
-					pi = len(self.radiiToValues.keys())-1
+					pi = len(list(self.radiiToValues.keys()))-1
 				ni = index+1
-				if ni>=len(self.radiiToValues.keys()):
+				if ni>=len(list(self.radiiToValues.keys())):
 					ni = 0
-				average = (self.radiiToValues[i]+self.radiiToValues[self.radiiToValues.keys()[pi]]+self.radiiToValues[self.radiiToValues.keys()[ni]])/3
+				average = (self.radiiToValues[i]+self.radiiToValues[list(self.radiiToValues.keys())[pi]]+self.radiiToValues[list(self.radiiToValues.keys())[ni]])/3
 				self.radiiToValues[i] = average
 
 	class Contour:#stores all the info about one contour
@@ -214,12 +214,12 @@ class PixelCurveMaker:
 			self.average = 0;
 		
 		def sortedDictValues1(self,adict):
-			items = adict.items()
+			items = list(adict.items())
 			items.sort()
 			return [value for key, value in items]
 
 		def sortedDictValues2(self,adict):
-			keys = adict.keys()
+			keys = list(adict.keys())
 			keys.sort()
 			return [dict[key] for key in keys]
 
@@ -244,7 +244,7 @@ class PixelCurveMaker:
 			self.average /=num
 			self.goodValues = self.exactValues
 			for i in range(0):
-				rrange =  range(len(self.thetalist))
+				rrange =  list(range(len(self.thetalist)))
 			# random.shuffle(rrange)
 				for j in rrange:
 					theta = self.thetalist[j]
@@ -458,8 +458,8 @@ class PickerApp(wx.App):
 
 		self.next = wx.Button(self.frame, wx.ID_FORWARD, '&Forward')
 		self.next.SetMinSize((150,40))
-		self.Bind(wx.EVT_BUTTON, self.onNext, self.next)
-		self.buttonrow.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		self.Bind(wx.EVT_BUTTON, self.onNext, self.__next__)
+		self.buttonrow.Add(self.__next__, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear')
 		self.clear.SetMinSize((100,40))
@@ -478,7 +478,7 @@ class PickerApp(wx.App):
 		return True
 
 	def addLabelPicker(self, label):
-		rgb = self.pick_colors.next()
+		rgb = next(self.pick_colors)
 		self.panel.addTargetTool(label, color=wx.Colour(*rgb),
 			target=True, shape=self.shape, size=self.size)
 		self.panel.setTargets(label, [])
@@ -731,7 +731,7 @@ class PickerApp(wx.App):
 			self.appionloop.targets[label] = self.panel.getTargets(label)
 		self.index+=1
 		if len(self.appionloop.imgtree)==self.index:
-			print "There Are No More Images"
+			print("There Are No More Images")
 		self.Exit()
 
 	def _onClear(self):
@@ -821,7 +821,7 @@ class ContourPicker(manualpicker.ManualPicker):
 		#parse and return the targets in peaktree form
 		self.app.panel.openImageFile(None)
 		peaktree=[]
-		for label,targets in self.targets.items():
+		for label,targets in list(self.targets.items()):
 			for target in targets:
 				peaktree.append(self.XY2particle(target.x, target.y, label=label))
 		

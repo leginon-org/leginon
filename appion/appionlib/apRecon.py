@@ -2,7 +2,7 @@
 
 import os, re, sys, time
 import tempfile
-import cPickle
+import pickle
 import math
 import numpy
 import string
@@ -310,7 +310,7 @@ def getParticleCount(refineid, cursor, name="refine_keep", isone=True):
 	cursor.execute(query)
 	results = cursor.fetchall()
 	if not results:
-		print query
+		print(query)
 		apDisplay.printError("Failed to get particle counts")
 	#print results
 	count = results[0][0]
@@ -363,7 +363,7 @@ def getListFromVector(vector, splitter=None):
 		elif len(listaIntervalo) == 2:
 			listValues += [listaIntervalo[1]] * string.atoi(listaIntervalo[0])
 		else:
-			raise RuntimeError,"Unknown syntax: "+intervals
+			raise RuntimeError("Unknown syntax: "+intervals)
 	return listValues
 
 #==================
@@ -372,6 +372,6 @@ def getListFromVector(vector, splitter=None):
 #==================
 if __name__ == '__main__':
 	r = runRMeasure(1.63,"/ami/data15/appion/08may09b/recon/recon1/threed.20a.mrc",'0,0')
-	print r
+	print(r)
 
 

@@ -5,7 +5,7 @@ import time
 import sys
 import math
 import glob
-import cPickle
+import pickle
 import subprocess
 import re
 import numpy
@@ -180,7 +180,7 @@ class SIMPLE(appionScript.AppionScript):
 		proc = subprocess.Popen(lddcmd, shell=True, stdout=subprocess.PIPE)
 		proc.wait()
 		lines = proc.stdout.readlines()
-		print "lines=", lines
+		print("lines=", lines)
 		if lines and len(lines) > 0:
 			return mpiexe
 
@@ -226,13 +226,13 @@ class SIMPLE(appionScript.AppionScript):
 		if not os.path.isfile(paramfile):
 			apDisplay.printError("Could not find run parameters file: "+paramfile)
 		f = open(paramfile, "r")
-		runparams = cPickle.load(f)
+		runparams = pickle.load(f)
 		return runparams
 		
 	#=====================
 	def calcResolution(self, alignedStack):
 		self.resdict = {}
-		for classref, partlist in self.classD.iteritems():
+		for classref, partlist in self.classD.items():
 			if len(partlist) == 0:
 				continue
 			stack=[]
@@ -264,7 +264,7 @@ class SIMPLE(appionScript.AppionScript):
 
 		### rename the dictionary
 		i = 1
-		for oldkey, val in tmp.iteritems(): ### ascending order
+		for oldkey, val in tmp.items(): ### ascending order
 			if len(val) > 0:
 				D[i] = val
 #				print oldkey, i, val

@@ -136,19 +136,19 @@ class ISACJob(apRemoteJob.RemoteJob): # technically not a refine job, but a big 
 		self.setIterationParamList()
 		for param in self.iterparams:
 			example = ''
-			if 'default' in param.keys() and param['default']:
+			if 'default' in list(param.keys()) and param['default']:
 				example = ", e.g. --%s=%s" % (param['name'],param['default'])
 			else:
 				example = ", e.g. --%s=<value>" % (param['name'])
 				param['default'] = None
-			if 'action' in param.keys() and param['action']:
+			if 'action' in list(param.keys()) and param['action']:
 				self.parser.add_option('--%s' % param['name'], dest="%s" % param['name'], default=param['default'], action="%s" % param['action'] ,
 				help="iteration parameter: %s%s" % (param['help'],example))
 			else:
 				self.parser.add_option('--%s' % param['name'], dest="%s" % param['name'], default=param['default'],
 				type="str", help="iteration parameter: %s%s" % (param['help'],example), metavar=param['metavar'])
 
-		print "*****", self.listparams, "******"
+		print("*****", self.listparams, "******")
 
 #		'''
 	#=====================

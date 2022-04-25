@@ -57,7 +57,7 @@ class genericJob(object):
 				   'queue'	 : self.setQueue,
 				   'jobtype'   : self.setJobType}
 		excludeList = ['jobid', 'walltime', 'cput', 'nodes', 'ppn', 'jobtype', 'mem', 'queue']
-		optionKeys = options.keys()
+		optionKeys = list(options.keys())
 		has_nproc = False
 
 		for opt in optList:

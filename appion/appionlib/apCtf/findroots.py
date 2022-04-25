@@ -56,7 +56,7 @@ class FindRoots(object):
 		lastdstd = 8*d.std()
 		count = 0
 		while lastdstd > 3*d.std():
-			print lastdstd, d.std(), types
+			print(lastdstd, d.std(), types)
 			lastdstd = d.std()
 			lastxsq = xsq
 			lasttypes = types
@@ -116,7 +116,7 @@ class FindRoots(object):
 				types -= 4
 
 		bestdef = numpy.median(zvalues)
-		print "best defocus=", bestdef
+		print("best defocus=", bestdef)
 		return bestdef
 
 	#==================
@@ -264,7 +264,7 @@ class FindRoots(object):
 	#==================
 	def getLinearRho(self, x, y):
 		slope, intercept, rho, _, _ = stats.linregress(x,y)
-		print "slope=", slope, "rho=", rho
+		print("slope=", slope, "rho=", rho)
 		return rho
 
 	#==================
@@ -431,12 +431,12 @@ if __name__ == "__main__" :
 		numpy.ones(xmins.shape)*4])
 		
 	args = numpy.argsort(xzeros)
-	print args
+	print(args)
 	
 	combine = numpy.vstack([xzeros[args], xzerostype[args]])
 	
 	for i in range(combine.shape[1]):
-		print "%.6f\t%d"%(combine[0,i]**2, int(combine[1,i]))
+		print("%.6f\t%d"%(combine[0,i]**2, int(combine[1,i])))
 
 	ac = fcls.autocorr(xzeros**2)
 

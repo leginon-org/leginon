@@ -4,7 +4,7 @@ import os
 import time
 import glob
 import math
-import cPickle
+import pickle
 import subprocess
 from pyami import mrc
 #appion
@@ -154,7 +154,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		proc = subprocess.Popen(lddcmd, shell=True, stdout=subprocess.PIPE)
 		proc.wait()
 		lines = proc.stdout.readlines()
-		print "lines=", lines
+		print("lines=", lines)
 		if lines and len(lines) > 0:
 			return mpiexe
 
@@ -166,7 +166,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		pf = open(paramfile, "w")
 		newdict = self.params.copy()
 		newdict.update(self.stack)
-		cPickle.dump(newdict, pf)
+		pickle.dump(newdict, pf)
 		pf.close()
 
 	#=====================
@@ -189,7 +189,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		if self.params['commit'] is True:
 			maxjobq.insert()
 		self.params['maxlikejobid'] = maxjobq.dbid
-		print "self.params['maxlikejobid']",self.params['maxlikejobid']
+		print("self.params['maxlikejobid']",self.params['maxlikejobid'])
 		return
 
 	#=====================
@@ -217,7 +217,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		uploadcmd += " -j %s "%(self.params['maxlikejobid'])
 		uploadcmd += " -R %s "%(self.params['rundir'])
 		uploadcmd += " -n %s "%(self.params['runname'])
-		print uploadcmd
+		print(uploadcmd)
 		proc = subprocess.Popen(uploadcmd, shell=True)
 		proc.communicate()
 
@@ -227,7 +227,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		return 1
 		secperiter = 0.12037
 		### get num processors
-		print '1. numprocs is = '+str(nproc)
+		print('1. numprocs is = '+str(nproc))
 		calctime = (
 			(self.params['numpart']/1000.0)
 			*self.params['numrefs']
@@ -265,7 +265,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		classStackFiles = glob.glob(searchstr)
 		classStackFiles.sort()
 		fname = classStackFiles[-1]
-		print("reading class averages from file %s"%(fname))
+		print(("reading class averages from file %s"%(fname)))
 		refarray = mrc.read(fname)
 		apImagicFile.writeImagic(refarray, avgstack)
 		### create a average mrc

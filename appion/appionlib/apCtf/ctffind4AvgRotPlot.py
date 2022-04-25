@@ -99,8 +99,8 @@ def setPyPlotXLabels(xdata, maxloc, square=True):
 def line2data(line):
 	bits = line.split(' ')
 	if len(bits) < 10:
-		print bits
-		print "error"
+		print(bits)
+		print("error")
 		sys.exit(1)
 	data = []
 	for bit in bits:
@@ -109,8 +109,8 @@ def line2data(line):
 		try:
 			d = float(bit)
 		except ValueError:
-			print bits
-			print bit
+			print(bits)
+			print(bit)
 			sys.exit(1)
 		data.append(d)
 	#print "line data length %d"%(len(data))
@@ -120,7 +120,7 @@ def line2data(line):
 #====================
 #====================
 def createPlot(avgrotfile):
-	print avgrotfile
+	print(avgrotfile)
 	output = os.path.splitext(avgrotfile)[0] + ".png"
 	f = open(avgrotfile, 'r')
 	datasets = []
@@ -130,7 +130,7 @@ def createPlot(avgrotfile):
 			continue
 		data = line2data(sline)
 		datasets.append(data)
-	print "Found %d of 6 data sets for creating CTFFIND4 plot"%(len(datasets))
+	print("Found %d of 6 data sets for creating CTFFIND4 plot"%(len(datasets)))
 
 	xdata = datasets[0]
 	xdatasq = xdata**2

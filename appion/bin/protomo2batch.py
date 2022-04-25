@@ -4,7 +4,7 @@
 # It is highly recommended that this script be run using commands generated
 # through the Appion-Protomo web interface.
 
-from __future__ import division
+
 import os
 import sys
 import glob
@@ -22,7 +22,7 @@ from scipy.ndimage.interpolation import rotate as imrotate
 
 try:
 	import protomo
-	print "\033[92m(Ignore the error: 'protomo: could not load libi3tiffio.so, TiffioModule disabled')\033[0m"
+	print("\033[92m(Ignore the error: 'protomo: could not load libi3tiffio.so, TiffioModule disabled')\033[0m")
 except:
 	apDisplay.printWarning("Protomo did not get imported. Alignment and reconstruction functionality won't work.")
 
@@ -1507,13 +1507,13 @@ def protomoReconstruct(log_file, tiltseriesnumber, recon_options):
 		apDisplay.printMsg("Reconstruction can be found in this directory:")
 		f.write("Reconstruction can be found in this directory:\n")
 		if (recon_options.link_recons == None) or (recon_options.link_recons == "") or (len(recon_options.link_recons) < 1):
-			print "\n%s\n" % (recon_out_dir)
+			print("\n%s\n" % (recon_out_dir))
 		else:
-			print "\n%s\n" % (recon_options.link_recons)
+			print("\n%s\n" % (recon_options.link_recons))
 	except:
 		apDisplay.printMsg("Reconstruction can be found in this directory:")
 		f.write("Reconstruction can be found in this directory:\n")
-		print "\n%s\n" % (recon_out_dir)
+		print("\n%s\n" % (recon_out_dir))
 		if proc.returncode != 0:
 			apDisplay.printMsg("The reconstruction in the above directory is not normalized because EMAN1 and EMAN2 were either not found or failed to process the reconstruction.")
 			f.write("The reconstruction in the above directory is not normalized because EMAN1 and EMAN2 were either not found or failed to process the reconstruction.\n")
@@ -2450,7 +2450,7 @@ def protomoExport(log_file, tiltseriesnumber, export_options):
 	mdoc.write('[T = SerialEM-formatted Leginon data formatted for easy import to Appion-Protomo]\n')
 	mdoc.write('\n')
 	
-	for data, i in zip(sorted_image_list, range(len(sorted_image_list))):
+	for data, i in zip(sorted_image_list, list(range(len(sorted_image_list)))):
 		mdoc.write('[ZValue = %s]\n' % i)
 		mdoc.write('TiltAngle = %s\n' % data['tilt'])
 		mdoc.write('Magnification = %s\n' % magnification)
@@ -2466,7 +2466,7 @@ def protomoExport(log_file, tiltseriesnumber, export_options):
 	
 	dimx,dimy = mrc.read(sorted_image_list[0]['image']).shape
 	stack = np.zeros((len(sorted_image_list),dimx,dimy))
-	for data, i in zip(sorted_image_list, range(len(sorted_image_list))):
+	for data, i in zip(sorted_image_list, list(range(len(sorted_image_list)))):
 		stack[i] = mrc.read(data['image'])
 	mrc.write(stack, stack_file_full)
 	
@@ -2511,7 +2511,7 @@ if __name__ == '__main__':
 			procs=options.procs
 		
 		log.close()
-		for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+		for i, j in zip(tiltseriesranges, list(range(1,len(tiltseriesranges)+1))):
 			p = mp.Process(target=protomoPrep, args=(log_file, i, options,))
 			p.start()
 			
@@ -2525,7 +2525,7 @@ if __name__ == '__main__':
 		if (options.dose_presets != "False"):
 			apDisplay.printMsg("Performing Dose Compensation")
 			log.write("Performing Dose Compensation\n")
-			for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+			for i, j in zip(tiltseriesranges, list(range(1,len(tiltseriesranges)+1))):
 				p = mp.Process(target=doseCompensate, args=(i, options,))
 				p.start()
 				
@@ -2547,7 +2547,7 @@ if __name__ == '__main__':
 		apDisplay.printMsg("Performing Protomo Coarse Alignments")
 		log.write("Performing Protomo Coarse Alignments\n")
 		log.close()
-		for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+		for i, j in zip(tiltseriesranges, list(range(1,len(tiltseriesranges)+1))):
 			p = mp.Process(target=protomoCoarseAlign, args=(log_file, i, options,))
 			p.start()
 			
@@ -2567,7 +2567,7 @@ if __name__ == '__main__':
 		apDisplay.printMsg("Performing Imod Coarse Alignments")
 		log.write("Performing Imod Coarse Alignments\n")
 		log.close()
-		for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+		for i, j in zip(tiltseriesranges, list(range(1,len(tiltseriesranges)+1))):
 			p = mp.Process(target=imodCoarseAlign, args=(log_file, i, options,))
 			p.start()
 			
@@ -2588,7 +2588,7 @@ if __name__ == '__main__':
 		apDisplay.printMsg("Performing Refinements")
 		log.write("Performing Refinements\n")
 		log.close()
-		for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+		for i, j in zip(tiltseriesranges, list(range(1,len(tiltseriesranges)+1))):
 			p = mp.Process(target=protomoRefine, args=(log_file, i, options,))
 			p.start()
 			
@@ -2609,7 +2609,7 @@ if __name__ == '__main__':
 		if (options.dose_presets != "False"):
 			apDisplay.printMsg("Performing Dose Compensation")
 			log.write("Performing Dose Compensation\n")
-			for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+			for i, j in zip(tiltseriesranges, list(range(1,len(tiltseriesranges)+1))):
 				p = mp.Process(target=doseCompensate, args=(i, options,))
 				p.start()
 				
@@ -2623,7 +2623,7 @@ if __name__ == '__main__':
 		apDisplay.printMsg("Creating Reconstructions")
 		log.write("Creating Reconstructions\n")
 		log.close()
-		for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+		for i, j in zip(tiltseriesranges, list(range(1,len(tiltseriesranges)+1))):
 			p = mp.Process(target=protomoReconstruct, args=(log_file, i, options,))
 			p.start()
 			
@@ -2640,14 +2640,14 @@ if __name__ == '__main__':
 		if (options.link_recons != None) or (options.link_recons != "") or (len(options.link_recons) > 1):
 			apDisplay.printMsg("Reconstructions can be found in this directory:")
 			log.write("Reconstructions can be found in this directory:\n%s\n" % options.link_recons)
-			print "\n%s\n" % options.link_recons
+			print("\n%s\n" % options.link_recons)
 	
 	
 	#CTF Correction
 	if (options.ctf_correct == "True" and options.automation == "False" and options.prep_files == "False" and options.reconstruct == "False"):
 		apDisplay.printMsg("Performing CTF Correction")
 		log.write("Performing CTF Correction\n")
-		for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+		for i, j in zip(tiltseriesranges, list(range(1,len(tiltseriesranges)+1))):
 			p = mp.Process(target=ctfCorrect, args=(i, options,))
 			p.start()
 			
@@ -2679,7 +2679,7 @@ if __name__ == '__main__':
 	if (options.dose_presets != "False" and options.automation == "False" and options.prep_files == "False" and options.reconstruct == "False"):
 		apDisplay.printMsg("Performing Dose Compensation")
 		log.write("Performing Dose Compensation\n")
-		for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+		for i, j in zip(tiltseriesranges, list(range(1,len(tiltseriesranges)+1))):
 			p = mp.Process(target=doseCompensate, args=(i, options,))
 			p.start()
 			
@@ -2707,7 +2707,7 @@ if __name__ == '__main__':
 				procs=options.procs
 			
 			log.close()
-			for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+			for i, j in zip(tiltseriesranges, list(range(1,len(tiltseriesranges)+1))):
 				p = mp.Process(target=protomoPrep, args=(log_file, i, options,))
 				p.start()
 				
@@ -2723,7 +2723,7 @@ if __name__ == '__main__':
 		if (options.auto_ctf_correct == "True"):
 			apDisplay.printMsg("Performing CTF Correction")
 			log.write("Performing CTF Correction\n")
-			for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+			for i, j in zip(tiltseriesranges, list(range(1,len(tiltseriesranges)+1))):
 				p = mp.Process(target=ctfCorrect, args=(i, options,))
 				p.start()
 				
@@ -2739,7 +2739,7 @@ if __name__ == '__main__':
 			apDisplay.printMsg("Performing Coarse Alignments")
 			log.write("Performing Coarse Alignments\n")
 			log.close()
-			for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+			for i, j in zip(tiltseriesranges, list(range(1,len(tiltseriesranges)+1))):
 				p = mp.Process(target=protomoCoarseAlign, args=(log_file, i, options,))
 				p.start()
 				
@@ -2756,7 +2756,7 @@ if __name__ == '__main__':
 			apDisplay.printMsg("Performing Refinements")
 			log.write("Performing Refinements\n")
 			log.close()
-			for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+			for i, j in zip(tiltseriesranges, list(range(1,len(tiltseriesranges)+1))):
 				p = mp.Process(target=protomoAutoRefine, args=(log_file, i, options,))
 				p.start()
 				
@@ -2771,7 +2771,7 @@ if __name__ == '__main__':
 		if (options.dose_presets != "False"):
 			apDisplay.printMsg("Performing Dose Compensation")
 			log.write("Performing Dose Compensation\n")
-			for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+			for i, j in zip(tiltseriesranges, list(range(1,len(tiltseriesranges)+1))):
 				p = mp.Process(target=doseCompensate, args=(i, options,))
 				p.start()
 				
@@ -2787,7 +2787,7 @@ if __name__ == '__main__':
 			apDisplay.printMsg("Creating Reconstructions")
 			log.write("Creating Reconstructions\n")
 			log.close()
-			for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+			for i, j in zip(tiltseriesranges, list(range(1,len(tiltseriesranges)+1))):
 				p = mp.Process(target=protomoReconstruct, args=(log_file, i, options,))
 				p.start()
 				
@@ -2801,7 +2801,7 @@ if __name__ == '__main__':
 			if (options.link_recons != None) or (options.link_recons != "") or (len(options.link_recons) > 1):
 				apDisplay.printMsg("Reconstructions can be found in this directory:")
 				log.write("Reconstructions can be found in this directory:\n%s\n" % options.link_recons)
-				print "\n%s\n" % options.link_recons
+				print("\n%s\n" % options.link_recons)
 		
 	
 	#Screening mode needs to be run by itself.
@@ -2853,7 +2853,7 @@ if __name__ == '__main__':
 			procs=options.procs
 		
 		log.close()
-		for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+		for i, j in zip(tiltseriesranges, list(range(1,len(tiltseriesranges)+1))):
 			p = mp.Process(target=protomoExport, args=(log_file, i, options,))
 			p.start()
 			
@@ -2871,7 +2871,7 @@ if __name__ == '__main__':
 	log.write('Did everything blow up and now you\'re yelling at your computer screen?\n')
 	log.write('If so, kindly email Alex at anoble@nysbc.org explaining the issue and include this log file.\n')
 	log.write('If everything worked beautifully and you publish, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations\n')
-	print "\n"
+	print("\n")
 	apDisplay.printMsg("Closing log file %s\n" % log_file)
 	log.write("\nEnd time: %s" % time_end)
 	log.close()

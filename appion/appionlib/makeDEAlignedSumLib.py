@@ -78,7 +78,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 	def setupParserOptions(self):
 		configuration_options = deProcessFrames.ConfigurationOptions()
 		options_list = configuration_options.get_options_list()
-		sections = options_list.keys()
+		sections = list(options_list.keys())
 		self.de_options=[]
 		for section in sections:
 			for option in options_list[section]:
@@ -152,7 +152,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			apDisplay.printMsg('Collating particles from stack id %s' % self.params['stackid'])
 			for particle in stackdata:
 				parentimage = particle['particle']['image']['filename']
-				if parentimage in imagedict.keys():
+				if parentimage in list(imagedict.keys()):
 					imagedict[parentimage].append(particle['particle'])
 				else:
 					imagedict[parentimage] = []
@@ -255,7 +255,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			targetdict={}
 			return targetdict
 
-		print os.path.join(framespath, imgrootname + '*')
+		print(os.path.join(framespath, imgrootname + '*'))
 		framesroot, framesextension = os.path.splitext(glob.glob(os.path.join(framespath, imgrootname + '*'))[0])
 		framespathname = framesroot + framesextension
 		framesname = os.path.split(framespathname)[-1]
@@ -331,28 +331,28 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		namemap = {'x': ('columns', 'cols'), 'y': ('rows', 'rows')}
 
 		def formatBadList(badlist):
-			return ','.join(map(lambda x: '%d' % x,badlist))
+			return ','.join(['%d' % x for x in badlist])
 
 		badlines = {'x':[],'y':[]}
-		for axis in namemap.keys():
+		for axis in list(namemap.keys()):
 			de_name = 'defects_%s' % namemap[axis][0]
 			leg_name = 'bad_%s' % namemap[axis][1]
 			exclude_list = []
 			# figure out the defects if not specified already
-			if leg_name not in self.params.keys() or not self.params[leg_name]:
+			if leg_name not in list(self.params.keys()) or not self.params[leg_name]:
 				if corrector_plan and corrector_plan[leg_name]:
 					# Do not include a location in defects for DE 
 					# process if in the border because large number
 					# of defect correction is slow.
 					if border:
-						exclude_list = range(0, border)
-						exclude_list.extend(range(cam_size[axis] - border, cam_size[axis]))
+						exclude_list = list(range(0, border))
+						exclude_list.extend(list(range(cam_size[axis] - border, cam_size[axis])))
 					bad = self.calculateListDifference(corrector_plan[leg_name], exclude_list)
 					badlines[axis] = bad
 					self.params[de_name] = formatBadList(bad)
 			else:
 				# overwrite corrector_plan
-				badlines[axis] = map((lambda x:int(x)),self.params[leg_name].split(','))
+				badlines[axis] = list(map((lambda x:int(x)),self.params[leg_name].split(',')))
 				self.params[de_name] = self.params[leg_name]
 
 		# Leginon sum image and DE frames flipping does not need to be handled
@@ -384,18 +384,18 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 
 		# bad columns and rows rotated based on camera rotation in Leginon
 		rotated_bad = {}
-		rotated_bad[defectx_transform_map[rotate][0]] = map((lambda x: defectx_transform_map[rotate][1](x,'x')),badlines['x'])
-		rotated_bad[defecty_transform_map[rotate][0]] = map((lambda x: defecty_transform_map[rotate][1](x,'y')),badlines['y'])
+		rotated_bad[defectx_transform_map[rotate][0]] = list(map((lambda x: defectx_transform_map[rotate][1](x,'x')),badlines['x']))
+		rotated_bad[defecty_transform_map[rotate][0]] = list(map((lambda x: defecty_transform_map[rotate][1](x,'y')),badlines['y']))
 		self.params['defects_%s' % namemap['x'][0]] = formatBadList(rotated_bad['cols'])
 		self.params['defects_%s' % namemap['y'][0]] = formatBadList(rotated_bad['rows'])
 	
 		# Handle bad pixels, too
 		bad_pixels = corrector_plan['bad_pixels']
 		rotated_bad_pixels = {}
-		xs = map((lambda x:x[0]),bad_pixels)
-		ys = map((lambda x:x[1]),bad_pixels)
-		rotated_bad_pixels[defectx_transform_map[rotate][0]] = map((lambda x: defectx_transform_map[rotate][1](x,'x')),xs)
-		rotated_bad_pixels[defecty_transform_map[rotate][0]] = map((lambda x: defecty_transform_map[rotate][1](x,'y')),ys)
+		xs = list(map((lambda x:x[0]),bad_pixels))
+		ys = list(map((lambda x:x[1]),bad_pixels))
+		rotated_bad_pixels[defectx_transform_map[rotate][0]] = list(map((lambda x: defectx_transform_map[rotate][1](x,'x')),xs))
+		rotated_bad_pixels[defecty_transform_map[rotate][0]] = list(map((lambda x: defecty_transform_map[rotate][1](x,'y')),ys))
 		bad_boxes = []
 		for i in range(len(bad_pixels)):
 			# Done pixel by pixel, not very efficient
@@ -468,7 +468,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			shutil.rmtree(targetdict['outpath'])
 		os.mkdir(targetdict['outpath'])
 		command = ['runDEProcessFrames.py']
-		keys = self.params.keys()
+		keys = list(self.params.keys())
 		keys.sort()
 		for key in keys:
 			param = self.params[key]
@@ -507,8 +507,8 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			return None
 
 		correctedpath=os.path.join(self.params['queue_scratch'],imgdata['filename'],imgdata['filename'])
-		print os.path.join(correctedpath,'*translations_x*')
-		print glob.glob(os.path.join(correctedpath,'*translations_x*'))
+		print(os.path.join(correctedpath,'*translations_x*'))
+		print(glob.glob(os.path.join(correctedpath,'*translations_x*')))
 		xtranslation=glob.glob(os.path.join(correctedpath,'*translations_x*'))[0]
 		ytranslation=glob.glob(os.path.join(correctedpath,'*translations_y*'))[0]
 		shutil.copy(xtranslation,self.params['rundir'])
@@ -541,7 +541,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 				newx = origx - self.params['border']
 				newy = origy - self.params['border']
 				command.append('clip=%d,%d' % (newx, newy))
-				print command
+				print(command)
 				subprocess.call(command)			
 			command = ['proc2d', outnamepath, outnamepath]
 			#if self.params['output_rotation'] !=0:
@@ -549,7 +549,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			#	command.append('rot=%d' % self.params['output_rotation'])
 			command.append('clip=%d,%d' % (origx, origy))
 			command.append('edgenorm')
-			print command
+			print(command)
 			subprocess.call(command)
 		else:
 			shutil.copyfile(innamepath,outnamepath)
@@ -624,12 +624,12 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 					subprocess.call(command)
 					#proc2d.run()
 				else:
-					print "did not find frames for ", parentimage
+					print("did not find frames for ", parentimage)
 					#proc2d.setValue('infile', origstackpath)
 					#proc2d.setValue('first', n)
 					#proc2d.setValue('last', n)
 					command=['proc2d', origstackpath, newstackname,('first=%d' % n), ('last=%d' % n)]
-					print command
+					print(command)
 					#proc2d.run()
 					if self.params['dryrun'] is False:
 						subprocess.call(command)
@@ -704,9 +704,9 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			midshx = shifts['x'][midval]
 			midshy = shifts['y'][midval]
 			for l in range(totalframes):
-				if l not in shxa.keys():
+				if l not in list(shxa.keys()):
 					shxa[l]=0.0
-				if l not in shya.keys():
+				if l not in list(shya.keys()):
 					shya[l]=0.0
 				# convert to the convention used in motioncorr
 				# so that shift is in pixels of the aligned image.

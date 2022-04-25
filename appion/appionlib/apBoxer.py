@@ -182,9 +182,11 @@ def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=
 	helixmode = False
 	for i in range(3):
 		partdata = random.choice(partdatas)
-		if partdata.get('helixnum', 0) > 0:
-			helixmode = True
-			break
+		# print(partdata, '111222333555777')
+		if partdata.get('helixnum', 0) is not None:
+			if partdata.get('helixnum', 0) > 0:
+				helixmode = True
+				break
 
 	### normal single particle
 	f = open(boxfile, 'w')

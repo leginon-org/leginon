@@ -25,7 +25,7 @@ from appionlib.apSpider import operations
 try:
 	from appionlib.apSpider import backprojectPWL
 except ImportError:
-	print "Pick-wei fix this"
+	print("Pick-wei fix this")
 from pyami import mem, mrc
 
 class otrVolumeScript(appionScript.AppionScript):
@@ -127,7 +127,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		self.params['rundir'] = os.path.join(uppath, "SpiderRecon",
 			self.params['runname'] )
 
-		print self.params['rundir']
+		print(self.params['rundir'])
 		
 #		### check if path exists in db already
 #		otrrunq = appiondata.ApOtrRunData()
@@ -195,8 +195,8 @@ class otrVolumeScript(appionScript.AppionScript):
 		stackapix = apStack.getStackPixelSizeFromStackId(self.params['partstackid'])*self.params['bin']
 		stackboxsize = apStack.getStackBoxsize(self.params['partstackid'])/self.params['bin']
 		
-		print apix
-		print mrcvolfile
+		print(apix)
+		print(mrcvolfile)
 
 		if not os.path.isfile(mrcvolfile):
 			apDisplay.printError("volfile does not exist: "+mrcvolfile)
@@ -837,11 +837,11 @@ class otrVolumeScript(appionScript.AppionScript):
 		# Andres's refinement steps	#
 		#										#
 		###############################
-		print "\n"
+		print("\n")
 		apDisplay.printMsg("##################################")
 		apDisplay.printMsg("Starting Andres' refinement steps")
 		apDisplay.printMsg("##################################")
-		print "\n"
+		print("\n")
 
 		if self.params['initvol'] is not None:
 			spidervol = self.convertVolToSpider(mrcvolfile=self.params['initvol'], apix=self.params['initvolapix'])
@@ -891,7 +891,7 @@ class otrVolumeScript(appionScript.AppionScript):
 			backprojectPWL.createClassAverages(apshstack,projstack,apshout,numprojs,boxsize,outclass="classes",rotated=True,shifted=True,dataext=".spi")
 
 
-			print "check~~!!!"
+			print("check~~!!!")
 			sys.exit(1)
 
 			### calculate FSC
@@ -909,11 +909,11 @@ class otrVolumeScript(appionScript.AppionScript):
 			eulerfile = apsheuler
 			mrcvolfile = self.processVolume(volfile, cnum, iternum)
 
-			print "\n"
+			print("\n")
 			apDisplay.printMsg("###########################")
 			apDisplay.printMsg("Done with iteration "+str(j+1)+"")
 			apDisplay.printMsg("###########################")
-			print "\n"
+			print("\n")
 		
 		#if len(self.classlist) > 1:
 			#get a list of all unique combinations of volumes

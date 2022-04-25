@@ -264,13 +264,13 @@ if __name__ == "__main__":
 	Y = numpy.dot(X, beta0) + numpy.random.normal(0, 1, xvec.shape)
 	W = numpy.ones(Y.shape)
 
-	print "numpyLeastSquares", ((numpyLeastSquares(X, Y)-beta0)**2).mean()
-	print "numpyLeastSquaresW", ((numpyLeastSquaresW(X, Y, W)-beta0)**2).mean()
-	print "normalLeastSquares", ((normalLeastSquares(X, Y)-beta0)**2).mean()
-	print "leastSquaresByQRdecomp", ((leastSquaresByQRdecomp(X, Y)-beta0)**2).mean()
-	print "weightedLeastSquares", ((weightedLeastSquares(X, Y, W)-beta0)**2).mean()
-	print "weightedLeastSquaresSVD", ((weightedLeastSquaresSVD(X, Y, W)-beta0)**2).mean()
-	print "totalLeastSquares", ((totalLeastSquares(X, Y, W, maxiter=4)-beta0)**2).mean()
+	print("numpyLeastSquares", ((numpyLeastSquares(X, Y)-beta0)**2).mean())
+	print("numpyLeastSquaresW", ((numpyLeastSquaresW(X, Y, W)-beta0)**2).mean())
+	print("normalLeastSquares", ((normalLeastSquares(X, Y)-beta0)**2).mean())
+	print("leastSquaresByQRdecomp", ((leastSquaresByQRdecomp(X, Y)-beta0)**2).mean())
+	print("weightedLeastSquares", ((weightedLeastSquares(X, Y, W)-beta0)**2).mean())
+	print("weightedLeastSquaresSVD", ((weightedLeastSquaresSVD(X, Y, W)-beta0)**2).mean())
+	print("totalLeastSquares", ((totalLeastSquares(X, Y, W, maxiter=4)-beta0)**2).mean())
 
 
 

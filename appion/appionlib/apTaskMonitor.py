@@ -19,7 +19,7 @@ class ParallelTaskMonitor(basicAgent.BasicAgent):
 		f = open(self.taskid_file)
 		lines = f.readlines()
 		f.close()
-		self.taskjobids = map((lambda x: int(x)),lines)
+		self.taskjobids = list(map((lambda x: int(x)),lines))
 		self.unfinished_task_status = {}
 		for hostJobId in self.taskjobids:
 			self.unfinished_task_status[hostJobId] = 'Q'
@@ -33,7 +33,7 @@ class ParallelTaskMonitor(basicAgent.BasicAgent):
 		# wait until all done
 		while len(self.unfinished_task_status):
 			time.sleep(self.checkStatusInterval)
-			for hostJobId in self.unfinished_task_status.keys():
+			for hostJobId in list(self.unfinished_task_status.keys()):
 				currentStatus = self.unfinished_task_status[hostJobId]
 				newStatus = self.processingHost.checkJobStatus(hostJobId)
 				if newStatus == "U" and (currentStatus == "R" or currentStatus == "Q"):

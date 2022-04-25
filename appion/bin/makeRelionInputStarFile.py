@@ -31,19 +31,19 @@ class RelionMaker(veryBasicScript.VeryBasicScript):
 
 	def checkConflicts(self):
 		if self.params['dbnum'] is None:
-			print apDisplay.printError("please specify a database ID")	
+			print(apDisplay.printError("please specify a database ID"))	
 		if self.params['images'] is None:
-			print apDisplay.printError("please specify an image stack filename")	
+			print(apDisplay.printError("please specify an image stack filename"))	
 		if self.params['starfile'] is None:
-			print apDisplay.printError("please specify an output starfile")	
+			print(apDisplay.printError("please specify an output starfile"))	
 		if self.params['ctfrunid'] is None:
-			print apDisplay.printWarning("using best CTF run ID from Appion db")	
+			print(apDisplay.printWarning("using best CTF run ID from Appion db"))	
 		if self.params['stackid'] is None:
-			print apDisplay.printError("please specify a stack ID from Appion db")	
+			print(apDisplay.printError("please specify a stack ID from Appion db"))	
 		if self.params['voltage'] is None:
-			print apDisplay.printError("please specify the microscope operating voltage (in kV)")	
+			print(apDisplay.printError("please specify the microscope operating voltage (in kV)"))	
 		if self.params['cs'] is None:
-			print apDisplay.printError("please specify the microscope spherical aberation constant (in mm)")	
+			print(apDisplay.printError("please specify the microscope spherical aberation constant (in mm)"))	
 
 	def start(self):
 		### default parameters
@@ -79,7 +79,7 @@ class RelionMaker(veryBasicScript.VeryBasicScript):
 		oldimgid = None
 		for i in range(len(particledata)):
 			if i % 1000 == 0:
-				print "done with %d particles" % i
+				print("done with %d particles" % i)
 	
 			### CTF info
 			image = particledata[i]['particle']['image']
@@ -95,7 +95,7 @@ class RelionMaker(veryBasicScript.VeryBasicScript):
 	
 			if ctf is None:
 				if oldimgid != imgid:
-					print "particle %d: " % i, "getting best value for image: %d" % imgid
+					print("particle %d: " % i, "getting best value for image: %d" % imgid)
 					ctf = ctfdb.getBestCtfValueForImage(image, msg=False, method='ctffind')
 					dx = ctf[0]['defocus1'] * 10e9 
 					dy = ctf[0]['defocus2'] * 10e9 

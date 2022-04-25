@@ -110,7 +110,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			apImage.arrayToMrc(clippedmrc,ace2inputpath,msg=False)
 
 		### pad out image to speed up FFT calculations for non-standard image sizes
-		print "checking prime factor"
+		print("checking prime factor")
 		if primefactor.isGoodStack(dimx) is False:
 			goodsize = primefactor.getNextEvenPrime(dimx)
 			factor = float(goodsize) / float(dimx)

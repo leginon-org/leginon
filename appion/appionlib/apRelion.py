@@ -31,11 +31,11 @@ def readStarFileDataBlock(starfile, datablock):
 
 def writeLoopDictToStarFile(loopDict, datablockname, starfilename):
 
-	labels = loopDict[0].keys()
+	labels = list(loopDict[0].keys())
 	valueSets = []
 	for line in loopDict:
 		params = ""
-		for p in line.values():
+		for p in list(line.values()):
 			params += " %s" % p
 		valueSets.append(params)
 	star = starFile.StarFile(starfilename)
@@ -116,30 +116,30 @@ def excludeClassesFromRelionDataFile2(starfile, outlist, *classlist):
 	f.close()
 	loopDictNew = starFile.LoopBlock
 #	loopDictNew = []
-	print dir(loopDict), "loop Dict"
-	print dir(loopDictNew), "loop Dict New"
-	print len(loopDict), "length of loop Dict"
-	print loopDict[0]
+	print(dir(loopDict), "loop Dict")
+	print(dir(loopDictNew), "loop Dict New")
+	print(len(loopDict), "length of loop Dict")
+	print(loopDict[0])
 	for gp in goodparts:
 		loopDictNew.append(loopDict[gp-1])
-	print len(loopDictNew), "length of loop Dict New"
+	print(len(loopDictNew), "length of loop Dict New")
 	dataBlockNew = starFile.DataBlock("data_images")
 	dataBlockNew.setLoopBlocks([loopDictNew])
-	print dir(dataBlockNew)
-	print len(dataBlockNew.loopBlocks)
+	print(dir(dataBlockNew))
+	print(len(dataBlockNew.loopBlocks))
 	star.setDataBlock(dataBlockNew,"data_images")
 	dbnew = star.getDataBlock("data_images")
-	print dbnew.name, "****"
-	print dir(dbnew)
-	print len(dbnew.loopBlocks)
+	print(dbnew.name, "****")
+	print(dir(dbnew))
+	print(len(dbnew.loopBlocks))
 	loopDict = dbnew.getLoopDict()
-	print len(loopDict)
+	print(len(loopDict))
 	star.write("destination.star")
 
 def listFileFromRelionStarFile(starfile, outlist, datablock="data_images"):
 	### write out an EMAN-style list file (numbering starts with 0) based on a relion star file with images and image numbers
 
- 	star = starFile.StarFile(starfile)
+	star = starFile.StarFile(starfile)
 	star.read()
 	dataBlock = star.getDataBlock(datablock)
 	loopDict = dataBlock.getLoopDict()
@@ -356,7 +356,7 @@ def adjustPartDict(relionpartdict, reflist):
 		'spread': float(relionpartdict['_rlnMaxValueProbDistribution']), #check for better
 	}
 	if particleNumber < 10:
-		print "%03d -- %.1f -- %s"%(particleNumber, newpartdict['inplane'], relionpartdict['_rlnAnglePsi'])
+		print("%03d -- %.1f -- %s"%(particleNumber, newpartdict['inplane'], relionpartdict['_rlnAnglePsi']))
 	return newpartdict
 
 def wrap360(theta):

@@ -9,9 +9,9 @@ from sinedon import directq
 This script runs much faster if the log file provided is a list of images which need to set status
 '''
 if len(sys.argv) != 3:
-	print 'usage: uploadImageStatus.py <inputlist> <statustype>'
-	print 'inputlist is a list of mrc file full path as known by leginon database'
-	print 'statustype is one the four: "exemplar", "hide", "trash" sets status as named; "reverse" sets other images of the same preset to "hidden"'
+	print('usage: uploadImageStatus.py <inputlist> <statustype>')
+	print('inputlist is a list of mrc file full path as known by leginon database')
+	print('statustype is one the four: "exemplar", "hide", "trash" sets status as named; "reverse" sets other images of the same preset to "hidden"')
 	sys.exit()
 
 ######################################
@@ -27,7 +27,7 @@ infilename = sys.argv[1]
 statusmapping = {'exemplar':('exemplar',None), 'reverse':(None,'hidden'), 'hide':('hidden',None), 'trash':('trash',None)}
 
 if statustype not in statusmapping:
-	print 'Valid status:', statusmapping.keys()
+	print('Valid status:', list(statusmapping.keys()))
 	sys.exit(1)
 
 def setStatus(imagedata,status):
@@ -49,7 +49,7 @@ def setStatus(imagedata,status):
 			# set viewer image status to hidden
 			vdata = leginondata.ViewerImageStatus(image=imagedata,status=status,session=imagedata['session'])
 			vdata.insert()
-	print 'Set %s.mrc status to %s' % (imagedata['filename'], status)
+	print('Set %s.mrc status to %s' % (imagedata['filename'], status))
 
 
 infile = open(infilename,'r')
@@ -69,7 +69,7 @@ if statustype != 'reverse':
 		if r:
 			setStatus(r[0],statusmapping[statustype][0])
 		else:
-			print 'Query failed. image %s.mrc does not exist' % filename
+			print('Query failed. image %s.mrc does not exist' % filename)
 else:
 	# Input file is a list of all the good images
 	sessionnames = set(map((lambda x: os.path.basename(os.path.dirname(x).split('/')[-2])),lines))

@@ -31,12 +31,12 @@ def alignZeroShiftImages(imgtree,zerotilts):
 	#index for imgtree images are one less than index in zerotilts b/c protomo images start at 1
 	im1=imgtree[zerotilts[0]-1]['image']
 	im2=imgtree[zerotilts[1]-1]['image']
-	print "correlating images",zerotilts[0], "and", zerotilts[1]
+	print("correlating images",zerotilts[0], "and", zerotilts[1])
 	cc=correlator.cross_correlate(im1,im2)
 	peak=peakfinder.findPixelPeak(cc)
 	#print peak
 	newy,newx=shiftPeak(cc,peak)
-	print "new origin for image", zerotilts[0], "is", newx, newy
+	print("new origin for image", zerotilts[0], "is", newx, newy)
 	shifty=cc.shape[0]/2 - newy
 	shiftx=cc.shape[1]/2 - newx
 	return {'shiftx':shiftx, 'shifty':shifty}
@@ -55,13 +55,13 @@ def shiftPeak(imgarray,peakarray):
 	return (newy,newx)
 
 def shiftHalfSeries(shiftdict,ptdict, lastimg):
-	keys=ptdict.keys()
+	keys=list(ptdict.keys())
 	keys.sort()
 	for key in keys:
 		if key <=lastimg:
 			ptdict[key]['x']=ptdict[key]['x']-shiftdict['shiftx']
 			ptdict[key]['y']=ptdict[key]['y']-shiftdict['shifty']
-			print "shifting image", key
+			print("shifting image", key)
 		else:
 			break
 
@@ -90,12 +90,12 @@ if __name__=='__main__':
 		
 	#set up directories
 		
-	print "Setting up directories"
+	print("Setting up directories")
 	rootdir=os.getcwd()
 	rawdir=os.path.join(rootdir, 'raw')
 	outdir=os.path.join(rootdir,'out')
 	if os.path.exists(rawdir) or os.path.exists(outdir) :
-		print "Warning, you must remove the raw, clean, align, and out directories before proceeding"
+		print("Warning, you must remove the raw, clean, align, and out directories before proceeding")
 		sys.exit()
 	else:
 		apParam.createDirectory(outdir,warning=False)
@@ -107,7 +107,7 @@ if __name__=='__main__':
 	zerotilts=[]
 	
 	for n in range(len(imgtree)):
-		print "determining parameters for", imgtree[n]['filename']
+		print("determining parameters for", imgtree[n]['filename'])
 		imdict={}
 		imdictkey=n+1
 		
@@ -151,7 +151,7 @@ if __name__=='__main__':
 	###Azimuth is determined from phi. In protomo tilt axis is measured from x where phi is from y
 	###Note there is a mirror between how Leginon reads images vs how protomo does
 	azimuth=90-((phi1+phi2)/2)
-	print "Azimuth is", azimuth
+	print("Azimuth is", azimuth)
 	
 	#shift first half of series with respect to second
 	shiftdict=alignZeroShiftImages(imgtree,zerotilts)
@@ -168,9 +168,9 @@ if __name__=='__main__':
 	if inputparams['tar']:
 		files='raw out *.tlt *.param'
 		command='tar cvfh %s %s' % ((inputparams['seriesname']+'.tar'), files)
-		print command
+		print(command)
 		os.system(command)
-		print '\n\n Please remember to remove tar file after transfering to processing computer'
-	print "Done!"
+		print('\n\n Please remember to remove tar file after transfering to processing computer')
+	print("Done!")
 	
 #	

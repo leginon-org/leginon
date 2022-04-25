@@ -42,7 +42,7 @@ class stackPolisherScript(appionScript.AppionScript):
 		
 		# DD processes
 		self.dd = apDDprocess.DDStackProcessing()
-		print self.dd
+		print(self.dd)
 	
 		# get stack data
 		self.stackdata = appiondata.ApStackData.direct_query(self.params['stackid'])

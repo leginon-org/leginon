@@ -29,13 +29,13 @@ class ImproveIEEEfit(object):
 		self.sampling = xfull/float(len(self.xdata))
 
 		self.xmax = self.sampling * len(self.xdata)**2
-		print "Max X", self.xmax
-		print "X sampling", self.sampling
-		print "X data", len(self.xdata)
+		print("Max X", self.xmax)
+		print("X sampling", self.sampling)
+		print("X data", len(self.xdata))
 		imagestat.printImageInfo(self.xdata)
-		print "X data^2", len(self.xdatasq)
+		print("X data^2", len(self.xdatasq))
 		imagestat.printImageInfo(self.xdatasq)
-		print "Y data", len(self.ydata)
+		print("Y data", len(self.ydata))
 		imagestat.printImageInfo(self.ydata)
 
 	#================
@@ -67,11 +67,11 @@ class ImproveIEEEfit(object):
 		# n^2 + k < N - 1 => n^2 < N - k - 1 => n < sqrt(N - k - 1)
 		nmax = int(math.floor(math.sqrt(len(self.xdata) - self.k - 1)))
 		#print "min,max", nmin, nmax
-		print "k,min,max", self.k, nmin, nmax
+		print("k,min,max", self.k, nmin, nmax)
 		if nmin >= nmax:
 			# 2k > N - k - 1 =>  3k > N-1 => k > (N-1)/3
 			return None
-		nvalues = range(nmin, nmax)
+		nvalues = list(range(nmin, nmax))
 		sumab = 0
 		sumaa = 0
 		for n in nvalues:
@@ -80,7 +80,7 @@ class ImproveIEEEfit(object):
 			#print a,b
 			sumab += a*b
 			sumaa += a**2
-		print "sumab/sumaa", sumab, sumaa, len(nvalues)
+		print("sumab/sumaa", sumab, sumaa, len(nvalues))
 		ratio = sumab/sumaa
 		acos = math.acos(ratio)
 		# k w T = acos => w = acos/k/T
@@ -106,15 +106,15 @@ if __name__ == "__main__":
 	ydata = numpy.load("ydata.npz", "r")['arr_0']
 	N = len(xdata)
 	maxk = int(math.floor((N-1)/6))
-	print "maxk=", maxk
+	print("maxk=", maxk)
 	#k = 10
 	#for k in range(100,maxk):
 	k=100
 	freqs = []
 	for k in range(100,200):
-		print "k=", k
+		print("k=", k)
 		a = ImproveIEEEfit(k, xdata, ydata)
 		freq = a.fit()
 		freqs.append(freq)
-	print freqs
+	print(freqs)
 

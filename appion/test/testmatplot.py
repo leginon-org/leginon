@@ -6,9 +6,9 @@ from matplotlib import use
 use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-print('numpy version is %s' % np.__version__)
+print(('numpy version is %s' % np.__version__))
 import matplotlib
-print('matplotlib version is %s' % matplotlib.__version__)
+print(('matplotlib version is %s' % matplotlib.__version__))
 
 class TestMatPlotLib(object):
 	def run(self):
@@ -38,7 +38,7 @@ class TestMatPlotLib(object):
 #		plt.colorbar()
 
 		# contour lines
-		X,Y = np.meshgrid(range(GD1.shape[1]),range(GD1.shape[0]))
+		X,Y = np.meshgrid(list(range(GD1.shape[1])),list(range(GD1.shape[0])))
 		CS = plt.contour(X,Y[::-1],GD1,15,linewidths=0.5, colors=line_color)
 		plt.clabel(CS, fontsize=9, inline=1)
 
@@ -49,9 +49,9 @@ class TestMatPlotLib(object):
 		plt.savefig(pngfile,bbox_inches='tight',pad_inches=0)
 		plt.close()
 		if os.path.isfile(pngfile):
-			print('Writing Contour image as %s: Pass' % (pngfile,))
+			print(('Writing Contour image as %s: Pass' % (pngfile,)))
 		else:
-			print('Writing Contour image as %s: Fail' % (pngfile,))
+			print(('Writing Contour image as %s: Fail' % (pngfile,)))
 
 if __name__=='__main__':
 	app = TestMatPlotLib()

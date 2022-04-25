@@ -77,7 +77,7 @@ class DDResults(object):
 		pixel_shifts = self.getPixelShiftsBetweenFrames()
 		if not pixel_shifts:
 			return pixel_shifts
-		return map((lambda x: x*self.apix), pixel_shifts)
+		return list(map((lambda x: x*self.apix), pixel_shifts))
 
 	def getFrameTrajectoryFromLog(self):
 		'''
@@ -86,8 +86,8 @@ class DDResults(object):
 		'''
 		positions = self.readPositionsFromAlignLog()
 		xydict = {}
-		xydict['x'] = map((lambda x: x[0]), positions)
-		xydict['y'] = map((lambda x: x[1]), positions)
+		xydict['x'] = list(map((lambda x: x[0]), positions))
+		xydict['y'] = list(map((lambda x: x[1]), positions))
 		return xydict
 
 	def saveFrameTrajectory(self, rundata, xydict, limit=10, reference_index=None, particle=None):
@@ -151,16 +151,16 @@ class DDResults(object):
 
 if __name__ == '__main__':
 	imagedata = leginondata.AcquisitionImageData().direct_query(461)
-	print(imagedata['filename'])
+	print((imagedata['filename']))
 	dd = DDResults(imagedata)
 	# shift for single aligned sum
-	print(dd.getPixelShiftsBetweenFrames())
+	print((dd.getPixelShiftsBetweenFrames()))
 	cwd = os.getcwd()
 	# shift for the whole run
 	os.chdir(dd.rundir)
-	print(dd.rundir)
+	print((dd.rundir))
 	ddinfo.printDriftStats(imagedata['filename'][:-5]+'*',dd.apix)
-	print(dd.getFrameStats())
+	print((dd.getFrameStats()))
 	xydict = dd.getFrameTrajectoryFromLog()
 	trajdata = dd.saveFrameTrajectory(dd.ddstackrun, xydict)
 	if trajdata.dbid:

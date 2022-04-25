@@ -115,6 +115,9 @@ class stackPolisherScript(appionScript.AppionScript):
 
 		# micrograph & frame info
 		frames = qimage['camera']['use frames']
+		if not frames:
+			#Issue 12298 workaround
+			frames = list(range(qimage['camera']['nframes']))
 		nframes = len(frames)
 		if self.params['framelastali'] is None:
 			self.params['framelastali'] = frames[-1]
@@ -194,7 +197,7 @@ class stackPolisherScript(appionScript.AppionScript):
 		''' bash script file that will be submitted to the cluster '''
 
 		bashfile = "alignparts_lmbfgs_%d.bash" % jobn
-		print "writing bashfile: ", bashfile
+		print("writing bashfile: ", bashfile)
 		f = open(bashfile, "w")
 
 		# set some parameters
@@ -325,7 +328,7 @@ class stackPolisherScript(appionScript.AppionScript):
 				nmic+=1
 				if nmic == self.params['micperjob']:
 					bashfile = self.write_bash_file_for_submission(jobn)
-					os.chmod(bashfile, 0755)
+					os.chmod(bashfile, 0o755)
 					command = 'cd '+self.params['rundir']+'\n'
 					command = command + os.path.join(self.params['rundir'],bashfile)
 					self.joblist.append(command)
@@ -346,7 +349,7 @@ class stackPolisherScript(appionScript.AppionScript):
 		moviefile.close()
 		if nmic < self.params['micperjob']:
 			bashfile = self.write_bash_file_for_submission(jobn)
-			os.chmod(bashfile, 0755)
+			os.chmod(bashfile, 0o755)
 			command = 'cd '+self.params['rundir']+'\n'	
 			command = command + os.path.join(self.params['rundir'],bashfile)
 			self.joblist.append(command)
@@ -358,7 +361,7 @@ class stackPolisherScript(appionScript.AppionScript):
 		return
 
 	def runShell(self,cmd):
-		print 'running: %s' % cmd
+		print('running: %s' % cmd)
 		proc = subprocess.Popen(cmd, shell=True)
 		(stdoutdata, stderrdata) = proc.communicate()
 

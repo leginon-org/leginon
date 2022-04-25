@@ -37,7 +37,7 @@ txt = open(train).read()
 radius = float(txt.split('--radius')[1].split()[0])
 diameter = 2*radius*scale
 reader = csv.reader(open(particles), delimiter='\t')
-reader.next()
+next(reader)
 imageDict = {}
 for row in reader:
     peakdict = {
@@ -46,7 +46,7 @@ for row in reader:
                     'ycoord': float(row[2])*scale,
                     'peakarea': row[3]
                 }        
-    if imageDict.has_key(row[0]):
+    if row[0] in imageDict:
         imageDict[row[0]].append(peakdict)
     else:
         imageDict[row[0]] = [peakdict]

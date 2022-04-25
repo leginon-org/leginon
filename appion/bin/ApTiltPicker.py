@@ -490,7 +490,7 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onSetFileType(self, evt):
-		print dir(evt)
+		print(dir(evt))
 
 	#---------------------------------------
 	def onClearPolygon(self, evt):
@@ -606,7 +606,7 @@ class PickerApp(wx.App):
 		### setup edge list
 		N = verts.shape[0]
 		### create edge pairs
-		edges = numpy.column_stack([range(N),range(1, N+1)])
+		edges = numpy.column_stack([list(range(N)),list(range(1, N+1))])
 		### wrap last vertex
 		edges[N-1,1] = 0
 
@@ -1580,7 +1580,7 @@ class PickerApp(wx.App):
 		if filename is None:
 			filename = os.path.join(self.data['dirname'], self.data['outfile'])
 
-		print "Reading file: %s of type %s"%(filename,filetype)
+		print("Reading file: %s of type %s"%(filename,filetype))
 		savedata = tiltfile.readData(filename, filetype)
 
 		if len(savedata['picks1']) > 2 and len(savedata['picks2']) > 2:
@@ -1667,7 +1667,7 @@ class PickerApp(wx.App):
 			self.data['rmsd'] = math.sqrt(float(ndimage.mean(sqdev)))
 		#self.data['overlap'] = ...
 		#copy over the data
-		for i,v in self.data.items():
+		for i,v in list(self.data.items()):
 			if type(v) in [type(1), type(1.0), type(""), ]:
 				self.appionloop.tiltparams[i] = v
 			elif 'point' in i:
@@ -1785,11 +1785,11 @@ if __name__ == '__main__':
 
 	params = apParam.convertParserToParams(parser)
 
-	print "=================================="
-	print "If you find this program useful please cite: "+tiltDialog.citationlogo
-	print "ApTiltPicker, version "+tiltDialog.version
-	print "Released on "+tiltDialog.releasedate
-	print "=================================="
+	print("==================================")
+	print("If you find this program useful please cite: "+tiltDialog.citationlogo)
+	print("ApTiltPicker, version "+tiltDialog.version)
+	print("Released on "+tiltDialog.releasedate)
+	print("==================================")
 
 	app = PickerApp(
 		pickshape=params['pickshape'],   pshapesize=params['pshapesize'],

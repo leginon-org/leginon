@@ -6,6 +6,7 @@ import sys
 import time
 import math
 import shutil
+import traceback
 #appion
 from appionlib import apDisplay
 from appionlib import appiondata
@@ -41,7 +42,7 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir, fftpath=None, 
 	opimagedir = os.path.join(rundir, "opimages")
 
 	### default extra phase shift to 0.0
-	if 'extra_phase_shift' not in ctfvalues.keys() or ctfvalues['extra_phase_shift'] is None:
+	if 'extra_phase_shift' not in list(ctfvalues.keys()) or ctfvalues['extra_phase_shift'] is None:
 		ctfvalues['extra_phase_shift'] = 0.0
 
 	if isvalid is True:
@@ -54,7 +55,7 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir, fftpath=None, 
 	### clean rundir from all entries:
 	if not rundir.endswith("/"):
 		rundir += "/"
-	for key in ctfvalues.keys():
+	for key in list(ctfvalues.keys()):
 		if isinstance(ctfvalues[key], str) and ctfvalues[key].startswith(rundir):
 			ctfvalues[key] = ctfvalues[key].replace(rundir, "")
 
@@ -64,8 +65,8 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir, fftpath=None, 
 	ctfq['image'] = imgdata
 	if debug is True:
 		apDisplay.printMsg("CTF data values")
-		print ctfvalues
-	for key in ctfq.keys():
+		print(ctfvalues)
+	for key in list(ctfq.keys()):
 		if key in ctfvalues:
 			ctfq[key] = ctfvalues[key]
 			if debug is True:
@@ -92,7 +93,7 @@ def appendFailedImage(rundir,imgdata, ctfvalues, fail_type='makeCTFImages'):
 	bits = []
 	bits.append(imgdata['filename'])
 	for key in ('defocus1','defocus2','angle_astigmatism'):
-		if key in ctfvalues.keys():
+		if key in list(ctfvalues.keys()):
 			bits.append('%.3f' % (ctfvalues[key]*1e6,))
 		else:
 			bits.append('')
@@ -110,7 +111,8 @@ def runCTFdisplayTools(imgdata, ctfvalues, opimagedir, fftpath=None, fftfreq=Non
 	try:
 		ctfdisplaydict = ctfdisplay.makeCtfImages(imgdata, ctfvalues, fftpath, fftfreq)
 	except:
-		print "Unexpected error:", sys.exc_info()
+		print("Unexpected error:", sys.exc_info())
+		print(traceback.format_exc())
 		appendFailedImage(rundir, imgdata, ctfvalues,'makeCtfImages exception')
 		return ctfvalues
 
@@ -129,7 +131,7 @@ def runCTFdisplayTools(imgdata, ctfvalues, opimagedir, fftpath=None, fftfreq=Non
 	if not os.path.isfile(ctfdisplaydict['powerspecfile']):
 		apDisplay.printWarning("Powerspec file not created")
 	else:
-		print ctfdisplaydict['powerspecfile']
+		print(ctfdisplaydict['powerspecfile'])
 		shutil.move(ctfdisplaydict['powerspecfile'], psfile)
 		ctfvalues['graph1'] = os.path.basename(psfile)
 	### new 1d plot file
@@ -196,8 +198,8 @@ def convertDefociToConvention(ctfvalues):
 			(defocus1*1e6, defocus2*1e6, angle), "cyan")
 
 		perdiff = abs(defocus1-defocus2)/abs(defocus1+defocus2)
-		print ("Defocus Astig Percent Diff %.2f -- %.3e, %.3e"
-				%(perdiff*100,defocus1,defocus2))
+		print(("Defocus Astig Percent Diff %.2f -- %.3e, %.3e"
+				%(perdiff*100,defocus1,defocus2)))
 
 	ctfvalues['defocus1'] = defocus1
 	ctfvalues['defocus2'] = defocus2
@@ -220,13 +222,13 @@ def checkParams(ctfvalues):
 	absangle = abs(ctfvalues['angle_astigmatism'])
 	### print debug
 	if debug is True:
-		print "  Defocus1 %.2f microns (underfocus is positive)"%(focus1*1e6)
+		print("  Defocus1 %.2f microns (underfocus is positive)"%(focus1*1e6))
 		if focus1 != focus2:
-			print "  Defocus2 %.2f microns (underfocus is positive)"%(focus2*1e6)
-		print "  C_s %.1f mm"%(cs)
-		print "  High tension %.1f kV"%(volts*1e-3)
-		print ("  Amp Contrast %.3f (shift %.1f degrees)"
-			%(ampcontrast, math.degrees(-math.asin(ampcontrast))))
+			print("  Defocus2 %.2f microns (underfocus is positive)"%(focus2*1e6))
+		print("  C_s %.1f mm"%(cs))
+		print("  High tension %.1f kV"%(volts*1e-3))
+		print(("  Amp Contrast %.3f (shift %.1f degrees)"
+			%(ampcontrast, math.degrees(-math.asin(ampcontrast)))))
 
 	### check angle to make sure we reach values in range above 2*Pi and below 90
 	global confirm_degrees
@@ -240,7 +242,7 @@ def checkParams(ctfvalues):
 		apDisplay.printWarning(msg)
 		return False
 	if not confirm_degrees and radian_suspects > 5:
-		print "confirm_degrees", confirm_degrees
+		print("confirm_degrees", confirm_degrees)
 		msg = "too many (%d) suspicious angle astigmatisms, likely in radians"%(radian_suspects)
 		apDisplay.printWarning(msg)
 

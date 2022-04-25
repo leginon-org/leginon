@@ -35,10 +35,10 @@ def getFieldSize(shape):
 	twopowerint = int(math.floor(twopowerfloat))
 	fieldsize = 2**twopowerint
 	if debug is True:
-		print "mindim=", mindim
-		print "twopower=", twopowerfloat
-		print "twopower=", twopowerint
-		print "fieldsize=", fieldsize
+		print("mindim=", mindim)
+		print("twopower=", twopowerfloat)
+		print("twopower=", twopowerint)
+		print("fieldsize=", fieldsize)
 	return fieldsize
 
 #=============
@@ -84,7 +84,7 @@ def powerseries(image, pixelsize, fieldsize=None, mask_radius=0.5, msg=True):
 	xnumstep = int(math.floor(xsize/float(fieldsize)))*2
 	ynumstep = int(math.floor(ysize/float(fieldsize)))*2
 	if debug is True:
-		print xsize, ysize, fieldsize, xnumstep, ynumstep
+		print(xsize, ysize, fieldsize, xnumstep, ynumstep)
 
 	f = fieldsize
 	#powersum = numpy.zeros((fieldsize,fieldsize))
@@ -95,7 +95,7 @@ def powerseries(image, pixelsize, fieldsize=None, mask_radius=0.5, msg=True):
 	if msg is True:
 		sys.stderr.write("Computing power spectra in %dx%d blocks"%(fieldsize,fieldsize))
 	if debug is True:
-		print ""
+		print("")
 	for i in range(xnumstep):
 		for j in range(ynumstep):
 			count += 1
@@ -108,7 +108,7 @@ def powerseries(image, pixelsize, fieldsize=None, mask_radius=0.5, msg=True):
 			if y2 > ysize:
 				continue
 			if debug is True:
-				print "%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2)
+				print("%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2))
 			elif msg is True:
 				sys.stderr.write(".")
 			cutout = image[x1:x2, y1:y2]
@@ -124,7 +124,7 @@ def powerseries(image, pixelsize, fieldsize=None, mask_radius=0.5, msg=True):
 			if y2 > ysize:
 				continue
 			if debug is True:
-				print "%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2)
+				print("%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2))
 			elif msg is True:
 				sys.stderr.write(".")
 			cutout = image[x1:x2, y1:y2]
@@ -140,7 +140,7 @@ def powerseries(image, pixelsize, fieldsize=None, mask_radius=0.5, msg=True):
 			y1 = ysize-f
 			y2 = ysize
 			if debug is True:
-				print "%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2)
+				print("%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2))
 			elif msg is True:
 				sys.stderr.write(".")
 			cutout = image[x1:x2, y1:y2]
@@ -180,9 +180,9 @@ if __name__ == "__main__":
 	t0 = time.time()
 	x = numpy.arange(6, 13)
 	N = 2**x
-	print N
+	print(N)
 	for n in N:
-		print "====================================="
+		print("=====================================")
 		b = power(a, n)
 		b = imagefilter.frame_cut(b, numpy.array(b.shape)/2)
 		imagefile.arrayToPng(b, "%04d-field.png"%(n))
@@ -194,5 +194,5 @@ if __name__ == "__main__":
 		imagefile.arrayToPng(b, "%04d-binned.png"%(n))
 		imagestat.printImageInfo(b)
 
-	print "complete in %s"%(apDisplay.timeString(time.time()-t0))
+	print("complete in %s"%(apDisplay.timeString(time.time()-t0)))
 	imagestat.printImageInfo(b)

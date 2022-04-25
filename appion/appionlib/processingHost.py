@@ -50,14 +50,14 @@ class ProcessingHost (object):
             'StatusCommand': self.setStatusCommand
             }
 			
-        for opt in confDict.keys():
+        for opt in list(confDict.keys()):
             if opt in options:
                 options[opt](confDict[opt])
                 
         ## dcshrum@fsu.edu
         # if this variable is present then we'll use job 
         # headers that come from a web service as opposed to a custom class (ie slurmHost.py)
-        if 'destinationsURL' in confDict.keys():
+        if 'destinationsURL' in list(confDict.keys()):
             self.destinationsURL = confDict['destinationsURL'] 
 
     ##executeCommand (command)	  
@@ -120,7 +120,7 @@ class ProcessingHost (object):
         
         # scheduler options
         headerText = headerArray['customResponse']['header'] + "\n";
-        for k, v in headerArray['customResponse']['options'].iteritems():
+        for k, v in headerArray['customResponse']['options'].items():
             headerText = headerText + headerArray['customResponse']['prefix'] + " " + k + " " + v + "\n"    
 
         # custom execs to run in the script before command and after scheduler options
@@ -165,7 +165,7 @@ class ProcessingHost (object):
             jobFile.write("# This job file has been created for the %s processing host. \n# Changes may be required to run this on another host.\n\n" % (host))
             for line in commandList:
                 jobFile.write(line + '\n')
-        except IOError, e:
+        except IOError as e:
             sys.stderr.write("Could not write to job file" + jobFile.name + ": " + str(e))
             return False
         #Job file was successfully written 
@@ -189,8 +189,8 @@ class ProcessingHost (object):
         #Make sure output directory exist before trying to write a file there.
         if	not os.path.exists(outputDir):
             try:
-                os.makedirs(outputDir, 0775)
-            except OSError, e:
+                os.makedirs(outputDir, 0o775)
+            except OSError as e:
                 sys.stderr.write("Couldn't create output directory " + outputDir + ": " + str(e))
                 return False
 		
@@ -200,7 +200,7 @@ class ProcessingHost (object):
         try:
             #open the job file for writing
             jobFile = open(jobfileName, 'w')
-        except IOError, e:
+        except IOError as e:
             sys.stderr.write("Could not open file to create job file: " + str(e) + "\n")
             return False
 		
@@ -219,7 +219,7 @@ class ProcessingHost (object):
         else: 
             try:
                 returnValue = self.executeCommand(commandString)
-            except (OSError, ValueError), e:
+            except (OSError, ValueError) as e:
                 sys.stderr.write("Failed to execute job " + jobObject.getName() + ": " + str(e))
                 return False
             #translate whatever is returned by executeCommand() to a JobID	   

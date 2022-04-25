@@ -50,8 +50,8 @@ def printCtfData(ctfvalue):
 	try:
 		defocusratio = ctfvalue['defocus2']/ctfvalue['defocus1']
 	except ZeroDivisionError:
-		print ctfvalue
-		print "invalid CTF"
+		print(ctfvalue)
+		print("invalid CTF")
 		return
 	method = getCtfMethod(ctfvalue)
 	if 'acerun' in ctfvalue:
@@ -66,7 +66,7 @@ def printCtfData(ctfvalue):
 	if ctfvalue['extra_phase_shift'] is not None:
 		sys.stderr.write("[%s]   additional phase shift: %.1f degrees \n"%
 		(apDisplay.colorString("CTF param", "blue"), math.degrees(ctfvalue['extra_phase_shift'])))
-	if 'resolution_80_percent' in ctfvalue.keys() and ctfvalue['resolution_80_percent'] is not None:
+	if 'resolution_80_percent' in list(ctfvalue.keys()) and ctfvalue['resolution_80_percent'] is not None:
 		sys.stderr.write("[%s] conf_30-10: %s | conf_5peak: %s | res_0.8: %.1fA | res_0.5 %.1fA\n"%
 			(apDisplay.colorString("CTF stats", "blue"), 
 			apDisplay.colorProb(ctfvalue['confidence_30_10']), 
@@ -130,7 +130,8 @@ def calculateConfidenceScore(ctfdata, ctfavg=True):
 	conf2 = ctfdata['confidence_d']
 	conf3 = ctfdata.get('confidence_30_10',-1)
 	conf4 = ctfdata.get('confidence_5_peak',-1)
-	conf = max(conf1, conf2, conf3, conf4)
+	confs = [conf1, conf2, conf3, conf4]
+	conf = max(list(filter(None, confs)))
 	if conf < 0:
 		conf = 0
 	return conf
@@ -208,7 +209,7 @@ def getBestCtfValue(imgdata, sortType='res80', method=None, msg=True):
 	imgname = apDisplay.short(imgdata['filename'])
 
 	if msg is True:
-		print "Found %d ctf values"%(len(ctfvalues))
+		print("Found %d ctf values"%(len(ctfvalues)))
 
 	### check if it has values
 	if ctfvalues is None:
@@ -232,7 +233,7 @@ def getBestCtfValue(imgdata, sortType='res80', method=None, msg=True):
 				continue
 		if msg is True:
 
-			print "%.5f -- %s"%(sortvalue, ctfvalue['acerun']['name'])
+			print("%.5f -- %s"%(sortvalue, ctfvalue['acerun']['name']))
 		if sortvalue > bestsortvalue:
 			bestsortvalue = sortvalue
 			bestctfvalue = ctfvalue
@@ -242,7 +243,7 @@ def getBestCtfValue(imgdata, sortType='res80', method=None, msg=True):
 		return None
 
 	if msg is True:
-		print "*** %.3f"%(bestsortvalue)
+		print("*** %.3f"%(bestsortvalue))
 		printCtfData(bestctfvalue)
 
 	return bestctfvalue
@@ -260,7 +261,7 @@ def getBestTiltCtfValueForImage(imgdata):
 	"""
 	takes an image and get the tilted ctf parameters for that image
 	"""
-	print "ERROR getBestTiltCtfValueForImage(), use getBestCtfByResolution() instead"
+	print("ERROR getBestTiltCtfValueForImage(), use getBestCtfByResolution() instead")
 	#sys.exit(1)
 
 	### get all ctf values

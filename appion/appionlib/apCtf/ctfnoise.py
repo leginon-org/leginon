@@ -162,9 +162,9 @@ class CtfNoise(object):
 		except:
 			return None, None
 		if self.debug is True:
-			print "poly fit: sqrt(x),y = ", z
+			print("poly fit: sqrt(x),y = ", z)
 		if numpy.any(numpy.isnan(z)):
-			print "NaN in fit result"
+			print("NaN in fit result")
 			return None,None
 
 		initfitparams = [z[2], z[1], z[0]]
@@ -185,9 +185,9 @@ class CtfNoise(object):
 		"""
 		z = numpy.polyfit(xdata, ctfdata, 1)
 		if self.debug is True:
-			print "poly fit: x,y = ", z
+			print("poly fit: x,y = ", z)
 		if numpy.any(numpy.isnan(z)):
-			print "NaN in fit result"
+			print("NaN in fit result")
 			return None,None
 		initfitparams = [z[1], z[0]]
 
@@ -207,9 +207,9 @@ class CtfNoise(object):
 		"""
 		z = numpy.polyfit(numpy.sqrt(xdata), ctfdata, 1)
 		if self.debug is True:
-			print "poly fit: sqrt(x),y = ", z
+			print("poly fit: sqrt(x),y = ", z)
 		if numpy.any(numpy.isnan(z)):
-			print "NaN in fit result"
+			print("NaN in fit result")
 			return None,None
 		initfitparams = [z[1], z[0]]
 
@@ -229,9 +229,9 @@ class CtfNoise(object):
 		"""
 		z = numpy.polyfit(numpy.power(xdata, 2), ctfdata, 1)
 		if self.debug is True:
-			print "poly fit: x**2,y = ", z
+			print("poly fit: x**2,y = ", z)
 		if numpy.any(numpy.isnan(z)):
-			print "NaN in fit result"
+			print("NaN in fit result")
 			return None,None
 		initfitparams = [z[1], z[0]]
 
@@ -251,9 +251,9 @@ class CtfNoise(object):
 		"""
 		z = numpy.polyfit(xdata, ctfdata, 3)
 		if self.debug is True:
-			print "poly fit: sqrt(x),y = ", z
+			print("poly fit: sqrt(x),y = ", z)
 		if numpy.any(numpy.isnan(z)):
-			print "NaN in fit result"
+			print("NaN in fit result")
 			return None,None
 		initfitparams = [z[3], 0.0, z[2], z[1], z[0]]
 
@@ -275,16 +275,16 @@ class CtfNoise(object):
 		numpoints = xdata.shape[0]
 		cutoff = int(math.floor(cutoffper*numpoints))
 		if self.debug is True:
-			print "CUT: totalpoints=%d: fit1points=%d / fit2points=%d"%(numpoints, cutoff, (numpoints - cutoff))
+			print("CUT: totalpoints=%d: fit1points=%d / fit2points=%d"%(numpoints, cutoff, (numpoints - cutoff)))
 		if cutoff < 3 or abs(numpoints - cutoff) < 3:
 			return None, None
-		if self.debug: print "cutoff percent %.3f (%d points)"%(cutoffper, cutoff)
+		if self.debug: print("cutoff percent %.3f (%d points)"%(cutoffper, cutoff))
 		### fit first two fifths
-		if self.debug is True: print "fit1"
+		if self.debug is True: print("fit1")
 		firstlinearfitparams, firstlinearvalue = self.fitLinear(
 			xdata[:cutoff], ctfdata[:cutoff], contraintFunction, maxfun)
 		### fit last two fifths
-		if self.debug is True: print "fit2"
+		if self.debug is True: print("fit2")
 		lastlinearfitparams, lastlinearvalue = self.fitLinear(
 			xdata[-cutoff:], ctfdata[-cutoff:], contraintFunction, maxfun)
 		if firstlinearfitparams is None or lastlinearfitparams is None:
@@ -302,7 +302,7 @@ class CtfNoise(object):
 		xconst =  (b1*xmax - b2*xmin)/xfull #b1*xmax - b2*xmin
 
 		initfitparams = numpy.array([xconst, 0, xlinear, xsquare, 0.0])
-		if self.debug is True: print "modelFitFun"
+		if self.debug is True: print("modelFitFun")
 		fullvalue = self.modelFitFun(initfitparams, xdata, ctfdata)
 		return initfitparams, fullvalue
 
@@ -316,7 +316,7 @@ class CtfNoise(object):
 		cutoff = int(math.floor(cutoffper*numpoints))
 		if cutoff < 3 or (numpoints - cutoff) < 3:
 			return None, None
-		if self.debug: print "cutoff percent %.3f (%d points)"%(cutoffper, cutoff)
+		if self.debug: print("cutoff percent %.3f (%d points)"%(cutoffper, cutoff))
 		### fit first two fifths
 		firstlinearfitparams, firstlinearvalue = self.fitLinear(
 			xdata[:cutoff], ctfdata[:cutoff], contraintFunction, maxfun)
@@ -362,7 +362,7 @@ class CtfNoise(object):
 		cutoff = int(math.floor(cutoffper*numpoints/2))*2
 		if cutoff < 3 or (numpoints - cutoff) < 3:
 			return None, None
-		if self.debug: print "cutoff percent %.3f (%d points)"%(cutoffper, cutoff)
+		if self.debug: print("cutoff percent %.3f (%d points)"%(cutoffper, cutoff))
 		### fit first two fifths
 		firstlinearfitparams, firstlinearvalue = self.fitLinear(
 			xdata[:cutoff], ctfdata[:cutoff], contraintFunction, maxfun)
@@ -464,7 +464,7 @@ class CtfNoise(object):
 		"""
 		data = numpy.array(data)
 		monotonicdata = data.copy()
-		indices = range(data.shape[0]-windowsize)
+		indices = list(range(data.shape[0]-windowsize))
 		indices.reverse()
 		monoval = data[indices[0]]
 		startmonoindex = 0
@@ -486,7 +486,7 @@ class CtfNoise(object):
 					#	 monotonicdata[j] = slope*(j-startmonoindex) + monoval
 					startmonoindex = 0
 				monoval = data[i]
-		print "monotonic", firstmono, lastmono
+		print("monotonic", firstmono, lastmono)
 		monotonicdata[:firstmono] = monotonicdata[firstmono]
 		monotonicdata[lastmono:] = monotonicdata[lastmono]
 		return monotonicdata
@@ -521,7 +521,7 @@ class CtfNoise(object):
 					#	 monotonicdata[j] = slope*(j-startmonoindex) + monoval
 					startmonoindex = 0
 				monoval = data[i]
-		print "monotonic", firstmono, lastmono
+		print("monotonic", firstmono, lastmono)
 		monotonicdata[:firstmono] = monotonicdata[firstmono]
 		monotonicdata[lastmono:] = monotonicdata[lastmono]
 		return monotonicdata
@@ -546,14 +546,14 @@ class CtfNoise(object):
 			nancount = numpy.isnan(xdata).sum()
 			apDisplay.printError("Major Error: %d of %d X-values are NaN"%(nancount, len(xdata)))
 		if self.debug is True:
-			print "ctfdata=", ctfdata[:10]
+			print("ctfdata=", ctfdata[:10])
 		if numpy.any(numpy.isnan(ctfdata)): #note does not work with 'is True'
 			nancount = numpy.isnan(ctfdata).sum()
 			apDisplay.printError("Major Error: %d of %d CTF Y-values are NaN"%(nancount, len(ctfdata)))
 
 		if contraint == "above":
 			if self.debug is True:
-				print "constrained above function"
+				print("constrained above function")
 			contraintFunction = self.modelConstFunAbove
 			#filterctfdata = scipy.ndimage.maximum_filter(ctfdata, size=2)
 			#for i in range(1):
@@ -564,7 +564,7 @@ class CtfNoise(object):
 			filterctfdata = numpy.copy(ctfdata)
 		else:
 			if self.debug is True:
-				print "constrained below function"
+				print("constrained below function")
 			contraintFunction = self.modelConstFunBelow
 			#filterctfdata = scipy.ndimage.minimum_filter(ctfdata, size=2)
 			#for i in range(1):
@@ -574,8 +574,8 @@ class CtfNoise(object):
 			#filterctfdata = self.downwardRightMonotonicFilter(ctfdata)
 			filterctfdata = numpy.copy(ctfdata)
 		if self.debug is True:
-			print "filterctfdata=", filterctfdata[:10]
-			print "nan test", filterctfdata[0] == filterctfdata[1]
+			print("filterctfdata=", filterctfdata[:10])
+			print("nan test", filterctfdata[0] == filterctfdata[1])
 		if numpy.any(numpy.isnan(filterctfdata)):
 			apDisplay.printError("Major Error CTF Y-value of NaN")
 
@@ -593,9 +593,9 @@ class CtfNoise(object):
 				namestr += apDisplay.rightPadString("%s"%(namelist[i][:15]), 15)+"|"
 				valstr += apDisplay.leftPadString("%.4f"%(valuelist[i]), 15)+"|"
 				conststr += apDisplay.leftPadString("%.4e"%(constrainval), 15)+"|"
-			print namestr
-			print valstr
-			print conststr
+			print(namestr)
+			print(valstr)
+			print(conststr)
 
 		### lowest is best
 		minvalindex = numpy.argmin(valuelist)
@@ -618,26 +618,26 @@ class CtfNoise(object):
 		midfitparams = fitparamslist[minvalindex]
 
 		if self.debug is True:
-			print ( "middle parameters (%.5e, %.5e, %.5e, %.5e, %.5e)"
-				%(midfitparams[0], midfitparams[1], midfitparams[2], midfitparams[3], midfitparams[4]))
+			print(( "middle parameters (%.5e, %.5e, %.5e, %.5e, %.5e)"
+				%(midfitparams[0], midfitparams[1], midfitparams[2], midfitparams[3], midfitparams[4])))
 		midvalue = self.modelFitFun(midfitparams, xdata, ctfdata)
 		if self.debug is True:
-			print "middle function value %.10f"%(midvalue)
+			print("middle function value %.10f"%(midvalue))
 			constrainval = contraintFunction(midfitparams, xdata, ctfdata)
-			print "constrained value %.10e"%(constrainval)
+			print("constrained value %.10e"%(constrainval))
 
 		### run the full minimization
 		rhobeg = (numpy.where(numpy.abs(midfitparams)<1e-20, 1e20, numpy.abs(midfitparams))).min()/1e7
-		if self.debug: print "RHO begin", rhobeg
+		if self.debug: print("RHO begin", rhobeg)
 		fitparams = scipy.optimize.fmin_cobyla( self.modelFitFun, midfitparams,
 			args=(xdata, ctfdata), cons=[contraintFunction,],
 			consargs=(xdata, ctfdata), rhobeg=rhobeg, rhoend=rhobeg/1e4, maxfun=1e6)
 		if self.debug is True:
-			print ( "final parameters (%.4e, %.4e, %.4e, %.4e, %.4e)"
-				%(fitparams[0], fitparams[1], fitparams[2], fitparams[3], fitparams[4]))
+			print(( "final parameters (%.4e, %.4e, %.4e, %.4e, %.4e)"
+				%(fitparams[0], fitparams[1], fitparams[2], fitparams[3], fitparams[4])))
 		finalvalue = self.modelFitFun(fitparams, xdata, ctfdata)
 		if self.debug is True:
-			print "final function value %.10f"%(finalvalue)
+			print("final function value %.10f"%(finalvalue))
 		#writeDatFile("finalvalue.dat", fitparams, xdata, ctfdata)
 
 		if finalvalue <= midvalue:

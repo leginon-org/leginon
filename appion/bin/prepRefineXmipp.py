@@ -20,7 +20,7 @@ class XmippPrepSingleRefinement(apPrepXmipp3D.XmippPrep3DRefinement):
 			apDisplay.printError("Xmipp projection match recon can take only one model")
 
 	def processMaskVol(self,prepdata):
-		if 'maskVolId' in self.params.keys() and self.params['maskVolId'] > 0:
+		if 'maskVolId' in list(self.params.keys()) and self.params['maskVolId'] > 0:
 			self.processModel(prepdata,self.params['maskVolId'],True)
 
 #=====================

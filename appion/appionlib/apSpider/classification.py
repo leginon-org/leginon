@@ -143,7 +143,7 @@ def analyzeEigenFactors(alignedstack, rundir, numpart, numfactors=8, dataext=".s
 		if len(bits) == 3:
 			count += 1
 			contriblist.append(contrib)
-			print "Factor", count, contrib, "%\t", cumm, "%\t", eigval
+			print("Factor", count, contrib, "%\t", cumm, "%\t", eigval)
 	### need to plot & insert this data
 
 	### hack to get 'CA VIS' to work: break up stack into individual particles
@@ -260,7 +260,7 @@ def makeDendrogram(numfactors=1, corandata="coran/corandata", dataext=".spi",npr
 
 #===============================
 def hierarchCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
-		factorlist=range(1,5), corandata="coran/corandata", dataext=".spi"):
+		factorlist=list(range(1,5)), corandata="coran/corandata", dataext=".spi"):
 
 	rundir = "cluster"
 	apParam.createDirectory(rundir)
@@ -271,7 +271,7 @@ def hierarchCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 	return classavg,classvar
 
 #===============================
-def hierarchClusterProcess(numpart=None, factorlist=range(1,5),
+def hierarchClusterProcess(numpart=None, factorlist=list(range(1,5)),
 		corandata="coran/corandata", rundir=".", dataext=".spi"):
 	"""
 	inputs:
@@ -352,7 +352,7 @@ def hierarchClusterClassify(alignedstack, dendrogramfile, numclasses=40, timesta
 	for dext in (".hed", ".img", dataext):
 		apFile.removeFile(classavg+dext)
 		apFile.removeFile(classvar+dext)
-	print ""
+	print("")
 
 	### create class averages
 	sys.stderr.write("create %i class averages"%classes)
@@ -368,7 +368,7 @@ def hierarchClusterClassify(alignedstack, dendrogramfile, numclasses=40, timesta
 			(classvar+"@%04d" % (classnum)),
 		)
 	mySpider.close()
-	print ""
+	print("")
 
 	### convert to IMAGIC
 	emancmd = "proc2d "+classavg+".spi "+classavg+".hed"
@@ -381,7 +381,7 @@ def hierarchClusterClassify(alignedstack, dendrogramfile, numclasses=40, timesta
 
 #===============================
 def kmeansCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
-		factorlist=range(1,5), corandata="coran/corandata", dataext=".spi"):
+		factorlist=list(range(1,5)), corandata="coran/corandata", dataext=".spi"):
 	"""
 	inputs:
 
@@ -429,7 +429,7 @@ def kmeansCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 	for dext in (".hed", ".img", dataext):
 		apFile.removeFile(classavg+dext)
 		apFile.removeFile(classvar+dext)
-	print ""
+	print("")
 
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, log=False)
 	### create class averages
@@ -459,7 +459,7 @@ def kmeansCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 
 #===============================
 def ClCla(alignedstack, numpart=None, numclasses=40,
-		factorlist=range(1,5), corandata="coran/corandata", dataext=".spi"):
+		factorlist=list(range(1,5)), corandata="coran/corandata", dataext=".spi"):
 	"""
 	this doesn't work
 	"""
@@ -539,6 +539,6 @@ def findThreshold(numclasses, dendrogramdocfile, rundir, dataext):
 			minclass = classes
 			sys.stderr.write("<")
 		#print " ",count, classes, thresh, maxthresh, minthresh
-	print count, "rounds for", classes, "classes"
+	print(count, "rounds for", classes, "classes")
 
 	return thresh, classes

@@ -33,7 +33,7 @@ def main():
 #    data = Image.open(args.ifile)
     data = ndimage.imread(args.ifile)
     data = np.asarray(data)    
-    print data
+    print(data)
 #    data = mrc.read(args.ifile)
 #    data  = apImage.binImg(data,4) 
 
@@ -50,8 +50,8 @@ def main():
 #    data /=threshold 
 
     inds = np.where(data > 1.0)
-    print inds
-    inds = np.array(zip(inds[0],inds[1]),dtype=float)
+    print(inds)
+    inds = np.array(list(zip(inds[0],inds[1])),dtype=float)
 
     X = inds
 
@@ -121,7 +121,7 @@ def main():
                 bot_curve = [[0,min(lft_edge[:,1])]]
             except ValueError:
                 bot_curve = []
-            for x in xrange(x_int/2, max_x, x_int):
+            for x in range(x_int/2, max_x, x_int):
 
                 lower_bd = x - x_res
                 upper_bd = x + x_res
@@ -142,7 +142,7 @@ def main():
             except ValueError:
                 pass
 
-            for i in xrange(len(bot_curve) - 1 ):
+            for i in range(len(bot_curve) - 1 ):
 
                 first_pt = bot_curve[i]
                 secnd_pt = bot_curve[i+1]
@@ -166,7 +166,7 @@ def main():
             except ValueError:
                 right_curve = []
 
-            for y in xrange(y_int/2, max_y, y_int):
+            for y in range(y_int/2, max_y, y_int):
             
                 lower_bd = y-y_res
                 upper_bd = y+y_res
@@ -187,7 +187,7 @@ def main():
             except ValueError:
                 pass
 
-            for i in xrange(len(right_curve)-1):
+            for i in range(len(right_curve)-1):
             
                 first_pt = right_curve[i]
                 secnd_pt = right_curve[i+1]
@@ -209,7 +209,7 @@ def main():
             except ValueError:
                 top_curve = []
         
-            for x in xrange(x_int/2,max_x,x_int):
+            for x in range(x_int/2,max_x,x_int):
 
                 lower_bd = x-x_res
                 upper_bd = x+x_res
@@ -230,7 +230,7 @@ def main():
             except ValueError:
                 pass
     
-            for i in xrange(len(top_curve)-1):
+            for i in range(len(top_curve)-1):
             
                 first_pt = top_curve[i]
                 secnd_pt = top_curve[i+1]
@@ -253,7 +253,7 @@ def main():
             except ValueError:
                 left_curve = []
 
-            for y in xrange(y_int/2,max_y,y_int):
+            for y in range(y_int/2,max_y,y_int):
             
                 lower_bd = y-y_res
                 upper_bd = y+y_res
@@ -274,7 +274,7 @@ def main():
             except ValueError:
                 pass
         
-            for i in xrange(len(left_curve) - 1):
+            for i in range(len(left_curve) - 1):
                 
                 first_pt = left_curve[i]
                 secnd_pt = left_curve[i+1]
@@ -297,7 +297,7 @@ def main():
             except ValueError:
                 left_curve = []
 
-            for y in xrange(y_int/2,max_y,y_int):
+            for y in range(y_int/2,max_y,y_int):
             
                 lower_bd = y-y_res
                 upper_bd = y+y_res
@@ -318,7 +318,7 @@ def main():
             except ValueError:
                 pass
         
-            for i in xrange(len(left_curve) - 1):
+            for i in range(len(left_curve) - 1):
                 
                 first_pt = left_curve[i]
                 secnd_pt = left_curve[i+1]
@@ -338,7 +338,7 @@ def main():
             except ValueError:
                 bot_curve = []
                 
-            for x in xrange(x_int/2, max_x, x_int):
+            for x in range(x_int/2, max_x, x_int):
 
                 lower_bd = x - x_res
                 upper_bd = x + x_res
@@ -359,7 +359,7 @@ def main():
             except ValueError:
                 pass
 
-            for i in xrange(len(bot_curve) - 1 ):
+            for i in range(len(bot_curve) - 1 ):
 
                 first_pt = bot_curve[i]
                 secnd_pt = bot_curve[i+1]
@@ -381,7 +381,7 @@ def main():
                 bot_curve = [[0,min(lft_edge[:,1])]]
             except ValueError:
                 bot_curve = []
-            for x in xrange(x_int/2, max_x, x_int):
+            for x in range(x_int/2, max_x, x_int):
 
                 lower_bd = x - x_res
                 upper_bd = x + x_res
@@ -402,7 +402,7 @@ def main():
             except ValueError:
                 pass
 
-            for i in xrange(len(bot_curve) - 1 ):
+            for i in range(len(bot_curve) - 1 ):
 
                 first_pt = bot_curve[i]
                 secnd_pt = bot_curve[i+1]
@@ -423,7 +423,7 @@ def main():
             except ValueError:
                 right_curve = []
             
-            for y in xrange(y_int/2, max_y, y_int):
+            for y in range(y_int/2, max_y, y_int):
             
                 lower_bd = y-y_res
                 upper_bd = y+y_res
@@ -444,7 +444,7 @@ def main():
             except ValueError:
                 pass
 
-            for i in xrange(len(right_curve)-1):
+            for i in range(len(right_curve)-1):
             
                 first_pt = right_curve[i]
                 secnd_pt = right_curve[i+1]
@@ -468,7 +468,7 @@ def main():
             except ValueError:
                 right_curve = []
 
-            for y in xrange(y_int/2, max_y, y_int):
+            for y in range(y_int/2, max_y, y_int):
             
                 lower_bd = y-y_res
                 upper_bd = y+y_res
@@ -489,7 +489,7 @@ def main():
             except ValueError:
                 pass
 
-            for i in xrange(len(right_curve)-1):
+            for i in range(len(right_curve)-1):
             
                 first_pt = right_curve[i]
                 secnd_pt = right_curve[i+1]
@@ -508,7 +508,7 @@ def main():
             except ValueError:
                 top_curve = []
         
-            for x in xrange(x_int/2,max_x,x_int):
+            for x in range(x_int/2,max_x,x_int):
 
                 lower_bd = x-x_res
                 upper_bd = x+x_res
@@ -529,7 +529,7 @@ def main():
             except ValueError:
                 pass
     
-            for i in xrange(len(top_curve)-1):
+            for i in range(len(top_curve)-1):
             
                 first_pt = top_curve[i]
                 secnd_pt = top_curve[i+1]
@@ -551,7 +551,7 @@ def main():
             except ValueError:
                 top_curve = []
         
-            for x in xrange(x_int/2,max_x,x_int):
+            for x in range(x_int/2,max_x,x_int):
 
                 lower_bd = x-x_res
                 upper_bd = x+x_res
@@ -572,7 +572,7 @@ def main():
             except ValueError:
                 pass
     
-            for i in xrange(len(top_curve)-1):
+            for i in range(len(top_curve)-1):
             
                 first_pt = top_curve[i]
                 secnd_pt = top_curve[i+1]
@@ -592,7 +592,7 @@ def main():
             except ValueError:
                 left_curve = []
 
-            for y in xrange(y_int/2,max_y,y_int):
+            for y in range(y_int/2,max_y,y_int):
             
                 lower_bd = y-y_res
                 upper_bd = y+y_res
@@ -613,7 +613,7 @@ def main():
             except ValueError:
                 pass
         
-            for i in xrange(len(left_curve) - 1):
+            for i in range(len(left_curve) - 1):
                 
                 first_pt = left_curve[i]
                 secnd_pt = left_curve[i+1]
@@ -630,8 +630,8 @@ def main():
     mask_array = np.zeros((max_x,max_y),dtype='uint8')
     
     
-    x_coords = map(lambda x: x[0],mask)
-    y_coords = map(lambda x: x[1],mask)
+    x_coords = [x[0] for x in mask]
+    y_coords = [x[1] for x in mask]
 
     mask_array[x_coords,y_coords] = 255
 

@@ -93,9 +93,9 @@ class EqualViews(appionScript.AppionScript):
 				else:
 					e2d[euler2] += 1
 				#print partnum, euler1, euler2
-			counts = [(val,key) for key,val in e1d.items()]
+			counts = [(val,key) for key,val in list(e1d.items())]
 			e1count, euler1 = max(counts)
-			counts = [(val,key) for key,val in e2d.items()]
+			counts = [(val,key) for key,val in list(e2d.items())]
 			e2count, euler2 = max(counts)
 
 			# reject indeterminant particles
@@ -110,28 +110,28 @@ class EqualViews(appionScript.AppionScript):
 			eulerdict[(euler1,euler2)].append(partnum)
 			eulercount[(euler1,euler2)] += 1
 
-		print "Rejected %d particles"%(reject)
+		print("Rejected %d particles"%(reject))
 
-		values = eulercount.values()
+		values = list(eulercount.values())
 		values.sort()
-		print values
+		print(values)
 
 		### run through Euler angles and count particles
-		counts = [(val,key) for key,val in eulercount.items()]
+		counts = [(val,key) for key,val in list(eulercount.items())]
 		mincount, val = min(counts)
 		self.params['mincount'] = max(self.params['mincount'], mincount)
 		#print "Keeping %d of %d particles"%(mincount*len(eulercount.keys()), len(partlist))
-		print "Keeping %d of %d particles"%(self.params['mincount']*len(eulercount.keys()), len(partlist))
+		print("Keeping %d of %d particles"%(self.params['mincount']*len(list(eulercount.keys())), len(partlist)))
 
 		keeplist = []
-		for key in eulerdict.keys():
+		for key in list(eulerdict.keys()):
 			eulerpartlist = eulerdict[key]
 			if len(partlist) < self.params['mincount']:
 				keeplist.extend(eulerpartlist)
 			else:
 				keeplist.extend(eulerpartlist[:self.params['mincount']])
 		keeplist.sort()
-		print "Keeping %d of %d particles"%(len(keeplist), len(partlist))
+		print("Keeping %d of %d particles"%(len(keeplist), len(partlist)))
 
 		#write to temporary keepfile
 		self.params['keepfile'] = os.path.join(self.params['rundir'], "equalviews.lst")

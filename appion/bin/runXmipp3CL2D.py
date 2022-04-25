@@ -4,7 +4,7 @@ import time
 import sys
 import math
 import glob
-import cPickle
+import pickle
 import subprocess
 import re
 import numpy
@@ -223,7 +223,7 @@ class CL2D(appionScript.AppionScript):
 					fhOut.close()
 				fhOut=open("part"+self.params['timestamp']+"_level_%02d_convergence.txt"%level,"w")
 			elif tokens[0]=="Number":
-				print >>fhOut, tokens[3].split("=")[1].rstrip()
+				print(tokens[3].split("=")[1].rstrip(), file=fhOut)
 		if not fhOut is None:
 			fhOut.close()
 		fh.close()		

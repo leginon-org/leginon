@@ -82,7 +82,7 @@ class ScriptRemaker(object):
 		# do nothing if value is None
 		if value == None:
 			return
-		if key in self.params.keys():
+		if key in list(self.params.keys()):
 			self.params[key] = value
 
 
@@ -101,9 +101,9 @@ class ScriptRemaker(object):
 			self._replaceParam('projectid',r[0]['project'].dbid)
 
 	def _setRunDir(self, sessionname):
-		if 'rundir' in self.params.keys():
+		if 'rundir' in list(self.params.keys()):
 			rundir = self.params['rundir']
-			if 'sessionname' in self.params.keys():
+			if 'sessionname' in list(self.params.keys()):
 				rundir = rundir.replace(self.params['sessionname'],sessionname)
 			# replace user part if present in rundir
 			username = apParam.getUsername()
@@ -117,8 +117,8 @@ class ScriptRemaker(object):
 
 	def _setRunName(self, runname):
 		if 'runname':
-			if 'runname' in self.params.keys() and runname != None:
-				if 'rundir' in self.params.keys():
+			if 'runname' in list(self.params.keys()) and runname != None:
+				if 'rundir' in list(self.params.keys()):
 					rundir = self.params['rundir']
 					rundir = rundir.replace(self.params['runname'],runname)
 					self.params['rundir'] = rundir
@@ -149,7 +149,7 @@ class LoopScriptRemaker(ScriptRemaker):
 		self.output_preset = self.setOutputPreset()
 
 	def makeCommands(self):
-		if 'parallel' in self.params.keys() and self.params['parallel'] is True:
+		if 'parallel' in list(self.params.keys()) and self.params['parallel'] is True:
 			# duplicate command by loop_max times
 			repeat = self.auto_params['loop_max']
 		else:
@@ -157,7 +157,7 @@ class LoopScriptRemaker(ScriptRemaker):
 		return [self._makeCommand()] * repeat
 
 	def setPreset(self):
-		if 'preset' in self.params.keys():
+		if 'preset' in list(self.params.keys()):
 			return self.params['preset']
 		return 'manual'
 
@@ -170,11 +170,14 @@ class DDAlignerRemaker(LoopScriptRemaker):
 	"""
 	valid_dependencies = []
 	jobtypes = ['makeddrawframestack',]
-	ignored_params = ['bft']
+	# Need to include both because both Bft and bft was used in the past
+	# and mysql query is not case-sensitive so it would having either
+	# Bft or bft as haskey.
+	ignored_params = ['bft','Bft']
 
 	def makeCommands(self):
 		cmds = []
-		if 'parallel' in self.params.keys() and self.params['parallel'] is True:
+		if 'parallel' in list(self.params.keys()) and self.params['parallel'] is True:
 			if 'gpuid' in self.params:
 				# specified gpu process
 				gpuids = self.auto_params['ddalign_gpus']
@@ -187,7 +190,7 @@ class DDAlignerRemaker(LoopScriptRemaker):
 		return super(DDAlignerRemaker, self).makeCommands()
 
 	def setOutputPreset(self):
-		if 'alignlabel' in self.params.keys():
+		if 'alignlabel' in list(self.params.keys()):
 			return '%s-%s' % (self.loop_preset,self.params['alignlabel'])
 
 class DenoiserRemaker(LoopScriptRemaker):
@@ -242,15 +245,18 @@ class OldSessionScripts(object):
 		# find program runs from self.session
 		expid_param = appiondata.ScriptParamName(name='expid')
 		expid_run_values= appiondata.ScriptParamValue(paramname=expid_param, value='%d' % self.session.dbid).query()
-		runs = map((lambda x: x['progrun']),expid_run_values)
+		runs = list(map((lambda x: x['progrun']),expid_run_values))
 		prog_params = {}
 		for run in runs:
 			params = apScriptLog.getScriptParamValuesFromRun(run)
 			usages = apScriptLog.getScriptUsageKeysFromRun(run)
+			if 'jobtype' not in list(params.keys()):
+				apDisplay.printWarning('no jobtype. Ignore')
+				continue
 			if params['jobtype'] not in self.dep_map:
 				apDisplay.printWarning('jobtype %s not known' % params['jobtype'])
 				continue
-			if params['jobtype'] not in prog_params.keys():
+			if params['jobtype'] not in list(prog_params.keys()):
 				# only use the latest of a jobtype
 				prog_params[params['jobtype']] = {'run': run, 'params': params}
 				dep_class_name = self.dep_map[params['jobtype']][1]+'Remaker'
@@ -269,8 +275,8 @@ class OldSessionScripts(object):
 				p1.appendRemaker(p2)
 
 if __name__=='__main__':
-	old_session_name=raw_input('Use appion run from this session to make command = ')
-	new_session_name=raw_input('new session to apply appion runs to = ')
+	old_session_name=input('Use appion run from this session to make command = ')
+	new_session_name=input('new session to apply appion runs to = ')
 	#new_session = leginondata.SessionData().query(results=1)[0]
 	#new_session_name = new_session['name']
 	try:
@@ -285,10 +291,10 @@ if __name__=='__main__':
 	old = OldSessionScripts(old_session_name)
 	scripts = old.scripts
 	for s in scripts:
-		print 'old', s.prog_name
+		print('old', s.prog_name)
 		s.setNewRun(new_session, None)
 		# dependencies also got changed since they point to those in earlier execution.
 		#for d in s.dependencies:
 		#	print d.prog_name, d.params['rundir']
-		print s.makeCommands()
+		print(s.makeCommands())
 

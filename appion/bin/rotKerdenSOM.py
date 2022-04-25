@@ -305,9 +305,9 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 					ymin = yval
 		f1.close()
 		ymax = math.ceil(ymax)+1
-		print "ymax ", ymax
+		print("ymax ", ymax)
 		ymin = max(math.floor(ymin)-1,0)
-		print "ymin ", ymin
+		print("ymin ", ymin)
 
 		f1=open(codeVectorFileName,'r')
 		#skip first line
@@ -319,8 +319,8 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 			data = []
 			for colNo in pylab.arange(numberHarmonic):
 				data.append(float(splitLine[colNo]))
-			print xvalues
-			print data
+			print(xvalues)
+			print(data)
 			#clear previous plot
 			pylab.clf()
 			lines = pylab.plot(xvalues, data)
@@ -406,7 +406,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 		proc = subprocess.Popen(findcentercmd, shell=True,stdout=subprocess.PIPE)
 		proc.wait()
 		stdout_value = proc.communicate()[0]
-		print stdout_value
+		print(stdout_value)
 		stdout_value=stdout_value.split()
 		if len(stdout_value) > 11 and ',' in stdout_value[12]:
 			aux = stdout_value[12].split(',')[0]

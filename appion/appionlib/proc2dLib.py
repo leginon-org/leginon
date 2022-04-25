@@ -382,7 +382,7 @@ class ApProc2d(basicScript.BasicScript):
 			try:
 				sint = int(sline)
 			except ValueError:
-				print "unknown int: ", sline
+				print("unknown int: ", sline)
 				continue
 			partlist.append(sint)
 		f.close()
@@ -419,14 +419,14 @@ class ApProc2d(basicScript.BasicScript):
 		if self.params['list']:
 			partlist = self.readKeepList()
 		else:
-			partlist = range(self.params['first'], self.params['first']+addNumParticles)
+			partlist = list(range(self.params['first'], self.params['first']+addNumParticles))
 		count = 0
 		for partnum in partlist:
 			count += 1
 			particle = indata[partnum]
 			if self.params['debug'] is True:
-				print "---------"
-				print "Particle Number: %d of %d"%(partnum, addNumParticles)
+				print("---------")
+				print("Particle Number: %d of %d"%(partnum, addNumParticles))
 			if self.params['pixlimit']:
 				self.message("pixlimit: %s"%(self.params['pixlimit']))
 				particle = imagefilter.pixelLimitFilter(particle, self.params['pixlimit'])
@@ -484,7 +484,7 @@ class ApProc2d(basicScript.BasicScript):
 		if self.params['average'] is True:
 			avgParticle = summedPartice/count
 			self.appendParticleListToStackFile([avgParticle,], self.params['outfile'])
-		print "Wrote %d particles to file "%(self.particlesWritten)
+		print("Wrote %d particles to file "%(self.particlesWritten))
 
 #================================
 #================================

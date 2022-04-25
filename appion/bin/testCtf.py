@@ -110,7 +110,7 @@ class CTFTest(appionScript.AppionScript):
 		defocus = microns * 1e-6
 		if nominal is None:
 			return defocus
-		print "%.3f - %.3f"%(defocus*1e6, nominal*1e6)
+		print("%.3f - %.3f"%(defocus*1e6, nominal*1e6))
 		return (defocus+nominal)/2.
 
 	#======================

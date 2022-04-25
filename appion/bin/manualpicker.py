@@ -124,8 +124,8 @@ class PickerApp(wx.App):
 
 		self.next = wx.Button(self.frame, wx.ID_FORWARD, '&Forward')
 		self.next.SetMinSize((200,40))
-		self.Bind(wx.EVT_BUTTON, self.onNext, self.next)
-		self.buttonrow.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		self.Bind(wx.EVT_BUTTON, self.onNext, self.__next__)
+		self.buttonrow.Add(self.__next__, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		### Helix picker doesn't have 'remove region'
 		if self.usehelix is False:
@@ -185,7 +185,7 @@ class PickerApp(wx.App):
 		return True
 
 	def addLabelPicker(self, label):
-		rgb = self.pick_colors.next()
+		rgb = next(self.pick_colors)
 		self.panel.addTargetTool(label, color=wx.Colour(*rgb),
 			target=True, shape=self.shape, size=self.size)
 		self.panel.setTargets(label, [])
@@ -195,7 +195,7 @@ class PickerApp(wx.App):
 		for label in self.labels:
 			targets = self.panel.getTargets(label)
 			for target in targets:
-				print '%s\t%s\t%s' % (label, target.x, target.y)
+				print('%s\t%s\t%s' % (label, target.x, target.y))
 		wx.Exit()
 
 	def onAdd(self, evt):
@@ -206,7 +206,7 @@ class PickerApp(wx.App):
 			clist=list(coord)
 			clist.reverse()
 			return tuple(clist)
-		vertices = map(reversexy,vertices)
+		vertices = list(map(reversexy,vertices))
 
 		maskimg = leginon.polygon.filledPolygon(self.panel.imagedata.shape,vertices)
 		type(maskimg)
@@ -295,7 +295,7 @@ class PickerApp(wx.App):
 
 	def onRevert(self, evt):
 		if self.panel.originaltargets:
-			for label,targets in self.panel.originaltargets.items():
+			for label,targets in list(self.panel.originaltargets.items()):
 				self.panel.setTargets(label, targets)
 
 	def targetsToArray(self, targets):
@@ -595,7 +595,7 @@ class ManualPicker(particleLoop2.ParticleLoop):
 					label = 'particle_w/o_label'
 			else:
 				if self.params['labels'] is not None and label not in self.params['labels']:
-					print "ERROR: It is too late to add old labels to the gui"
+					print("ERROR: It is too late to add old labels to the gui")
 			if label not in targets:
 				targets[label] = []
 			targets[label].append( (p['xcoord']/self.params['bin'], p['ycoord']/self.params['bin']) )
@@ -654,14 +654,14 @@ class ManualPicker(particleLoop2.ParticleLoop):
 
 		targets = self.getParticlePicks(imgdata)
 		if targets:
-			for label in targets.keys():
+			for label in list(targets.keys()):
 				if label not in self.labels:
 					self.labels.append(label)
 					self.app.addLabelPicker(label)
 			for label in self.labels:
 				if label not in targets:
 					targets[label] = []
-				print "inserting ",len(targets[label]),"%s targets" % (label,)
+				print("inserting ",len(targets[label]),"%s targets" % (label,))
 				self.app.panel.setTargets(label, targets[label])
 				self.app.panel.originaltargets[label] = targets[label]
 		# labels may have changed, default selection is the first one
@@ -680,15 +680,15 @@ class ManualPicker(particleLoop2.ParticleLoop):
 		#parse and return the targets in peaktree form
 		self.app.panel.openImageFile(None)
 		peaktree=[]
-		for label,targets in self.targets.items():
+		for label,targets in list(self.targets.items()):
 			for target in targets:	
 				angle=None
 				helixnum=None
 				if isinstance(target, leginon.gui.wx.TargetPanelTools.StatsTarget):
 					t = target.stats
-					if t.has_key('angle'):
+					if 'angle' in t:
 						angle = target.stats['angle']
-					if t.has_key('helixnum'):
+					if 'helixnum' in t:
 						helixnum = target.stats['helixnum']
 				peaktree.append(self.XY2particle(target.x, target.y, angle, helixnum, label))
 

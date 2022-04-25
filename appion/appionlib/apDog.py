@@ -62,7 +62,7 @@ def diffOfGauss(imgarray0, pixrad, k=1.2):
 	apDisplay.printMsg("filtering particles of size "+str(pixrad)+" +/- "
 		+str(round(pixrange,1))+" pixels")
 	#do the blurring
-	print sigma1, sigmaprime
+	print(sigma1, sigmaprime)
 	imgarray1 = ndimage.gaussian_filter(imgarray0, sigma=sigma1, mode='reflect')
 	imgarray2 = ndimage.gaussian_filter(imgarray1, sigma=sigmaprime, mode='reflect')
 	#imagefile.arrayToJpeg(imgarray1, "imgarray1.jpg")
@@ -146,7 +146,7 @@ def diffOfGaussLevels(imgarray, r0, N, dr, writeImg=False, apix=1):
 			imagefile.arrayToJpeg(dogarray, "dogmap"+str(i)+".jpg")
 
 	sizevals = numpy.array(pixradlist)
-	print "particle pixel sizes=", sizevals*apix
+	print("particle pixel sizes=", sizevals*apix)
 
 	#sys.exit(1)
 	return dogarrays, sizevals
@@ -161,8 +161,8 @@ def pixelDiameterToSigmaValues(pixdiam, k=1.01):
 	Ek = math.sqrt( (k**2 - 1.0) / (2.0 * k**2 * math.log(k)) )
 	sigma1 = Ek * pixdiam
 	sigma2 = k * sigma1
-	print "Sigma 1:", sigma1
-	print "Sigma 2:", sigma2
+	print("Sigma 1:", sigma1)
+	print("Sigma 2:", sigma2)
 	
 
 

@@ -140,7 +140,7 @@ class tomoRaptor(appionScript.AppionScript):
 		if not raptorfailed:
 			alifilename = imodseriesname+'.ali'
 			alifilepath = os.path.join(aligndir,'align',alifilename)
-			print alifilepath
+			print(alifilepath)
 		# commit to database
 		if commit:
 			# parameters

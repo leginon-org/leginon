@@ -102,7 +102,7 @@ def combineSpiParticleList(infiles, outfile):
 def makeClassAverages(lst, outputstack,e,mask):
 	import EMAN
 	#align images in class
-	print "creating class average from",lst,"to",outputstack
+	print("creating class average from",lst,"to",outputstack)
 	images=EMAN.readImages(lst,-1,-1,0)
 	for image in images:
 		image.rotateAndTranslate()
@@ -190,7 +190,7 @@ def flagGoodParticleInClassLst(clsfile, goodclsfile):
 
 	goodptcls = []
 	plines = lines[2:]
-	goodptcls = map((lambda x: int(x.split("\t")[0])),plines)
+	goodptcls = list(map((lambda x: int(x.split("\t")[0])),plines))
 
 	apDisplay.printMsg("class contains %d particles" % len(ptext))
 	for i, t in enumerate(ptext):
@@ -232,7 +232,7 @@ def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None, fail=Fals
 			#emanproc.wait()
 			out, err = emanproc.communicate()
 			if out is not None and err is not None:
-				print "EMAN error", out, err
+				print("EMAN error", out, err)
 		else:
 			out, err = emanproc.communicate()
 			### continuous check
@@ -250,7 +250,7 @@ def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None, fail=Fals
 	if tdiff > 20:
 		apDisplay.printMsg("completed in "+apDisplay.timeString(tdiff))
 	elif waited is True:
-		print ""
+		print("")
 	proc_code = emanproc.returncode
 	if proc_code != 0:
 		if proc_code == -11:

@@ -128,14 +128,14 @@ class BasicScript(object):
 				appions[p] = None
 			if "leginon" in p:
 				leginons[p] = None
-		leginons = leginons.keys()
-		appions = appions.keys()
+		leginons = list(leginons.keys())
+		appions = list(appions.keys())
 		if len(appions) > 1:
 			apDisplay.printWarning("There is more than one appion directory in your PYTHONPATH")
-			print appions
+			print(appions)
 		if len(leginons) > 1:
 			apDisplay.printWarning("There is more than one leginon directory in your PYTHONPATH")
-			print leginons
+			print(leginons)
 
 	#######################################################
 	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####

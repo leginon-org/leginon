@@ -19,7 +19,7 @@ from appionlib import apProject
 from appionlib.apSpider import alignment
 from appionlib import spyder
 from appionlib import appiondata
-import cPickle
+import pickle
 
 #=====================
 #=====================
@@ -270,7 +270,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 			partlist.append(partdict)
 		docf.close()
 		picklef = open(picklefile, "w")
-		cPickle.dump(partlist, picklef)
+		pickle.dump(partlist, picklef)
 		picklef.close()
 		return partlist
 
@@ -336,7 +336,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		templateparams['lowpass'] = self.params['lowpass']
 		templateparams['median'] = None
 		templateparams['pixlimit'] = None
-		print 'Converting reference templates:\n', templateparams
+		print('Converting reference templates:\n', templateparams)
 		apParam.createDirectory(os.path.join(self.params['rundir'], "templates"))
 		filelist = apTemplate.getTemplates(templateparams)
 
@@ -372,7 +372,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		templateparams['lowpass'] = self.params['lowpass']
 		templateparams['median'] = None
 		templateparams['pixlimit'] = None
-		print 'Converting orientation reference:\n', templateparams
+		print('Converting orientation reference:\n', templateparams)
 		apParam.createDirectory(os.path.join(self.params['rundir'], "templates"))
 		filelist = apTemplate.getTemplates(templateparams)
 		mrcfile = filelist[0]

@@ -30,7 +30,7 @@ Functions to manipulate volumes
 
 #================
 def getModelDimensions(mrcfile):
-	print "calculating dimensions..."
+	print("calculating dimensions...")
 	h=mrc.readHeaderFromFile(mrcfile)
 	(x,y,z)=h['mx'],h['my'],h['mz']
 	if x!=y!=z:

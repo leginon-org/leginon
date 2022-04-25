@@ -160,7 +160,7 @@ class ParticleLoop(filterLoop.FilterLoop):
 		paramQuery = self.getParticleParamsData()
 
 		#insert common parameters
-		for pkey,dbkey in dbmap.items():
+		for pkey,dbkey in list(dbmap.items()):
 			if (dbkey in paramQuery
 			 and pkey in self.params
 			 and self.params[pkey] is not None):

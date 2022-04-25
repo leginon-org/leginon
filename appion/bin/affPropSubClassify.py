@@ -10,6 +10,7 @@ import glob
 import math
 import numpy
 import shutil
+import string
 import tarfile
 import subprocess
 ### appion
@@ -279,11 +280,11 @@ def start():
 				else:
 					classes[classnum].append(partnum)
 		clustf.close()
-		apDisplay.printMsg("Found %d classes"%(len(classes.keys())))
+		apDisplay.printMsg("Found %d classes"%(len(list(classes.keys()))))
 
 		### Create class averages
 		classavgdata = []
-		classnames = classes.keys()
+		classnames = list(classes.keys())
 		classnames.sort()
 		for classnum in classnames:
 			apDisplay.printMsg("Class %d, %d members"%(classnum, len(classes[classnum])))
@@ -352,14 +353,13 @@ def start():
 			cci = ccListSort[len(ccListSort)-i-1]
 			if cci>=params['corCutOff']:
 				bestclass_i=cclist.index(cci)
-				bstr = '%d' % bestclass_i
-				classname_i=clslist[clsNum].split('.')[0]+'.dir/subClassAvgs/subcls'+bstr.zfill(2)+'.lst'
+				classname_i=clslist[clsNum].split('.')[0]+'.dir/subClassAvgs/subcls'+string.zfill(bestclass_i,2)+'.lst'
 				f1=open(classname_i,'r')
 				Ptcls_i = f1.readlines()
 				f1.close()
 				Ptcls.extend(Ptcls_i)
 			else:
-				print "Not included - ", cci
+				print("Not included - ", cci)
 				pass
 		if len(Ptcls)>0:
 

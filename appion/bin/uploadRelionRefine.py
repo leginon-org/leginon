@@ -127,7 +127,7 @@ class UploadRelionScript(reconUploader.generalReconUploader):
 
 		### add each particle to the file
 		count = 0
-		for partnum, partdict in parttree.items():
+		for partnum, partdict in list(parttree.items()):
 			count += 1
 			if count % 500 == 0:
 				apDisplay.printMsg("Wrote %d particles to Particle Data File: %s"%(count,partdatafilepath))
@@ -313,8 +313,8 @@ class UploadRelionScript(reconUploader.generalReconUploader):
 			try:
 				f = mrc.read(file)
 				appended += f
-			except Exception, e:
-				print e
+			except Exception as e:
+				print(e)
 				apDisplay.printError("%s file could not be combined with its other half." % file)
 		
 		appended = (appended / nvol)

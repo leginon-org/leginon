@@ -101,8 +101,8 @@ def commitToJensenDatabase (session_time, fulltomodata, stackdir, processdir, st
 		apDisplay.printWarning('No output full or part mrc found.')
 		raptordatabase = 1
 	else:
-		print '!!!0', ' mrcpath=', mrcpath
-		print '!!!1', ' stackdir=', stackdir, ' stackname=', stackname, ' processdir=', processdir, ' description=',description
+		print('!!!0', ' mrcpath=', mrcpath)
+		print('!!!1', ' stackdir=', stackdir, ' stackname=', stackname, ' processdir=', processdir, ' description=',description)
 		imagelist = apTomo.getImageList([tiltseries])
 		defocus = imagelist[0]['preset']['defocus']
 		magnification = imagelist[0]['preset']['magnification']
@@ -113,9 +113,9 @@ def commitToJensenDatabase (session_time, fulltomodata, stackdir, processdir, st
 		tilt_max = tomosettings['tilt max']
 		tilt_step = tomosettings['tilt step']
 		dose = tomosettings['dose']
-		print '!!!2', ' defocus=', defocus, ' magnification=', magnification, ' tilt_min=', tilt_min, ' tilt_max=', tilt_max, ' tilt_step=', tilt_step, ' dose=', dose
+		print('!!!2', ' defocus=', defocus, ' magnification=', magnification, ' tilt_min=', tilt_min, ' tilt_max=', tilt_max, ' tilt_step=', tilt_step, ' dose=', dose)
 	        #sessiondata = tiltdatalist[0]['session']
 		session_id = tiltseries.dbid
-		print '!!!3', ' session_id=', session_id, ' session_time=', session_time
+		print('!!!3', ' session_id=', session_id, ' session_time=', session_time)
 
 	return raptordatabase

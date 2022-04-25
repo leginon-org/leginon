@@ -1080,8 +1080,8 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 		### CONTINUE WITH CONSECUTIVE ITERATIONS ###
 
-		print "... stack pixel size: "+str(self.params['apix'])
-		print "... stack box size: "+str(self.params['boxsize'])
+		print("... stack pixel size: "+str(self.params['apix']))
+		print("... stack box size: "+str(self.params['boxsize']))
 
 		time3dRefine = time.time()
 

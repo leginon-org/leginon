@@ -91,7 +91,7 @@ class AutoMasker(appionLoop2.AppionLoop):
 			return
 		regionlines=""
 		try:
-			infos.keys()
+			list(infos.keys())
 		except:
 			offset=0
 		else:
@@ -138,25 +138,25 @@ class AutoMasker(appionLoop2.AppionLoop):
 			# make sure the images have the same shape
 			imgshape = numpy.asarray(imgdata['image'].shape)
 			apDisplay.printMsg("MRC Image Shape:")
-			print imgshape
+			print(imgshape)
 			imgsize = imgshape[0]*imgshape[1]
 			apDisplay.printMsg("MRC Image Size:")
-			print imgsize
+			print(imgsize)
 
 			maskshape = numpy.shape(img2)
 			apDisplay.printMsg("Mask Image Shape:")
-			print maskshape
+			print(maskshape)
 			
 			apDisplay.printMsg("resizing mask image with scale:")
 			scaleFactorx = float(imgshape[0])/float(maskshape[0])
 			scaleFactory = float(imgshape[1])/float(maskshape[1])
 			scale = scaleFactorx, scaleFactory
-			print scale
+			print(scale)
 
 			img3 = imagefun.scale( img2, scale )
 			maskshape = numpy.shape(img3)
 			apDisplay.printMsg("Mask Image Shape:")
-			print maskshape
+			print(maskshape)
 			#img3 = numpy.resize(img2, imgshape) # not working
 			img3path = self.outfile + "_tmp.jpg"
 			scipy.misc.imsave(img3path, img3)			
@@ -167,10 +167,10 @@ class AutoMasker(appionLoop2.AppionLoop):
 			infos={}
 			
 			apDisplay.printMsg("getting mask region info.")
-			infos,testlog = apCrud.getLabeledInfo( imgdata['image'], img3, labeled_regions, range(1,clabels+1), False, infos, testlog)
+			infos,testlog = apCrud.getLabeledInfo( imgdata['image'], img3, labeled_regions, list(range(1,clabels+1)), False, infos, testlog)
 	
 			apDisplay.printMsg("inserting mask regions to DB.")
-			print len(infos)
+			print(len(infos))
 			
 			area_max = imgsize*.9
 			offset = 1
@@ -178,10 +178,10 @@ class AutoMasker(appionLoop2.AppionLoop):
 				l = l1 + offset
 				info = infos[l]
 				area=info[0]
-				print area
+				print(area)
 				if (area > 400 and area < area_max):
 					apDisplay.printMsg("saving a region of size:")
-					print area
+					print(area)
 					info.append(l)
 					regiondata = apMask.insertMaskRegion( maskrundata, imgdata, info )
 
@@ -200,7 +200,7 @@ class AutoMasker(appionLoop2.AppionLoop):
 		# set the directory to the activate program which sets up the environment to run the em_hole_finder
 		# This is needed because at the moment, the em_hole_finder uses versions of packages line numextension 
 		# that the rest of appion is not compatible with. Should be something like "/opt/em_hole_finder/env/bin/activate".
-		if os.environ.has_key('HOLE_FIND_ACTIVATE'):
+		if 'HOLE_FIND_ACTIVATE' in os.environ:
 			self.activatepath = os.path.join(os.environ['HOLE_FIND_ACTIVATE'], 'activate')
 		else:
 			apDisplay.printError("The environment variable 'HOLE_FIND_ACTIVATE' is not set. This is the path to the activate program which sets up the environment to run em_hole_finder. It should be 'path/to/em_hole_finder/env/bin'. For more info see http://http://emg.nysbc.org/redmine/projects/appion/wiki/Install_EM_Hole_Finder.")
@@ -220,7 +220,7 @@ class AutoMasker(appionLoop2.AppionLoop):
 		# Check the image shape
 		imgshape = numpy.asarray(imgdata['image'].shape)
 		apDisplay.printMsg("MRC Image Shape prior to processing:")
-		print imgshape
+		print(imgshape)
 		
 		imagepath = os.path.join(imgdata['session']['image path'],imgdata['filename']+".mrc")
 		
@@ -321,7 +321,7 @@ class AutoMasker(appionLoop2.AppionLoop):
 		mask = Image.open()
 		
 		labeled_regions,clabels = nd.label(mask)
-		regioninfos,testlog = getLabeledInfo(originalimage,Henrybitmap,labeled_regions,range(1,clabels+1),False,regioninfos,testlog)
+		regioninfos,testlog = getLabeledInfo(originalimage,Henrybitmap,labeled_regions,list(range(1,clabels+1)),False,regioninfos,testlog)
 		
 		
 		

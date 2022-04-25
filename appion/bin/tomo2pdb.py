@@ -17,16 +17,16 @@ if __name__ == "__main__":
 			stds = []
 			means = []
 		else:
-			centers = scipy.ndimage.center_of_mass(im,labels,range(1,n+1))
+			centers = scipy.ndimage.center_of_mass(im,labels,list(range(1,n+1)))
 			sizes = scipy.ndimage.histogram(labels,1,n+1,n)
-			stds = scipy.ndimage.standard_deviation(im,labels,range(1,n+1))
-			means = scipy.ndimage.mean(im,labels,range(1,n+1))
+			stds = scipy.ndimage.standard_deviation(im,labels,list(range(1,n+1)))
+			means = scipy.ndimage.mean(im,labels,list(range(1,n+1)))
 			if n==1:
 				centers = [centers]
 				stds = [stds]
 				means = [means]
 			else:
-				centers = map(numpy.array, centers)
+				centers = list(map(numpy.array, centers))
 
 		blobs = []
 		for i in range(n):
@@ -39,14 +39,14 @@ if __name__ == "__main__":
 	minsize = 5 #minimal blob size to be considered as a gold cluster
 	# end of input variables
 
-	input1 = raw_input('Enter the .mrc for pdb conversion: ') 
+	input1 = input('Enter the .mrc for pdb conversion: ') 
 	image = mrc.read(input1)
-	output1 = raw_input('Enter the destination name: ')
+	output1 = input('Enter the destination name: ')
 	out = open(output1,'w')
 	line = "HEADER " + output1 + "\n"
 	out.write(line)
 	shape = image.shape
-	print shape
+	print(shape)
 
 	scale = float(scale_factor)/min(shape)
 	lattice = [shape[0]*scale,shape[1]*scale,shape[2]*scale]
@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
 	maskimg = numpy.where(image>=threshold,1,0)
 	blobs = scipyblobs(image,maskimg)
-	print "total blobs of any size=",len(blobs)
+	print("total blobs of any size=",len(blobs))
 	i = 0
 	if len(blobs) > 1:
 		for blob in blobs:
@@ -76,7 +76,7 @@ if __name__ == "__main__":
 				out.write(line)
 		out.write('END\n')
 		out.close()
-		print i
+		print(i)
 	else:
-		print blobs
-		print "too few blobs"
+		print(blobs)
+		print("too few blobs")

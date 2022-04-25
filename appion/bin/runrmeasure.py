@@ -22,7 +22,7 @@ def getRMeasurePath():
 #===========
 if __name__ == "__main__":
 	if len(sys.argv) !=3:
-		print "Check your arguments\nUsage: runrmeasure.py apix outfile"
+		print("Check your arguments\nUsage: runrmeasure.py apix outfile")
 		sys.exit(1)
 
 	apix=sys.argv[1]
@@ -42,7 +42,7 @@ if __name__ == "__main__":
 		if intvol==0:
 			continue
 		vol='threed.'+str(intvol)+'a.mrc'
-		print 'Processing', vol
+		print('Processing', vol)
 		rmeasexe = getRMeasurePath()
 		rmeasproc = subprocess.Popen(rmeasexe, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 		fin = rmeasproc.stdin
@@ -60,10 +60,10 @@ if __name__ == "__main__":
 				break
 		f=open(resout, 'a')
 		if resolution is None:
-			print vol, "failed"
+			print(vol, "failed")
 			f.write('%s\t%s\n' % (vol, "failed"))
 		else:
-			print vol, resolution, "A"
+			print(vol, resolution, "A")
 			f.write('%s\t%s\n' % (vol, resolution))
 		f.close()
-	print "Done!"
+	print("Done!")

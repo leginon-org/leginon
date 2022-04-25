@@ -97,7 +97,7 @@ def getManualDefocusPair(imgdata):
 ##===================
 def getShift(imgdata1 ,imgdata2):
 	#assumes images are square
-	print "Finding shift between", apDisplay.short(imgdata1['filename']), "and", apDisplay.short(imgdata2['filename'])
+	print("Finding shift between", apDisplay.short(imgdata1['filename']), "and", apDisplay.short(imgdata2['filename']))
 	dimension1 = imgdata1['camera']['dimension']['x']
 	binning1   = imgdata1['camera']['binning']['x']
 	dimension2 = imgdata2['camera']['dimension']['x']

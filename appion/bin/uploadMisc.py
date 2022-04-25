@@ -40,7 +40,7 @@ class UploadMiscScript(appionScript.AppionScript):
 			apDisplay.printError("file does not exist")
 		if self.params['description'] is None:
 			apDisplay.printError("enter a file description")
-		print self.params
+		print(self.params)
 		if self.params['sessionname'] is None and self.params['reconid'] is None and self.params['fulltomoid'] is None:
 			apDisplay.printError("please enter either session name (e.g. 06mar12a) or reconID or fulltomoid")
 
@@ -63,7 +63,7 @@ class UploadMiscScript(appionScript.AppionScript):
 
 	#=====================
 	def insertMisc(self):
-		print "inserting into database"
+		print("inserting into database")
 		miscq = appiondata.ApMiscData()
 		if self.params['reconid'] is not None:
 			miscq['refineRun'] = self.recondata
@@ -97,10 +97,10 @@ class UploadMiscScript(appionScript.AppionScript):
 
 		if self.params['reconid'] is not None:
 			self.recondata = apRecon.getRefineRunDataFromID(self.params['reconid'])
-			print "Associated with",self.recondata['name'],":",self.recondata['path']
+			print("Associated with",self.recondata['name'],":",self.recondata['path'])
 		if self.params['fulltomoid'] is not None:
 			self.tomodata = apTomo.getFullTomoData(self.params['fulltomoid'])
-			print "Associated with",self.tomodata['name'],":",self.tomodata['path']['path']
+			print("Associated with",self.tomodata['name'],":",self.tomodata['path']['path'])
 		if self.params['sessionname'] is not None:
 			self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 			self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['sessionname'])

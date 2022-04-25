@@ -92,7 +92,7 @@ class appionRelauncher(basicScript.BasicScript):
 				alldone = []
 				for d in script.dependencies:
 					done = False
-					returncodes = map((lambda x: x.returncode),d.processes)
+					returncodes = list(map((lambda x: x.returncode),d.processes))
 					if len(returncodes)>0:
 						if not all(map((lambda x: x!= None),returncodes)):
 							apDisplay.printMsg('Waiting for %s.py to finish' % d.prog_name)
@@ -111,7 +111,7 @@ class appionRelauncher(basicScript.BasicScript):
 			for p in s.processes:
 				if p.returncode == None:
 					p.communicate()
-			print '%s ended' % (s.prog_name)
+			print('%s ended' % (s.prog_name))
 
 	#=====================
 	def showCommands(self,script,cmds):

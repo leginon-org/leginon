@@ -30,7 +30,7 @@ def makeStack(starfile):
 	partDataBlock = star.getDataBlock("data_particles")
 	loopDict = partDataBlock.getLoopDict()
 
-	print "Found %d particles"%(len(loopDict))
+	print("Found %d particles"%(len(loopDict)))
 	if len(loopDict) == 0:
 		return
 
@@ -85,7 +85,7 @@ def writeUsedParticleStackStats(starfile, stackfile, usedparticles):
 
 #================================
 def start_process():
-	print 'Starting', multiprocessing.current_process().name
+	print('Starting', multiprocessing.current_process().name)
 
 #=====================
 #=====================
@@ -385,7 +385,7 @@ class QuickStack(appionScript.AppionScript):
 		p.close()
 		p.join()
 		p.terminate()
-		print "Image Processing Finished in %.3f seconds"%((time.time()-t0)*1)
+		print("Image Processing Finished in %.3f seconds"%((time.time()-t0)*1))
 
 		if self.params['mode'] == 'appion' or self.params['mode'] == 'both':
 			mergestack = "start.hed"

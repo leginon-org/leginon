@@ -23,7 +23,7 @@ that way its easy to tell what type of file it is
 
 #===============================
 def runCoranClass(params,cls):
-	print "processing class",cls
+	print("processing class",cls)
 
 	#set up cls dir
 	clsdir=cls.split('.')[0]+'.dir'
@@ -47,7 +47,7 @@ def runCoranClass(params,cls):
 	if params['nptcls'] == 0:
 		# don't run clscmd, just make directory and empty average
 		apEMAN.writeBlankImage(os.path.join(clsdir,'classes_avg.spi'),params['boxsize'],0,'spider')
-		print "WARNING!! no particles in class"
+		print("WARNING!! no particles in class")
 		return
 
 	# if only 3 particles or less, turn particles into the class averages
@@ -67,7 +67,7 @@ def runCoranClass(params,cls):
 		for ptcl in range(0,params['nptcls']):
 			dummyfile.write('%d 1 %d\n' % (ptcl,ptcl+1))
 		dummyfile.close()
-		print "WARNING!! not enough particles in class for subclassification"
+		print("WARNING!! not enough particles in class for subclassification")
 		return
 
 	# otherwise, run coran

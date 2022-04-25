@@ -4,7 +4,7 @@ import subprocess
 import os
 import re
 import glob
-from urllib import urlretrieve
+from urllib.request import urlretrieve
 
 ### This class is used to test the Ace2 program. It will dowload the needed test images from the AMI website, 
 ### then run ace2.exe and compare the results to what is ecpected. It will remove results files from a prior run

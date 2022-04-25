@@ -249,7 +249,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 		### scale envelope
 		if abs(scaleFactor - 1.0) > 0.01:
-			print "scaling envelope by", scaleFactor
+			print("scaling envelope by", scaleFactor)
 			envcalc = ndimage.zoom(envcalc, zoom=scaleFactor, mode='nearest')
 		### shift center of envelope to the edges
 		envamp = self.center(envcalc)
@@ -369,10 +369,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			%(apDisplay.timeString(time.time()-t0), 1.0e6 * (time.time()-t0)/float(self.params['projcount'])))
 		f.close()
 
-		print "projection count", projcount
+		print("projection count", projcount)
 		for i in range(len(eulerlist)):
 			angavg = angsum[i,:]/projcount[i]
-			print "angle average %d: %03.3f, %03.3f, %03.3f"%(i, angavg[0], angavg[1], angavg[2])
+			print("angle average %d: %03.3f, %03.3f, %03.3f"%(i, angavg[0], angavg[1], angavg[2]))
 
 		### first get rid of projection artifacts from insufficient padding
 		if self.params['threedfile'] is not None:
@@ -897,7 +897,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		if tdiff > 20:
 			apDisplay.printMsg("completed in "+apDisplay.timeString(tdiff))
 		elif waited is True:
-			print ""
+			print("")
 
 	#=====================
 	def uploadData(self, ctfpartlist):
@@ -1018,30 +1018,30 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			## if no runinstack found, find out which parameters are wrong:
 			if not rinstack:
 				for i in uniqrundatas[0]:
-					print "r =======",i,"========"
+					print("r =======",i,"========")
 					if uniqrundatas[0][i] != runq[i]:
 						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
 					else:
-						print i,uniqrundatas[0][i],runq[i]
+						print(i,uniqrundatas[0][i],runq[i])
 				for i in uniqrundatas[0]['stackParams']:
-					print "p =======",i,"========"
+					print("p =======",i,"========")
 					if uniqrundatas[0]['stackParams'][i] != stparamq[i]:
 						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
 					else:
-						print i, uniqrundatas[0]['stackParams'][i], stparamq[i]
+						print(i, uniqrundatas[0]['stackParams'][i], stparamq[i])
 				for i in uniqstackdatas[0]:
-					print "s =======",i,"========"
+					print("s =======",i,"========")
 					if uniqstackdatas[0][i] != stackq[i]:
 						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
 					else:
-						print i,uniqstackdatas[0][i],stackq[i]
+						print(i,uniqstackdatas[0][i],stackq[i])
 				for i in prevrinstack[0]:
-					print "rin =======",i,"========"
+					print("rin =======",i,"========")
 					if prevrinstack[0][i] != rinstackq[i]:
-						print i,prevrinstack[0][i],rinstackq[i]
+						print(i,prevrinstack[0][i],rinstackq[i])
 						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
 					else:
-						print i,prevrinstack[0][i],rinstackq[i]
+						print(i,prevrinstack[0][i],rinstackq[i])
 				apDisplay.printError("All parameters for a particular stack must be identical! \n"+\
 											 "please check your parameter settings.")
 			apDisplay.printWarning("Stack already exists in database! Will try and appending new particles to stack")

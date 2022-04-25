@@ -266,7 +266,7 @@ def rsync(from_path, to_dir, remove_sent=False, delay=0):
 		return
 	fileutil.mkdirs(to_dir)
 	cmd = makeRsyncCommand(from_path, to_dir, remove_sent)
-	print cmd
+	print(cmd)
 	time.sleep(delay)
 	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 	(output, error) = proc.communicate()
@@ -302,7 +302,7 @@ def compress_and_rsync(from_path, to_dir, remove_sent=False, delay=0):
 	if to_dir:
 		rsync_cmd = makeRsyncCommand(rsync_from_path, to_dir, remove_sent)
 		cmd += '; '+rsync_cmd	
-	print cmd
+	print(cmd)
 	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 	(output, error) = proc.communicate()
 

@@ -74,7 +74,7 @@ class ManualPicker(filterLoop.FilterLoop):
 		labeled_regions,clabels=nd.label(mask)
 		testlog = [False,0,""]
 		infos={}
-		infos,testlog=apCrud.getLabeledInfo(image,mask,labeled_regions,range(1,clabels+1),False,infos,testlog)
+		infos,testlog=apCrud.getLabeledInfo(image,mask,labeled_regions,list(range(1,clabels+1)),False,infos,testlog)
 		offset=1
 		for l1 in range(0,len(infos)):
 
@@ -82,13 +82,13 @@ class ManualPicker(filterLoop.FilterLoop):
 			info=infos[l]
 			info.append(l)
 			regiondata= apMask.insertMaskRegion(maskrundata,imgdata,info)
-			print "Inserting mask region in database"
+			print("Inserting mask region in database")
 		
 		allregiondata = apMask.getMaskRegions(maskrundata,imgdata)
 			
 		for regiondata in allregiondata:
 			apMask.insertMaskAssessment(massessrundata,regiondata,1)
-			print "Inserting mask assessment in database."
+			print("Inserting mask assessment in database.")
 		return
 
 	def specialCreateOutputDirs(self):

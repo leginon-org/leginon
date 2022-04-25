@@ -222,7 +222,7 @@ class UploadImages(appionScript.AppionScript):
 			return self.params['runname']
 
 		apDisplay.printColor("Found session name with runname %s, creating new name"%(self.params['runname']), "blue")
-		print sessiondatas[0]
+		print(sessiondatas[0])
 
 		for char in string.lowercase:
 			sessionname = self.timestamp+char
@@ -576,7 +576,7 @@ class UploadImages(appionScript.AppionScript):
 		imgdata['tilt series'] = self.getTiltSeries(seriescount)
 
 		# references
-		for key in self.refdata.keys():
+		for key in list(self.refdata.keys()):
 			imgdata[key] = self.refdata[key]
 
 		if self.params['commit'] is True:
@@ -739,9 +739,9 @@ class UploadImages(appionScript.AppionScript):
 		self.refdata[reftype] = self.c_client.storeCorrectorImageData(imagedata, reftype, 0)
 
 	def correctImage(self,rawarray,nframes):
-		if 'norm' in self.refdata.keys() and self.refdata['norm']:
+		if 'norm' in list(self.refdata.keys()) and self.refdata['norm']:
 			normarray = self.refdata['norm']['image']
-			if 'dark' in self.refdata.keys() and self.refdata['dark']:
+			if 'dark' in list(self.refdata.keys()) and self.refdata['dark']:
 				darkarray = self.refdata['dark']['image']*nframes/self.refdata['dark']['camera']['nframes']
 			else:
 				darkarray = numpy.zeros(rawarray.shape)
@@ -787,7 +787,7 @@ class UploadImages(appionScript.AppionScript):
 			mrclist = self.getImagesInDirectory(self.params['imagedir'])
 
 		for i in range(min(len(mrclist),6)):
-			print mrclist[i]
+			print(mrclist[i])
 
 		numinseries = 1
 		seriescount = 1

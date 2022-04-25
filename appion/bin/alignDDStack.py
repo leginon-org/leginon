@@ -59,7 +59,7 @@ class AlignFrameStackLoop(apDDLoop.DDStackLoop):
 			imageids_from_stack = apStack.getImageIdsFromStack(self.params['stackid'])
 			self.imageids = self.getUnAlignedImageIds(imageids_from_stack)
 			if not self.params['ddstack']:
-				print 'This does not work yet.  Need to create gain-corrected-ddstack first'
+				print('This does not work yet.  Need to create gain-corrected-ddstack first')
 		if self.params['ddstack']:
 			self.gain_corrected_ddproc = apDDprocess.DDStackProcessing()
 			self.gain_corrected_ddproc.setDDStackRun(ddstackrunid=self.params['ddstack'])
@@ -81,7 +81,7 @@ class AlignFrameStackLoop(apDDLoop.DDStackLoop):
 		### set processing image
 		try:
 			self.dd.setImageData(imgdata)
-		except Exception, e:
+		except Exception as e:
 			apDisplay.printWarning(e.args[0])
 			return
 

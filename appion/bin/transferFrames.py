@@ -22,7 +22,7 @@ def transfer(src, dst, delete=True):
 	if delete is True:
 		cmdroot+=' --remove-sent-files '
 	cmd='%s %s %s' % (cmdroot, src, dst)
-	print cmd
+	print(cmd)
 	p = subprocess.Popen(cmd, shell=True)
 	p.wait()
 
@@ -30,13 +30,13 @@ def checkdestpath(imgdata,destination):
 	try:
 		session=imgdata['session']['name']
 	except:
-		print imgdata
+		print(imgdata)
 	destfolder=os.path.join(destination,session,'rawdata')
-	print destfolder
+	print(destfolder)
 	if os.path.exists(destfolder):
 		return destfolder
 	else:
-		print "Making output directory",destfolder
+		print("Making output directory",destfolder)
 		os.makedirs(destfolder)
 		return destfolder
 

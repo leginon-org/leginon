@@ -231,7 +231,7 @@ class frealignJob(appionScript.AppionScript):
 				'shifty': pclass['shifty'],
 			}
 		except:
-			print pclass
+			print(pclass)
 			emaneuler={
 				'alt':    pclass['euler1'],
 				'az':     pclass['euler2'],
@@ -499,7 +499,7 @@ class frealignJob(appionScript.AppionScript):
 		f.write('\n')
 
 		f.close()
-		os.chmod(jobfile, 0755)
+		os.chmod(jobfile, 0o755)
 
 	#===============
 	def createMultipleJobs(self, iternum):
@@ -744,7 +744,7 @@ class frealignJob(appionScript.AppionScript):
 		#package data for transfer to cluster
 		apFile.removeFile(self.params['runname']+".tar")
 		cmd = "tar --exclude=*.tar -cf %s.tar *"%(self.params['runname'])
-		print cmd
+		print(cmd)
 		proc = subprocess.Popen(cmd, shell=True)
 		proc.wait()
 
@@ -831,7 +831,7 @@ class frealignJob(appionScript.AppionScript):
 		if self.params['cluster'] is True:
 			self.prepareForCluster()
 
-		print "Done!"
+		print("Done!")
 
 if __name__ =='__main__':
 	frealign = frealignJob()

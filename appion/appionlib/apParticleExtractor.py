@@ -165,7 +165,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			inspectkey = 'ctffind4_resolution'
 		else:
 			inspectkey = 'resolution_50_percent'
-		if not inspectkey in ctfvalue.keys() or ctfvalue[inspectkey] is None:
+		if not inspectkey in list(ctfvalue.keys()) or ctfvalue[inspectkey] is None:
 			apDisplay.printColor("%s: no 0.5 resolution found"%(shortname), "cyan")
 			return False
 		if self.params['ctfres50max'] and ctfvalue[inspectkey] > self.params['ctfres50max']:
@@ -194,7 +194,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 
 		### check resolution requirement for CTF fit at 0.8 threshold
 		if self.params['ctfres80min'] is not None or self.params['ctfres80max'] is not None:
-			if not 'resolution_80_percent' in ctfvalue.keys() or ctfvalue['resolution_80_percent'] is None:
+			if not 'resolution_80_percent' in list(ctfvalue.keys()) or ctfvalue['resolution_80_percent'] is None:
 				apDisplay.printColor("%s: no 0.8 resolution found"%(shortname), "cyan")
 				return False
 			if self.params['ctfres80max'] and ctfvalue['resolution_80_percent'] > self.params['ctfres80max']:
@@ -381,7 +381,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		if self.params['maskassess'] is not None and not self.params['checkmask']:
 			apDisplay.printMsg("running mask assess")
 			self.params['checkmask'] = True
-		if 'localCTF' in self.params.keys() and self.params['localCTF']: self.params['ctfmethod']='localctf'
+		if 'localCTF' in list(self.params.keys()) and self.params['localCTF']: self.params['ctfmethod']='localctf'
 
 	def checkIsDD(self):
 		apDisplay.printWarning('Checking for dd')
@@ -468,7 +468,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		# check to see if image is rejected by other criteria
 		if self.rejectImage(imgdata) is False:
 			return False
-		if 'boxfiles' in self.params.keys() and not self.params['boxfiles'] and 'noctf' in self.params.keys() and self.params['noctf'] is not True:
+		if 'boxfiles' in list(self.params.keys()) and not self.params['boxfiles'] and 'noctf' in list(self.params.keys()) and self.params['noctf'] is not True:
 			# check CTF parameters for image and skip if criteria is not met
 			if self.checkCtfParams(imgdata) is False:
 				return False
@@ -600,7 +600,7 @@ class ParticleBoxLoop(ParticleExtractLoop):
 class Test(ParticleExtractLoop):
 	def processParticles(self,imgdata,partdatas,shiftdata):
 		for partdata in partdatas:
-			print partdata['xcoord'],partdata['ycoord']
+			print(partdata['xcoord'],partdata['ycoord'])
 		return None
 
 	def commitToDatabase(self,imgdata):

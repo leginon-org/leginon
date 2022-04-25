@@ -6,7 +6,7 @@ import time
 import math
 import shutil
 import glob
-import cPickle
+import pickle
 import tarfile
 import string
 #appion
@@ -152,7 +152,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		self.params['timestamp'] = self.timestamp
 		paramfile = "topolrep-"+self.timestamp+"-params.pickle"
 		pf = open(paramfile, "w")
-		cPickle.dump(self.params, pf)
+		pickle.dump(self.params, pf)
 		pf.close()
 
 	#=====================
@@ -805,7 +805,7 @@ class TopologyRepScript(appionScript.AppionScript):
 				# Extract directories with a safe mode.
 				directories.append(tarinfo)
 				tarinfo = copy.copy(tarinfo)
-				tarinfo.mode = 0700
+				tarinfo.mode = 0o700
 			tarobj.extract(tarinfo, ".")
 
 		# Reverse sort directories.

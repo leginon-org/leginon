@@ -279,7 +279,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		templateparams['lowpass'] = self.params['lowpass']
 		templateparams['median'] = None
 		templateparams['pixlimit'] = None
-		print templateparams
+		print(templateparams)
 		apParam.createDirectory(os.path.join(self.params['rundir'], "templates"))
 		filelist = apTemplate.getTemplates(templateparams)
 
@@ -402,7 +402,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		self.resdict = {}
 		boxsizetuple = apFile.getBoxSize(stackfile)
 		boxsize = boxsizetuple[0]
-		for refnum in reflistsdict.keys():
+		for refnum in list(reflistsdict.keys()):
 			partlist = reflistsdict[refnum]
 			esttime = 3e-6 * len(partlist) * boxsize**2
 			apDisplay.printMsg("Ref num %d; %d parts; est time %s"

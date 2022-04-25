@@ -4,7 +4,7 @@
 # This script provides the user access to the protomo command line interface,
 # allowing for the manual alignment
 
-from __future__ import division
+
 import os
 import re
 import sys
@@ -19,7 +19,7 @@ from appionlib import apProTomo2Aligner
 
 try:
 	import protomo
-	print "\033[92m(Ignore the error: 'protomo: could not load libi3tiffio.so, TiffioModule disabled')\033[0m"
+	print("\033[92m(Ignore the error: 'protomo: could not load libi3tiffio.so, TiffioModule disabled')\033[0m")
 except:
 	apDisplay.printError("Protomo did not get imported. Aborting.")
 	sys.exit()
@@ -133,11 +133,11 @@ class ProTomo2ManualAligner(basicScript.BasicScript):
 				proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 				(tilt_angle, err) = proc.communicate()
 				if tilt_angle:
-					print "Protomo Image #%d is %s degrees" % (i+1, tilt_angle.rstrip('\r\n'))
+					print("Protomo Image #%d is %s degrees" % (i+1, tilt_angle.rstrip('\r\n')))
 			except:
 				pass
 		
-		print ""
+		print("")
 		apDisplay.printMsg("\033[1mAlign images manually (to within ~5% accuracy), Save, & Quit.\033[0m")
 		apDisplay.printMsg("\033[1mQuick Manual Alignment instructions:\033[0m")
 		apDisplay.printMsg("\033[1m    1) View > image, Actions > Show movie. Identify an image in the center of the overall shift range.\033[0m")
@@ -146,7 +146,7 @@ class ProTomo2ManualAligner(basicScript.BasicScript):
 		apDisplay.printMsg("\033[1m    4) If 3) failed, then manually align each nearest-neighbor images by dragging and pressing 'A' to align.\033[0m")
 		apDisplay.printMsg("\033[1mNote: If you get a popup error, then use the Reset button to reset the current image, or Actions > revert to reset all images.\033[0m")
 		apDisplay.printMsg("\033[1mTip: Hold the 'A' button to continually align.\033[0m")
-		print ""
+		print("")
 		
 		manualparam = '%s/manual_%s.param' % (self.params['rundir'], base_seriesname)
 		manuali3t = '%s/manual_%s.i3t' % (self.params['rundir'], base_seriesname)
@@ -181,7 +181,7 @@ class ProTomo2ManualAligner(basicScript.BasicScript):
 		os.system("sed -i '/width/c\     width: { %d, %d }' %s" % (manual_x_size, manual_y_size, manualparam))
 		#os.system("sed -i '/consider using N/c\     width: { %d, %d }' %s" % (manual_x_size, manual_y_size, manualparam))
 		#os.system("sed -i '/AP width2/c\     width: { %d, %d }' %s" % (int(manual_x_size*0.5), int(manual_y_size*0.5), manualparam))
-		print "\033[92m(Don't worry about the following potential error: 'tomoalign-gui: could not load libi3tiffio.so, TiffioModuleDisabled')\033[0m"
+		print("\033[92m(Don't worry about the following potential error: 'tomoalign-gui: could not load libi3tiffio.so, TiffioModuleDisabled')\033[0m")
 		process = subprocess.Popen(["tomoalign-gui", "-tlt", "%s" % tiltfilename_full, "%s" % manualparam], stdout=subprocess.PIPE)
 		stdout, stderr = process.communicate()
 		

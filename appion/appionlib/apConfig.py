@@ -36,7 +36,7 @@ def parseConfigFile (configFile):
 	confDict ={}
 	try:
 		cFile= file(configFile, 'r')
-	except IOError, e:
+	except IOError as e:
 		raise IOError ("Couldn't read configuration file " + configFile + ": " + str(e))
 	
 	#for line in cFile.readlines():		  
@@ -65,5 +65,5 @@ def parseConfigFile (configFile):
 	return confDict
 
 if __name__ == '__main__':
-	print "getAppionDir()=",getAppionDir()
-	print "getAppionConfigFile=",getAppionConfigFile()
+	print("getAppionDir()=",getAppionDir())
+	print("getAppionConfigFile=",getAppionConfigFile())

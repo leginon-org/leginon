@@ -743,10 +743,11 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		if not os.path.isfile(ctfvaluesfile):
 			apDisplay.printError("ctfvaluesfile does not exist")
 
-		ace2exe = self.getACE2Path()
+		ace2exe = self.getACE2Path().decode()
+		# print(ace2exe)
 		outfile = os.path.join(os.getcwd(),imgdata['filename']+".mrc.corrected.mrc")
 
-		ace2cmd = (ace2exe+" -ctf %s -apix %.3f -img %s -out %s" % (ctfvaluesfile, apix, inimgpath,outfile))
+		ace2cmd = (str(ace2exe)+" -ctf %s -apix %.3f -img %s -out %s" % (ctfvaluesfile, apix, inimgpath,outfile))
 		if self.params['fliptype'] == "ace2image":
 			ace2cmd += " -wiener 0.1"
 		apDisplay.printMsg("ace2 command: "+ace2cmd)
@@ -960,7 +961,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			stparamq['normalized'] = True
 
 		if not 'boxSize' in stparamq or stparamq['boxSize'] is None:
-			print stparamq
+			print(stparamq)
 			apDisplay.printError("problem in database insert")
 
 		### create a stack object
@@ -1029,32 +1030,32 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			## if no runinstack found, find out which parameters are wrong:
 			if not rinstack:
 				for i in uniqrundatas[0]:
-					print "r =======",i,"========"
+					print("r =======",i,"========")
 					if uniqrundatas[0][i] != runq[i]:
 						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
 					else:
-						print i, uniqrundatas[0][i], runq[i]
+						print(i, uniqrundatas[0][i], runq[i])
 				for i in uniqrundatas[0]['stackParams']:
-					print "p =======",i,"========"
+					print("p =======",i,"========")
 					if uniqrundatas[0]['stackParams'][i] != stparamq[i]:
 						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
 					else:
-						print i, uniqrundatas[0]['stackParams'][i], stparamq[i]
+						print(i, uniqrundatas[0]['stackParams'][i], stparamq[i])
 				for i in uniqstackdatas[0]:
-					print "s =======",i,"========"
+					print("s =======",i,"========")
 					if str(uniqstackdatas[0][i]) != str(stackq[i]):
 						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
 					else:
-						print i, uniqstackdatas[0][i], stackq[i]
+						print(i, uniqstackdatas[0][i], stackq[i])
 				for i in prevrinstack[0]:
 					if i=='stack' or i=='stackRun':
 						continue
-					print "rin =======",i,"========"
+					print("rin =======",i,"========")
 					if prevrinstack[0][i] != rinstackq[i]:
-						print i, prevrinstack[0][i], rinstackq[i]
+						print(i, prevrinstack[0][i], rinstackq[i])
 						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
 					else:
-						print i, prevrinstack[0][i], rinstackq[i]
+						print(i, prevrinstack[0][i], rinstackq[i])
 				#apDisplay.printError("All parameters for a particular stack must be identical! \n"+\
 				#			     "please check your parameter settings.")
 			apDisplay.printWarning("Stack already exists in database! Will try and appending new particles to stack")
@@ -1176,7 +1177,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			self.params['falloff']=int(float(bxlist[3]))
 
 		# bin must be integer if not using Relion:
-		print self.params['bin']
+		print(self.params['bin'])
 		if (not (float(self.params['bin'])).is_integer() and self.params['filetype'] != "relion"):
 			apDisplay.printError("Binning value must be integer unless generating Relion file")
 

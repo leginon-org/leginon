@@ -86,7 +86,7 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 	printPlot(partlists, gridpoints)
 
 	### createStackAverages
-	keys = partlists.keys()
+	keys = list(partlists.keys())
 	keys.sort()
 	count = 0
 	backs = "\b\b\b\b\b\b\b\b\b\b\b"
@@ -109,11 +109,13 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 
 #===============
 def averageSubStack(partlist, stackfile, bin=1):
+	print('111222333555777')
+	print(partlist)
 	if len(partlist) > 300:
 		partlist = partlist[:300]
 	boxsize = apImagicFile.getBoxsize(stackfile)
 	if len(partlist) == 0:
-		binboxsize = boxsize/bin
+		binboxsize = int(boxsize/bin)
 		blank = numpy.ones((binboxsize, binboxsize), dtype=numpy.float32)
 		return blank
 	if not os.path.isfile(stackfile):
@@ -181,7 +183,7 @@ def meanStdevToKey(mean, stdev, limits, gridpoints):
 #===============
 #===============
 if __name__ == "__main__":
-	print "Usage: apStackMeanPlot.py <stackid> <#points> <projectid>"
+	print("Usage: apStackMeanPlot.py <stackid> <#points> <projectid>")
 	if len(sys.argv) > 1:
 		stackid = int(sys.argv[1])
 	else:

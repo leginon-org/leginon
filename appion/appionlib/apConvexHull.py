@@ -28,9 +28,9 @@ def _myDet(p, q, r):
 	return sum1 - sum2
 
 
-def _isRightTurn((p, q, r)):
+def _isRightTurn(xxx_todo_changeme):
 	"""Do the vectors pq:qr form a right turn, or not?"""
-
+	(p, q, r) = xxx_todo_changeme
 	assert p != q and q != r and p != r
 			
 	if _myDet(p, q, r) < 0:
@@ -38,8 +38,9 @@ def _isRightTurn((p, q, r)):
 	else:
 		return 0
 
-def _isRightTurnOrColinear((p, q, r)):
+def _isRightTurnOrColinear(xxx_todo_changeme1):
 	"""Do the vectors pq:qr form a right turn, or not?"""
+	(p, q, r) = xxx_todo_changeme1
 	assert p != q and q != r and p != r
 	if _myDet(p, q, r) < 0:
 		return 1
@@ -58,7 +59,7 @@ def isPointInPolygon(r, P0):
 	P=list(P0)
 	if (P[0] !=P[-1]):
 		P.append(P[0])
-	for i in xrange(len(P[:-1])):
+	for i in range(len(P[:-1])):
 		p, q = P[i], P[i+1]
 		if not (r==p or r==q):
 			if not _isRightTurnOrColinear((p, q, r)):
@@ -71,7 +72,7 @@ def _isPointOnlyInPolygon(r, P0):
 	P=list(P0)
 	if (P[0] !=P[-1]):
 		P.append(P[0])
-	for i in xrange(len(P[:-1])):
+	for i in range(len(P[:-1])):
 		p, q = P[i], P[i+1]
 		if (r==p or r==q):
 			return 1 # It's on
@@ -85,7 +86,7 @@ def convexHull(P):
 	"""Calculate the convex hull of a set of points."""
 
 	# Get a local list copy of the points and sort them lexically.
-	points = map(None, P)
+	points = list(P)
 	points.sort()
 
 	# Build upper half of the hull.

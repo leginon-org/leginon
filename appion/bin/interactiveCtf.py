@@ -207,7 +207,7 @@ class RefineCTFDialog(wx.Dialog):
 
 		weights = None
 		if self.parent.checkNormalized(msg=False) is True:
-			print "using weights from resolution profile"
+			print("using weights from resolution profile")
 			### get the data
 			oldzavg = (def1+def2)/2.0
 			pixelrdata, raddata, PSDarray = self.parent.getOneDProfile(full=False)
@@ -220,7 +220,7 @@ class RefineCTFDialog(wx.Dialog):
 			### get the weights
 			weights, firstpoint, lastpoint = ctfres.getWeightsForXValues(raddata, confraddata, confdata)
 		if weights is None or len(weights) < 10 or 1/raddata[lastpoint] > 12:
-			print "weighting to 30-8 range"
+			print("weighting to 30-8 range")
 			weights = numpy.zeros(radial_array.shape, dtype=numpy.float64)
 			firstpoint = numpy.searchsorted(radial_array, 1/30.)
 			lastpoint = numpy.searchsorted(radial_array, 1/8.)
@@ -272,7 +272,7 @@ class ManualCTFPanel(TargetPanel.TargetImagePanel):
 	#---------------------------------------
 	def openImageFile(self, filename):
 		self.filename = filename
-		print filename
+		print(filename)
 		if filename is None:
 			self.setImage(None)
 		elif filename[-4:] == '.mrc':
@@ -325,7 +325,7 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 		if not self.button.GetToggle():
 			return
 		### need CTF information
-		if not self.app.ctfvalues or not 'defocus2' in self.app.ctfvalues.keys():
+		if not self.app.ctfvalues or not 'defocus2' in list(self.app.ctfvalues.keys()):
 			return
 		if self.app.freq is None:
 			return
@@ -358,8 +358,8 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 			major = radii1[i]
 			minor = radii2[i]
 			if self.app.debug is True:
-				print ("major=%.1f, minor=%.1f, angle=%.1f"
-					%(major, minor, self.app.ctfvalues['angle_astigmatism']))
+				print(("major=%.1f, minor=%.1f, angle=%.1f"
+					%(major, minor, self.app.ctfvalues['angle_astigmatism'])))
 			if minor > width/1.95:
 				# this limits how far we draw out the ellipses: sqrt(3) to corner, just 2 inside line
 				break
@@ -883,8 +883,8 @@ class CTFApp(wx.App):
 
 		self.next = wx.Button(self.frame, wx.ID_FORWARD, 'Forward')
 		self.next.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onNext, self.next)
-		self.buttonrow.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		self.Bind(wx.EVT_BUTTON, self.onNext, self.__next__)
+		self.buttonrow.Add(self.__next__, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		### END BUTTONS ROW
 		self.sizer.Add(self.buttonrow, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
@@ -1021,7 +1021,7 @@ class CTFApp(wx.App):
 
 	#---------------------------------------
 	def onEditParams(self, evt):
-		print self.ctfvalues
+		print(self.ctfvalues)
 		if 'defocus1' in self.ctfvalues:
 			self.editparam_dialog.def1value.SetValue(self.ctfvalues['defocus1'])
 		if 'defocus2' in self.ctfvalues:
@@ -1039,7 +1039,7 @@ class CTFApp(wx.App):
 
 	#---------------------------------------
 	def onEditScope(self, evt):
-		print self.ctfvalues
+		print(self.ctfvalues)
 		if 'cs' in self.ctfvalues:
 			self.editscope_dialog.csvalue.SetValue(self.ctfvalues['cs']*1e3)
 		if 'apix' in self.ctfvalues:
@@ -1058,11 +1058,11 @@ class CTFApp(wx.App):
 		t0 = time.time()
 
 		if self.bestvalues is None:
-			print "no best values found"
+			print("no best values found")
 			return
 
-		print self.bestvalues
-		print self.ctfvalues
+		print(self.bestvalues)
+		print(self.ctfvalues)
 
 		self.ctfvalues['amplitude_contrast'] = self.bestvalues['amplitude_contrast']
 		self.ctfvalues['defocus1'] = self.bestvalues['defocus1']
@@ -1076,7 +1076,7 @@ class CTFApp(wx.App):
 			self.ctfvalues['defocus2']/self.ctfvalues['defocus1'],
 			self.ctfvalues['angle_astigmatism'], self.ctfvalues['amplitude_contrast']), "magenta")
 
-		print self.ctfvalues
+		print(self.ctfvalues)
 
 		self.panel.UpdateDrawing()
 
@@ -1230,7 +1230,7 @@ class CTFApp(wx.App):
 	def onAutoNormalize(self, evt):
 		t0 = time.time()
 
-		if not 'defocus2' in self.ctfvalues.keys():
+		if not 'defocus2' in list(self.ctfvalues.keys()):
 			dialog = wx.MessageDialog(self.frame, "Need a defocus estimate first.",
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
@@ -1692,7 +1692,7 @@ class CTFApp(wx.App):
 	#---------------------------------------
 	def onGetConf(self, env):
 		t0 = time.time()
-		if not 'defocus2' in self.ctfvalues.keys():
+		if not 'defocus2' in list(self.ctfvalues.keys()):
 			dialog = wx.MessageDialog(self.frame, "Need a defocus estimate first.",
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
@@ -1765,7 +1765,7 @@ class CTFApp(wx.App):
 	#---------------------------------------
 	def onGetResolution(self, env, meandefocus=None, show=True):
 		t0 = time.time()
-		if meandefocus is None and not 'defocus2' in self.ctfvalues.keys():
+		if meandefocus is None and not 'defocus2' in list(self.ctfvalues.keys()):
 			if show is True:
 				dialog = wx.MessageDialog(self.frame, "Need a defocus estimate first.",
 					'Error', wx.OK|wx.ICON_ERROR)
@@ -1807,7 +1807,7 @@ class CTFApp(wx.App):
 			self.bestvalues['defocus'] = meandefocus
 			self.bestellipse = copy.deepcopy(self.ellipseParams)
 		else:
-			print "not saving values %.2f, need an average better than %.2f"%((res8+res5), self.bestres)
+			print("not saving values %.2f, need an average better than %.2f"%((res8+res5), self.bestres))
 
 
 		if show is True:
@@ -1893,7 +1893,7 @@ class CTFApp(wx.App):
 		random.shuffle(invGuesses)
 		bestres = 1000.0
 		resVals = []
-		print "Guessing %d different defocus values"%(len(invGuesses))
+		print("Guessing %d different defocus values"%(len(invGuesses)))
 		for invDefocus in invGuesses:
 			defocus = 1.0/invDefocus**2
 			avgres = self.onGetResolution(evt, meandefocus=defocus, show=False)
@@ -1978,7 +1978,7 @@ class CTFApp(wx.App):
 		pixelrdata, raddata, PSDarray = self.getOneDProfile(full=False)
 
 		if self.checkNormalized(msg=False) is True:
-			print "using limits from resolution profile"
+			print("using limits from resolution profile")
 			### get the data
 			peaks = ctftools.getCtfExtrema(newdefocus, self.freq*1e10, self.ctfvalues['cs'], 
 				self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], numzeros=250, zerotype="peak")
@@ -2047,7 +2047,7 @@ class CTFApp(wx.App):
 	#---------------------------------------
 	def onRefineAmpContrast(self, evt):
 		t0 = time.time()
-		if not 'defocus2' in self.ctfvalues.keys():
+		if not 'defocus2' in list(self.ctfvalues.keys()):
 			dialog = wx.MessageDialog(self.frame, "Need a defocus estimate first.",
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
@@ -2066,7 +2066,7 @@ class CTFApp(wx.App):
 
 		weights = None
 		if self.checkNormalized(msg=False) is True:
-			print "using weights from resolution profile"
+			print("using weights from resolution profile")
 			### get the data
 			peaks = ctftools.getCtfExtrema(meandefocus, self.freq*1e10, self.ctfvalues['cs'], 
 				self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], numzeros=250, zerotype="peak")
@@ -2077,7 +2077,7 @@ class CTFApp(wx.App):
 			### get the weights
 			weights, firstpoint, lastpoint = ctfres.getWeightsForXValues(raddata, confraddata, confdata)
 		if weights is None or len(weights) < 10 or 1/raddata[lastpoint] > 12:
-			print "weighting to 30-8 range"
+			print("weighting to 30-8 range")
 			weights = numpy.zeros(raddata.shape, dtype=numpy.float64)
 			firstpoint = numpy.searchsorted(raddata, 1/30.)
 			lastpoint = numpy.searchsorted(raddata, 1/8.)		
@@ -2105,7 +2105,7 @@ class CTFApp(wx.App):
 	#---------------------------------------
 	def onRefineCTFOneDimension(self, evt):
 		t0 = time.time()
-		if not 'defocus2' in self.ctfvalues.keys():
+		if not 'defocus2' in list(self.ctfvalues.keys()):
 			dialog = wx.MessageDialog(self.frame, "Need a defocus estimate first.",
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
@@ -2124,7 +2124,7 @@ class CTFApp(wx.App):
 
 		weights = None
 		if self.checkNormalized(msg=False) is True:
-			print "using weights from resolution profile"
+			print("using weights from resolution profile")
 			### get the data
 			peaks = ctftools.getCtfExtrema(oldzavg, self.freq*1e10, self.ctfvalues['cs'], 
 				self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], numzeros=250, zerotype="peak")
@@ -2135,7 +2135,7 @@ class CTFApp(wx.App):
 			### get the weights
 			weights, firstpoint, lastpoint = ctfres.getWeightsForXValues(raddata, confraddata, confdata)
 		if weights is None or len(weights) < 10 or 1/raddata[lastpoint] > 12:
-			print "weighting to 30-8 range"
+			print("weighting to 30-8 range")
 			weights = numpy.zeros(raddata.shape, dtype=numpy.float64)
 			firstpoint = numpy.searchsorted(raddata, 1/30.)
 			lastpoint = numpy.searchsorted(raddata, 1/8.)		
@@ -2175,7 +2175,7 @@ class CTFApp(wx.App):
 	#---------------------------------------
 	def onRefineCTFOLD(self, evt):
 		t0 = time.time()
-		if not 'defocus2' in self.ctfvalues.keys():
+		if not 'defocus2' in list(self.ctfvalues.keys()):
 			dialog = wx.MessageDialog(self.frame, "Need a defocus estimate first.",
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
@@ -2205,7 +2205,7 @@ class CTFApp(wx.App):
 
 		weights = None
 		if self.checkNormalized(msg=False) is True:
-			print "using weights from resolution profile"
+			print("using weights from resolution profile")
 			### get the data
 			oldzavg = (self.ctfvalues['defocus2']+self.ctfvalues['defocus1'])/2.0
 			pixelrdata, raddata, PSDarray = self.getOneDProfile(full=False)
@@ -2218,7 +2218,7 @@ class CTFApp(wx.App):
 			### get the weights
 			weights, firstpoint, lastpoint = ctfres.getWeightsForXValues(raddata, confraddata, confdata)
 		if weights is None or len(weights) < 10 or 1/raddata[lastpoint] > 12:
-			print "weighting to 30-8 range"
+			print("weighting to 30-8 range")
 			weights = numpy.zeros(radial_array.shape, dtype=numpy.float64)
 			firstpoint = numpy.searchsorted(radial_array, 1/30.)
 			lastpoint = numpy.searchsorted(radial_array, 1/8.)
@@ -2249,7 +2249,7 @@ class CTFApp(wx.App):
 	def onRefineCTF(self, evt):
 		#self.onUpdate(None)
 		t0 = time.time()
-		if not 'defocus2' in self.ctfvalues.keys():
+		if not 'defocus2' in list(self.ctfvalues.keys()):
 			dialog = wx.MessageDialog(self.frame, "Need a defocus estimate first.",
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
@@ -2316,7 +2316,7 @@ class CTFApp(wx.App):
 	#---------------------------------------
 	def onCannyEdge(self, evt):
 		t0 = time.time()
-		print "onCannyEdge"
+		print("onCannyEdge")
 		#if self.checkNormalized() is False:
 		#	return
 
@@ -2347,7 +2347,7 @@ class CTFApp(wx.App):
 	#---------------------------------------
 	def onRANSAC(self, evt):
 		t0 = time.time()
-		print "onRANSAC"
+		print("onRANSAC")
 		if self.edgeMap is None:
 			return
 
@@ -2470,7 +2470,7 @@ class CTFApp(wx.App):
 		### 
 
 		# skip the center
-		if 'defocus1' in self.ctfvalues.keys():
+		if 'defocus1' in list(self.ctfvalues.keys()):
 			#get first zero
 			valleys = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.freq*1e10,
 				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
@@ -2545,7 +2545,7 @@ class CTFApp(wx.App):
 		### 
 
 		# high pass filter the center
-		if 'defocus1' in self.ctfvalues.keys():
+		if 'defocus1' in list(self.ctfvalues.keys()):
 			#get first zero
 			meandefocus = math.sqrt(self.ctfvalues['defocus1']*self.ctfvalues['defocus2'])
 			peaks = ctftools.getCtfExtrema(meandefocus, self.freq*1e10,
@@ -2870,7 +2870,7 @@ class CTFApp(wx.App):
 		newctdata = copy.deepcopy(self.ctfvalues)
 		newctdata['cs'] *= 1000
 		fftpath = os.path.join(self.appionloop.fftsdir, apDisplay.short(self.imgdata['filename'])+'.powerspec.mrc')
-		if os.path.isfile(fftpath) and fftpath in self.appionloop.freqdict.keys():
+		if os.path.isfile(fftpath) and fftpath in list(self.appionloop.freqdict.keys()):
 			fftfreq = self.appionloop.freqdict[fftpath]
 		else:
 			return
@@ -2963,7 +2963,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 			return
 		f = open(self.freqfile, "w")
 		f.write("#frequency	fft file\n")
-		keys = self.freqdict.keys()
+		keys = list(self.freqdict.keys())
 		keys.sort()
 		for key in keys:
 			f.write("%.8e\t%s\n"%(self.freqdict[key], key))
@@ -3009,7 +3009,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 		all stored in self.ctfvalues
 		"""
 		if self.app.submit is False:
-			print "main window was closed, quitting program"
+			print("main window was closed, quitting program")
 			sys.exit(1)
 
 		if self.assess != self.assessold and self.assess is not None:
@@ -3030,7 +3030,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 			self.insertRunData()
 
 		fftpath = os.path.join(self.fftsdir, apDisplay.short(imgdata['filename'])+'.powerspec.mrc')
-		if os.path.isfile(fftpath) and fftpath in self.freqdict.keys():
+		if os.path.isfile(fftpath) and fftpath in list(self.freqdict.keys()):
 			freq = self.freqdict[fftpath]
 		else:
 			fftpath = None
@@ -3063,7 +3063,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 			return True
 
 		avgres = (ctfvalue['resolution_80_percent'] + ctfvalue['resolution_50_percent'])/2.0
-		print "avgres %.3f -- %s"%(avgres, apDisplay.short(imgdata['filename']))
+		print("avgres %.3f -- %s"%(avgres, apDisplay.short(imgdata['filename'])))
 
 		if avgres < self.params['reprocess']:
 			return False
@@ -3157,7 +3157,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 			self.fftsdir
 			fftpath = os.path.join(self.fftsdir, apDisplay.short(imgdata['filename'])+'.powerspec.mrc')
 			#if self.params['continue'] is True and os.path.isfile(fftpath) and fftpath in self.freqdict.keys():
-			if os.path.isfile(fftpath) and fftpath in self.freqdict.keys():
+			if os.path.isfile(fftpath) and fftpath in list(self.freqdict.keys()):
 				sys.stderr.write("image %d of %d -- finished\n"%(count, len(self.imgtree)))
 				#print "already processed: ",apDisplay.short(imgdata['filename'])
 			else:
@@ -3169,7 +3169,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 
 	#---------------------------------------
 	def processAndSaveFFT(self, imgdata, fftpath):
-		if os.path.isfile(fftpath) and fftpath in self.freqdict.keys():
+		if os.path.isfile(fftpath) and fftpath in list(self.freqdict.keys()):
 			return False
 
 		### downsize and filter leginon image
@@ -3221,7 +3221,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 			apDisplay.printError("Cannot get requested resolution %.1fA > %.1fA"
 				%(maxres, self.params['reslimit']))
 		limitwidth = int(math.ceil(2.0/(self.params['reslimit']*freq)))
-		print limitwidth, self.params['reslimit'], freq
+		print(limitwidth, self.params['reslimit'], freq)
 		limitwidth = primefactor.getNextEvenPrime(limitwidth)
 		requestres = 2.0/(freq*limitwidth)
 		if limitwidth > fftwidth:

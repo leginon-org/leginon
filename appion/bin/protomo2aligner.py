@@ -4,7 +4,7 @@
 # allowing for the initial coarse alignment and subsequent iterative alignments
 # to be performed serially.
 
-from __future__ import division
+
 import os
 import re
 import sys
@@ -23,7 +23,7 @@ from appionlib import apProTomo2Prep
 
 try:
 	import protomo
-	print "\033[92m(Ignore the error: 'protomo: could not load libi3tiffio.so, TiffioModule disabled')\033[0m"
+	print("\033[92m(Ignore the error: 'protomo: could not load libi3tiffio.so, TiffioModule disabled')\033[0m")
 except:
 	apDisplay.printWarning("Protomo did not get imported. Alignment functionality won't work.")
 
@@ -1397,7 +1397,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		if (self.params['serialem_stack'] != '' and self.params['serialem_mdoc'] != '' and self.params['voltage'].isdigit()):
 			if (os.path.exists(self.params['serialem_stack']) and os.path.exists(self.params['serialem_mdoc'])):
 				apDisplay.printMsg("Unstacking the SerialEM stack and creating an information file for the tilt-series for easy uploading into Appion...")
-				print ""
+				print("")
 				apProTomo2Prep.serialEM2Appion(self.params['serialem_stack'], self.params['serialem_mdoc'], self.params['voltage'])
 			else:
 				apDisplay.printError("One or both of the SerialEM paths not found.")
@@ -1827,7 +1827,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					[p.join() for p in mp.active_children()]
 			
 			if self.params['further_alignment'] == 'Manual_then_Coarse': #Depreciated
-				print ""
+				print("")
 				apDisplay.printMsg("\033[1mAlign images manually (to within ~5% accuracy), Save, & Quit.\033[0m")
 				apDisplay.printMsg("\033[1mQuick Manual Alignment instructions:\033[0m")
 				apDisplay.printMsg("\033[1m    1) View > image, Actions > Show movie. Identify an image in the center of the overall shift range.\033[0m")
@@ -1835,7 +1835,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				apDisplay.printMsg("\033[1m    3) First try Actions > Align all. Then 'show movie' again. If it aligned, then File > Save, File > Quit.\033[0m")
 				apDisplay.printMsg("\033[1m    4) If 3) failed, then manually align each nearest-neighbor images by dragging and pressing 'A' to align.\033[0m")
 				apDisplay.printMsg("\033[1mNote: If you get a popup error, then use the Reset button to reset the current image, or Actions > revert to reset all images.\033[0m")
-				print ""
+				print("")
 				f.write("Align images manually (to within ~5% accuracy), Save, & Quit.")
 				manualparam = '%s/manual_%s.param' % (rundir, seriesname)
 				manual_x_size = int(0.65*self.params['dimx'])
@@ -2476,7 +2476,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					f.write('Window Size (x) was windowed down to %s\n' % (new_region_x*sampling))
 					f.write('Window Size (y) was windowed down to %s\n' % (new_region_y*sampling))
 				
-				if n == range(iters)[-1]:
+				if n == list(range(iters))[-1]:
 					apDisplay.printMsg("Finished Refinement for Tilt-Series #%s (%s)!\n" % (self.params['tiltseries'], self.params['runname']))
 					f.write('Finished Refinement for Tilt-Series #%s (%s)!\n' % (self.params['tiltseries'], self.params['runname']))
 			
@@ -2498,7 +2498,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		f.write('Did everything blow up and now you\'re yelling at your computer screen?\n')
 		f.write('If so, kindly email Alex at anoble@nysbc.org explaining the issue and include this log file.\n')
 		f.write('If everything worked beautifully and you publish, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations\n')
-		print "\n"
+		print("\n")
 		apDisplay.printMsg("Closing log file %s/protomo2aligner_%s.log\n" % (rundir, time_start))
 		f.write("\nEnd time: %s" % time_end)
 		f.close()

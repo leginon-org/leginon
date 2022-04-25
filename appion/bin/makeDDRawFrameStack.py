@@ -30,6 +30,8 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 			action="store_true", help="Use Gram-Schmidt process to scale dark image")
 		self.parser.add_option("--align", dest="align", default=False,
 			action="store_true", help="Make Aligned frame stack")
+		self.parser.add_option("--alignbfactor", dest="bft", type="float", default=100.0,
+			help="alignment B-factor in pix^2 in dosefgpu_driftcorr")
 		self.parser.add_option("--square", dest="square", default=False,
 			action="store_true", help="Output square images")
 		self.parser.add_option("--defergpu", dest="defergpu", default=False,
@@ -58,7 +60,7 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 
 	#		gpuexe = "/emg/sw/script/motioncorr-master/bin/"+exename
 
-			print 'gpuexe path is '+gpuexe
+			print('gpuexe path is '+gpuexe)
 			if not os.path.isfile(gpuexe):
 				apDisplay.printError('Correction program "%s" not available' % exename)
 			# We don't have gpu locking
@@ -139,7 +141,7 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 		### set processing image
 		try:
 			self.dd.setImageData(imgdata)
-		except Exception, e:
+		except Exception as e:
 			apDisplay.printWarning(e.args[0])
 			return
 

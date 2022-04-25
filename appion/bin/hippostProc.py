@@ -230,7 +230,7 @@ class PostProcScript(appionScript.AppionScript):
 		elif self.params['lrdw'] is True:
 			lrdwcmd = "s_diffmap2 %s %s %s %s"%(self.params['filepath'],self.params['filename'],self.params['ampx'],self.params['resol'])
 			proc = subprocess.Popen(lrdwcmd)
-			print lrdwcmd
+			print(lrdwcmd)
 		else :
 			### just run proc3d
 			curfile = self.params['file']
@@ -297,7 +297,7 @@ class PostProcScript(appionScript.AppionScript):
 
 		if self.params['commit'] is True:
 			symdata  = apSymmetry.findSymmetry(self.params['sym'])
-			print symdata
+			print(symdata)
 			symmetry = symdata['eman_name']
 			self.params['reconid'] = self.params['reconiterid']
 			self.insert3dDensity()

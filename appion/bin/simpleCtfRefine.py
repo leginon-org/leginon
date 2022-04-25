@@ -181,7 +181,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 			return
 		f = open(self.freqfile, "w")
 		f.write("#frequency	fft file\n")
-		keys = self.freqdict.keys()
+		keys = list(self.freqdict.keys())
 		keys.sort()
 		for key in keys:
 			f.write("%.8e\t%s\n"%(self.freqdict[key], key))
@@ -191,12 +191,12 @@ class RefineCTF(appionLoop2.AppionLoop):
 	#---------------------------------------
 	def processAndSaveFFT(self, imgdata, fftpath):
 		if os.path.isfile(fftpath):
-			print "FFT file found"
-			if fftpath in self.freqdict.keys():
-				print "Freq found"
+			print("FFT file found")
+			if fftpath in list(self.freqdict.keys()):
+				print("Freq found")
 				return False
-			print "Freq not found"
-		print "creating FFT file: ", fftpath
+			print("Freq not found")
+		print("creating FFT file: ", fftpath)
 
 		### downsize and filter leginon image
 		if self.params['uncorrected']:
@@ -410,7 +410,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 
 		maxfun = self.params['refineIter']
 		results = scipy.optimize.fmin(self.refineMinFunc, x0=x0, maxfun=maxfun)
-		print "raw refine results =", results
+		print("raw refine results =", results)
 		ctfvalues = self.xToCtfvalues(results)
 		self.datalog.close()
 
@@ -542,24 +542,24 @@ class RefineCTF(appionLoop2.AppionLoop):
 		}
 		avgres = self.getCorrelation(ctfvalues)
 
-		print "results =", (self.ctfvalues['defocus'], self.ctfvalues['defocus1'], self.ctfvalues['defocus2'],
-			self.ctfvalues['amplitude_contrast'], avgres)
+		print("results =", (self.ctfvalues['defocus'], self.ctfvalues['defocus1'], self.ctfvalues['defocus2'],
+			self.ctfvalues['amplitude_contrast'], avgres))
 
 		apDisplay.printColor("Final defocus values %.3e -> %.3e, %.3e; ac=%.2f, res=%.1f"
 			%(self.ctfvalues['defocus'], self.ctfvalues['defocus1'], self.ctfvalues['defocus2'],
 			self.ctfvalues['amplitude_contrast'], avgres), "green")
 
 		for i in range(10):
-			print "===================================="
+			print("====================================")
 
-		print "PREVIOUS VALUES"
+		print("PREVIOUS VALUES")
 		ctfdb.getBestCtfByResolution(imgdata)
-		print "CURRENT VALUES"
+		print("CURRENT VALUES")
 		defocusratio = self.ctfvalues['defocus2']/self.ctfvalues['defocus1']
 		apDisplay.printColor("def1: %.2e | def2: %.2e | angle: %.1f | ampcontr %.2f | defratio %.3f"
 			%(self.ctfvalues['defocus1'], self.ctfvalues['defocus2'], self.ctfvalues['angle_astigmatism'],
 			self.ctfvalues['amplitude_contrast'], defocusratio), "blue")
-		print "===================================="
+		print("====================================")
 
 		return
 

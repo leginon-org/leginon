@@ -99,7 +99,7 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 	#=====================
 	#=====================
 	def setPreferences(self, simlist):
-		print simlist[:5]
+		print(simlist[:5])
 		numpart = len(simlist)
 		### Preference value stats
 		prefarray = numpy.asarray(simlist, dtype=numpy.float32)
@@ -107,7 +107,7 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 			%(prefarray.mean(), prefarray.std(), prefarray.min(), prefarray.max()))
 
 		### Determine median preference value
-		print self.params['preftype']
+		print(self.params['preftype'])
 		if self.params['preftype'] == 'minlessrange':
 			apDisplay.printMsg("Determine minimum minus total range (fewer classes) preference value")
 			simarray = numpy.asarray(simlist)
@@ -176,11 +176,11 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 				else:
 					classes[classnum].append(partnum)
 		clustf.close()
-		apDisplay.printMsg("Found %d classes"%(len(classes.keys())))
+		apDisplay.printMsg("Found %d classes"%(len(list(classes.keys()))))
 
 		### Create class averages
 		classavgdata = []
-		classnames = classes.keys()
+		classnames = list(classes.keys())
 		classnames.sort()
 		for classnum in classnames:
 			apDisplay.printMsg("Class %d, %d members"%(classnum, len(classes[classnum])))
@@ -292,7 +292,7 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 	#=====================
 	def insertAffinityPropagationRun(self, classes):
 		### Preliminary data
-		numclass = len(classes.keys())
+		numclass = len(list(classes.keys()))
 		projectid = apProject.getProjectIdFromAlignStackId(self.params['alignstackid'])
 		alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 		pathdata = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))

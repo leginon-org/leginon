@@ -85,7 +85,7 @@ program main
 	! 1. read in filenames and parameters
 	write (6,*) '>>> enter filename of the image file :'
 	read (5,*) imagefile
-	!write (6,*) imagefile
+	write (6,*) imagefile
 	PRINT*,"X ... image:    ",imagefile
 
 	write (6,*) '>>> enter filename of the search template :'

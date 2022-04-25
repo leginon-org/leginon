@@ -207,7 +207,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		'''
 		super(FrealignRefineJob,self).checkIterationConflicts()
 		# FIX ME: not sure if this will com out right if percentDiscard is a fractional number
-		self.params['thresh'] = map((lambda x: 100 - x), self.params['percentDiscard'])
+		self.params['thresh'] = list(map((lambda x: 100 - x), self.params['percentDiscard']))
 		# frealign 9.11 mult_refine_n.com set it to 0.0 always
 		self.params['thresh'] = 0.0
 
@@ -221,7 +221,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		if inputname[0] in ('c','d'):
 			bits = inputname.split(' ')
 			symm_name = bits[0].upper()
-		elif inputname in frealign_hedral_symm_names.keys():
+		elif inputname in list(frealign_hedral_symm_names.keys()):
 			symm_name = frealign_hedral_symm_names[inputname]
 		else:
 			symm_name = inputname.upper()
@@ -253,7 +253,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 	def combineFrealignParams(self,iter_index,valid_paramkeys):
 		task_params = []
 		for key in valid_paramkeys:
-			if key in self.params.keys():
+			if key in list(self.params.keys()):
 				if type(self.params[key]) == type([]):
 					paramvalue = self.params[key][iter_index]
 				else:
@@ -320,9 +320,9 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			])
 		procfile = os.path.join(iterpath,'frealign.iter%03d.combine.sh' %	(iter))
 		f = open(procfile,'w')
-		f.writelines(map((lambda x: x+'\n'),lines))
+		f.writelines(list(map((lambda x: x+'\n'),lines)))
 		f.close()
-		os.chmod(procfile, 0755)
+		os.chmod(procfile, 0o755)
 		return procfile
 
 	def writeReconShell(self,iter,inputlines,iterpath,ppn):
@@ -375,9 +375,9 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 
 		procfile = os.path.join(iterpath,'frealign.iter%03d.recon.sh' %	(iter))
 		f = open(procfile,'w')
-		f.writelines(map((lambda x: x+'\n'),alllines))
+		f.writelines(list(map((lambda x: x+'\n'),alllines)))
 		f.close()
-		os.chmod(procfile, 0755)
+		os.chmod(procfile, 0o755)
 		return procfile
 
 	def writeMultipleRefineShells(self,iter,constant_inputlines,iterpath,nproc):
@@ -415,9 +415,9 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 
 			procfile = os.path.join(iterpath,'frealign.iter%03d.proc%03d.sh' %	(iter,proc))
 			f = open(procfile,'w')
-			f.writelines(map((lambda x: x+'\n'),alllines))
+			f.writelines(list(map((lambda x: x+'\n'),alllines)))
 			f.close()
-			os.chmod(procfile, 0755)
+			os.chmod(procfile, 0o755)
 			scripts.append(procfile)
 		return scripts
 
@@ -505,7 +505,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		if self.params['program_version'] =='9.11':
 			# This output a dictionary of dictionary with partnum as key
 			parttree = apFrealign.parseFrealign9ParamFile(initparamfile)
-			keys = parttree.keys()
+			keys = list(parttree.keys())
 			keys.sort()
 		for k in keys:
 			p = parttree[k]

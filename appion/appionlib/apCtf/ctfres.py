@@ -59,7 +59,7 @@ def getCorrelationProfile(raddata, normPSD, ctfdata, peaks, freq):
 
 	### PART 2: initial data points, best for large defocus
 	if debug is True:
-		print "getCorrelationProfile(): starting initial loop"
+		print("getCorrelationProfile(): starting initial loop")
 	xsqStartPre = (firstpeak*freq)**2
 	if startindex >= len(raddatasq):
 		apDisplay.printWarning("First peak of CTF is greater than FFT resolution")
@@ -69,9 +69,9 @@ def getCorrelationProfile(raddata, normPSD, ctfdata, peaks, freq):
 	preindex = numpy.searchsorted(raddatasq, xsqStartPre)
 	xsq = raddatasq[preindex]
 	if debug is True:
-		print ("%.5f (1/%.3fA) -> %.5f (1/%.3fA) + %.5f"
+		print(("%.5f (1/%.3fA) -> %.5f (1/%.3fA) + %.5f"
 			%(xsqStartPre, 1.0/math.sqrt(xsqStartPre),
-			xsqEndPre, 1.0/math.sqrt(xsqEndPre), xsqStepPre))
+			xsqEndPre, 1.0/math.sqrt(xsqEndPre), xsqStepPre)))
 	while xsq < xsqEndPre:
 		#for index in range(startindex, endindex):
 		index = numpy.searchsorted(raddatasq, xsq)
@@ -91,15 +91,15 @@ def getCorrelationProfile(raddata, normPSD, ctfdata, peaks, freq):
 		confs.append(math.sqrt(abs(conf)))
 		xsq += xsqStep/4.0
 	if debug is True:
-		print "getCorrelationProfile(): end initial loop"
+		print("getCorrelationProfile(): end initial loop")
 
 	### PART 3: fill in the standard resolutions
 	if debug is True:
-		print "getCorrelationProfile(): starting main loop"
+		print("getCorrelationProfile(): starting main loop")
 	if debug is True:
-		print ("%.5f (1/%.1fA) -> %.5f (1/%.1fA) + %.5f"
+		print(("%.5f (1/%.1fA) -> %.5f (1/%.1fA) + %.5f"
 			%(xsqStart, 1.0/math.sqrt(xsqStart),
-			xsqEnd, 1.0/math.sqrt(xsqEnd), xsqStep))
+			xsqEnd, 1.0/math.sqrt(xsqEnd), xsqStep)))
 	xsq = raddatasq[startindex]
 	nancount = 0
 	while xsq < xsqEnd:
@@ -133,7 +133,7 @@ def getCorrelationProfile(raddata, normPSD, ctfdata, peaks, freq):
 		confs.append(conf)
 		xsq += xsqStep/4.0
 	if debug is True:
-		print "getCorrelationProfile(): end main loop"
+		print("getCorrelationProfile(): end main loop")
 
 	confsArray = numpy.array(confs, dtype=numpy.float64)
 	#confs[0:2] = confs[0:2].max()
@@ -197,7 +197,7 @@ def getResolutionFromConf(raddata, confs, limit=0.5):
 		apDisplay.printMsg("getResolutionFromConf: num points %d"%(len(confs)))
 		apDisplay.printMsg("getResolutionFromConf: overall max %.3f"%(confs.max()))
 		apDisplay.printMsg("getResolutionFromConf: overall min %.3f"%(confs.min()))
-		print(numpy.around(confs[:15],3))
+		print((numpy.around(confs[:15],3)))
 		apDisplay.printMsg("getResolutionFromConf: first points max %.3f"%(confs[:3].max()))
 	if len(confs) < 3:
 		apDisplay.printWarning("Res calc failed: Not enough points")
@@ -215,7 +215,7 @@ def getResolutionFromConf(raddata, confs, limit=0.5):
 			saveConfData(confs, "median")
 		return None
 	if confs[:10].min() < 0.0:
-		print(numpy.around(confs[:15],3))
+		print((numpy.around(confs[:15],3)))
 		apDisplay.printWarning("Res calc: Negative values in first 10 values")
 		if debug is True:
 			saveConfData(confs, "negative")

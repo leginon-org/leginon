@@ -40,7 +40,7 @@ class PrepParallelRefinement(object):
 		'''
 		Not implemented Yet
 		'''
-		print 'setupRefineScript need to be implemented in the subclasses'
+		print('setupRefineScript need to be implemented in the subclasses')
 
 	def run(self):
 		self.setupRefineScript()

@@ -18,12 +18,12 @@ def refineAmplitudeContrast(radial_array, defocus, normPSD, cs, wavelength, weig
 	"""
 
 	if msg is True:
-		print "resolution limits %.2f <> %.2f"%(1.0e10/radial_array.max(), 1.0e10/radial_array.min())
+		print("resolution limits %.2f <> %.2f"%(1.0e10/radial_array.max(), 1.0e10/radial_array.min()))
 
 	# create X matrix
 	radialsq = radial_array**2
 	if msg is True:
-		print 1.0/radial_array[-1], wavelength, defocus, cs
+		print(1.0/radial_array[-1], wavelength, defocus, cs)
 	gamma = ( -0.5 * math.pi * cs * wavelength**3 * radialsq**2
 		+ math.pi * wavelength * radialsq * defocus )
 	cosvec = numpy.cos(2*gamma) #C
@@ -56,13 +56,13 @@ def refineAmplitudeContrast(radial_array, defocus, normPSD, cs, wavelength, weig
 	constant = beta[2]
 	sqterm = beta[3]
 	if msg is True:
-		print beta, radial_array.shape
+		print(beta, radial_array.shape)
 	psi = 0.5*math.atan2(C,D)
 	if msg is True:
-		print "psi=", psi
+		print("psi=", psi)
 	phi = psi + math.pi/4
 	if msg is True:
-		print "phi=", phi
+		print("phi=", phi)
 	amp_con = math.sin(phi)
 
 	if msg is True:
@@ -94,7 +94,7 @@ def refineAmplitudeContrast(radial_array, defocus, normPSD, cs, wavelength, weig
 		conf2 = scipy.stats.pearsonr(yprime2, adjctf1)[0]
 		conf3 = scipy.stats.pearsonr(yprime2, fitctf2)[0]
 
-		print "conf %.4f, %.4f, %.4f; cc = %.4f"%(conf1, conf2, conf3, crosscorr)
+		print("conf %.4f, %.4f, %.4f; cc = %.4f"%(conf1, conf2, conf3, crosscorr))
 
 		#pyplot.ylim(ymin=-1.05, ymax=1.05)
 		pyplot.title("Amplitude Contrast Fit (%.2f, %.2f, %.2f) CC=%.3f"%(conf1, conf2, conf3, crosscorr))
@@ -103,7 +103,7 @@ def refineAmplitudeContrast(radial_array, defocus, normPSD, cs, wavelength, weig
 		pyplot.show()
 
 	if crosscorr < -0.6:
-		print "likely 180 degree out of phase"
+		print("likely 180 degree out of phase")
 		apDisplay.printWarning("Bad angle translation: %.8f"%(amp_con))
 		return None
 
@@ -136,8 +136,8 @@ def refineCTFOneDimension(radial_array, amp_con, zavg, normPSD, cs, wavelength, 
 	all values in meters
 	"""
 	apDisplay.printColor("BEFORE ac=%.3f, zavg=%.3e"%(amp_con, zavg), "cyan")
-	print cs, wavelength
-	print "resolution limits %.2f <> %.2f"%(1.0e10/radial_array.max(), 1.0e10/radial_array.min())
+	print(cs, wavelength)
+	print("resolution limits %.2f <> %.2f"%(1.0e10/radial_array.max(), 1.0e10/radial_array.min()))
 
 	### convert parameters
 	C = math.sin(math.asin(amp_con) - math.pi/4.)
@@ -182,11 +182,11 @@ def refineCTFOneDimension(radial_array, amp_con, zavg, normPSD, cs, wavelength, 
 	dzavg = beta[2]
 	constant = beta[3]
 	sqterm = beta[4]
-	print beta
+	print(beta)
 	psi = 0.5*math.atan2(C,D)
-	print "psi=", psi
+	print("psi=", psi)
 	phi = psi + math.pi/4
-	print "phi=", phi
+	print("phi=", phi)
 	amp_con = math.sin(phi)
 
 	if dzavg/zavg > 1:
@@ -195,7 +195,7 @@ def refineCTFOneDimension(radial_array, amp_con, zavg, normPSD, cs, wavelength, 
 
 	zavg += dzavg
 
-	print "AFTER ac=%.3f, zavg=%.3e"%(amp_con, zavg)
+	print("AFTER ac=%.3f, zavg=%.3e"%(amp_con, zavg))
 
 	apDisplay.printColor("AFTER ac=%.3f, zavg=%.3e"%(amp_con, zavg), "cyan")
 
@@ -212,7 +212,7 @@ def refineCTFOneDimension(radial_array, amp_con, zavg, normPSD, cs, wavelength, 
 	crosscorr = scipy.stats.pearsonr(fitctf2, adjctf1)[0]
 
 	if crosscorr < -0.6:
-		print "likely 180 degree out of phase"
+		print("likely 180 degree out of phase")
 		apDisplay.printWarning("Bad angle translation: %.8f"%(amp_con))
 
 	if msg is True:
@@ -267,9 +267,9 @@ def refineCTF(radial_array, angle_array,
 
 	all values in meters
 	"""
-	print "BEFORE ac=%.3f, z1=%.3e, z2=%.3e, astig=%.1f"%(amp_con, z1, z2, angle_astig)
-	print cs, wavelength
-	print "resolution limits %.2f <> %.2f"%(1.0e10/radial_array.max(), 1.0e10/radial_array.min())
+	print("BEFORE ac=%.3f, z1=%.3e, z2=%.3e, astig=%.1f"%(amp_con, z1, z2, angle_astig))
+	print(cs, wavelength)
+	print("resolution limits %.2f <> %.2f"%(1.0e10/radial_array.max(), 1.0e10/radial_array.min()))
 
 	### convert parameters
 	C = math.sin(math.asin(amp_con) - math.pi/4.)
@@ -337,20 +337,20 @@ def refineCTF(radial_array, angle_array,
 	index += 1
 	if refineFlags[0] == 1:
 		dzavg = beta[index]
-		print "dzavg", dzavg
+		print("dzavg", dzavg)
 		index += 1
 	else:
 		dzavg = 0
 	if refineFlags[1] == 1:
 		dzdiff = beta[index]
 		index += 1
-		print "dzdiff", dzdiff
+		print("dzdiff", dzdiff)
 	else:
 		dzdiff = 0
 	if refineFlags[2] == 1:
 		dtheta = beta[index] % 2*math.pi
 		index += 1
-		print "dtheta", dtheta
+		print("dtheta", dtheta)
 	else:
 		dtheta = 0
 	constant = beta[index]
@@ -374,7 +374,7 @@ def refineCTF(radial_array, angle_array,
 		astigrad += dtheta
 		angle_astig = math.degrees(astigrad)
 
-	print "AFTER ac=%.3f, z1=%.3e, z2=%.3e, astig=%.1f"%(amp_con, z1, z2, angle_astig)
+	print("AFTER ac=%.3f, z1=%.3e, z2=%.3e, astig=%.1f"%(amp_con, z1, z2, angle_astig))
 
 	if msg is True:
 		from matplotlib import pyplot

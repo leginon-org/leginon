@@ -58,7 +58,7 @@ class ProTomo2Reconstruct(apTomoMakerBase.TomoMaker):
 		tiltdata=apTomo.getImageList([tiltseriesdata])
 		description = self.params['description']
 		apDisplay.printMsg("getting imagelist")
-		print "ordering list"
+		print("ordering list")
 		tilts,ordered_imagelist,ordered_mrc_files,refimg = apTomo.orderImageList(tiltdata)
 		#tilts are tilt angles, ordered_imagelist are imagedata, ordered_mrc_files are paths to files, refimg is an int
 

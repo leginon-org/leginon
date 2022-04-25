@@ -130,7 +130,7 @@ if __name__ == '__main__':
 			num_images, info_file, temp_image_dir = serialEM2Appion(options.serialem_stack, options.serialem_mdoc, options.voltage)
 			
 			cmd = 'imageloader.py --projectid='+options.projectid+' --session='+options.session+' --cs='+str(options.cs)+' --batchparams='+info_file+' --tiltgroup='+str(num_images)+' --description="'+options.description+'" --jobtype='+options.jobtype
-			print cmd
+			print(cmd)
 			proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 			(out, err) = proc.communicate()
 			os.system("rm -rf %s" % temp_image_dir)
@@ -150,7 +150,7 @@ if __name__ == '__main__':
 						mdoc_file = os.path.dirname(os.path.abspath(stack_file))+'/'+os.path.splitext(os.path.basename(stack_file))[0]+'.mdoc'
 					num_images, info_file, temp_image_dir = serialEM2Appion(stack_file, mdoc_file, options.voltage)
 					cmd = 'imageloader.py --projectid='+options.projectid+' --session='+options.session+' --cs='+str(options.cs)+' --batchparams='+info_file+' --tiltgroup='+str(num_images)+' --description="'+options.description+'" --expid='+options.expid+' --jobtype='+options.jobtype
-					print cmd
+					print(cmd)
 					proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 					(out, err) = proc.communicate()
 					os.system("rm -rf %s" % temp_image_dir)

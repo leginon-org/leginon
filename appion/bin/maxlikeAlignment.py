@@ -4,7 +4,7 @@ import os
 import time
 import math
 import glob
-import cPickle
+import pickle
 import subprocess
 import numpy
 from pyami import spider
@@ -148,7 +148,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.params['timestamp'] = self.timestamp
 		paramfile = "maxlike-"+self.timestamp+"-params.pickle"
 		pf = open(paramfile, "w")
-		cPickle.dump(self.params, pf)
+		pickle.dump(self.params, pf)
 		pf.close()
 
 	#=====================
@@ -171,7 +171,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if self.params['commit'] is True:
 			maxjobq.insert()
 		self.params['maxlikejobid'] = maxjobq.dbid
-		print "self.params['maxlikejobid']",self.params['maxlikejobid']
+		print("self.params['maxlikejobid']",self.params['maxlikejobid'])
 		return
 
 	#=====================
@@ -200,7 +200,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		uploadcmd += " -j %s "%(self.params['maxlikejobid'])
 		uploadcmd += " -R %s "%(self.params['rundir'])
 		uploadcmd += " -n %s "%(self.params['runname'])
-		print uploadcmd
+		print(uploadcmd)
 		proc = subprocess.Popen(uploadcmd, shell=True)
 		proc.communicate()
 
@@ -240,7 +240,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		proc = subprocess.Popen(lddcmd, shell=True, stdout=subprocess.PIPE)
 		proc.wait()
 		lines = proc.stdout.readlines()
-		print "lines=", lines
+		print("lines=", lines)
 		if lines and len(lines) > 0:
 			return mpiexe
 

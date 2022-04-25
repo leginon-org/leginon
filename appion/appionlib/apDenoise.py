@@ -11,7 +11,7 @@ class KSVDdenoise(object):
 		self.ksvd_param_line = None
 		self.stack_param_line = None
 		self.matlabpaths = []
-		if os.environ.has_key('MATLAB_KSVD_TOOL_PATH') and os.environ.has_key('MATLAB_DENOISE_PATH'):
+		if 'MATLAB_KSVD_TOOL_PATH' in os.environ and 'MATLAB_DENOISE_PATH' in os.environ:
 			self.setHelperPaths(os.environ['MATLAB_KSVD_TOOL_PATH'],os.environ['MATLAB_DENOISE_PATH'])
 
 		apParam.createDirectory(os.path.join(rundir,'results','mrc'))
@@ -37,7 +37,7 @@ class KSVDdenoise(object):
 		for libname in ('ksvdbox','ompbox','imod'):
 			self.matlabpaths.append(os.path.join(lib_basepath,libname))
 		self.matlabpaths.append(denoise_srcpath)
-		print self.matlabpaths
+		print(self.matlabpaths)
 
 	def createScriptFile(self,inputdir,input_mrc):
 		scriptname = 'denoise.m'

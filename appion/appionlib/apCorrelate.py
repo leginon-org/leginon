@@ -20,10 +20,10 @@ def runCrossCorr(params,file):
 	classavg=1
 	blobs = []
 	while classavg<=len(params['templatelist']):
-		print "Template ",classavg
+		print("Template ",classavg)
 		outfile="cccmaxmap%i00.mrc" % classavg
 		if (os.path.exists(outfile)):
-			print " ... removing outfile:",outfile
+			print(" ... removing outfile:",outfile)
 			os.remove(outfile)
 
 		strt=float(params["startang"+str(classavg)])
@@ -146,7 +146,7 @@ def crossCorrelateFft(imagefft, templatefft, imshape, tmplshape):
 
 def calcNormConvMap(image, imagefft, tmplmask, oversized, pixrad):
 	t1 = time.time()
-	print " ... computing FindEM's norm_conv_map"
+	print(" ... computing FindEM's norm_conv_map")
 
 	#print " IMAGE"
 	#imageinfo(image)
@@ -156,7 +156,7 @@ def calcNormConvMap(image, imagefft, tmplmask, oversized, pixrad):
 	#numeric_to_jpg(tmplmask,"tmplmask.jpg")
 
 	if(nd_image.minimum(image) < 0.0 or nd_image.minimum(tmplmask) < 0.0):
-		print " !!! WARNING image or mask is less than zero"
+		print(" !!! WARNING image or mask is less than zero")
 
 	tmplsize = (tmplmask.shape)[1]
 	nmask = tmplmask.sum()
@@ -237,18 +237,18 @@ def calcNormConvMap(image, imagefft, tmplmask, oversized, pixrad):
 	#IMPORTANT TO CHECK FOR ERROR
 	if(v2[xn-1,xn-1] > 1.0 or v2[xn,xn] > 1.0 or v2[xn+1,xn+1] > 1.0 \
 		or nd_image.mean(v2[xn/2:3*xn/2,xn/2:3*xn/2]) > 1.0):
-		print " !!! MAJOR ERROR IN NORMALIZATION CALCUATION (values > 1)"
+		print(" !!! MAJOR ERROR IN NORMALIZATION CALCUATION (values > 1)")
 		imageinfo(v2)
-		print " ... VALUES: ",v2[xn-1,xn-1],v2[xn,xn],v2[xn+1,xn+1],nd_image.mean(v2)
+		print(" ... VALUES: ",v2[xn-1,xn-1],v2[xn,xn],v2[xn+1,xn+1],nd_image.mean(v2))
 		numeric_to_jpg(a1,"a1.jpg")
 		numeric_to_jpg(b1,"b1.jpg")
 		numeric_to_jpg(b1,"v2.jpg")
 		sys.exit(1)
 	if(v2[xn-1,xn-1] < 0.0 or v2[xn,xn] < 0.0 or v2[xn+1,xn+1] < 0.0 \
 		or nd_image.mean(v2[xn/2:3*xn/2,xn/2:3*xn/2]) < 0.0):
-		print " !!! MAJOR ERROR IN NORMALIZATION CALCUATION (values < 0)"
+		print(" !!! MAJOR ERROR IN NORMALIZATION CALCUATION (values < 0)")
 		imageinfo(v2)
-		print " ... VALUES: ",v2[xn-1,xn-1],v2[xn,xn],v2[xn+1,xn+1],nd_image.mean(v2)
+		print(" ... VALUES: ",v2[xn-1,xn-1],v2[xn,xn],v2[xn+1,xn+1],nd_image.mean(v2))
 		numeric_to_jpg(a1,"a1.jpg")
 		numeric_to_jpg(b1,"b1.jpg")
 		numeric_to_jpg(b1,"v2.jpg")
@@ -267,7 +267,7 @@ def calcNormConvMap(image, imagefft, tmplmask, oversized, pixrad):
 	#imageinfo(normconvmap)
 	#print normconvmap[499,499],normconvmap[500,500],normconvmap[501,501]
 	#numeric_to_jpg(normconvmap,"normconvmap-big.jpg")
-	print " ... ... time %.2f sec" % float(time.time()-t1)
+	print(" ... ... time %.2f sec" % float(time.time()-t1))
 
 	#RETURN CENTER
 	return normconvmap
@@ -311,12 +311,12 @@ def phaseCorrelate(image, template):
 	del templatefft
 
 	#NORMALIZE CC TO GET PC
-	print "d"
+	print("d")
 	absfft = numarray.absolute(newfft.copy())
 	phasefft = numarray.where(absfft>0, newfft/absfft, 0)
 	#phasefft = newfft / numarray.absolute(newfft)
 	del newfft
-	print "d"
+	print("d")
 
 	#INVERSE TRANSFORM TO GET RESULT
 	correlation = fft.inverse_real_fft2d(phasefft, s=oversized)

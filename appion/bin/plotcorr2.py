@@ -57,4 +57,4 @@ if __name__=="__main__":
 	pylab.title('coa')
 	
 	pylab.show()
-	print "Done!"
+	print("Done!")

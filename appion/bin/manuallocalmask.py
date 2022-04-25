@@ -33,7 +33,7 @@ class ManualMaskMakerPanel(manualpicker.ManualPickerPanel):
 
 	def openImageFile(self, filename):
 		self.filename = filename
-		print filename
+		print(filename)
 		if filename is None:
 			self.setImage(None)
 		elif filename[-4:] == '.mrc':
@@ -88,8 +88,8 @@ class MaskApp(manualpicker.PickerApp):
 
 		self.next = wx.Button(self.frame, wx.ID_FORWARD, '&Forward')
 		self.next.SetMinSize((200,40))
-		self.Bind(wx.EVT_BUTTON, self.onNext, self.next)
-		self.buttonrow.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		self.Bind(wx.EVT_BUTTON, self.onNext, self.__next__)
+		self.buttonrow.Add(self.__next__, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.add = wx.Button(self.frame, wx.ID_REMOVE, '&Add to Mask')
 		self.add.SetMinSize((150,40))
@@ -124,7 +124,7 @@ class MaskApp(manualpicker.PickerApp):
 			clist=list(coord)
 			clist.reverse()
 			return tuple(clist)
-		vertices = map(reversexy,vertices)
+		vertices = list(map(reversexy,vertices))
 
 		polygonimg = leginon.polygon.filledPolygon(self.panel.imagedata.shape,vertices)
 		type(polygonimg)

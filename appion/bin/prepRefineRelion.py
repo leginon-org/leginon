@@ -93,7 +93,7 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 		self.mismatch = 0
 		if self.params['reconiterid'] is not None:
 			refIterData = appiondata.ApRefineIterData.direct_query(self.params['reconiterid'])
-			print refIterData.keys()
+			print(list(refIterData.keys()))
 			self.symmetryName = refIterData['symmetry']['symmetry']
 	
 	#=====================							
@@ -191,7 +191,7 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 		runq['name'] = newstackrunname
 		runq['session'] = leginondata.SessionData.direct_query(self.params['expid'])
 		rundatas = runq.query(results=1)
-		print rundatas
+		print(rundatas)
 
 		if rundatas:
 			selectionid = rundatas[0].dbid
@@ -557,7 +557,7 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 				partParams.update(eulerDict)
 
 			partParamsList.append(partParams)
-		print "no class %d ; mismatch %d"%(self.noClassification, self.mismatch)
+		print("no class %d ; mismatch %d"%(self.noClassification, self.mismatch))
 		sys.stderr.write("\ndone in %s\n\n"%(apDisplay.timeString(time.time()-t0)))	
 		return partParamsList			
 

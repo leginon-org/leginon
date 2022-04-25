@@ -118,7 +118,7 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		self.dd.last_correct_dark_gain = self.last_correct_dark_gain
 		try:
 			self.dd.setImageData(imgdata)
-		except Exception, e:
+		except Exception as e:
 			apDisplay.printWarning(e.args[0])
 			return
 

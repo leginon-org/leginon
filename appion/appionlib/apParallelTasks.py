@@ -108,7 +108,7 @@ class Agent (basicAgent.BasicAgent):
 		for command in commands:	 
 			try:   
 				self.currentJob = self.createJobInst(command)
-			except Exception, e:
+			except Exception as e:
 				sys.stderr.write("Error: Could not create job  %s : %s\n" %(command, e))
 				sys.exit(1)
 			

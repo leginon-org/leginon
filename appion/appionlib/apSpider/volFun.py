@@ -13,7 +13,7 @@ from appionlib import apDisplay
 try:
 	from pyami import spider
 except:
-	print "could not import spider from pyami"
+	print("could not import spider from pyami")
 
 
 """

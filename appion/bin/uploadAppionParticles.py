@@ -133,7 +133,7 @@ class UploadParticles(appionScript.AppionScript):
 		f.close()
 		apDisplay.printMsg("Read %d lines from input file"%(linecount))
 		apDisplay.printColor("Found %d particles in %d images"%
-			(count, len(imgfilename2peaklist.keys())), "cyan")
+			(count, len(list(imgfilename2peaklist.keys()))), "cyan")
 
 		if count == 0:
 			apDisplay.printError("No particles were found")
@@ -143,7 +143,7 @@ class UploadParticles(appionScript.AppionScript):
 	#===========================
 	def start(self):
 		imgfilename2peaklist = self.readFileToPeakTree()
-		imglist = imgfilename2peaklist.keys()
+		imglist = list(imgfilename2peaklist.keys())
 
 		apDisplay.printMsg("Getting image data from database")
 		imgtree = apDatabase.getSpecificImagesFromDB(imglist, self.sessiondata)

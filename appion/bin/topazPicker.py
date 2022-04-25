@@ -61,10 +61,10 @@ class TopazPicker(appionScript.AppionScript):
 		self.sessiondata = self.particledata['image']['session']
 		self.params['expid'] = self.particledata['image']['session'].dbid
 		self.params['sessionname'] = self.sessiondata['name']
-		print("Session Name: %s"%(self.params['sessionname']))
+		print(("Session Name: %s"%(self.params['sessionname'])))
 		self.presetdata = self.particledata['image']['preset']
 		self.params['preset'] = self.presetdata['name']
-		print("Preset Name:  %s"%(self.params['preset']))
+		print(("Preset Name:  %s"%(self.params['preset'])))
 
 	#=====================
 	def setRunDir(self):
@@ -94,7 +94,7 @@ class TopazPicker(appionScript.AppionScript):
 	#=====================
 	def preProcessImages(self, limit=True):
 		cmd = "topazPreProcessImages.py "
-		print self.params.keys()
+		print(list(self.params.keys()))
 		cmd += " --projectid=%d "%(self.params['projectid'])
 		cmd += " --expid=%d "%(self.params['expid'])
 		cmd += " --selectionid=%d "%(self.params['selectionid'])
@@ -154,9 +154,9 @@ class TopazPicker(appionScript.AppionScript):
 			imgdata = imgtree[i]
 			imagefilename = self.training_images[i]
 			basename = os.path.basename(imagefilename)
-			print basename, imgdata['filename']
+			print(basename, imgdata['filename'])
 			particles = apParticle.getParticles(imgdata, self.params['selectionid'])
-			print("Found %d particles"%(len(particles)))
+			print(("Found %d particles"%(len(particles))))
 			#print(particles[0].keys())
 			for partdata in particles:
 				f.write("%s\t%d\t%d\n"
