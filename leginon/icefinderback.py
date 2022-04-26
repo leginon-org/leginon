@@ -128,7 +128,7 @@ class IceFinder(object):
 	def update_result(self, key, image):
 		self.__update_result(key, image)
 
-	def get_result(key):
+	def get_result(self, key):
 		return self.__results[key]
 
 	def configure_holestats(self, radius=None):
@@ -226,7 +226,6 @@ class IceFinder(object):
 	def make_convolved(self, input_name='holes',excluding_hole=None):
 		"""
 		Make convolved results as holes2.
-		Note: Subclass needs to duplicate this because __results must be in the same module.
 		"""
 		if self.get_result(input_name) is None:
 			raise RuntimeError('need %s to generate convolved targets' % input_name)

@@ -177,8 +177,8 @@ class HoleFinder(icefinderback.IceFinder):
 			xshft = xt * xspacing
 			for yt in ylist:
 				yshft = yt * yspacing
-				xrot = yshft * numpy.cos(radians) + xshft * numpy.sin(radians) 
-				yrot = xshft * numpy.cos(radians) - yshft * numpy.sin(radians)
+				xrot = xshft * numpy.cos(radians) + yshft * numpy.sin(radians)
+				yrot = -yshft * numpy.cos(radians) + xshft * numpy.sin(radians)
 				x = int(xrot + x0)
 				y = int(yrot + y0)
 				if x < 0 or x >= imageshape[1]: continue
@@ -240,8 +240,8 @@ class HoleFinder(icefinderback.IceFinder):
 
 	def points_to_stats_holes(self, points):
 		holes = []
-		for n,point in enumerate(points):
-			h = {'center':point,'convolved':False}
+		for n,center in enumerate(self.swapxy(points)):
+			h = {'center':center,'convolved':False} # point is in (x,y)
 			holes.append(statshole.StatsHole(h, n, h.keys())) # (row, col)
 		return holes
 

@@ -107,7 +107,7 @@ class RasterFinder(icetargetfinder.IceTargetFinder):
 		
 		spacing = numpy.hypot(*p2)
 		angle = numpy.arctan2(*p2)
-		angle = math.degrees(angle)
+		angle = math.degrees(angle) # +x to +y is positive
 		
 		return spacing, angle
 
