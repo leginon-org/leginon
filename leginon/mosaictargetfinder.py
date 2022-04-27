@@ -783,15 +783,6 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		scaledpos = mosaic_instance.scaled(mospos)
 		return scaledpos
 
-	def scaleToMosaic(self, d):
-		shape = tile.image.shape
-		drow = targetdata['delta row']
-		dcol = targetdata['delta column']
-		tilepos = drow+shape[0]/2, dcol+shape[1]/2
-		mospos = self.mosaic.tile2mosaic(tile, tilepos)
-		scaledpos = self.mosaic.scaled(mospos)
-		return scaledpos
-
 	def _mosaicToTarget(self, row, col):
 		'''
 		Convert mosaic position to target position on a tile image.
