@@ -4,6 +4,7 @@ import os
 import multiprocessing
 import time
 import math
+import numpy
 
 from pyami import groupfun
 from leginon import leginondata
@@ -47,6 +48,18 @@ def pointsInBlobs(blobs, points):
 			if total == total_points:
 					break
 	return has_point
+
+def getDistanceArray(centers):
+	'''
+	using array math to get a square of distance matrix between all pairs of centers.
+	'''
+	s = len(centers)
+	#create repeating 2D array
+	x = numpy.repeat(centers[:,0],s).reshape((s,s))
+	y = numpy.repeat(centers[:,1],s).reshape((s,s))
+	# use transposed array to calculate square of distance.
+	a = (x-x.T)**2+(y-y.T)**2
+	return a
 
 class StatsBlob(object):
 	def __init__(self, info_dict, index):
@@ -132,7 +145,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		if self.mosaicimagedata and 'filename' in self.mosaicimagedata.keys():
 			label='all'
 			mosaic_image_path = os.path.join(self.session['image path'],self.mosaicimagedata['filename']+'.mrc')
-			self.logger.info('running external square finding')
+			self.logger.info('Running external square finding')
 			blobs = self._runExternalBlobFinder(self.mosaicimagedata['image'],mosaic_image_path, label)
 			self.loadBlobs(label, self.getOutPath(label))
 			# show blob target and stats
@@ -168,7 +181,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		load target locations and score as StatsBlob
 		'''
 		if not os.path.isfile(outpath):
-			self.logger.warning("external square finding did not run")
+			self.logger.warning("External square finding did not run")
 			self.ext_blobs[label] = []
 			return
 		f = open(outpath,'r')
@@ -179,7 +192,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		def _revindex(value_tuple):
 			return value_tuple[1],value_tuple[0]
 		for n, b in enumerate(blob_dicts):
-			#ptolemy write its coordinates in (col, row) modify them first.
+			#ptolemy write its coordinates in (x,y) modify them first.
 			b['center'] = _revindex(b['center'])
 			b['vertices'] = list(map((lambda x: _revindex(x)),b['vertices']))
 			blobs.append(StatsBlob(b, n)) # (row, col)
@@ -215,7 +228,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 				self.setSettings(self.settings, False)
 				return
 			else:
-				self.logger.error('filter key %s not found in stats' % self.settings['filter-key'])
+				self.logger.error('Filter key %s not found in stats' % self.settings['filter-key'])
 
 	def storeScoreSquareFinderPrefs(self):
 		prefs = leginondata.ScoreSquareFinderPrefsData()
@@ -237,7 +250,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		good_blobs = []
 		for i, blob in enumerate(blobs):
 			if i == 0 and key not in blob.stats.keys():
-				self.logger.error('filter key %s not found in stats' % self.settings['filter-key'])
+				self.logger.error('Filter key %s not found in stats' % self.settings['filter-key'])
 				return good_blobs
 			row = blob.stats['center'][0]
 			column = blob.stats['center'][1]
@@ -251,7 +264,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 				stats['good'] = False
 				# only publish bad stats
 				self.publish(stats, database=True)
-		self.logger.info('fitering number of blobs down number to %d' % len(good_blobs))
+		self.logger.info('Filtering number of blobs down number to %d' % len(good_blobs))
 		return good_blobs
 
 	def sampleBlobs(self, blobs, total_targets_need):
@@ -317,6 +330,10 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		return sample_blobs_in_class, sample_indices
 
 class MosaicScoreTargetFinder(MosaicTargetFinderBase):
+	"""
+	External script score finder that operates on individual grid atlas tile.  Multithread
+	process is added when each tile is added, and then loaded later. 
+	"""
 	panelclass = gui.wx.MosaicScoreTargetFinder.Panel
 	settingsclass = leginondata.MosaicScoreTargetFinderSettingsData
 	defaultsettings = dict(MosaicTargetFinderBase.defaultsettings)
@@ -328,10 +345,10 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 		super(MosaicScoreTargetFinder, self).__init__(id, session, managerlocation, **kwargs)
 		self.tileblobmap = {}
 		self.finder_blobs = []
+		self.mblob_values = []
 		self.start()
 		self.p = {}
 		self.script_exists = None
-
 
 	def _addTile(self, imagedata):
 		super(MosaicScoreTargetFinder, self)._addTile(imagedata)
@@ -345,12 +362,85 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 		self.p[imid] = multiprocessing.Process(target=self._runExternalBlobFinder, args=(imagedata['image'], mrcpath,label))
 		self.p[imid].start()
 
+	def getMergingDistance(self, sizes, means):
+		if len(sizes) == 0:
+			return 10000.0
+		size_array = numpy.array(sizes)
+		mean_array = numpy.array(means)
+		# accept blobs excluding very dark ones works except when the whole
+		# grid is thick.
+		top_mean = numpy.percentile(mean_array, 10)
+		filtered_size_array = size_array[numpy.where(mean_array >= top_mean)]
+		# use the size at top 90 percentile since the max may be torn squares.
+		top_size = numpy.percentile(filtered_size_array,90)
+		max_length = math.sqrt(top_size)
+		# calculate length displayed on finder_mosaic
+		some_imid = list(self.tilemap.keys())[0]
+		tile = self.tilemap[some_imid]
+		# map two positions on tile to that of finder_posaic
+		r0,c0 = self._tile2MosaicPosition(tile, (0,0), self.finder_mosaic)
+		r,c = self._tile2MosaicPosition(tile, (max_length,0), self.finder_mosaic)
+		self.logger.info('Merging distance on mosaic = %.1f' % (float(r-r0),))
+		return r-r0
+
+	def mergeFinderBlobs(self):
+		blob_values = self.mblob_values
+		if len(self.tilemap) > 2 and len(blob_values) >= 10:
+			self.logger.info('Running blob merging')
+			self._mergeFinderBlobs()
+		# create finder_blobs
+		self.finder_blobs = []
+		for info_dict in self.mblob_values:
+			self.finder_blobs.append(StatsBlob(info_dict, len(self.finder_blobs)))
+
+	def _mergeFinderBlobs(self):
+		'''
+		Merging blobs based on distance on finder_mosaic.
+		'''
+		blob_values = self.mblob_values
+		centers = numpy.array(map((lambda x: x['center']), blob_values))
+		sizes = map((lambda x: x['area']), blob_values )
+		means = map((lambda x: x['brightness']), blob_values )
+		max_distance = self.getMergingDistance(sizes, means)
+		# distance
+		d_array = getDistanceArray(centers)
+		max_d2 = max_distance*max_distance
+		too_close = numpy.where(d_array < max_d2, 1,0).nonzero()
+		# exclude the symmetrical distance and distance to self.
+		c = numpy.array(too_close[1]-too_close[0])
+		unique_close = numpy.where(c > 0, 1,0).nonzero()[0]
+		# update values of the second blob
+		to_remove = []
+		for i in unique_close:
+			first = too_close[0][i]
+			second = too_close[1][i]
+			to_remove.append(first)
+			b1 = blob_values[first]['brightness']
+			b2 = blob_values[second]['brightness']
+			w1 = blob_values[first]['area']
+			w2 = blob_values[second]['area']
+			c1 = centers[first]
+			c2 = centers[second]
+			new_area = w1+w2
+			new_brightness = (b1*w1+b2*w2)/(w1+w2)
+			new_center = tuple(((c1*w1+c2*w2)/(w1+w2)).tolist())
+			new_score = max(blob_values[first]['score'],blob_values[second]['score'])
+			self.mblob_values[second].update({'area':new_area,'center':new_center,'score':new_score,'brightness':new_brightness})
+		# pop merged
+		to_remove = list(set(to_remove))
+		to_remove.sort()
+		to_remove.reverse()
+		self.logger.info('%d blobs were merged to others' % len(to_remove))
+		for i in to_remove:
+			self.mblob_values.pop(i)
+
 	def createMosaicImage(self):
 		super(MosaicScoreTargetFinder, self).createMosaicImage()
 		if not self.hasValidScoringScript():
 			return
 		if self.mosaic and self.tileblobmap and self.finder_scale_factor:
 			self.finder_blobs = []
+			self.mblob_values = []
 			s = self.finder_scale_factor
 			for imid, targetlists in self.targetmap.items():
 					tile = self.tilemap[imid]
@@ -358,20 +448,22 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 					label = '%d' % imid
 					if label in self.ext_blobs.keys():
 						self.tileblobmap[imid] = self.ext_blobs[label]
-						self.addFinderBlobs(tile, imid)
+						self.addMosaicBlobValues(tile, imid)
+			# merge finder blobs
+			self.mergeFinderBlobs()
 
-	def addFinderBlobs(self, tile, imid):
-					s = self.finder_scale_factor
-					for b in self.tileblobmap[imid]:
-						#statistics are calculated on finder_mosaic
-						vertices = map((lambda x: self._tile2MosaicPosition(tile, (x[0]*s,x[1]*s), self.finder_mosaic)), b.vertices)
-						r,c = self._tile2MosaicPosition(tile, b.stats['center'], self.finder_mosaic)
-						new_info_dict = dict(b.info_dict)
-						new_info_dict['vertices'] = list(vertices)
-						# center of the blob on finder_mosaic coordinate
-						# _tile2MosaicPosition standard is (row, col)
-						new_info_dict['center'] = r,c
-						self.finder_blobs.append(StatsBlob(new_info_dict, len(self.finder_blobs)))
+	def addMosaicBlobValues(self, tile, imid):
+		s = self.finder_scale_factor
+		for b in self.tileblobmap[imid]:
+			#statistics are calculated on finder_mosaic
+			vertices = map((lambda x: self._tile2MosaicPosition(tile, (x[0],x[1]), self.finder_mosaic)), b.vertices)
+			r,c = self._tile2MosaicPosition(tile, (b.stats['center'][0],b.stats['center'][1]), self.finder_mosaic)
+			new_info_dict = dict(b.info_dict)
+			new_info_dict['vertices'] = list(vertices)
+			# center of the blob on finder_mosaic coordinate
+			# _tile2MosaicPosition standard is (row, col)
+			new_info_dict['center'] = r,c
+			self.mblob_values.append(new_info_dict)
 
 	def findSquareBlobs(self):
 		"""
@@ -386,17 +478,21 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 			self.script_exists = None #reset
 			return []
 		imids = list(map((lambda x: int(x)),self.p.keys()))
+		# gather subprocesses
+		self.logger.info('Gathering finder results')
 		for imid in imids:
 			self.p[imid].join()
 			self.p[imid].terminate()
 			self.p.pop(imid)
+		self.logger.info('All scripts finished')
 		new_imids = set(imids).difference(self.tileblobmap.keys())
 		for imid in new_imids:
 			label = '%d' % imid
 			outpath = self.getOutPath(label)
 			self.loadBlobs(label, outpath)
 			self.tileblobmap[imid] = self.ext_blobs['%d' % imid]
-			s = self.finder_scale_factor
 			tile = self.tilemap[imid]
-			self.addFinderBlobs(tile,imid)
+			self.addMosaicBlobValues(tile,imid)
+		# merge finder blobs
+		self.mergeFinderBlobs()
 		return list(self.finder_blobs)
