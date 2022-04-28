@@ -391,6 +391,8 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 		# create finder_blobs
 		self.finder_blobs = []
 		for info_dict in self.mblob_values:
+			c = info_dict['center']
+			info_dict['center'] = int(c[0]), int(c[1])
 			self.finder_blobs.append(StatsBlob(info_dict, len(self.finder_blobs)))
 
 	def _mergeFinderBlobs(self):
