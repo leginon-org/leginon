@@ -9,7 +9,7 @@ import random
 import pickle
 import functools
 import logging
-logging.basicConfig(filename='errors.log', encoding='utf-8', level=logging.ERROR)
+logging.basicConfig(filename='errors.log', level=logging.ERROR)
 #appion
 from appionlib import apDisplay
 from appionlib import apDatabase
