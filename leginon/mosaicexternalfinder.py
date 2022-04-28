@@ -428,9 +428,10 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 			new_center = tuple(((c1*w1+c2*w2)/(w1+w2)).tolist())
 			new_score = max(blob_values[first]['score'],blob_values[second]['score'])
 			# merge vertices as convex hull
-			v = list(blob_values[first]['vertices'])
-			v.extend(list(blob_values[second]['vertices']))
-			new_vertices = convexhull.convexHull(v)
+			# use union set to avoid duplicates
+			v = set(blob_values[first]['vertices'])
+			v.union(blob_values[second]['vertices'])
+			new_vertices = convexhull.convexHull(list(v))
 			# update
 			self.mblob_values[second].update({
 					'area':new_area,
