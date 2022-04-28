@@ -222,6 +222,16 @@ class MosaicTargetMaker(TargetMaker):
 			# generated from external event
 			grid = evt['grid']
 			label = gridlabeler.getGridLabel(grid)
+			if not label:
+				# Use variation of the settings label
+				failed = True
+				label = self.settings['label']
+				while failed:
+					try:
+						self.checkLabel(label)
+						failed = False
+					except AtlasError as e:
+						label += 'a'
 			targetlist = self.newTargetList(mosaic=True, label=label)
 		self.logger.debug('Target list created')
 		return targetlist, grid
