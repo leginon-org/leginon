@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import logging
+logging.basicConfig(level=logging.INFO, filename='stacklog.log')
 
 #pythonlib
 import os
@@ -147,10 +149,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 		apDisplay.printMsg("do not break function now otherwise it will corrupt stack")
 		#time.sleep(1.0)
-
+		
 		### merge image particles into big stack
 		totalpart = self.mergeImageStackIntoBigStack(self.imgstackfile, imgdata)
-
 		### create a stack average every so often
 		if self.stats['lastpeaks'] > 0:
 			totalPartices = self.existingParticleNumber+self.stats['peaksum']+self.stats['lastpeaks']
@@ -1331,7 +1332,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			mrcfiles = apRelion.getMrcParticleFilesFromStar(stackpath)
 			stackTools.averageStackList(mrcfiles, averagefile)
 		else:
-			apStack.averageStack(stackpath)
+			apStack.averageStack(stackpath) ## 
 		### Create Stack Mean Plot
 		if self.params['commit'] is True and self.params['meanplot'] is True:
 			stackid = apStack.getStackIdFromPath(stackpath)

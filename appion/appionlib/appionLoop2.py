@@ -90,7 +90,6 @@ class AppionLoop(appionScript.AppionScript):
 
 				### START any custom functions HERE:
 				results = self.loopProcessImage(imgdata)
-
 				### WRITE db data
 				if self.badprocess is False:
 					if self.params['commit'] is True:
@@ -114,7 +113,6 @@ class AppionLoop(appionScript.AppionScript):
 			if self.notdone is True:
 				self.notdone = self._waitForMoreImages()
 			#END NOTDONE LOOP
-
 		self.postLoopFunctions()
 		self.close()
 

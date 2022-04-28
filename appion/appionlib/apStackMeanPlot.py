@@ -109,8 +109,6 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 
 #===============
 def averageSubStack(partlist, stackfile, bin=1):
-	print('111222333555777')
-	print(partlist)
 	if len(partlist) > 300:
 		partlist = partlist[:300]
 	boxsize = apImagicFile.getBoxsize(stackfile)
