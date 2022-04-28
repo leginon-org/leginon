@@ -1,7 +1,7 @@
 #!/usr/bin/python -O
 #region finding functions called by makeMask.py
 
-from appionlib import apConvexHull
+from pyami import convexhull
 from appionlib import apImage
 from appionlib import apDisplay
 import os
@@ -147,7 +147,7 @@ def convolveDisk(bimage,radius,convolve_t,testlog):
 def findConvexHullsFromPoints(points):
 	polygons=[]
 	if (len(points) >3):
-		polygon=apConvexHull.convexHull(points)
+		polygon=convexhull.convexHull(points)
 		polygon=list(polygon)
 	else:
 		polygon=points
