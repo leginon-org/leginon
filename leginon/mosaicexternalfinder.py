@@ -6,7 +6,7 @@ import time
 import math
 import numpy
 
-from pyami import groupfun
+from pyami import groupfun, convexhull
 from leginon import leginondata
 from leginon import mosaictargetfinder
 from leginon import targetfinder
@@ -427,7 +427,19 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 			new_brightness = (b1*w1+b2*w2)/(w1+w2)
 			new_center = tuple(((c1*w1+c2*w2)/(w1+w2)).tolist())
 			new_score = max(blob_values[first]['score'],blob_values[second]['score'])
-			self.mblob_values[second].update({'area':new_area,'center':new_center,'score':new_score,'brightness':new_brightness})
+			# merge vertices as convex hull
+			# use union set to avoid duplicates
+			v = set(blob_values[first]['vertices'])
+			v.union(blob_values[second]['vertices'])
+			new_vertices = convexhull.convexHull(list(v))
+			# update
+			self.mblob_values[second].update({
+					'area':new_area,
+					'center':new_center,
+					'score':new_score,
+					'brightness':new_brightness,
+					'vertices':new_vertices
+			})
 		# pop merged
 		to_remove = list(set(to_remove))
 		to_remove.sort()
