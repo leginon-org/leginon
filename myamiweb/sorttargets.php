@@ -56,6 +56,12 @@
 			//Targets with new status. This is a complete list of targets necessary to
 			//map order_array later
 			$targets = $leginondata->getNewTargetsOnImage($imgId); 
+			// Ignore targets if targetlist dequeued
+			if ($targets) {
+				$dequeued = $leginondata->getDequeuedByTargetList($targets[0]['tlist']);
+				$done = $leginondata->getDoneByTargetList($targets[0]['tlist']);
+				if ($dequeued || $done) $targets = array();
+			}
 			$filename_r = $leginondata->getFilename($imgId);
 			$filename = $filename_r[0]['filename'];
 			$title = "Targets on image <br> <ul><li>".$filename."</li></ul><hr>";
