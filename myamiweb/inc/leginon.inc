@@ -3463,6 +3463,22 @@ class leginondata {
 		return $r;
 	}
 
+	function getDequeuedByTargetList($tlistId) {
+		$q="SELECT t.`DEF_id` as id, t.`REF|QueueData|queue` as qid, "
+			."t.`REF|ImageTargetListData|list` as tlist from DequeuedImageTargetListData t "
+			."where t.`REF|ImageTargetListData|list`=".$tlistId." ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getDoneByTargetList($tlistId) {
+		$q="SELECT t.`DEF_id` as id, "
+			."t.`REF|ImageTargetListData|list` as tlist from DoneImageTargetListData t "
+			."where t.`REF|ImageTargetListData|list`=".$tlistId." ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getVersionZeroImage($imgId) {
 		$q="SELECT a.`DEF_id` from AcquisitionImageData a "
 			."LEFT JOIN AcquisitionImageData a1 "
