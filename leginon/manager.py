@@ -1011,7 +1011,10 @@ class Manager(node.Node):
 				affixlist = ['%d' % affixlist]
 			if type(affixlist) == type(''):
 				# single entry is translated to string, not list of string
-				affixlist = [affixlist]
+				if affixlist == '':
+					affixlist = []
+				else:
+					affixlist = [affixlist]
 		except IOError:
 			affixlist = []
 		except KeyError:
@@ -1036,17 +1039,22 @@ class Manager(node.Node):
 			if name in history:
 				continue
 			#filter by prefix
-			found_prefix = len(prefixlist) > 0
-			for prefix in prefixlist:
-				if name.startswith(str(prefix)):
-					found_prefix = True
+			# allow not specified to pass
+			found_prefix = len(prefixlist) == 0
+			if not found_prefix:
+				for prefix in prefixlist:
+					if name.startswith(str(prefix)):
+						found_prefix = True
+						break
 			if not found_prefix:
 				continue
 			# filter by prefix
-			found_postfix = len(postfixlist) > 0
-			for postfix in postfixlist:
-				if name.endswith(str(postfix)):
-					found_postfix = True
+			# allow not specified to pass
+			found_postfix = len(postfixlist) == 0
+			if not found_postfix:
+				for postfix in postfixlist:
+					if name.endswith(str(postfix)):
+						found_postfix = True
 			if not found_postfix:
 				continue
 			history.append(name)
