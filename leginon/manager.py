@@ -991,12 +991,8 @@ class Manager(node.Node):
 							hiddens.append(appname)
 						else:
 							apps[appname] = app
-		if not show_hidden:
-			history, map = self.getApplicationHistory()
-			for appname in history:
-				if appname not in apps:
-					app = application.Application(self, name=appname)
-					apps[appname] = app
+		#	adding hidden apps from history when show_hidden is False is removed
+		# to improve the speed.
 		appnames = apps.keys()
 		appnames.sort()
 		orderedapps = ordereddict.OrderedDict()
@@ -1027,39 +1023,34 @@ class Manager(node.Node):
 
 	def getApplicationHistory(self):
 		initializer = {'session': leginondata.SessionData(user=self.session['user']),
-										'application': leginondata.ApplicationData()}
-		appdata = leginondata.LaunchedApplicationData(initializer=initializer)
-		appdatalist = self.research(appdata, timelimit='-90 0:0:0')
+										'application': leginondata.ApplicationData(hide=False)}
+		lappdata = leginondata.LaunchedApplicationData(initializer=initializer)
+		lappdatalist_long = self.research(lappdata, timelimit='-90 0:0:0')
 		prefixlist = self.getApplicationAffixList('prefix')
 		postfixlist = self.getApplicationAffixList('postfix')
+		lappdatalist = []
 		history = []
 		amap = {}
-		for a in appdatalist:
-			name =  a['application']['name']
-			if a['application']['hide']:
+		for la in lappdatalist_long:
+			name =  la['application']['name']
+			if name in history:
 				continue
-			if prefixlist:
-				# filter by prefix
-				found_prefix = False
-				for prefix in prefixlist:
-					if name.startswith(str(prefix)):
-						found_prefix = True
-						break
-				if not found_prefix:
-					continue
-			if postfixlist:
-				# filter by prefix
-				found_postfix = False
-				for postfix in postfixlist:
-					if name.endswith(str(postfix)):
-						found_postfix = True
-						break
-				if not found_postfix:
-					continue
-			# add to history
-			if name not in history:
-				history.append(name)
-				amap[name] = a['launchers']
+			#filter by prefix
+			found_prefix = False
+			for prefix in prefixlist:
+				if name.startswith(str(prefix)):
+					found_prefix = True
+			if not found_prefix:
+				continue
+			# filter by prefix
+			found_postfix = False
+			for postfix in postfixlist:
+				if name.endswith(str(postfix)):
+					found_postfix = True
+			if not found_postfix:
+				continue
+			history.append(name)
+			amap[name] = la['launchers']
 		return history, amap
 
 	def onApplicationStarting(self, name, nnodes):
