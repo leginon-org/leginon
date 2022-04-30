@@ -1036,14 +1036,14 @@ class Manager(node.Node):
 			if name in history:
 				continue
 			#filter by prefix
-			found_prefix = False
+			found_prefix = len(prefixlist) > 0
 			for prefix in prefixlist:
 				if name.startswith(str(prefix)):
 					found_prefix = True
 			if not found_prefix:
 				continue
 			# filter by prefix
-			found_postfix = False
+			found_postfix = len(postfixlist) > 0
 			for postfix in postfixlist:
 				if name.endswith(str(postfix)):
 					found_postfix = True
