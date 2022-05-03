@@ -1040,7 +1040,7 @@ class Manager(node.Node):
 		'''
 		q = " SELECT name from ApplicationData where name like '%%%s'; " % (f,)
 		results = directq.complexMysqlQuery('leginondata',q)
-		return map((lambda x: x['name']),results)
+		return list(set(map((lambda x: x['name']),results)))
 
 	def _getLaunchedApplicationByName(self, appname=''):
 		'''
@@ -1076,7 +1076,7 @@ class Manager(node.Node):
 		'''
 		lappdatalist = []
 		for f in postfixlist:
-			names = self.getAppNamesFromPostfix(f)
+			names = self._getAppNamesFromPostfix(f)
 			for n in names:
 				apps = self._getLaunchedApplicationByName(appname=n)
 				if apps:
