@@ -27,6 +27,8 @@ from pyami import mysocket
 # autotask
 from leginon import autotask
 
+from sinedon import directq
+
 import socket
 from wx import PyDeadObjectError
 import gui.wx.Manager
@@ -1024,41 +1026,87 @@ class Manager(node.Node):
 			raise ValueError('unknown application %s error: %s' % (affix_type,str(e)))
 		return affixlist
 
-	def getApplicationHistory(self):
+	def _getAppNamesFromPrefix(self, f):
+		'''
+		Use direct mysql query to return prefix application names.
+		'''
+		q = " SELECT name from ApplicationData where name like '%s%%'; " % (f,)
+		results = directq.complexMysqlQuery('leginondata',q)
+		return list(set(map((lambda x: x['name']),results)))
+
+	def _getAppNamesFromPostfix(self, f):
+		'''
+		Use direct mysql query to return postfix application names.
+		'''
+		q = " SELECT name from ApplicationData where name like '%%%s'; " % (f,)
+		results = directq.complexMysqlQuery('leginondata',q)
+		return map((lambda x: x['name']),results)
+
+	def _getLaunchedApplicationByName(self, appname=''):
+		'''
+		Return most recent launched application data by user,
+		90 day limit, and application name.
+		'''
+		t0=time.time()
+		app = leginondata.ApplicationData(hide=False, name=appname)
 		initializer = {'session': leginondata.SessionData(user=self.session['user']),
-										'application': leginondata.ApplicationData(hide=False)}
+					'application': app}
 		lappdata = leginondata.LaunchedApplicationData(initializer=initializer)
-		lappdatalist_long = self.research(lappdata, timelimit='-90 0:0:0')
+		lappdatalist = self.research(lappdata, timelimit='-90 0:0:0',results=1)
+		return lappdatalist
+
+	def _getPrefixUserLaunchedApplications(self, prefixlist):
+		'''
+		Return launched spplication results by prefix list, session user,
+		and time limit.
+		'''
+		lappdatalist = []
+		for f in prefixlist:
+			names = self._getAppNamesFromPrefix(f)
+			for n in names:
+				apps = self._getLaunchedApplicationByName(appname=n)
+				if apps:
+					lappdatalist.extend(apps) # only one item in apps
+		return lappdatalist
+
+	def _getPostfixUserLaunchedApplications(self, postfixlist):
+		'''
+		Return launched application results by postfix list, session user,
+		and time limit.
+		'''
+		lappdatalist = []
+		for f in postfixlist:
+			names = self.getAppNamesFromPostfix(f)
+			for n in names:
+				apps = self._getLaunchedApplicationByName(appname=n)
+				if apps:
+					lappdatalist.extend(apps) # only one item in apps
+		return lappdatalist
+
+	def getApplicationHistory(self):
+		t0 = time.time()
 		prefixlist = self.getApplicationAffixList('prefix')
 		postfixlist = self.getApplicationAffixList('postfix')
 		lappdatalist = []
-		history = []
+		# faster if prefix or postfix is set when the same applications were
+		# used by the same user many times.
+		if prefixlist:
+			lapps = self._getPrefixUserLaunchedApplications(prefixlist)
+			lappdatalist.extend(lapps)
+		if postfixlist:
+			lapps = self._getPostfixUserLaunchedApplications(postfixlist)
+			lappdatalist.extend(lapps)
+		if not lappdatalist:
+			# slow er method get all application names and then filter.
+			apnames = self.getApplicationNames()
+			for n in apnames:
+				lapps = self._getLaunchedApplicationByName(appname=n)
+				if lapps:
+					lappdatalist.extend(lapps) # only one item in apps
+		history = map((lambda x: x['application']['name']), lappdatalist)
 		amap = {}
-		for la in lappdatalist_long:
-			name =  la['application']['name']
-			if name in history:
-				continue
-			#filter by prefix
-			# allow not specified to pass
-			found_prefix = len(prefixlist) == 0
-			if not found_prefix:
-				for prefix in prefixlist:
-					if name.startswith(str(prefix)):
-						found_prefix = True
-						break
-			if not found_prefix:
-				continue
-			# filter by prefix
-			# allow not specified to pass
-			found_postfix = len(postfixlist) == 0
-			if not found_postfix:
-				for postfix in postfixlist:
-					if name.endswith(str(postfix)):
-						found_postfix = True
-			if not found_postfix:
-				continue
-			history.append(name)
-			amap[name] = la['launchers']
+		for i,n in enumerate(history):
+			amap[n] = lappdatalist[i]['launchers']
 		return history, amap
 
 	def onApplicationStarting(self, name, nnodes):
