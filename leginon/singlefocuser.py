@@ -314,6 +314,9 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		logmessage = 'Good focus measurement'
 
 		### check fit limit
+		if fitlimit is None:
+			#python3 exception if None is comparied with a number.
+			fitlimit = 0.0
 		fitlimit = setting['fit limit']
 		if fitmin > fitlimit:
 			status = 'fit untrusted (%s>%s)' % (fitmin, fitlimit)

@@ -28,9 +28,10 @@ def _myDet(p, q, r):
 	return sum1 - sum2
 
 
-def _isRightTurn((p, q, r)):
+def _isRightTurn(input_tuple):
 	"""Do the vectors pq:qr form a right turn, or not?"""
 
+	p,q,r = input_tuple
 	assert p != q and q != r and p != r
 			
 	if _myDet(p, q, r) < 0:
@@ -38,8 +39,9 @@ def _isRightTurn((p, q, r)):
 	else:
 		return 0
 
-def _isRightTurnOrColinear((p, q, r)):
+def _isRightTurnOrColinear(input_tuple):
 	"""Do the vectors pq:qr form a right turn, or not?"""
+	p,q,r = input_tuple
 	assert p != q and q != r and p != r
 	if _myDet(p, q, r) < 0:
 		return 1

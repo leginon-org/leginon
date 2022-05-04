@@ -329,7 +329,7 @@ def scipyblobs(im,mask):
 		sizes = numpy.histogram(labels,n,(1,n+1))[0]
 		stds = scipy.ndimage.standard_deviation(im,labels,list(range(1,n+1)))
 		means = scipy.ndimage.mean(im,labels,list(range(1,n+1)))
-		moments = moment_of_inertia(im,labels,list(range(1,n+1)))
+		perimeters = calc_perimeter(mask,labels)
 		maxpos = scipy.ndimage.maximum_position(im,labels,list(range(1,n+1)))
 		## scipy has changed to return array when there is one answer in 0.9
 		## This single value case for n=1 only needed for older versions

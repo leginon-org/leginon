@@ -23,7 +23,6 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 
 		try:
 			dbconfig = sinedon.getConfig('leginondata')
-			print dbconfig['db']
 			dbinfo1 = 'host: %s' % (dbconfig['host'],)
 			dbinfo2 = 'database: %s' % (dbconfig['db'])
 		except KeyError:

@@ -1016,7 +1016,7 @@ class Manager(node.Node):
 							apps[appname] = app
 		#	adding hidden apps from history when show_hidden is False is removed
 		# to improve the speed.
-		appnames = apps.keys()
+		appnames = list(apps.keys())
 		appnames.sort()
 		orderedapps = ordereddict.OrderedDict()
 		for appname in appnames:
@@ -1128,7 +1128,7 @@ class Manager(node.Node):
 		amap = {}
 		for i,n in enumerate(history):
 			amap[n] = lappdatalist[i]['launchers']
-		return history, amap
+		return list(history), amap
 
 	def onApplicationStarting(self, name, nnodes):
 		evt = leginon.gui.wx.Manager.ApplicationStartingEvent(name, nnodes)

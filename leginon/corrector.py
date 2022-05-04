@@ -190,7 +190,7 @@ class Corrector(imagewatcher.ImageWatcher):
 		try:
 			self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			imagedata = self._retrieveReference(exp_type='norm', channel=channel)
-		except Exception, e:
+		except Exception as e:
 			self.logger.exception('Cannot retrieve reference: %s' % (e,))
 		else:
 			image = imagedata['image']
@@ -330,7 +330,7 @@ class Corrector(imagewatcher.ImageWatcher):
 		exposuretype = exp_type
 		try:
 			imagedata = self.acquireRawCameraImageData(type=exposuretype, force_no_frames=True)
-		except Exception, e:
+		except Exception as e:
 			self.logger.error('Error retrieving image: %s' % e)
 			raise
 		## final image based on contents of last image in series

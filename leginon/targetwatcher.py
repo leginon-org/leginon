@@ -450,7 +450,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			target_order = leginondata.TargetOrderData(session=self.session, list=targetlist).query(results=1)[0]['order']
 		except IndexError:
 			return range(len(good_targets))
-		target_numbers = map((lambda x: x['number']),good_targets)
+		target_numbers = list(map((lambda x: x['number']),good_targets))
 		# this filter makes sure that returned index_order only contains only those
 		# of the good_targets.
 		valid_order = filter((lambda x: x in target_numbers), target_order)

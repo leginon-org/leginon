@@ -287,10 +287,10 @@ class Frame(wx.Frame):
 		self.helpmenu = wx.Menu()
 		self.aboutmenuitem = wx.MenuItem(self.settingsmenu, -1, '&About...')
 		self.Bind(wx.EVT_MENU, self.onMenuAbout, self.aboutmenuitem)
-		self.helpmenu.AppendItem(self.aboutmenuitem)
+		self.helpmenu.Append(self.aboutmenuitem)
 		self.dbmenuitem = wx.MenuItem(self.settingsmenu, -1, '&DBinfo...')
 		self.Bind(wx.EVT_MENU, self.onMenuDBinfo, self.dbmenuitem)
-		self.helpmenu.AppendItem(self.dbmenuitem)
+		self.helpmenu.Append(self.dbmenuitem)
 		self.menubar.Append(self.helpmenu, '&Help')
 
 		self.SetMenuBar(self.menubar)

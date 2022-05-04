@@ -24,7 +24,7 @@ import itertools
 default_template = os.path.join(version.getInstalledLocation(),'hole_edge_template.mrc')
 
 class HoleFinder(jahcfinder.JAHCFinder):
-	panelclass = gui.wx.HoleFinder.Panel
+	panelclass = leginon.gui.wx.HoleFinder.Panel
 	settingsclass = leginondata.HoleFinderSettingsData
 	defaultsettings = dict(jahcfinder.JAHCFinder.defaultsettings)
 	defaultsettings.update({

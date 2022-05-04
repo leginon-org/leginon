@@ -134,7 +134,7 @@ def unixChangeMode(path,mode_str='g-w,o-rw', recursive=False):
 	else:
 		rec_str = ''
 	cmd = 'chmod %s%s %s' % (rec_str, mode_str, path)
-	print cmd
+	print(cmd)
 	p = subprocess.Popen(cmd, shell=True)
 	p.wait()
 
@@ -146,7 +146,7 @@ def unixChangeOwnership(uid,gid,pathname, recursive=False):
 	else:
 		rec_str = ''
 	cmd = 'chown %s%s:%s %s' % (rec_str, uid, gid, pathname)
-	print cmd
+	print(cmd)
 	p = subprocess.Popen(cmd, shell=True)
 	p.wait()
 
