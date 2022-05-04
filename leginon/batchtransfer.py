@@ -45,7 +45,19 @@ class RawTransfer(filetransfer.FileTransfer):
 		else:
 			# move does only rename and therefore will be faster if on the same device
 			# but could have problem if dropped during the process between devices.
-			self.move(src_dir,dst_dir)
+			src_basedir = os.path.basename(src_dir)
+			dst_subdir = os.path.join(dst_dir, src_basedir)
+			if os.path.isdir(dst_subdir):
+				# shutil.move gives error if the src_basedir of the same
+				# name exists on the destination
+				files = os.listdir(src_dir)
+				# move each files and then remove the src_dir
+				for f in files:
+					src_path = os.path.join(src_dir, f)
+					self.move(src_path, dst_subdir)
+				self.removeEmptyFolders(src_dir)
+			else:
+				self.move(src_dir,dst_dir)
 
 		if mode_str:
 			self.changeMode(dst_dir, mode_str, recursive=True)
@@ -231,15 +243,18 @@ class RawTransfer(filetransfer.FileTransfer):
 		# move the whole session together.
 		dst_tmp_dir = os.path.join(frames_path,'tmp')
 		print 'move dir to the dst_tmp_dir', dst_tmp_dir
-		self.cleanUp(dst_tmp_dir, method)
 		# make temp dst_path
 		self.transfer_dir(src_tmp_dir, dst_tmp_dir, uid, gid, method, mode_str)
+		# the results are in dst_tmp_dire/session_name
 		#TODO: move *.* in dst_tmp_dir backout
-		files = os.listdir(dst_tmp_dir)
+		dst_tmp_session_dir = os.path.join(dst_tmp_dir, session_name)
+		files = os.listdir(dst_tmp_session_dir)
 		for f in files:
-			tmp_f = os.path.join(dst_tmp_dir, f)
+			tmp_f = os.path.join(dst_tmp_session_dir, f)
 			print 'final move from', tmp_f
 			self.move(tmp_f, frames_path)
+		# clean up tmp_dir
+		os.rmdir(dst_tmp_session_dir)
 		os.rmdir(dst_tmp_dir)
 
 	def run(self):
