@@ -17,6 +17,7 @@ import leginon.gui.wx.ImagePanel
 import leginon.gui.wx.ToolBar
 from leginon.gui.wx.ImageBrowser import ImageBrowserPanel
 import leginon.gui.wx.Icons 
+import leginon.gui.wx.Dialog
 
 import leginon.targethandler
 
@@ -577,15 +578,13 @@ class Panel(leginon.gui.wx.Node.Panel):
 	def onStopQueueTool(self, evt):
 		number_of_targets = self.node.getQueueTargetListToDo()
 		if number_of_targets:
-			msg = 'Are you sure you want to abort targets in %d parent images ?' % (number_of_targets)
 			title = 'Abort all targets in Queue'
 		else:
-			msg = 'No targetlist in queue now.\n Are you sure you want to abort future target list ?'
 			title = 'Abort future targets in Queue'
-		dialog = wx.MessageDialog(self, msg,title, wx.YES|wx.NO)
+		dialog = AbortQueueConfirmationDialog(self, title)
 		result = dialog.ShowModal()
 		dialog.Destroy()
-		if result == wx.ID_YES:
+		if result == wx.ID_OK:
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
@@ -632,6 +631,20 @@ class Panel(leginon.gui.wx.Node.Panel):
 		panel = ImageBrowserPanel(frame)
 		frame.Fit()
 		frame.Show()
+
+class AbortQueueConfirmationDialog(leginon.gui.wx.Dialog.ConfirmationDialog):
+	def addDescriptionSizers(self):
+		number_of_targets = self.parent.node.getQueueTargetListToDo()
+		if number_of_targets:
+			msg = 'Are you sure you want to abort targets in %d parent images ?' % (number_of_targets)
+		else:
+			msg = 'No targetlist in queue now.\n Are you sure you want to abort future target list ?'
+		sz_msg = wx.GridBagSizer(0, 0)
+		label1 = wx.StaticText(self, -1, msg)
+		sz_msg.Add(label1, (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		self.mainsz.Add(sz_msg, (0,0),(1,1))
+
 
 if __name__ == '__main__':
 	class App(wx.App):

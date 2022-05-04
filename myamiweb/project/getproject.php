@@ -385,12 +385,12 @@ if (SAMPLE_TRACK) {
 	}
 	
 	$experiments = $project->getExperiments($projectId);
-	echo divtitle(count($experimentIds).' Experiments '.$toggleHidden);
+	echo divtitle(count($experiments).' Experiments '.$toggleHidden);
 	if ($is_admin)
 		echo '<a alt="upload" target="_blank" class="header" href="'.UPLOAD_URL.'?projectId='.$selectedprojectId.'">upload images to new session</a>';
 
 	$sessions=array();
-	$experiments=array();
+	//$experiments=array();
 	foreach ($experiments as $k=>$exp) {
 		$sessionid = $exp['leginonId'];
 		$info = $leginondata->getSessionInfo($sessionid);

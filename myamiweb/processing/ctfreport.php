@@ -378,19 +378,17 @@ if ($ctfrundatas) {
 	echo $ctfdownlink;
 
 	$ctfdownlink = "<h3>";
-	$ctfdownlink = "<h3>";
 	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&relion=2'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download star file for Relion 3 without beam tilt values'>&nbsp;download star file for Relion 3 without beam tilt values\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
 
 	$ctfdownlink = "<h3>";
-	$ctfdownlink = "<h3>";
 	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&relion=3'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download beam tilt star file for Relion 3.0'>&nbsp;download star file with expected beam tilt for Relion 3.0\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
-
+	
 	$ctfdownlink = "<h3>";
 	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download best ctf data'>&nbsp;download best ctf data\n";
@@ -404,7 +402,23 @@ if ($ctfrundatas) {
 	echo $ctfdownlink;
 	//End Data Export
 
+	echo "<hr/>\n";
+	echo "<h3>Relion star file with beam tilt group</h3>\n";
+	echo "<form name='titlwrangler' method='post' action=downloadctfdataGrouped.php?expId=$expId&preset=$preset&runId=$runId&relion=3'>\n";
+	echo "<label for='ncluster'>The number of tilt groups:</label>\n";
+	echo "<input type='number' id='ncluster' name='ncluster' value='50' style='width: 4em;'>\n";
+	
+	echo "<label for='rversion'>Relion version:</label>\n";
+	echo "<select name='rversion' id='rversion'>";
+	echo "<option value='3.1'>3.1</option>";
+	echo "<option value='3'>3.0</option>";
+    echo "</select>";
+    echo "&nbsp";
+	echo "<input type='submit' value='Download'>\n";
+	
+	echo "</form>\n";
 
+	
 	echo "<hr/>\n";
 
 	foreach ($ctfrundatas as $ctfrundata) {

@@ -236,10 +236,10 @@ if reclim < 20000:
 	sys.setrecursionlimit(20000)
 
 class Blob(object):
-	def __init__(self, image, mask, n, center, mean, stddev, moment, maxpos, label_index=1):
+	def __init__(self, image, mask, n, center, mean, stddev, roundness, maxpos, label_index=1):   #wjr
 		self.image = image
 		self.mask = mask
-		self.stats = {"center":center, "n":n, "mean":mean, "stddev":stddev, "size":0, "moment":moment, "maximum_position":maxpos, "label_index":label_index}
+		self.stats = {"center":center, "n":n, "mean":mean, "stddev":stddev, "size":0, "roundness":roundness, "maximum_position":maxpos, "label_index":label_index}  #wjr
 
 def highest_peaks(blobs, n):
 	"""
@@ -338,34 +338,74 @@ def scipyblobs(im,mask):
 			stds = [stds]
 			means = [means]
 			maxpos = [maxpos]
+			perimeters = [perimeters]    # wjr
 		else:
 			centers = list(map(numpy.array, centers))
 
 	blobs = []
+# wjr replace moment of inertia with ration of area to perimeter: see somments below
+# change variable 'moment' to 'roundness'
+# wjr replacing moment-of-inertial calculation with a ratio of (4 pi * area) to perimeter**2
+# for circles, should be 1 (4 pi * pi r**2 = 4 Pi**2 r**2 == (2pi * r) **2 == perimiter**2
+# other shapes will be <1
+	fourpi = 4 * math.pi
 	for i in range(n):
-		blobs.append({'center':centers[i], 'n':sizes[i], 'mean':means[i],'stddev':stds[i],'moment':moments[i], 'maximum_position':maxpos[i], 'label_index':i})
+		blobs.append({'center':centers[i], 'n':sizes[i], 'mean':means[i],'stddev':stds[i],'roundness':fourpi * sizes[i]/(perimeters[i]*perimeters[i]), 'maximum_position':maxpos[i], 'label_index':i})
 	return blobs
 
-def moment_of_inertia(input, labels, index = None):
+def calc_perimeter(input, labels):
 	"""
-	Calculate the moment of inertia of of the array.
+	Calculate the perimeter of the shape in the array.
+ 	Perimeter is calculated by seeing how many active neighbors every active point has and subtracting them from 4
 
-	The index parameter is a single label number or a sequence of
-	label numbers of the objects to be measured. If index is None, all
-	values are used where labels is larger than zero.
 	"""
-	input = numpy.asarray(input)
+	#input = numpy.asarray(input)
 	if labels is None:
 		raise RuntimeError('labels are needed')
 	if labels.shape != input.shape:
 		raise RuntimeError('input and labels shape are not equal')
-	moments = []
+	perimeters = []
 	for label in scipy.ndimage.find_objects(labels):
-		submask = input[label].copy()
-		moment = _moment(submask)
-		moments.append(moment)
-	return moments
+		#submask = input[label].copy()
+		submask = input[label]
+		perimeter = _perimeter(submask)
+		perimeters.append(perimeter)
+	return perimeters
 
+def _perimeter(mat):
+	perimeter = 0;
+	root2 = math.sqrt(2)
+	Row,Col = mat.shape	
+	# Traversing the matrix and finding ones to
+	# calculate their contribution.
+	for i in range(0, Row):
+		for j in range(0, Col):
+			if (mat[i][j]):
+				sides = (4 - _numofneighbour(mat, i, j, Row, Col));
+				if sides == 2:  # wjr correct for pixelation of perimter
+					sides = root2
+				perimeter += sides 
+	#print("Row=%i Col=%i,      perimeter is %i and area is %i, this calc of roundness is %f \n" %(Row,Col,perimeter,a, r))
+	return perimeter;
+
+
+def _numofneighbour(mat, i, j, R, C):
+# wjr add code to determine perimeter, this function counts the number of non-zero neighbors a point has
+# This code is contributed by Akanksha Rai
+	count = 0;
+	# UP
+	if (i > 0 and mat[i - 1][j]):
+		count+= 1;
+	# LEFT
+	if (j > 0 and mat[i][j - 1]):
+ 		count+= 1;
+	# DOWN
+	if (i < R-1 and mat[i + 1][j]):
+  		count+= 1
+	# RIGHT
+	if (j < C-1 and mat[i][j + 1]):
+		count+= 1;
+	return count;
 
 def _moment(subimage):
 	if(subimage.shape[0]+subimage.shape[1] < 4):
@@ -385,7 +425,7 @@ def _distsqmat(r0,shape):
 	dx, dy = indices[0]-r0[0],indices[1]-r0[1]
 	return (dx**2+dy**2)
 
-def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0, maxmoment=None, method="central", summary=False):
+def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0, minblobroundness=0.8, method="central", summary=False):
 	"""
 	find blobs with particular features in a map
 	"""
@@ -408,7 +448,7 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 	toosmall = 0
 	toooblong = 0
 	for blob in blobs:
-		fakeblob = Blob(image, mask, blob['n'], blob['center'], blob['mean'], blob['stddev'], blob['moment'], blob['maximum_position'], blob['label_index'])
+		fakeblob = Blob(image, mask, blob['n'], blob['center'], blob['mean'], blob['stddev'], blob['roundness'], blob['maximum_position'], blob['label_index'])
 		# scipy.ndimage.center_of_mass may return inf or nan which we don't want.
 		if math.isinf(blob['center'][0]) or math.isinf(blob['center'][1]):
 			isinf += 1
@@ -422,11 +462,12 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 		if blob['n'] < minblobsize:
 			toosmall += 1
 			continue
-		if maxmoment is not None and blob['moment'] >= maxmoment:
+		if minblobroundness is not None and blob['roundness'] <= minblobroundness:   # wjr change > to < since moment is now redefined as roundness, where 1 is circular, <1 is non circular
 			toooblong += 1
+			#print( "ignored because roundness = %f and minimum is %f \n" %(blob['roundness'],minblobroundness))
+#			print("size of blob is %d\n" %blob['n'])
 			continue
 		fakeblobs.append(fakeblob)
-
 	if summary is True:
 		sys.stderr.write("BLOB summary: %d total / %d invalid number / %d too big / %d too small / %d too oblong\n"
 			%(len(fakeblobs),isinf+isnan, toobig,toosmall,toooblong,))
@@ -508,10 +549,10 @@ def bin2f(a, factor):
 	xend   = int( fft.shape[0]/2 * (1 + old_div(1.0,factor)))
 	ystart = int( fft.shape[1]/2 * (1 - old_div(1.0,factor)))
 	yend   = int( fft.shape[1]/2 * (1 + old_div(1.0,factor)))
-	#print ("%d:%d  ,  %d:%d\n"%(xstart,xend,ystart,yend,))
+	#print("%d:%d  ,  %d:%d\n"%(xstart,xend,ystart,yend,))
 	cutfft = fft[xstart:xend, ystart:yend]
 	cutfft = numpy.fft.fftshift(cutfft)
-	#print cutfft.shape, fft.shape
+	#print(cutfft.shape, fft.shape)
 	binned = old_div(ffteng.itransform(cutfft),float(factor**2))
 	return binned
 
@@ -529,10 +570,10 @@ def fourier_scale(a, boxsize):
 	xend   = int( old_div(fft.shape[0],2) + old_div(boxsize,2) )
 	ystart = int( old_div(fft.shape[1],2) - old_div(boxsize,2) )
 	yend   = int( old_div(fft.shape[1],2) + old_div(boxsize,2) )
-	#print ("%d:%d  ,  %d:%d\n"%(xstart,xend,ystart,yend,))
+	#print("%d:%d  ,  %d:%d\n"%(xstart,xend,ystart,yend,))
 	cutfft = fft[xstart:xend, ystart:yend]
 	cutfft = numpy.fft.fftshift(cutfft)
-	#print cutfft.shape, fft.shape
+	#print(cutfft.shape, fft.shape)
 	binned = old_div(ffteng.itransform(cutfft),float(factor**2))
 	return binned
 
@@ -880,7 +921,7 @@ def edgeStats(imagearray):
 	edgepix=numpy.append(imagearray[0,0:],imagearray[-1,0:])
 	edgepix=numpy.append(edgepix,imagearray[0:,0])
 	edgepix=numpy.append(edgepix,imagearray[0:,-1])
-	#print edgepix
+	#print(edgepix)
 	mean=edgepix.mean()
 	std=edgepix.std()
 	return {'mean':mean,'std':std}

@@ -12,7 +12,7 @@ require_once "mathParticleForm.inc";
 class DogPickerForm extends MathParticleForm
 
 {
-	function __construct(  $expId, $errorHTML='', $infoHTML='', $kfactorv=1.2, $numslicesv='',$sizerangev='',$invertv="on" ) 
+    function __construct(  $expId, $errorHTML='', $infoHTML='', $kfactorv=1.2, $numslicesv='',$sizerangev='',$invertv="on" , $minblobroundness=0) 
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
 		$this->showfilters=false; //override to not display lowpass and highpass fields
@@ -48,6 +48,8 @@ class DogPickerForm extends MathParticleForm
 		//Multiple slices
 		$params->addParam( "numslices", $numslicesv, "Number of Slices" );
 		$params->addParam( "sizerange", $sizerangev, "Size Range" );
+		// See https://emg.nysbc.org/redmine/issues/12483
+		$params->addParam( "minblobroundness", $minblobroundness, "Minimum Blob Roundness" );
 		// Validations
 		//$params->addValidation( "numpart", "req" );
 	}
@@ -64,7 +66,10 @@ class DogPickerForm extends MathParticleForm
 		$html .= "<b>Multi-scale dogpicker:</b><br />\n";
 		$html .= $params->insertTextField( "numslices", $fieldSize,"(number of sizes)" );
 		$html .= $params->insertTextField( "sizerange", $fieldSize,"(in &Aring;ngstroms)" );
+		$html .="<br />";
+		$html .= $params->insertTextField( "minblobroundness", $fieldSize,"(1 is a round object)" );
 		$html .="<br />\n";
+		
 		return $html;
 	}
 

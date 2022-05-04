@@ -56,7 +56,8 @@ class TargetHandler(object):
 			return False
 		all_new = leginondata.AcquisitionImageTargetData(status='new',list=targetlistdata).query()
 		preview_new = leginondata.AcquisitionImageTargetData(type='preview',status='new',list=targetlistdata).query()
-		return len(all_new) == len(preview_new)
+		# if there are new targets, and not all of them  are not preview targets
+		return len(all_new) > 0 and len(all_new) == len(preview_new)
 
 	def reportTargetListDone(self, targetlistdata, status):
 		listid = targetlistdata.dbid
@@ -67,8 +68,8 @@ class TargetHandler(object):
 		if self.isPreviewOnly(targetlistdata):
 			# targetlist containing only preview needs to avoid being marked as done.
 			return
-		# mosaic quilt finder and mosaic target finder
-		# should not do this so more targets can be submitted
+		# DoneTargetList should not be inserted on targetlist originated from mosaic finders.
+		# This is so that more targets can be submitted
 		if targetlistdata['node']:
 			if not targetlistdata['node']['class string'].startswith('Mosaic'):
 				# TODO: using class string text to test is not a good idea. Need better solutions.
@@ -203,6 +204,7 @@ class TargetHandler(object):
 		'''
 		this is run in a thread to watch for and handle queue updates
 		'''
+		trials = 0
 		while 1:
 			# wait for a queue update
 			self.setStatus('idle')
@@ -212,17 +214,20 @@ class TargetHandler(object):
 				idletime = 20
 			else:
 				idletime = None
-			# wait here for TargetFinder.publishQueue() to start processing
-			self.queueupdate.wait(idletime)
-			if not self.queueupdate.isSet():
-				self.queueIdleFinish()
-				# close valves, stop doing everything or quit
+			state = self.player.state()
+			if state != 'stopqueue':
+				# wait here for TargetFinder.publishQueue() to start processing
+				self.queueupdate.wait(idletime)
+				if not self.queueupdate.isSet():
+					self.queueIdleFinish()
+					# close valves, stop doing everything or quit
 		
-			self.setStatus('processing')
-			self.queueupdate.clear()
-			self.logger.info('received queue update')
+				self.setStatus('processing')
+				self.queueupdate.clear()
+				self.logger.info('received queue update')
 
 			active = self.getListsInQueue(self.getQueue())
+			self.logger.info('%d targetlists in queue' % len(active))
 			self.postQueueCount(len(active))
 			self.total_queue_left_in_loop = len(active)
 			# process all target lists in the queue
@@ -254,10 +259,26 @@ class TargetHandler(object):
 					self.logger.info('dequeued targetlist from %s' % targetlist['image']['filename'])
 				else:
 					self.logger.info('dequeued targetlist id=%d without parent' % targetlist,dbid)
-			self.player.play()
-			if self.settings['reset tilt']:
+			if state == 'stopqueue':
+				if len(active) == 0 or trials > 3:
+					self.logger.info ('all targets in this active queue done. Releasing queue abort')
+					self.player.play()
+					trials = 0
+				elif trials > 3:
+					self.logger.warning('Keep finding more in queue. Releasing queue abort to avoid infinite loop')
+					self.player.play()
+					trials = 0
+				else:
+					trials += 1
+					self.logger.info('check for queue one more time. since last # of active = %d' % len(active))
+					continue
+			else:
+				self.player.play()
+			end_state = self.player.state()
+			if end_state != 'stopqueue' and len(active) == 0 and self.settings['reset tilt']:
 				# FIX ME: reset tilt and xy at the end of queue.  This is different
-				# from non-queue case.
+				# from non-queue case. The current code resets each time active queue
+				# runs out.
 				self.resetTiltStage()
 
 	def resetTiltStage(self):

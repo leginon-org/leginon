@@ -187,8 +187,10 @@ function createData() {
 	foreach ($descimages as $d3) {
 		$desctlist = getTargetListIdsByImage($d3,'0');
 		foreach ((array)$desctlist as $d3tl) {
-			array_push($imagetls,$d3tl['itlid']);
-			array_push($queues,$d3tl['queue']);
+			if ($d3tl['queue']) {
+				array_push($imagetls,$d3tl['itlid']);
+				array_push($queues,$d3tl['queue']);
+			}
 		};
 		$descdqlist = getDeQueuedTargetListIdsByImage($d3);
 		foreach ((array)$descdqlist as $d3tl) {

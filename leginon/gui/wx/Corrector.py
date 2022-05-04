@@ -275,6 +275,9 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		elif acqtype == 'Corrected':
 			method = self.node.acquireCorrected
 			kwargs = {'channels': channels}
+		elif acqtype == 'Norm':
+			method = self.node.retrieveNorm #camera software reference
+			kwargs = {'channels': channels}
 		else:
 			self._acquisitionEnable(True)
 			return
@@ -298,6 +301,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		elif chanstr == 'Channel 1':
 			channel = 1
 		else:
+			self.node.displayInLogger('error','Displaying %s is not a valid choice.' % chanstr)
 			return
 		self.node.displayRef(reftype, channel)
 

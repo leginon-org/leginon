@@ -25,6 +25,13 @@ for i in range(repeats):
 	t0 = time.time()
 	p = c.getImage()
 	t1 = time.time()
+	try:
+		print('returned image shape', p.shape)
+	except AttributeError as e:
+		print('Error: Returned image not an array.')
+		if type(p) == type(()):
+			print('----Did you replace safearray.py in comtypes installation as instructed?')
+		break
 	print('image at binning %d took %.6f seconds' % (binning, t1 -t0))
 	mrc.write(p,'test%d.mrc' % (i,))
 	print('image writing took %.6f seconds' % (t1 -t0))

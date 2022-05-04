@@ -41,6 +41,7 @@ class IceFinder(object):
 		self.save_mrc = is_testing
 		self.setComponents()
 		self.setDefaults()
+		self.lattice_matrix = None
 
 		## These are the results that are maintained by this
 		## object for external use through the __getitem__ method.
@@ -122,7 +123,13 @@ class IceFinder(object):
 		NotImplemented
 
 	def updateHoles(self, holes):
-		self.__update_result('holes', holes)
+		self.update_result('holes', holes)
+
+	def update_result(self, key, image):
+		self.__update_result(key, image)
+
+	def get_result(self, key):
+		return self.__results[key]
 
 	def configure_holestats(self, radius=None):
 		im = self.image
@@ -150,12 +157,12 @@ class IceFinder(object):
 		Set result holes2 that contains only good holes from ice thickness thresholds
 		in ice_config.
 		'''
-		if self.__results[input_name] is None:
+		if self.get_result(input_name) is None:
 			raise RuntimeError('need holes to calculate ice')
 		self.configure_ice(i0=i0,tmin=tmin,tmax=tmax)
-		holes = self.__results[input_name]
+		holes = self.get_result(input_name)
 		holes, holes2 = self.ice.calc_ice(holes)
-		self.__results['holes2']=holes2
+		self.update_result('holes2',holes2)
 
 	def find_holes(self):
 		'''
@@ -176,21 +183,21 @@ class IceFinder(object):
 		This adds hole stats to holes.  Note: Need to copy this in
 		subclasses since self.__results are not accessible in the subclass.
 		'''
-		if self.__results[input_name] is None:
+		if self.get_result(input_name) is None:
 			raise RuntimeError('need holes to calculate hole stats')
 		self.configure_holestats(radius=radius)
-		holes = list(self.__results[input_name])
+		holes = list(self.get_result(input_name))
 		holes = self.holestats.calc_stats(holes)
-		self.__update_result(input_name, holes)
+		self.update_result(input_name, holes)
 
 	def filter_good(self, input_name='holes2'):
 		'''
 		This filter holes with good is True.  Note: Need to copy this in
 		subclasses since self.__results are not accessible in the subclass.
 		'''
-		holes = list(self.__results[input_name])
+		holes = list(self.get_result(input_name))
 		holes = self.good.filter_good(holes)
-		self.__update_result('holes2', holes)
+		self.update_result('holes2', holes)
 
 	def calc_center_holestats(self, coord, im, r):
 		'''
@@ -216,33 +223,45 @@ class IceFinder(object):
 			blobs.append(blob)
 		return blobs
 
-	def make_convolved(self, input_name='holes'):
+	def make_convolved(self, input_name='holes',excluding_hole=None):
 		"""
 		Make convolved results as holes2.
-		Note: Subclass needs to duplicate this because __results must be in the same module.
 		"""
-		if self.__results[input_name] is None:
+		if self.get_result(input_name) is None:
 			raise RuntimeError('need %s to generate convolved targets' % input_name)
 			return
 		# convolve from these goodholes
-		goodholes = list(self.__results[input_name])
+		goodholes = list(self.get_result(input_name))
+		# exclude holes used for making a focus point
+		centers = map((lambda x: x.stats['center']),goodholes)
+		if excluding_hole is not None:
+			excluding_index = None
+			limit = 3
+			for i, p in enumerate(centers):
+				r,c = p
+				excluding_center = excluding_hole.stats['center']
+				if abs(r-excluding_center[0]) < limit and abs(c-excluding_center[1]) < limit:
+					excluding_index = i
+					break
+			goodholes.pop(i)
+		centers = map((lambda x: x.stats['center']),goodholes)
 		conv_vect = self.convolve.configs['conv_vect'] # list of (del_r,del_c)s
 		# reset before start
-		self.__update_result('holes2', [])
+		self.update_result('holes2', [])
 		if not conv_vect:
 			return
 		#real part
 		convolved = self.convolve.make_convolved(goodholes)
-		self.__update_result('holes2', convolved)
+		self.update_result('holes2', convolved)
 
 	def sampling(self, input_name='holes2'):
 		"""
 		Sample results of the input_name.
 		Note: Subclass needs to duplicate this because __results must be in the same module.
 		"""
-		holes = self.__results[input_name]
+		holes = self.get_result(input_name)
 		sampled = self.sample.sampleHoles(holes)
-		self.__update_result(input_name, sampled)
+		self.update_result(input_name, sampled)
 
 class TestIceFinder(IceFinder):
 	def setDefault(self):

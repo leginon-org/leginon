@@ -30,6 +30,7 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap", pikfile=True):
 	maxsizemult = float(params["maxsize"])
 	peaktype =  params["peaktype"]
 	msg =       not params['background']
+	roundness = params["minblobroundness"]
 	pixdiam =   diam/apix/float(bin)
 	pixrad =    diam/apix/2.0/float(bin)
 
@@ -43,7 +44,7 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap", pikfile=True):
 		peaktreelist = []
 		for count in range(0,len(maplist)):
 			mappeaktree = runFindPeaks(params,maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,
-				maxpeaks,maxsizemult,msg,bin,peaktype,pixrad,imgdict)
+				maxpeaks,maxsizemult,msg,bin,peaktype,pixrad,imgdict, roundness)
 			peaktreelist.append(mappeaktree)
 
 	peaktree = mergePeakTrees(imgdict, peaktreelist, params, msg, pikfile)
@@ -59,7 +60,7 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap", pikfile=True):
 	return peaktree
 
 def runFindPeaks(params,maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,
-		maxpeaks,maxsizemult,msg,bin,peaktype,pixrad,imgdict):
+		maxpeaks,maxsizemult,msg,bin,peaktype,pixrad,imgdict, minblobroundness=0):
 
 	tmpldbid =  None
 	mapdiam =   None
@@ -77,7 +78,7 @@ def runFindPeaks(params,maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,
 
 	#find peaks
 	peaktree = findPeaksInMap(imgmap,thresh,pixdiam,count+1,olapmult, 
-		maxpeaks,maxsizemult,msg,tmpldbid,mapdiam,bin,peaktype)
+		maxpeaks,maxsizemult,msg,tmpldbid,mapdiam,bin,peaktype, minblobroundness)
 
 	#remove border peaks
 	peaktree = removeBorderPeaks(peaktree, pixdiam, imgdict['image'].shape[1], imgdict['image'].shape[0])
@@ -98,7 +99,7 @@ def printPeakTree(peaktree):
 		print "  ",i,":",int(p['xcoord']),int(p['ycoord'])
 
 def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500, 
-		maxsizemult=1.0, msg=True, tmpldbid=None, mapdiam=None, bin=1, peaktype="maximum"):
+		maxsizemult=1.0, msg=True, tmpldbid=None, mapdiam=None, bin=1, peaktype="maximum", minblobroundness=0.):
 
 	outstr = ''
 	pixrad = pixdiam/2.0
@@ -109,7 +110,7 @@ def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500,
 
 	#VARY PEAKS FROM STATS
 	if msg is True:
-		outstr+=varyThreshold(imgmap, thresh, maxsize)
+		outstr+=varyThreshold(imgmap, thresh, maxsize, minblobroundness)
 
 	#GET FINAL PEAKS
 	blobtree, percentcov = findBlobs(imgmap, thresh, maxsize=maxsize,
@@ -130,7 +131,7 @@ def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500,
 
 	#max peaks
 	if(len(peaktree) > maxpeaks):
-		#orders peaks from biggest to smallest
+		#orders peaks from biggest to smallestroundness
 		peaktree.sort(_peakCompareBigSmall)
 		outstr+="!!! WARNING: more than maxpeaks ("+str(maxpeaks)+" peaks), selecting only top peaks\n"
 		outstr+="Corr best=%.3f, worst=%.3f\n"%(peaktree[0]['correlation'],
@@ -343,11 +344,11 @@ def peakDistSq(a,b):
 	col2 = b['xcoord']
 	return (row1-row2)**2 + (col1-col2)**2
 
-def varyThreshold(ccmap, threshold, maxsize):
+def varyThreshold(ccmap, threshold, maxsize, minblobroundness=0):
 	outstr = ''
 	for i in numpy.array([-0.05,-0.02,0.00,0.02,0.05]):
 		thresh      = threshold + float(i)
-		blobtree, percentcov = findBlobs(ccmap, thresh, maxsize=maxsize)
+		blobtree, percentcov = findBlobs(ccmap, thresh, maxsize=maxsize, minblobroundness=minblobroundness)
 		tstr  = "%.2f" % thresh
 		lbstr = "%4d" % len(blobtree)
 		pcstr = "%.2f" % percentcov
@@ -396,7 +397,7 @@ def convertBlobsToPeaks(blobtree, bin=1, tmpldbid=None, tmplnum=None, diam=None,
 			peakdict['ycoord']      = int(round( float(blobclass.stats['center'][0])*float(bin) ))
 			peakdict['xcoord']      = int(round( float(blobclass.stats['center'][1])*float(bin) ))
 		peakdict['correlation'] = blobclass.stats['mean']
-		peakdict['peakmoment']  = blobclass.stats['moment']
+		peakdict['roundness']  = blobclass.stats['roundness']
 		peakdict['peakstddev']  = blobclass.stats['stddev']
 		peakdict['peakarea']    = blobclass.stats['n']
 		attachTemplateLabel(peakdict,tmplnum,tmpldbid,diam)
@@ -404,7 +405,7 @@ def convertBlobsToPeaks(blobtree, bin=1, tmpldbid=None, tmplnum=None, diam=None,
 	return peaktree
 
 def findBlobs(ccmap, thresh, maxsize=500, minsize=1, maxpeaks=1500, border=10, 
-	  maxmoment=6.0, elim= "highest", summary=False):
+	  minblobroundness=0, elim= "highest", summary=False):
 	"""
 	calls leginon's imagefun.find_blobs
 	"""
@@ -417,8 +418,8 @@ def findBlobs(ccmap, thresh, maxsize=500, minsize=1, maxpeaks=1500, border=10,
 		return [],percentcov
 	#apImage.arrayToJpeg(ccmap, "dogmap2.jpg")
 	#apImage.arrayToJpeg(ccthreshmap, "threshmap2.jpg")
-	blobtree = imagefun.find_blobs(ccmap, ccthreshmap, border, maxpeaks*4,
-	  maxsize, minsize, maxmoment, elim, summary)
+	blobtree = imagefun.find_blobs(ccmap, ccthreshmap, border=border, maxblobs=maxpeaks*4,
+	  maxblobsize=maxsize, minblobsize=minsize, minblobroundness=minblobroundness, method=elim, summary=summary)
 	return blobtree, percentcov
 
 def peakTreeToPikFile(peaktree, imgname, tmpl, rundir="."):
@@ -439,7 +440,7 @@ def peakTreeToPikFile(peaktree, imgname, tmpl, rundir="."):
 		size = peakdict['peakarea']
 		mean_str = "%.4f" % peakdict['correlation']
 		std_str = "%.4f" % peakdict['peakstddev']
-		mom_str = "%.4f" % peakdict['peakmoment']
+		roundness_str = "%.4f" % peakdict['roundness']
 		if peakdict['diameter'] is not None:
 			diam_str = "%.2f" % peakdict['diameter']
 		else:
@@ -451,7 +452,7 @@ def peakTreeToPikFile(peaktree, imgname, tmpl, rundir="."):
 		#filename x y mean stdev corr_coeff peak_size templ_num angle moment
 		out = imgname+".mrc "+str(int(col))+" "+str(int(row))+ \
 			" "+mean_str+" "+std_str+" "+str(rho)+" "+str(int(size))+ \
-			" "+str(tmplnum)+" 0 "+mom_str+" "+diam_str
+			" "+str(tmplnum)+" 0 "+roundness_str+" "+diam_str
 		f.write(str(out)+"\n")
 	f.close()
 

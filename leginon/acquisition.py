@@ -354,6 +354,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if self.inDoneTargetList(newdata):
 			# most likely aborted from myamiweb
 			self.logger.info('target list ID: %d found in DoneImageTargetList' % (listid,))
+			# send event so waiting stops.
+			status='success'
+			e = event.TargetListDoneEvent(targetlistid=listid, status=status, targetlist=newdata)
+			self.outputEvent(e)
+			self.logger.info('TargetListDoneEvent sent')
 			return
 		targetwatcher.TargetWatcher.processData(self, newdata)
 		self.publish(self.imagelistdata, pubevent=True)
@@ -1399,20 +1404,34 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def reportStatus(self, type, message):
 		self.logger.info('%s: %s' % (type, message))
 
+	def useFirstPresetOrderPreset(self):
+			presetnames = self.settings['preset order']
+			currentpreset = self.presetsclient.getPresetByName(presetnames[0])
+			if not currentpreset:
+				raise InvalidPresetsSequence('selected preset name %s not found in presets manager')
+			return currentpreset
+
 	def simulateTarget(self):
 		self.setStatus('processing')
 		# no need to pause longer for simulateTarget
 		self.is_firstimage = False
+		# current preset is used to create a target for this node.
 		currentpreset = self.presetsclient.getCurrentPreset()
 		if currentpreset is None:
 			try:
 				self.validatePresets()
-			except InvalidPresetsSequence:
-				self.logger.error('Configure at least one preset in the settings for this node.')
+			except InvalidPresetsSequence as e:
+				self.logger.error(e)
 				self.setStatus('idle')
 				return
-			presetnames = self.settings['preset order']
-			currentpreset = self.presetsclient.getPresetByName(presetnames[0])
+			# use first preset in preset order to initialize
+			try:
+				currentpreset = self.useFirstPresetOrderPreset()
+			except InvalidPresetsSequence as e:
+				self.logger.error(e)
+				self.logger.error('Configure a valid preset to allow initialization')
+				self.setStatus('idle')
+				return
 		targetdata = self.newSimulatedTarget(preset=currentpreset,grid=self.grid)
 		self.publish(targetdata, database=True)
 		## change to 'processing' just like targetwatcher does

@@ -117,6 +117,11 @@ class Corrector(imagewatcher.ImageWatcher):
 		cameraname = self.instrument.getCCDCameraName()
 		if cameraname == 'DE12':
 			self.changeScreenPosition('down')
+		need_dark = not self.instrument.ccdcamera.SystemDarkSubtracted
+		if not need_dark:
+			self.logger.warning('%s does not need dark reference' % cameraname)
+			self.panel.acquisitionDone()
+			return
 		for channel in channels:
 			try:
 				imagedata = self.acquireReference(type='dark', channel=channel)
@@ -132,6 +137,15 @@ class Corrector(imagewatcher.ImageWatcher):
 		self.panel.acquisitionDone()
 
 	def acquireBright(self, channels):
+		cameraname = self.instrument.getCCDCameraName()
+		need_bright = not (self.instrument.ccdcamera.FrameGainCorrected or self.instrument.ccdcamera.SumGainCorrected)
+		if not need_bright:
+			self.logger.warning('%s does not need bright reference' % cameraname)
+			need_norm = not (self.instrument.ccdcamera.FrameGainCorrected and self.instrument.ccdcamera.SumGainCorrected)
+			if need_norm:
+				self.logger.warning('Use acquire Norm to retrieve gain reference from camera host')
+			self.panel.acquisitionDone()
+			return
 		for channel in channels:
 			try:
 				imagedata = self.acquireReference(type='bright', channel=channel)
@@ -162,6 +176,29 @@ class Corrector(imagewatcher.ImageWatcher):
 		self.panel.acquisitionDone()
 		self.stopTimer('acquireRaw')
 
+	def retrieveNorm(self, channels):
+		"""
+		Retrieve Norm image (Gain in Falcon terminology) instead of
+		acquire our own.  Camera software often has an easier gui.
+		"""
+		if 1 in channels:
+			self.logger.error('Norm retrieval can only be applied to channel 0')
+			self.panel.acquisitionDone()
+			return
+		# save only to channel 0
+		channel = 0
+		try:
+			self.instrument.ccdcamera.Settings = self.settings['camera settings']
+			imagedata = self._retrieveReference(exp_type='norm', channel=channel)
+		except Exception, e:
+			self.logger.exception('Cannot retrieve reference: %s' % (e,))
+		else:
+			image = imagedata['image']
+			self.displayImage(image)
+			self.currentimage = image
+			self.beep()
+		self.panel.acquisitionDone()
+
 	def acquireCorrected(self, channels):
 		for channel in channels:
 			self.startTimer('acquireCorrected')
@@ -188,8 +225,15 @@ class Corrector(imagewatcher.ImageWatcher):
 
 	def displayRef(self, reftype, channel):
 		self.setStatus('processing')
-		self.logger.info('load channel %s %s image' % (channel, reftype))
 
+		need_dark = not self.instrument.ccdcamera.SystemDarkSubtracted
+		need_bright = not (self.instrument.ccdcamera.FrameGainCorrected or self.instrument.ccdcamera.SumGainCorrected)
+		if ('dark' in reftype and not need_dark) or ('bright' in reftype and not need_bright):
+			self.logger.warning('Displaying %s is not valid for this camera' % reftype.upper())
+			self.beep()
+			self.setStatus('idle')
+			return
+		self.logger.info('load channel %s %s image' % (channel, reftype))
 		if reftype != 'dark-subtracted':
 			imdata = self.retrieveCorrectorImageFromSettings(reftype, channel)
 			if imdata == None:
@@ -278,6 +322,21 @@ class Corrector(imagewatcher.ImageWatcher):
 		finaldata = self.storeCorrectorImageData(finaldata, type, channel)
 		return finaldata
 
+	def _retrieveReference(self,exp_type, channel):
+		"""
+		Pretend to acquire image but in fact return an existing one
+		on the camera pc.
+		"""
+		exposuretype = exp_type
+		try:
+			imagedata = self.acquireRawCameraImageData(type=exposuretype, force_no_frames=True)
+		except Exception, e:
+			self.logger.error('Error retrieving image: %s' % e)
+			raise
+		## final image based on contents of last image in series
+		imagedata = self.storeCorrectorImageData(imagedata, 'norm', 0)
+		return imagedata
+
 	def insert(self, x):
 		self.__n += 1
 		if self.__n == 1:
@@ -364,38 +423,64 @@ class Corrector(imagewatcher.ImageWatcher):
 		refarray = refimagedata['image']
 		if refimagedata is not None and self.needCalcNorm(type):
 			self.logger.info('Got reference image, calculating normalization')
-			self.calc_norm(refimagedata)
+			self.calcNormFromRefData(refimagedata)
 
 		self.maskimg = numpy.zeros(refarray.shape)
 		return refarray
 
-	def calc_norm(self, refdata):
+	def _retrieveDarkBrightPair(self, refdata):
 		scopedata = refdata['scope']
 		cameradata = refdata['camera']
 		channel = refdata['channel']
+		# find the other refdata needed to calculate norm
 		if isinstance(refdata, leginondata.DarkImageData):
 			dark = refdata
 			bright = self.retrieveCorrectorImageData('bright', scopedata, cameradata, channel)
 			if bright is None:
-				self.logger.warning('No bright reference image for normalization calculations')
-				return
+				raise ValueError('No bright reference image for normalization calculations')
 		if isinstance(refdata, leginondata.BrightImageData):
 			bright = refdata
-			dark = self.retrieveCorrectorImageData('dark', scopedata, cameradata, channel)
-			if dark is None:
-				self.logger.warning('No dark reference image for normalization calculations')
-				return
+			dark = None
+			need_dark = not self.instrument.ccdcamera.SystemDarkSubtracted
+			if need_dark:
+				dark = self.retrieveCorrectorImageData('dark', scopedata, cameradata, channel)
+				if dark is None:
+					raise ValueError('No dark reference image for normalization calculations')
+		return dark, bright
+
+	def calcNormFromRefData(self, refdata):
 		try:
-			darkarray = self.prepareDark(dark, bright)
-		except:
-			self.logger.warning('Unable to load dark image from %s' % dark['session']['image path'])
+			dark, bright = self._retrieveDarkBrightPair(refdata)
+		except ValueError as e:
+			self.logger.warning(e)
+			return
+		except Exception as e:
+			self.logger.error(e)
 			return
 		try:
 			brightarray = bright['image']
 		except:
 			self.logger.warning('Unable to load bright image from %s' % bright['session']['image path'])
 			return
+		if dark:
+			try:
+				darkarray = self.prepareDark(dark, bright)
+			except:
+				self.logger.warning('Unable to load dark image from %s' % dark['session']['image path'])
+				return
+		else:
+			darkarray = numpy.zeros(brightarray.shape)
+		# calculation
+		normarray = self._calc_norm(darkarray, brightarray)
+		# Saving normdata
+		normdata = leginondata.CameraImageData(initializer=refdata)
+		normdata['image'] = normarray
+		normdata['dark'] = dark
+		normdata['bright'] = bright
+		channel = refdata['channel']
+		self.storeCorrectorImageData(normdata, 'norm', channel)
 
+	def _calc_norm(self, darkarray, brightarray):
 		try:
 			normarray = brightarray - darkarray
 		except:
@@ -410,12 +495,7 @@ class Corrector(imagewatcher.ImageWatcher):
 		normarray = normavg / normarray
 		# Avoid over correcting dead pixels
 		normarray = numpy.ma.masked_greater(normarray,20).filled(1)
-		# Saving normdata
-		normdata = leginondata.CameraImageData(initializer=refdata)
-		normdata['image'] = normarray
-		normdata['dark'] = dark
-		normdata['bright'] = bright
-		self.storeCorrectorImageData(normdata, 'norm', channel)
+		return normarray
 
 	def onAddPoints(self):
 		'''

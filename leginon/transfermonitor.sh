@@ -93,7 +93,7 @@ do
 
 		echo FILEPATH IS ${FILEPATH}
 
-		if [[ ${NEWFILE} = *".tif" ]]; then
+		if [[ ${NEWFILE} = *".tif" || ${NEWFILE} = *".eer" ]]; then
 			DIFF=$( diff <(ls ${FILEPATH}) <(ls $TARGETDIR$SESSIONPATH) | grep \< | awk '{print $2}' )
 			CHECKEXT=''
 			# fit files are not compressed so the original need to be kept
@@ -114,7 +114,7 @@ do
 			TEMPFILENAME=$TARGETDIR$SESSIONPATH$j
 			FINALFILENAME=$TARGETDIR$SESSIONPATH$j$CHECKEXT
 			echo TEMPFILENAME IS $TEMPFILENAME
-			if [ ! -f "$FINALEFILENAME" ] && ([ ${TEMPFILENAME: -4} == ".mrc" ] || [ ${TEMPFILENAME: -4} == ".xml" ] || [ ${TEMPFILENAME: -4} == ".tif" ]) && [[ "${TARGETDIR}${SESSIONPATH}" != *references* ]];
+			if [ ! -f "$FINALEFILENAME" ] && ([ ${TEMPFILENAME: -4} == ".mrc" ] || [ ${TEMPFILENAME: -4} == ".xml" ] || [ ${TEMPFILENAME: -4} == ".tif" ] || [ ${TEMPFILENAME: -4} == ".eer" ]) && [[ "${TARGETDIR}${SESSIONPATH}" != *references* ]];
 
 			then
 				echo source: $FILEPATH$j target: $FINALFILENAME j: $j

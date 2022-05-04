@@ -20,6 +20,7 @@ import math
 import leginon.gui.wx.JAHCFinder
 from leginon import version
 import itertools
+import numpy
 
 invsqrt2 = math.sqrt(2.0)/2.0
 default_template = os.path.join(version.getInstalledLocation(),'holetemplate.mrc')
@@ -49,6 +50,7 @@ class JAHCFinder(icetargetfinder.IceTargetFinder):
 		'blobs max': 300,
 		'blobs max size': 1000,
 		'blobs min size': 10,
+		'blobs min roundness': 0.8,
 		'lattice spacing': 150.0,
 		'lattice tolerance': 0.1,
 		'lattice hole radius': 15.0,
@@ -94,8 +96,9 @@ class JAHCFinder(icetargetfinder.IceTargetFinder):
 
 		self.foc_counter = itertools.count()
 		self.foc_activated = False
-
-		self.start()
+		self.lattice_matrix = self.hf.lattice_matrix
+		if self.__class__ == JAHCFinder:
+			self.start()
 
 	def correlateTemplate(self):
 		'''
@@ -165,12 +168,14 @@ class JAHCFinder(icetargetfinder.IceTargetFinder):
 		blobsize = self.settings['blobs max size']
 		minblobsize = self.settings['blobs min size']
 		maxblobs = self.settings['blobs max']
-		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs, minblobsize=minblobsize)
+		minblobroundness = self.settings['blobs min roundness']   #wjr
+		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs, minblobsize=minblobsize, minblobroundness=minblobroundness)   #wjr
 		try:
 			self.hf.find_blobs()
 		except Exception as e:
 			raise
 			self.logger.error(e)
+			self.logger.error('was in FindBlobs')
 			return
 		blobs = self.hf['blobs']
 		targets = self.blobStatsTargets(blobs)
@@ -251,7 +256,7 @@ class JAHCFinder(icetargetfinder.IceTargetFinder):
 		# ice
 		self.ice()
 
-	def storeHoleFinderPrefsData(self, imagedata):
+	def _getHolePrefs(self, imagedata):
 		hfprefs = leginondata.HoleFinderPrefsData()
 		hfprefs.update({
 			'session': self.session,
@@ -269,6 +274,7 @@ class JAHCFinder(icetargetfinder.IceTargetFinder):
 			'blob-max-number': self.settings['blobs max'],
 			'blob-max-size': self.settings['blobs max size'],
 			'blob-min-size': self.settings['blobs min size'],
+#			'blob-min-roundness': self.settings['blobs min roundness'],    # wjr don not store yet in database
 			'lattice-spacing': self.settings['lattice spacing'],
 			'lattice-tolerance': self.settings['lattice tolerance'],
 			'stats-radius': self.settings['lattice hole radius'],
@@ -289,7 +295,10 @@ class JAHCFinder(icetargetfinder.IceTargetFinder):
 			'file-diameter': self.settings['file diameter'],
 			'template-filename': self.settings['template filename'],
 		})
+		return hfprefs
 
+	def storeHoleFinderPrefsData(self, imagedata):
+		hfprefs = self._getHolePrefs(imagedata)
 		self.publish(hfprefs, database=True)
 		return hfprefs
 

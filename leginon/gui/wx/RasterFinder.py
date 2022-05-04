@@ -12,10 +12,10 @@ import leginon.gui.wx.TargetPanel
 import leginon.gui.wx.ImagePanelTools
 import leginon.gui.wx.Settings
 import leginon.gui.wx.AutoTargetFinder
+import leginon.gui.wx.IceTargetFinder
 from leginon.gui.wx.Entry import Entry, IntEntry, FloatEntry
 from leginon.gui.wx.Presets import PresetChoice
 from leginon.gui.wx.Choice import Choice
-import leginon.gui.wx.TargetTemplate
 import leginon.gui.wx.ToolBar
 
 class Panel(leginon.gui.wx.AutoTargetFinder.Panel):
@@ -86,8 +86,8 @@ class RasterScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sb = wx.StaticBox(self, -1, 'Spacing/Angle Calculator')
 		sbszauto = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
-		self.widgets['raster spacing'] = IntEntry(self, -1, chars=4, min=1)
-		self.widgets['raster spacing asymm'] = IntEntry(self, -1, chars=4)
+		self.widgets['raster spacing'] = FloatEntry(self, -1, chars=4, min=1)
+		self.widgets['raster spacing asymm'] = FloatEntry(self, -1, chars=4)
 		self.widgets['raster limit'] = IntEntry(self, -1, chars=4, min=1)
 		self.widgets['raster limit asymm'] = IntEntry(self, -1, chars=4)
 		self.widgets['raster angle'] = FloatEntry(self, -1, chars=4)
@@ -237,6 +237,8 @@ class PolygonScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		sbszpolygon.Add(szpolygon, 1, wx.EXPAND|wx.ALL, 5)
 
+		sbszstats = self.createStatsBoxSizer()
+
 		self.btest = wx.Button(self, -1, 'Test')
 		szbutton = wx.GridBagSizer(5, 5)
 		szbutton.Add(self.btest, (0, 0), (1, 1),
@@ -245,7 +247,28 @@ class PolygonScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
 
-		return [sbszpolygon, szbutton]
+		return [sbszpolygon, sbszstats, szbutton]
+
+	def createStatsBoxSizer(self):
+		sb = wx.StaticBox(self, -1, 'Statistics')
+		sbszstats = wx.StaticBoxSizer(sb, wx.VERTICAL)
+
+		self.widgets['lattice hole radius'] = FloatEntry(self, -1, min=0.0, chars=6)
+		self.widgets['lattice zero thickness'] = FloatEntry(self, -1, chars=6)
+
+		szstats = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Radius:')
+		szstats.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szstats.Add(self.widgets['lattice hole radius'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Reference Intensity:')
+		szstats.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szstats.Add(self.widgets['lattice zero thickness'], (1, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		szstats.AddGrowableCol(1)
+
+		sbszstats.Add(szstats, 1, wx.EXPAND|wx.ALL, 5)
+		return sbszstats
 
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
@@ -271,119 +294,8 @@ class FinalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return FinalScrolledSettings(self,self.scrsize,False)
 
-class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
-	def initialize(self):
-		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, 'Ice Analysis')
-		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sb = wx.StaticBox(self, -1, 'Focus Targets')
-		sbszft = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sb = wx.StaticBox(self, -1, 'Acquisition Targets')
-		sbszat = wx.StaticBoxSizer(sb, wx.VERTICAL)
-
-		self.widgets['ice box size'] = FloatEntry(self, -1, chars=8)
-		self.widgets['ice thickness'] = FloatEntry(self, -1, chars=8)
-		self.widgets['ice min mean'] = FloatEntry(self, -1, chars=8)
-		self.widgets['ice max mean'] = FloatEntry(self, -1, chars=8)
-		self.widgets['ice max std'] = FloatEntry(self, -1, chars=8, min=0.0)
-		self.widgets['ice min std'] = FloatEntry(self, -1, chars=8, min=0.0)
-		self.widgets['acquisition convolve'] = wx.CheckBox(self, -1, 'Convolve')
-		self.widgets['acquisition convolve template'] = \
-			leginon.gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
-		self.widgets['acquisition constant template'] = \
-			leginon.gui.wx.TargetTemplate.Panel(self, 'Constant Template', targetname='Constant target')
-
-		szice = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Box size:')
-		szice.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szice.Add(self.widgets['ice box size'], (0, 1), (1, 1),
-			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Reference Intensity:')
-		szice.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szice.Add(self.widgets['ice thickness'], (1, 1), (1, 1),
-			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Min. mean:')
-		szice.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szice.Add(self.widgets['ice min mean'], (2, 1), (1, 1),
-			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Max. mean:')
-		szice.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szice.Add(self.widgets['ice max mean'], (3, 1), (1, 1),
-			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Max. stdev.:')
-		szice.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szice.Add(self.widgets['ice max std'], (4, 1), (1, 1),
-			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Min. stdev.:')
-		szice.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szice.Add(self.widgets['ice min std'], (5, 1), (1, 1),
-			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		szice.AddGrowableCol(1)
-
-		sbszice.Add(szice, 1, wx.EXPAND|wx.ALL, 5)
-
-		szft = self.FocusFilterSettingsPanel()
-		sbszft.Add(szft, 1, wx.EXPAND|wx.ALL, 5)
-
-		szat = wx.GridBagSizer(5, 5)
-		szat.Add(self.widgets['acquisition convolve'], (0, 0), (1, 2),
-			wx.ALIGN_CENTER_VERTICAL)
-		szat.Add(self.widgets['acquisition convolve template'], (1, 0), (1, 1),
-			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szat.Add(self.widgets['acquisition constant template'], (2, 0), (1, 1),
-			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szat.AddGrowableCol(0)
-
-		sbszat.Add(szat, 1, wx.EXPAND|wx.ALL, 5)
-
-		self.bice = wx.Button(self, -1, 'Test')
-		self.cice = wx.Button(self, -1, '&Clear targets')
-		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(self.cice, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
-		szbutton.Add(self.bice, (0, 1), (1, 1),
-			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		szbutton.AddGrowableCol(1)
-
-		szt = wx.GridBagSizer(5, 5)
-		szt.Add(sbszft, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
-		szt.Add(sbszat, (0, 1), (1, 1), wx.EXPAND|wx.ALL)
-
-
-		self.Bind(wx.EVT_BUTTON, self.onAnalyzeIceButton, self.bice)
-		self.Bind(wx.EVT_BUTTON, self.onClearButton, self.cice)
-
-		return [sbszice, szt, szbutton]
-
-	
-	def FocusFilterSettingsPanel(self):
-		self.widgets['focus convolve'] = wx.CheckBox(self, -1, 'Convolve')
-		self.widgets['focus convolve template'] = \
-			leginon.gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
-		self.widgets['focus constant template'] = \
-			leginon.gui.wx.TargetTemplate.Panel(self, 'Constant Template', targetname='Constant target')
-		self.widgets['focus one'] = wx.CheckBox(self, -1, 'Threshold to one focus target')
-		szft = wx.GridBagSizer(5, 5)
-		szft.Add(self.widgets['focus convolve'], (0, 0), (1, 2),
-			wx.ALIGN_CENTER_VERTICAL)
-		szft.Add(self.widgets['focus convolve template'], (1, 0), (1, 1),
-			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szft.Add(self.widgets['focus constant template'], (2, 0), (1, 1),
-			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szft.Add(self.widgets['focus one'], (3, 0), (1, 1),
-			wx.ALIGN_CENTER_VERTICAL)
-		szft.AddGrowableCol(0)
-
-		return szft
-
-	def onAnalyzeIceButton(self, evt):
-		self.dialog.setNodeSettings()
-		threading.Thread(target=self.node.ice).start()
-		self.panel.imagepanel.showTypeToolDisplays(['acquisition','focus'])
-
-	def onClearButton(self, evt):
-		self.dialog.setNodeSettings()
-		self.node.clearTargets('acquisition')
-		self.node.clearTargets('focus')
+class FinalScrolledSettings(leginon.gui.wx.IceTargetFinder.FinalScrolledSettings):
+	this = 'RasterTargetFinder'
 
 class SettingsDialog(leginon.gui.wx.AutoTargetFinder.SettingsDialog):
 	pass

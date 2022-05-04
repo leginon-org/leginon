@@ -475,6 +475,16 @@ class TIA_Falcon(TIA):
 				pass
 
 	def getSystemGainDarkCorrected(self):
+		# deprecated in v3.6
+		return True
+
+	def getSystemDarkSubtracted(self):
+		return True
+
+	def getFrameGainCorrected(self):
+		return True
+
+	def getSumGainCorrected(self):
 		return True
 
 	def getFrameFlip(self):
@@ -508,6 +518,16 @@ class TIA_Ceta(TIA):
 	camera_name = 'BM-Ceta'
 
 	def getSystemGainDarkCorrected(self):
+		# deprecated in v3.6
+		return True
+
+	def getSystemDarkSubtracted(self):
+		return True
+
+	def getFrameGainCorrected(self):
+		return True
+
+	def getSumGainCorrected(self):
 		return True
 
 	def getPixelSize(self):

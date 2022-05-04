@@ -30,7 +30,8 @@ def initializeDDFrameprocess(sessionname,wait_flag=False):
 	initialize the DDprocess according to the camera
 	'''
 	sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
-	dcamdata = apDatabase.getFrameImageCamera(sessiondata)
+	camemdata = apDatabase.getFrameImageCameraState(sessiondata) #CameraEMData
+	dcamdata = camemdata['ccdcamera'] #InstrumentData instance
 	if not dcamdata:
 		apDisplay.printError('Can not determine DD camera type. Did you save frames?')
 	if 'GatanK2' in dcamdata['name']:
@@ -42,6 +43,9 @@ def initializeDDFrameprocess(sessionname,wait_flag=False):
 	elif 'DE' in dcamdata['name']:
 		from appionlib import apDEprocess
 		return apDEprocess.DEProcessing(wait_flag)
+	elif 'Falcon4EC' in dcamdata['name'] and camemdata['eer frames']==True:
+		from appionlib import apEerProcess
+		return apEerProcess.EerProcessing(wait_flag)
 	elif 'Falcon3' in dcamdata['name'] or 'Falcon4' in dcamdata['name']:
 		from appionlib import apFalcon3Process
 		return apFalcon3Process.FalconProcessing(wait_flag)
@@ -122,6 +126,8 @@ class DirectDetectorProcessing(object):
 		self.extname = 'mrc'
 		if imagedata['camera']['tiff frames']:
 			self.extname = 'tif'
+		if imagedata['camera']['eer frames']:
+			self.extname = 'eer'
 		return self.extname
 		
 	def getFrameStackPath(self,temp=False):
@@ -172,12 +178,25 @@ class DirectDetectorProcessing(object):
 		self.square_output = value
 
 	def getUsedFramesFromImageData(self,imagedata):
-		return imagedata['camera']['use frames']
+		used_frames = imagedata['camera']['use frames']
+		if used_frames:
+			return used_frames
+		else:
+			# all frames used
+			# see Issue 12298
+			# With fast rolling shutter frame rate such as Falcon eer format,
+			# the use frames field becomes very long.  Since frame removing is not done
+			# in most modern approach, we will assume all frames used if not specified.
+			return range(imagedata['camera']['nframes'])
 
 	def checkFrameListRange(self,framelist):
 		# check parameter
 		if not self.image:
 			apDisplay.printError("You must set an image for the operation")
+		if framelist is None:
+			# handle default all frames used
+			framelist = range(self.totalframe)
+			return framelist
 		if min(framelist) not in range(self.totalframe):
 			apDisplay.printError("Starting Frame not in saved raw frame range, can not be processed")
 		framelength_original = len(framelist)
@@ -1068,8 +1087,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		return self.makeCorrectedFrameStack_cpu(use_full_raw_area)
 
 	def makeModifiedDefectMrc(self):
-		self.setCameraInfo(1,self.use_full_raw_area)
-		a = self.c_client.getCameraDefectMap(self.camerainfo)
+		image_for_correction = self.getCorrectedImageData()
+		a = self.c_client.getImageDefectMap(image_for_correction)
 		frame_flip, frame_rotate = self.getImageFrameOrientation()
 		# flip and rotate map_array.  Therefore, do the oposite of
 		# frames
@@ -1323,11 +1342,13 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			camdata['binning'][axis] = added_bin*old_bin
 			camdata['offset'][axis] = (camerasize[axis]/newbin -camdata['dimension'][axis])/2
 		framelist = self.getAlignedSumFrameList()
-		if framelist:
+		nframes = self.getNumberOfFrameSaved()
+		# see Issue 12298
+		if framelist and framelist != range(nframes):
 			camdata['use frames'] = framelist
 		else:
-			# DE camera might not use all frames in the original sum image
-			camdata['use frames'] = range(self.totalframe)
+			# assume all frames that are saved are used by not defining the list
+			camdata['use frames'] = None
 		self.aligned_camdata = camdata
 
 	def getAlignedCameraEMData(self):

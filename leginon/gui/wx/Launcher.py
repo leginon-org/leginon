@@ -15,6 +15,7 @@ import leginon.gui.wx.Events
 import leginon.gui.wx.ToolBar
 import leginon.gui.wx.Selector
 import leginon.gui.wx.LeginonLogging
+from leginon.gui.wx import DBinfo
 
 CreateNodeEventType = wx.NewEventType()
 DestroyNodeEventType = wx.NewEventType()
@@ -96,6 +97,13 @@ class Frame(wx.Frame):
 		self.settingsmenu.Append(self.loggingmenuitem)
 		self.menubar.Append(self.settingsmenu, '&Settings')
 
+		# help menu
+		self.helpmenu = wx.Menu()
+		self.dbmenuitem = wx.MenuItem(self.settingsmenu, -1, '&DBinfo...')
+		self.Bind(wx.EVT_MENU, self.onMenuDBinfo, self.dbmenuitem)
+		self.helpmenu.AppendItem(self.dbmenuitem)
+		self.menubar.Append(self.helpmenu, '&Help')
+
 		self.SetMenuBar(self.menubar)
 
 		self.toolbar = leginon.gui.wx.ToolBar.ToolBar(self)
@@ -114,6 +122,11 @@ class Frame(wx.Frame):
 
 	def onMenuLogging(self, evt):
 		dialog = leginon.gui.wx.LeginonLogging.LoggingConfigurationDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
+
+	def onMenuDBinfo(self, evt):
+		dialog = DBinfo.Dialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 

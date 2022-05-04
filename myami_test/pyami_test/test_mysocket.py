@@ -44,7 +44,7 @@ class TestIpMapping(unittest.TestCase):
 		'''
 		self.setUp()
 		self.testHostname()
-		self.testMapping()
+		#self.testMapping()
 
 def runTestCases():
 	'''

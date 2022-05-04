@@ -18,7 +18,7 @@ import os
 from leginon import icefinderback, statshole, holetemplatemaker, lattice
 
 ###################
-### Because of the use of __result, the subclass don't get them as attribute. AC 2021
+### Because of the use of __result, the subclass should define update_result and get_result
 ###################
 class HoleFinder(icefinderback.IceFinder):
 	'''
@@ -31,9 +31,11 @@ class HoleFinder(icefinderback.IceFinder):
 	Do the processes step by step, or the whole thing:
 		hf.find_holes()
 	'''
+	correlator_from_result = 'original'
 	def __init__(self, is_testing=False):
 		self.setComponents()
 		self.setDefaults()
+		self.lattice_matrix = None
 		self.save_mrc = is_testing
 		## These are the results that are maintained by this
 		## object for external use through the __getitem__ method.
@@ -81,8 +83,8 @@ class HoleFinder(icefinderback.IceFinder):
 		self.correlation_config = {'cortype': 'cross', 'corfilt': (1.0,),'cor_image_min':0.0}
 		self.threshold = 3.0
 		self.threshold_method = "Threshold = mean + A * stdev"
-		self.blobs_config = {'border': 20, 'maxblobsize': 50, 'maxblobs':100, 'minblobsize':0}
-		self.lattice_config = {'tolerance': 0.1, 'vector': 100.0, 'minspace': 20, 'extend': 'off'}
+		self.blobs_config = {'border': 20, 'maxblobsize': 50, 'maxblobs':100, 'minblobsize':0, 'minblobroundness':0.8}  #wjr
+		self.lattice_config = {'tolerance': 0.1, 'spacing': 100.0, 'minspace': 20, 'extend': 'off'}
 		self.holestats_config = {'radius': 20}
 		self.filter_config = {'tmin': -10, 'tmax': 20}
 		self.convolve_config = {'conv_vect':None}
@@ -112,20 +114,32 @@ class HoleFinder(icefinderback.IceFinder):
 	def updateHoles(self, holes):
 		self.__update_result('holes', holes)
 
+	def update_result(self, key, image):
+		'''
+		update __results in this module. Must copy to the subclass in a different module.
+		'''
+		self.__update_result(key, image)
+
+	def get_result(self,key):
+		'''
+		get __result in this module. Must copy to the subclass in a different module.
+		'''
+		return self.__results[key]
+
 	def configure_holefinder(self, script=None, job_name='hole', in_path=None, out_dir=None, score_key=None, threshold=None):
 		'''
 		configuration for holefinder to run. Each non-None kwarg is added.
 		'''
-		if not in_path and self.__results['original']:
+		if not in_path and self.get_result('original'):
 			self.temp_in_path = '%s.mrc' % job_name
-			mrc.write(self.__results['original'], self.temp_in_path)
+			mrc.write(self.get_result('original'), self.temp_in_path)
 			in_path = self.temp_in_path
 
 	def run_holefinder(self):
 		'''
 		Return external hole finder holes found
 		'''
-		if self.__results['original'] is None:
+		if self.get_result('original') is None:
 			raise RuntimeError('need original image to run hole finding')
 		self.create_template()
 		self.correlate_template()
@@ -137,12 +151,12 @@ class HoleFinder(icefinderback.IceFinder):
 		self.template.configure({'template filename':filename, 'template diameter':diameter, 'file diameter':filediameter, 'invert':invert, 'multiple':multiple, 'spacing': spacing, 'angle':angle})
 
 	def create_template(self):
-		fromimage = 'original'
-		if self.__results[fromimage] is None:
+		fromimage = self.correlator_from_result
+		if self.get_result(fromimage) is None:
 			raise RuntimeError('need image %s before creating template' % (fromimage,))
 		template = self.template.create_template(self.im_shape)
-		self.logger.info('invert template for correlation')
-		self.__update_result('template', template)
+		#self.logger.info('invert template for correlation')
+		self.update_result('template', template)
 		self.saveTestMrc(template, 'template.mrc')
 
 	def configure_correlation(self, cortype=None, corfilt=None,cor_image_min=0):
@@ -169,12 +183,12 @@ class HoleFinder(icefinderback.IceFinder):
 		'''
 		Correlate template that is already created and configured.
 		'''
-		fromimage = 'original'
-		if self.__results[fromimage] is None or self.__results['template'] is None:
+		fromimage = self.correlator_from_result
+		if self.get_result(fromimage) is None or self.get_result('template') is None:
 			raise RuntimeError('need image %s and template before correlation' % (fromimage,))
-		edges = self.__results[fromimage]
+		edges = self.get_result(fromimage)
 		edges = self.maskBlack(edges)
-		template = self.__results['template']
+		template = self.get_result('template')
 		cortype = self.correlation_config['cortype']
 		corfilt = self.correlation_config['corfilt']
 		if cortype == 'cross':
@@ -188,7 +202,7 @@ class HoleFinder(icefinderback.IceFinder):
 			kernel = convolver.gaussian_kernel(*corfilt)
 			self.convolver.setKernel(kernel)
 			cc = self.convolver.convolve(image=cc)
-		self.__update_result('correlation', cc)
+		self.update_result('correlation', cc)
 		self.saveTestMrc(cc, 'correlation.mrc')
 
 	def configure_threshold(self, threshold=None, threshold_method=None):
@@ -201,9 +215,9 @@ class HoleFinder(icefinderback.IceFinder):
 		'''
 		Threshold the correlation image.
 		'''
-		if self.__results['correlation'] is None:
+		if self.get_result('correlation') is None:
 			raise RuntimeError('need correlation image to threshold')
-		cc = self.__results['correlation']
+		cc = self.get_result('correlation')
 
 		meth = self.threshold_method
 		if meth == "Threshold = mean + A * stdev":
@@ -214,10 +228,10 @@ class HoleFinder(icefinderback.IceFinder):
 			thresh = self.threshold
 
 		t = imagefun.threshold(cc, thresh)
-		self.__update_result('threshold', t)
+		self.update_result('threshold', t)
 		self.saveTestMrc(t, 'threshold.mrc')
 
-	def configure_blobs(self, border=None, maxblobs=None, maxblobsize=None, minblobsize=None):
+	def configure_blobs(self, border=None, maxblobs=None, maxblobsize=None, minblobsize=None, minblobroundness=None):
 		if border is not None:
 			self.blobs_config['border'] = border
 		if maxblobsize is not None:
@@ -226,25 +240,28 @@ class HoleFinder(icefinderback.IceFinder):
 			self.blobs_config['minblobsize'] = minblobsize
 		if maxblobs is not None:
 			self.blobs_config['maxblobs'] = maxblobs
+		if minblobroundness is not None:
+			self.blobs_config['minblobroundness'] = minblobroundness   #wjr
 
 	def find_blobs(self, picks=None):
 		'''
 		find blobs on a thresholded image
 		'''
 		if picks is None:
-			if self.__results['threshold'] is None or self.__results['correlation'] is None:
+			if self.get_result('threshold') is None or self.get_result('correlation') is None:
 				raise RuntimeError('need correlation image and threshold image to find blobs')
-			im = self.__results['correlation']
-			mask = self.__results['threshold']
+			im = self.get_result('correlation')
+			mask = self.get_result('threshold')
 			border = self.blobs_config['border']
 			maxsize = self.blobs_config['maxblobsize']
 			minsize = self.blobs_config['minblobsize']
 			maxblobs = self.blobs_config['maxblobs']
-			blobs = imagefun.find_blobs(im, mask, border, maxblobs, maxsize, minsize)
+			minroundness = self.blobs_config['minblobroundness']
+			blobs = imagefun.find_blobs(im, mask, border, maxblobs, maxsize, minsize, minroundness)   #wjr
 		else:
 			picks = self.swapxy(picks)
 			blobs = self.points_to_blobs(picks)
-		self.__update_result('blobs', blobs)
+		self.update_result('blobs', blobs)
 
 	def configure_lattice(self, tolerance=None, spacing=None, minspace=None, extend=None):
 		if tolerance is not None:
@@ -255,6 +272,7 @@ class HoleFinder(icefinderback.IceFinder):
 			self.lattice_config['minspace'] = minspace
 		if extend is not None:
 			self.lattice_config['extend'] = extend
+		l = self.lattice_config['spacing']
 
 	def points_to_blobs(self, points):
 			blobs = []
@@ -274,7 +292,7 @@ class HoleFinder(icefinderback.IceFinder):
 		if len(points) < 2:
 			self.logger.warning('Need at least 2 point to determine 3x3 patter orientation')
 			return []
-		shape = self.__results['original'].shape
+		shape = self.get_result('original').shape
 		tolerance = self.lattice_config['tolerance']
 		spacing = self.lattice_config['spacing']
 		total_lattice_points = []
@@ -290,15 +308,16 @@ class HoleFinder(icefinderback.IceFinder):
 			best_lattice = lattice.pointsToLattice(newpoints, spacing, tolerance, first_is_center=True)
 			best_lattice_points = best_lattice.raster(shape, layers=1)
 			total_lattice_points.extend(best_lattice_points)
+		self.lattice_matrix = best_lattice.matrix
 		return total_lattice_points
-			
+
 	def blobs_to_lattice(self, tolerance=None, spacing=None, minspace=None, extend=None):
-		if self.__results['blobs'] is None:
+		if self.get_result('blobs') is None:
 			raise RuntimeError('need blobs to create lattice')
 		self.configure_lattice(tolerance=tolerance,spacing=spacing,minspace=minspace, extend=extend)
 
-		shape = self.__results['original'].shape
-		blobs = self.__results['blobs']
+		shape = self.get_result('original').shape
+		blobs = self.get_result('blobs')
 		tolerance = self.lattice_config['tolerance']
 		spacing = self.lattice_config['spacing']
 		extend = self.lattice_config['extend']
@@ -306,7 +325,7 @@ class HoleFinder(icefinderback.IceFinder):
 		points = []
 		pointdict = {}
 		if len(blobs) < 2 and extend !='off':
-			self.__update_result('holes', [])
+			self.update_result('holes', [])
 			return
 			
 		for blob in blobs:
@@ -320,24 +339,32 @@ class HoleFinder(icefinderback.IceFinder):
 		else:
 			if spacing > 0:
 				best_lattice = lattice.pointsToLattice(points, spacing, tolerance)
+				accept_all = False
 			else:
 				# accept all points
 				best_lattice = lattice.pointsToFakeLattice(points)
+				accept_all = True
 
-		self.__update_result('lattice', best_lattice)
+		self.update_result('lattice', best_lattice)
 		if best_lattice is None:
 			# no valid results
 			best_lattice_points = []
 			holes = []
-			self.__update_result('holes', [])
+			self.update_result('holes', [])
 			return
 		if extend == 'full':
+			if accept_all:
+				raise ValueError('Can not extend unspecified lattice to full')
 			best_lattice_points = best_lattice.raster(shape)
 			best_lattice_points = best_lattice.optimizeRaster(best_lattice_points,best_lattice.points)
+			self.lattice_matrix = best_lattice.matrix
 		elif extend == '3x3':
+			if accept_all:
+				raise ValueError('Can not extend unspecified lattice to 3x3')
 			best_lattice_points = self.convolve3x3WithBlobPoints(points)
 		else:
 			best_lattice_points = best_lattice.points
+			self.lattice_matrix = best_lattice.matrix
 		holes = self.points_to_stats_holes(best_lattice_points)
 		self.updateHoles(holes)
 
@@ -345,15 +372,15 @@ class HoleFinder(icefinderback.IceFinder):
 		'''
 		Mark locations of the holes found on image.  This is a test function.
 		'''
-		if self.__results['holes'] is None or self.__results['original'] is None:
+		if self.get_result('holes') is None or self.get_result('original') is None:
 			raise RuntimeError('need original image and holes before marking holes')
-		image = self.__results['original']
+		image = self.get_result('original')
 		im = image.copy()
 		value = arraystats.min(im)
-		for hole in self.__results['holes']:
+		for hole in self.get_result('holes'):
 			coord = hole.stats['center']
 			imagefun.mark_image(im, coord, value)
-		self.__update_result('markedholes', im)
+		self.update_result('markedholes', im)
 		self.saveTestMrc(im, 'markedholes.mrc')
 
 	def swapxy(self, points):
@@ -362,68 +389,6 @@ class HoleFinder(icefinderback.IceFinder):
 		"""
 		return [(point[1],point[0]) for point in points]
 
-	def calc_holestats(self, radius=None, input_name='holes'):
-		'''
-		This adds hole stats to holes.  Note: Need to copy this in
-		subclasses since self.__results are not accessible in the subclass.
-		'''
-		if self.__results[input_name] is None:
-			raise RuntimeError('need holes to calculate hole stats')
-		self.configure_holestats(radius=radius)
-		holes = list(self.__results[input_name])
-		holes = self.holestats.calc_stats(holes)
-		self.__update_result(input_name, holes)
-
-	def filter_good(self, input_name='holes2'):
-		'''
-		This filter holes with good is True.  Note: Need to copy this in
-		subclasses since self.__results are not accessible in the subclass.
-		'''
-		holes = list(self.__results[input_name])
-		holes = self.good.filter_good(holes)
-		self.__update_result('holes2', holes)
-
-	def calc_ice(self, i0=None, tmin=None, tmax=None, input_name='holes'):
-		'''
-		Set result holes2 that contains only good holes from ice thickness thresholds
-		in ice_config.
-		Duplicates what is in icefinderback because __results must be in the same module.
-		'''
-		if self.__results[input_name] is None:
-			raise RuntimeError('need holes to calculate ice')
-		self.configure_ice(i0=i0,tmin=tmin,tmax=tmax)
-		holes = self.__results[input_name]
-		holes, holes2 = self.ice.calc_ice(holes)
-		self.__update_result('holes2', holes)
-		self.__update_result('holes2', holes2)
-
-	def make_convolved(self, input_name='holes'):
-		"""
-		Duplicates what is in icefinderback because __results must be in the same module.
-		"""
-		if self.__results[input_name] is None:
-			raise RuntimeError('need %s to generate convolved targets' % input_name)
-			return
-		# convolve from these goodholes
-		goodholes = list(self.__results[input_name])
-		conv_vect = self.convolve.configs['conv_vect'] # list of (del_r,del_c)s
-		# reset before start
-		self.__update_result('holes2', [])
-		if not conv_vect:
-			return
-		#real part
-		convolved = self.convolve.make_convolved(goodholes)
-		self.__update_result('holes2', convolved)
-
-	def sampling(self, input_name='holes2'):
-		"""
-		Sample results of the input_name.
-		Duplicates what is in icefinderback because __results must be in the same module.
-		"""
-		holes = self.__results[input_name]
-		sampled = self.sample.sampleHoles(holes)
-		self.__update_result(input_name, sampled)
-
 	def find_holes(self):
 		'''
 		For testing purpose. Configuration must be done already.
@@ -431,8 +396,6 @@ class HoleFinder(icefinderback.IceFinder):
 		self.run_holefinder()
 		self.mark_holes()
 		# for focus anyhole filtering, good holes are in holes2 results
-		#self.calc_holestats()
-		#self.calc_ice()
 		# template convolution. This will replace holes2 results
 		self.make_convolved()
 		self.calc_holestats(input_name='holes2')
@@ -443,7 +406,6 @@ class HoleFinder(icefinderback.IceFinder):
 if __name__ == '__main__':
 	from pyami import numpil
 	hf = HoleFinder()
-	score_key = 'probability'
 	leginon_dir = os.path.dirname(os.path.abspath(__file__))
 	hf = HoleFinder(is_testing=True)
 	hf['original'] = numpil.read(os.path.join(leginon_dir,'sq_example.jpg'))

@@ -39,10 +39,11 @@ class FalconProcessing(apDDprocess.DDFrameProcessing):
 			apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
 		session_frame_path = self.getSessionFramePathFromImage(imagedata)
 		# frame stackfile is image filename plus '.frames.mrc'
-		rawframedir = os.path.join(session_frame_path,'%s.frames.mrc' % imagedata['filename'])
+		apDisplay.printMsg('frame extension is %s' % self.extname)
+		rawframedir = os.path.join(session_frame_path,'%s.frames.%s' % (imagedata['filename'],self.extname))
 		if not self.waitForPathExist(rawframedir,30):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
-		apDisplay.printMsg('K2 Raw Frame Dir from image is %s' % (rawframedir,))
+		apDisplay.printMsg('Raw Frame Dir from image is %s' % (rawframedir,))
 		return rawframedir
 
 	def loadOneRawFrame(self,rawframe_path,frame_number):

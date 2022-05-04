@@ -115,19 +115,19 @@ else:
 ######################################################################
 ## Python MySQL client module
 ######################################################################
-minmysqlver = (1, 2)
+minmysqlver = (0, 6)
 minstr = '.'.join(map(str,minmysqlver))
 print('--------------------------------------------------------------')
-print('MySQL Python client (MySQLdb):')
-print('    importing MySQLdb module...')
+print('pyMySQL Python client:')
+print('    importing pymysql module...')
 try:
-	import MySQLdb
+	import pymysql
 except:
-	print('    *** Could not import MySQLdb module.')
-	print('      You must install Python MySQL version %s or greater' % (minstr,))
+	print('    *** Could not import PyMySQL module.')
+	print('      You must install PyMySQL version %s or greater' % (minstr,))
 else:
-	mystr = MySQLdb.__version__
-	mymysqlver = MySQLdb.version_info[:3]
+	mystr = pymysql.__version__
+	mymysqlver = pymysql.version_info[:3]
 	print('    Python MySQL version: %s' % (mystr,))
 	if versionAtLeast(mymysqlver, minmysqlver):
 		print('        OK (at least %s required)' % (minstr ,))

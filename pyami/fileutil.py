@@ -4,6 +4,7 @@ import os
 import sys
 import errno
 import imp
+import subprocess
 
 def getMyFilename(up=1):
 	'''
@@ -125,6 +126,29 @@ def check_exist_one_file(filenames):
 			sys.exit()
 		else:
 			raise IOError(msg)
+
+def unixChangeMode(path,mode_str='g-w,o-rw', recursive=False):
+	# only works on uniux
+	if recursive:
+		rec_str = '-R '
+	else:
+		rec_str = ''
+	cmd = 'chmod %s%s %s' % (rec_str, mode_str, path)
+	print cmd
+	p = subprocess.Popen(cmd, shell=True)
+	p.wait()
+
+def unixChangeOwnership(uid,gid,pathname, recursive=False):
+	# change ownership of desintation directory or file
+	# not recursive so it does not go through all every time.
+	if recursive:
+		rec_str = '-R '
+	else:
+		rec_str = ''
+	cmd = 'chown %s%s:%s %s' % (rec_str, uid, gid, pathname)
+	print cmd
+	p = subprocess.Popen(cmd, shell=True)
+	p.wait()
 
 if __name__ == '__main__':
 	print((getMyFilename()))

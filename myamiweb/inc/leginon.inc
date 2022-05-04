@@ -1434,6 +1434,8 @@ class leginondata {
 		$gridjoin = ($gridtable) ?
 			"left join GridData grid "
 			."on (grid.`DEF_id`=a.`REF|GridData|grid`) " : '';
+		$cameraemfields = $this->mysql->getFields('CameraEMData');
+		$eer_select =	in_array('eer frames', $cameraemfields) ? "c.`eer frames`, ":"";
 		// --- check if image has a parent
 		$parentinfo = $this->getParent($imgId);
 		$parentId = ($parentinfo['parentId']) ? $parentinfo['parentId'] : false;
@@ -1506,6 +1508,9 @@ class leginondata {
 			."c.`SUBD|dimension|y` as dimy, "
 			."c.`SUBD|binning|y` as binning, "
 			."c.`exposure time`, "
+			."c.`save frames`, "
+			."c.`nframes`, "
+			.$eer_select
 			."pi.pixelsize as pixelsize, "
 			."scope.magnification, "
 			."scope.`SUBD|beam tilt|x` as `beam tilt x`, "
@@ -2181,13 +2186,17 @@ class leginondata {
 
 	}
 
+	function getEngine() {
+		return (defined('DB_ENGINE')) ? DB_ENGINE: '';
+	}
 	function importTables($filename) {
 		$app = new XMLApplicationImport($filename);
 		$sqldef = $app->getSQLDefinitionQueries();
 		$sqldata = $app->getSQLDataQueries();
 		$fieldtypes = $app->getFieldTypes();
+		$engine = $this->getEngine();
 		if ($this->mysql->checkDBConnection()) {
-			$this->mysql->SQLAlterTables($sqldef, $fieldtypes);
+			$this->mysql->SQLAlterTables($sqldef, $fieldtypes, $engine);
 			foreach ((array)$sqldata as $table=>$queries) {
 				foreach($queries as $query) {
 					eval("\$sqlinsert= \"".addslashes($query)."\";");
@@ -2639,7 +2648,26 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function _getFinderPrefsArray() {
+		$r = array(array('table'=>'HoleFinderPrefsData','ref'=>'prefs'));
+		if ($this->mysql->isTable('ScoreTargetFinderPrefsData')) {
+			$r[] = array('table'=>'ScoreTargetFinderPrefsData','ref'=>'score-prefs');
+		}
+		return $r;
+	}
 	function getIceThicknessFromImage($imageId) {
+		$prefs = $this->_getFinderPrefsArray();
+		$all = array();
+		foreach ($prefs as $v) {
+			$r=$this->_getIceThicknessFromImage($imageId, $v);
+			$all = array_merge($all,$r);
+		}
+		return $all;
+	}
+
+	function _getIceThicknessFromImage($imageId, $pref) {
+		$preftable = $pref['table'];
+		$ref = $pref['ref'];
 		$q="SELECT DISTINCT"
 			."`h`.`DEF_id`, `h`.`DEF_timestamp`, "
 			."`h`.`stats-radius`, `h`.`edge-threshold`, "
@@ -2650,11 +2678,11 @@ class leginondata {
 			."`h`.`ice-max-stdev`, `h`.`ice-max-thickness`, "
 			."`hstats`.`column`, `hstats`.`stdev`, "
 			."`hstats`.`mean`, `hstats`.`thickness-mean`, "
-			."`hstats`.`REF|HoleFinderPrefsData|prefs`, `hstats`.`row` "
+			."`hstats`.`REF|".$preftable."|".$ref."`, `hstats`.`row` "
 			."FROM "
-			."`HoleFinderPrefsData` AS `h` "
+			."`".$preftable."` AS `h` "
 			."LEFT JOIN `HoleStatsData` AS `hstats` "
-			."ON (`h`.`DEF_id`=`hstats`.`REF|HoleFinderPrefsData|prefs`) "
+			."ON (`h`.`DEF_id`=`hstats`.`REF|".$preftable."|".$ref."`) "
 			."LEFT JOIN `AcquisitionImageData` AS `a` "
 			."ON (`a`.`DEF_id`=`h`.`REF|AcquisitionImageData|image`) "
 			."WHERE "
@@ -2676,10 +2704,22 @@ class leginondata {
 	}
 
 	function getIceThicknessPresets($sessionId) {
+		$prefs = $this->_getFinderPrefsArray();
+		$all = array();
+		foreach ($prefs as $v) {
+			$r=$this->_getIceThicknessPresets($sessionId, $v);
+			$all = array_merge($all,$r);
+		}
+		return $all;
+	}
+
+	function _getIceThicknessPresets($sessionId, $pref) {
+		$preftable = $pref['table'];
+		$ref = $pref['ref'];
 		$q="SELECT DISTINCT"
 			."`p`.`name`, `h`.`REF|SessionData|session` "
 			."FROM "
-			."`HoleFinderPrefsData` AS `h` "
+			."`".$preftable."` AS `h` "
 			."LEFT JOIN `AcquisitionImageData` AS `a` "
 			."ON (`a`.`DEF_id`=`h`.`REF|AcquisitionImageData|image`) "
 			."LEFT JOIN `PresetData` AS `p` "
@@ -3084,12 +3124,25 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-		function getRelatedStats($sessionId, $preset) {
+	function getRelatedStats($sessionId, $preset) {
+		$prefs = $this->_getFinderPrefsArray();
+		$all = array();
+		foreach ($prefs as $v) {
+			$r=$this->_getRelatedStats($sessionId, $preset, $v);
+			$all = array_merge($all,$r);
+		}
+		return $all;
+	}
+
+	function _getRelatedStats($sessionId, $preset, $pref) {
+		$preftable = $pref['table'];
+		$ref = $pref['ref'];
 		$q="SELECT "
 			."`a`.`DEF_id` as `Id`, "
 			."CONCAT(`a`.`filename`,'.mrc') AS filename, "
 			."`istats`.`mean`, "
 			."`h`.`DEF_id` as `prefId`, "
+			."'".$preftable."' as pref_table, "
 			."`parent`.`DEF_id` as `parentId`, "
 			."`hstats`.`mean` AS `parent mean`, "
 			."`hstats`.`thickness-mean` AS `parent thickness-mean` "
@@ -3099,10 +3152,10 @@ class leginondata {
 			."ON (`target`.`DEF_id`=`a`.`REF|AcquisitionImageTargetData|target`) "
 			."LEFT JOIN `AcquisitionImageData` AS `parent` "
 			."ON (`parent`.`DEF_id`=`target`.`REF|AcquisitionImageData|image`) "
-			."LEFT JOIN `HoleFinderPrefsData` AS `h` "
+			."LEFT JOIN `".$preftable."` AS `h` "
 			."ON (`target`.`REF|AcquisitionImageData|image`=`h`.`REF|AcquisitionImageData|image`) "
 			."LEFT JOIN `HoleStatsData` AS `hstats` "
-			."ON (`h`.`DEF_id`=`hstats`.`REF|HoleFinderPrefsData|prefs`) "
+			."ON (`h`.`DEF_id`=`hstats`.`REF|".$preftable."|".$ref."`) "
 			."LEFT JOIN `PresetData` AS `p` "
 			."ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
 			."LEFT JOIN `AcquisitionImageStatsData` AS `istats` "
@@ -3118,6 +3171,18 @@ class leginondata {
 	}
 
 	function getIceThickness($sessionId, $preset) {
+		$prefs = $this->_getFinderPrefsArray();
+		$all = array();
+		foreach ($prefs as $v) {
+			$r=$this->_getIceThickness($sessionId, $preset, $v);
+			$all = array_merge($all,$r);
+		}
+		return $all;
+	}
+
+	function _getIceThickness($sessionId, $preset,$pref) {
+		$preftable = $pref['table'];
+		$ref = $pref['ref'];
 		$q = "SELECT "
 			."date_format(h.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`, "
 			."CONCAT(`a`.`filename`,'.mrc') AS filename, "
@@ -3126,7 +3191,7 @@ class leginondata {
 			.'`a`.`DEF_id` AS `image_id` '
 			.'FROM '
 			.'`HoleStatsData` AS `h` '
-			.'LEFT JOIN `HoleFinderPrefsData` AS `pref` ON (`pref`.`DEF_id`=`h`.`REF|HoleFinderPrefsData|prefs`) '
+			.'LEFT JOIN `'.$preftable.'` AS `pref` ON (`pref`.`DEF_id`=`h`.`REF|'.$preftable.'|'.$ref.'`) '
 			.'LEFT JOIN `AcquisitionImageData` AS `a` ON (`a`.`DEF_id`=`pref`.`REF|AcquisitionImageData|image`) '
 			.'LEFT JOIN `PresetData` AS `p` ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) '
 			.'WHERE '
@@ -3394,6 +3459,22 @@ class leginondata {
 			."ON t.`REF|AcquisitionImageData|image`=a.DEF_id "
 			."where a.`DEF_id`=".$imgId." "
 			."AND t.status like 'new' GROUP BY t.`number` ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getDequeuedByTargetList($tlistId) {
+		$q="SELECT t.`DEF_id` as id, t.`REF|QueueData|queue` as qid, "
+			."t.`REF|ImageTargetListData|list` as tlist from DequeuedImageTargetListData t "
+			."where t.`REF|ImageTargetListData|list`=".$tlistId." ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getDoneByTargetList($tlistId) {
+		$q="SELECT t.`DEF_id` as id, "
+			."t.`REF|ImageTargetListData|list` as tlist from DoneImageTargetListData t "
+			."where t.`REF|ImageTargetListData|list`=".$tlistId." ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}

@@ -233,6 +233,7 @@ camera_params = (
 	('save frames', bool),
 	('align frames', bool),
 	('tiff frames', bool),
+	('eer frames', bool),
 	('align filter', str),
 	('frames name', str),
 	('use frames', tuple),
@@ -244,7 +245,10 @@ camera_params = (
 	('temperature status', str),
 	('readout delay', int),
 	('gain index', int),
-	('system corrected', bool),
+	('system corrected', bool), # deprecated in v3.6
+	('sum gain corrected', bool),
+	('frame gain corrected', bool),
+	('system dark subtracted', bool),
 	('use cds', bool),
 	('fast save', bool),
 )
@@ -1406,8 +1410,9 @@ class ScoreSquareFinderPrefsData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('image', MosaicImageData),
-			('area-min', float),
-			('area-max', float),
+			('filter-min', float),
+			('filter-max', float),
+			('filter-key', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -1754,14 +1759,30 @@ class TemplateTargetFinderSettingsData(IceTargetFinderSettingsData):
 			('blobs max', int),
 			('blobs max size', int),
 			('blobs min size', int),
+			('blobs min roundness', float),
 			('lattice spacing', float),
 			('lattice tolerance', float),
 		)
 	typemap = classmethod(typemap)
 
-class HoleFinderSettingsData(TemplateTargetFinderSettingsData):
+class JAHCFinderSettingsData(TemplateTargetFinderSettingsData):
 	def typemap(cls):
 		return TemplateTargetFinderSettingsData.typemap() + (
+			('template diameter', int),
+			('file diameter', int),
+			('template filename', str),
+			('template invert', bool),
+			('template image min', float),
+			('lattice extend', str),
+			('template multiple', int),
+			('multihole angle', float),
+			('multihole spacing', float),
+		)
+	typemap = classmethod(typemap)
+
+class HoleFinderSettingsData(JAHCFinderSettingsData):
+	def typemap(cls):
+		return JAHCFinderSettingsData.typemap() + (
 			('edge lpf', LowPassFilterSettingsData),
 			('edge', bool),
 			('edge type', str),
@@ -1769,7 +1790,6 @@ class HoleFinderSettingsData(TemplateTargetFinderSettingsData):
 			('edge log sigma', float),
 			('edge absolute', bool),
 			('edge threshold', float),
-			('template rings', list),
 		)
 	typemap = classmethod(typemap)
 
@@ -1798,21 +1818,6 @@ class HoleDepthFinderSettingsData(TargetFinderSettingsData):
 			('blobs min size', int),
 			('pickhole radius', float),
 			('pickhole zero thickness', float),
-		)
-	typemap = classmethod(typemap)
-
-class JAHCFinderSettingsData(TemplateTargetFinderSettingsData):
-	def typemap(cls):
-		return TemplateTargetFinderSettingsData.typemap() + (
-			('template diameter', int),
-			('file diameter', int),
-			('template filename', str),
-			('template invert', bool),
-			('template image min', float),
-			('lattice extend', str),
-			('template multiple', int),
-			('multihole angle', float),
-			('multihole spacing', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1847,7 +1852,7 @@ class DTFinderSettingsData(TargetFinderSettingsData):
 
 class RasterFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
-		return TargetFinderSettingsData.typemap() + (
+		return IceTargetFinderSettingsData.typemap() + (
 			('publish polygon', bool),
 			('image filename', str),
 			('raster preset', str),
@@ -1863,20 +1868,6 @@ class RasterFinderSettingsData(TargetFinderSettingsData):
 			('raster limit asymm', int),
 			('raster symmetric', bool),
 			('select polygon', bool),
-			('ice box size', float),
-			('ice thickness', float),
-			('ice min mean', float),
-			('ice max mean', float),
-			('ice max std', float),
-			('ice min std', float),
-			('focus interval', int),
-			('focus convolve', bool),
-			('focus convolve template', list),
-			('focus constant template', list),
-			('focus one', bool),
-			('acquisition convolve', bool),
-			('acquisition convolve template', list),
-			('acquisition constant template', list),
 		)
 	typemap = classmethod(typemap)
 
@@ -1975,8 +1966,9 @@ class TopScoreFinderSettingsData(SettingsData):
 			('scoring script', str),
 			('target grouping', TargetGroupingSettingsData),
 			('target multiple', int),
-			('area-min', float),
-			('area-max', float),
+			('filter-min', float),
+			('filter-max', float),
+			('filter-key', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -2043,7 +2035,7 @@ class MosaicSectionFinderSettingsData(ClickTargetFinderSettingsData,
 		return typemap
 	typemap = classmethod(typemap)
 
-class MosaicQuiltFinderSettingsData( JAHCFinderSettingsData):
+class MosaicQuiltFinderSettingsData(JAHCFinderSettingsData):
 	def typemap(cls):
 		typemap = JAHCFinderSettingsData.typemap()
 		typemap += (
