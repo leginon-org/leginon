@@ -58,7 +58,7 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 		if not os.path.isdir(path):
 			return
 
-		print 'found', path
+		print('found', path)
 		# remove empty subfolders
 		files = os.listdir(path)
 		if len(files):
@@ -70,7 +70,7 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 		# if folder empty, delete it
 		files = os.listdir(path)
 		if len(files) == 0:
-			print "Removing empty folder:", path
+			print("Removing empty folder:", path)
 			######filedir operation########
 			os.rmdir(path)
 
@@ -79,24 +79,24 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 			# remove empty .frames dir from source
 			# does not work on Windows
 			abspath = os.path.abspath(src)
-			print 'clean up %s from linux' % (abspath)
+			print('clean up %s from linux' % (abspath))
 			dirpath,basename = os.path.split(abspath)
 			if os.path.isdir(src):
 				cmd = 'find %s -type d -empty -prune -exec rmdir --ignore-fail-on-non-empty -p \{\} \;' % (basename,)
-				print 'cd', dirpath
+				print('cd', dirpath)
 				os.chdir(dirpath)
-				print cmd
+				print(cmd)
 				p = subprocess.Popen(cmd, shell=True, cwd=dirpath)
 				p.wait()
 			if os.path.isfile(src):
 				cmd = 'rm -f %s' % abspath
-				print cmd
+				print(cmd)
 				p = subprocess.Popen(cmd, shell=True, cwd=dirpath)
 				p.wait()
 
 		else:
 			if os.path.isfile(src):
-				print 'os.remove(%s)' % src
+				print('os.remove(%s)' % src)
 				os.remove(src)
 			else:
 				self.removeEmptyFolders(os.path.abspath(src))
@@ -106,7 +106,7 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 		Use shutil's move to rename frames
 		'''
 		######filedir operation########
-		print 'moving %s -> %s' % (src, dst)
+		print('moving %s -> %s' % (src, dst))
 		shutil.move(src, dst)
 
 	def makeDirWithOwnershipChange(self,dirname,uid,gid):
@@ -128,7 +128,7 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 		after copying.
 		'''
 		cmd = 'rsync -av --owner=%s:%s --remove-sent-files %s %s' % (uid, gid, src, dst)
-		print cmd
+		print(cmd)
 		p = subprocess.Popen(cmd, shell=True)
 		p.wait()
 
@@ -239,11 +239,11 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 		method = self.params['method']
 		mode_str = self.params['mode_str']
 		src_path = self.get_source_path()
-		print 'Source path:  %s' % (src_path,)
+		print('Source path:  %s' % (src_path,))
 		file_map = self.getFrameFileMap(src_path)
 		dst_head = self.get_dst_head()
 		if dst_head:
-			print "Limit processing to destination frame path started with %s" % (dst_head)
+			print("Limit processing to destination frame path started with %s" % (dst_head))
 		raise NotImplemented('Need to be defined in the subclass')
 
 
@@ -469,7 +469,7 @@ def testRefCopy():
 	app.setFrameDir('/home/acheng/tests/test_copyref/')
 	app.run(imagedata,imagedata['filename']+'.frames.mrc')
 	app.setImage(imagedata)
-	print app.modifyCorrectorPlan(imagedata['image'].shape,[0,],[0,],[(1000,54),])
+	print(app.modifyCorrectorPlan(imagedata['image'].shape,[0,],[0,],[(1000,54),]))
 
 if __name__ == '__main__':
 		a = RawTransfer()

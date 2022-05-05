@@ -19,7 +19,7 @@ class ScriptRun(object):
 		# parsing options
 		(options, optargs) = parser.parse_args(sys.argv[1:])
 		if len(optargs) > 0:
-			print "Unknown commandline options: "+str(optargs)
+			print("Unknown commandline options: "+str(optargs))
 		if not self.use_gui and len(sys.argv) < 2:
 			parser.print_help()
 			sys.exit()

@@ -432,10 +432,10 @@ class SimFrameCamera(SimCCDCamera):
 			transparency = numpy.ones(shape, dtype=numpy.float32)
 		elif self.view == 'square':
 			transparency = 0.9 * numpy.ones(shape, dtype=numpy.float32)
-			row_offset = random.randint(-shape[0]/8, shape[0]/8) + shape[0]/4
-			column_offset = random.randint(-shape[1]/8, shape[1]/8) + shape[0]/4
-			transparency[row_offset:row_offset+shape[0]/2,
-					column_offset:column_offset+shape[1]/2] = 0.7
+			row_offset = random.randint(-shape[0]//8, shape[0]//8) + shape[0]//4
+			column_offset = random.randint(-shape[1]//8, shape[1]//8) + shape[0]//4
+			transparency[row_offset:row_offset+shape[0]//2,
+					column_offset:column_offset+shape[1]//2] = 0.7
 		return transparency
 
 	def convertToInt8(self,array):
