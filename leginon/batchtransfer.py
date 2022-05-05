@@ -314,7 +314,7 @@ class RawTransfer(filetransfer.FileTransfer):
 		for session_name in session_maps.keys():
 			print('Iterating %s' % (session_name))
 			intersection_images = self.getIntersectionImages(session_maps[session_name],file_map)
-			self.runSession(session_name,intersection_images,method,mode_str)
+			self.runSession(session_name,list(intersection_images),method,mode_str)
 
 if __name__ == '__main__':
 		a = RawTransfer()
