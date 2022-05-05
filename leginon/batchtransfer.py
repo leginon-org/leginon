@@ -280,10 +280,12 @@ class RawTransfer(filetransfer.FileTransfer):
 		pyami.fileutil.mkdirs(dst_tmp_dir)
 		self.transfer_dir(src_session_dir, dst_tmp_dir, uid, gid, method, mode_str)
 		# the results are in dst_tmp_dir/session_name
-		try:
-			os.rmdir(src_session_dir)
-		except Exception as e:
-			print('Error removing intermediate files: %s' % e)
+		if method == 'rsync':
+			# rsync leaves src_session_dir in place.
+			try:
+				os.rmdir(src_session_dir)
+			except Exception as e:
+				print('Error removing intermediate files: %s' % e)
 			
 
 	def _moveDstTmpToFramesDir(self, session_name, dst_tmp_dir,frames_path):
