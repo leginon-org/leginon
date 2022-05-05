@@ -314,11 +314,9 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		logmessage = 'Good focus measurement'
 
 		### check fit limit
-		if fitlimit is None:
-			#python3 exception if None is comparied with a number.
-			fitlimit = 0.0
 		fitlimit = setting['fit limit']
-		if fitmin > fitlimit:
+		# python3 fitmin==None can not be compared with number
+		if fitmin and fitmin > fitlimit:
 			status = 'fit untrusted (%s>%s)' % (fitmin, fitlimit)
 			validdefocus = False
 			logmessage = 'Focus measurement failed: fit = %s (fit limit = %s)' % (fitmin, fitlimit)
@@ -586,7 +584,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		target.
 		'''
 		melt_time = self.settings['melt time']
-		if melt_time and attempt > 1:
+		if melt_time and attempt and attempt > 1:
 			self.logger.info('Target attempt %s, not melting' % (attempt,))
 		elif melt_time:
 			self.startTimer('melt')

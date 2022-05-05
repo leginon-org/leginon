@@ -202,7 +202,7 @@ class HoleFinder(icefinderback.IceFinder):
 		"""
 		# Ptolemy currently only do square lattice.
 		# blob center here is in r,c
-		b_centers = map((lambda x: self.jsonCenterToHoleCenter(x['center'])), hole_dicts)
+		b_centers = list(map((lambda x: self.jsonCenterToHoleCenter(x['center'])), hole_dicts))
 		im_center = self.im_shape[0]//2, self.im_shape[1]//2
 		b_centers = lattice.sortPointsByDistances(b_centers, center=im_center)
 		b_centers = lattice.sortPointsByDistances(b_centers, center=b_centers[0])

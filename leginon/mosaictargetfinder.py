@@ -1140,8 +1140,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# blobs and filtering are done at smaller dimension to save memory usage.
 		##############
 		s = self.finder_scale_factor
-		finder_example_points = map((lambda x: (x[1]//s,x[0]//s)),example_xys)
-		finder_database_points = map((lambda x: (x[1]//s,x[0]//s)),database_xys)
+		finder_example_points = list(map((lambda x: (x[1]//s,x[0]//s)),example_xys))
+		finder_database_points = list(map((lambda x: (x[1]//s,x[0]//s)),database_xys))
 		priority_blobs, other_blobs, finder_display_array = self._runBlobRankFilter(finder_blobs, finder_example_points, finder_database_points)
 		if finder_display_array is not None:
 			self.setImage(finder_display_array, 'Thresholded')
@@ -1154,7 +1154,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		################
 		# turn combined blobs into targets at the original mosaic dimension
 		################
-		targets = map((lambda x: self.blobToDisplayTarget(x,self.finder_scale_factor)), combined_blobs)
+		targets = list(map((lambda x: self.blobToDisplayTarget(x,self.finder_scale_factor)), combined_blobs))
 		# flat list of multihole convolution at the original mosaic dimension
 		targets = self.multiHoleConvolution(targets)
 		# TODO save SquareStatsData
@@ -1165,7 +1165,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		Convolute targets using a lattice based on next acquisition
 		targetimagevectors
 		'''
-		target_groups = map((lambda x: self._multihole_list(x)), targets)
+		target_groups = list(map((lambda x: self._multihole_list(x)), targets))
 		# return a flat list of targets
 		return [t for tgroup in target_groups for t in tgroup] 
 
@@ -1182,7 +1182,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		lattice_vectors = self.multihole.makeLatticeVectors()
 		targets = numpy.ndarray.tolist(lattice_vectors)
 		# shift based on original_target
-		targets = map((lambda x: (x[0]+original_target[0],x[1]+original_target[1])), targets)
+		targets = list(map((lambda x: (x[0]+original_target[0],x[1]+original_target[1])), targets))
 		# [(row0,col0),(row1,col1),....]
 		return targets
 
@@ -1208,7 +1208,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.setFilterSettings(example_blobs)
 		#
 		#
-		blob_sizes = numpy.array(map((lambda x: x.stats['n']),blobs))
+		blob_sizes = numpy.array(list(map((lambda x: x.stats['n']),blobs)))
 		self.logger.info('Mean blob size is %.1f' % ( blob_sizes.mean(),))
 		example_blob_indices.sort()
 		# move the examples to front of the targetlist
@@ -1218,9 +1218,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		def is_false(b):
 			return not to_avoid[b.stats['label_index']]
 		# set aside example blobs not need to be avoided
-		priority_blobs = filter(is_false, example_blobs)
+		priority_blobs = list(filter(is_false, example_blobs))
 		# remove any to_avoid blobs from the rest of the blobs
-		blobs = filter(is_false, blobs[len(priority_blobs):])
+		blobs = list(filter(is_false, blobs[len(priority_blobs):]))
 		return priority_blobs, blobs, display_array
 
 	def filterPoints(self, blobs, example_points, panel_points):

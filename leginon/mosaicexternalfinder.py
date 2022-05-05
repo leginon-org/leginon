@@ -35,13 +35,13 @@ def pointInPolygon(x,y,poly):
 def pointsInBlobs(blobs, points):
 	if len(blobs) == 0:
 		return []
-	has_point =  map((lambda x: False), blobs)
+	has_point =  list(map((lambda x: False), blobs))
 	if len(points) == 0:
 		return has_point
 	total_points = len(points)
 	total = 0
 	for i, b in enumerate(blobs):
-		result_map = map(lambda x: pointInPolygon(x[0],x[1],b.vertices), points)
+		result_map = list(map(lambda x: pointInPolygon(x[0],x[1],b.vertices), points))
 		if max(result_map):
 			total += 1
 			has_point[i] = True
@@ -60,6 +60,19 @@ def getDistanceArray(centers):
 	# use transposed array to calculate square of distance.
 	a = (x-x.T)**2+(y-y.T)**2
 	return a
+
+def runExternalBlobFinderSubprocess(imagearray, scoring_script, mosaic_image_path,job_basename):
+	"""
+	running top level process for multiprocess
+	"""
+	outdir = os.path.dirname(mosaic_image_path)
+	outpath = os.path.join(outdir, '%s.json' % job_basename)
+	if os.path.isfile(outpath):
+		os.remove(outpath)
+	# This process must create the output '%s.json' % job_basename at outpath
+	cmd = 'source %s %s %s %s' % (scoring_script, job_basename, mosaic_image_path, outdir)
+	proc = subprocess.Popen(cmd, shell=True)
+	proc.wait()
 
 class StatsBlob(object):
 	def __init__(self, info_dict, index):
@@ -146,7 +159,9 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 			label='all'
 			mosaic_image_path = os.path.join(self.session['image path'],self.mosaicimagedata['filename']+'.mrc')
 			self.logger.info('Running external square finding')
-			blobs = self._runExternalBlobFinder(self.mosaicimagedata['image'],mosaic_image_path, label)
+			job_basename = self.getJobBasename(label)
+			scoring_script = self.settings['scoring script']
+			blobs = runExternalBlobFinderSubprocess(self.mosaicimagedata['image'], scoring_script, mosaic_image_path, job_basename)
 			self.loadBlobs(label, self.getOutPath(label))
 			# show blob target and stats
 			return self.ext_blobs[label]
@@ -163,18 +178,6 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		and output file name (extension json)
 		'''
 		return '%s_%s' % (self.session['name'], label)
-
-	def _runExternalBlobFinder(self, imagearray, mosaic_image_path,label='all'):
-		outdir = os.path.dirname(mosaic_image_path)
-		job_basename = self.getJobBasename(label)
-		outpath = os.path.join(outdir, '%s.json' % job_basename)
-		if os.path.isfile(outpath):
-			os.remove(outpath)
-		# This process must create the output '%s.json' % job_basename at outpath
-		scoring_script = self.settings['scoring script']
-		cmd = 'source %s %s %s %s' % (scoring_script, job_basename, mosaic_image_path, outdir)
-		proc = subprocess.Popen(cmd, shell=True)
-		proc.wait()
 
 	def loadBlobs(self, label, outpath):
 		'''
@@ -281,7 +284,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		index_groups = self.groupBlobsByKey(blobs, n_class, key)
 		range_list = groupfun.calculateIndexRangesInClassEvenDistribution(total_targets_need, n_class)
 		# number_of_samples_in_classes
-		nsample_in_classes = map((lambda x: x[1]-x[0]), range_list)
+		nsample_in_classes = list(map((lambda x: x[1]-x[0]), range_list))
 		# final blobs sampled
 		samples = []
 		for c in range(n_class):
@@ -312,7 +315,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 				blob_indices_at_score_in_class[score] = []
 			blob_indices_at_score_in_class[score].append(i)
 		# sort the blobs by score in float
-		keys = blob_indices_at_score_in_class.keys()
+		keys = list(blob_indices_at_score_in_class.keys())
 		keys.sort()
 		keys.reverse()
 		sample_blobs_in_class = []
@@ -359,7 +362,8 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 		label = '%d' % imid
 		self.logger.info('running external square finding on imgid=%d' % imid)
 		job_basename = self.getJobBasename(label)
-		self.p[imid] = multiprocessing.Process(target=self._runExternalBlobFinder, args=(imagedata['image'], mrcpath,label))
+		scoring_script = self.settings['scoring script']
+		self.p[imid] = multiprocessing.Process(target=runExternalBlobFinderSubprocess, args=(imagedata['image'], scoring_script, mrcpath,job_basename))
 		self.p[imid].start()
 
 	def getMergingDistance(self, sizes, means):
@@ -400,9 +404,9 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 		Merging blobs based on distance on finder_mosaic.
 		'''
 		blob_values = self.mblob_values
-		centers = numpy.array(map((lambda x: x['center']), blob_values))
-		sizes = map((lambda x: x['area']), blob_values )
-		means = map((lambda x: x['brightness']), blob_values )
+		centers = numpy.array(list(map((lambda x: x['center']), blob_values)))
+		sizes = list(map((lambda x: x['area']), blob_values ))
+		means = list(map((lambda x: x['brightness']), blob_values ))
 		max_distance = self.getMergingDistance(sizes, means)
 		# distance
 		d_array = getDistanceArray(centers)
@@ -470,7 +474,7 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 		s = self.finder_scale_factor
 		for b in self.tileblobmap[imid]:
 			#statistics are calculated on finder_mosaic
-			vertices = map((lambda x: self._tile2MosaicPosition(tile, (x[0],x[1]), self.finder_mosaic)), b.vertices)
+			vertices = list(map((lambda x: self._tile2MosaicPosition(tile, (x[0],x[1]), self.finder_mosaic)), b.vertices))
 			r,c = self._tile2MosaicPosition(tile, (b.stats['center'][0],b.stats['center'][1]), self.finder_mosaic)
 			new_info_dict = dict(b.info_dict)
 			new_info_dict['vertices'] = list(vertices)

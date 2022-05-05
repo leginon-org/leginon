@@ -87,7 +87,7 @@ def convexHull(P):
 	"""Calculate the convex hull of a set of points."""
 
 	# Get a local list copy of the points and sort them lexically.
-	points = map(None, P)
+	points = list(P)
 	points.sort()
 
 	# Build upper half of the hull.
