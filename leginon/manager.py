@@ -1063,10 +1063,12 @@ class Manager(node.Node):
 		lappdatalist = []
 		for f in prefixlist:
 			names = self._getAppNamesFromPrefix(f)
+			names = list(filter((lambda x: x not in self.apnames), names))
 			for n in names:
 				apps = self._getLaunchedApplicationByName(appname=n)
 				if apps:
 					lappdatalist.extend(apps) # only one item in apps
+					self.apnames.append(n)
 		return lappdatalist
 
 	def _getPostfixUserLaunchedApplications(self, postfixlist):
@@ -1077,10 +1079,22 @@ class Manager(node.Node):
 		lappdatalist = []
 		for f in postfixlist:
 			names = self._getAppNamesFromPostfix(f)
+			names = list(filter((lambda x: x not in self.apnames), names))
 			for n in names:
 				apps = self._getLaunchedApplicationByName(appname=n)
 				if apps:
 					lappdatalist.extend(apps) # only one item in apps
+					self.apnames.append(n)
+		return lappdatalist
+
+	def _getSessionLaunchedApplications(self):
+		lappdatalist_long = leginondata.LaunchedApplicationData(session=self.session).query()
+		lappdatalist=[]
+		for lapp in lappdatalist_long:
+			name = lapp['application']['name']
+			if name not in self.apnames:
+				self.apnames.append(name)
+				lappdatalist.append(lapp)
 		return lappdatalist
 
 	def getApplicationHistory(self):
@@ -1088,10 +1102,14 @@ class Manager(node.Node):
 		prefixlist = self.getApplicationAffixList('prefix')
 		postfixlist = self.getApplicationAffixList('postfix')
 		lappdatalist = []
+		self.apnames = []
+		# keep session history
+		session_lappdatalist = self._getSessionLaunchedApplications()
+		session_history = list(self.apnames)
 		# faster if prefix or postfix is set when the same applications were
 		# used by the same user many times.
 		if prefixlist:
-			lapps = self._getPrefixUserLaunchedApplications(prefixlist)
+			lapps = self._getPrefixUserLaunchedApplications(prefixlist,)
 			lappdatalist.extend(lapps)
 		if postfixlist:
 			lapps = self._getPostfixUserLaunchedApplications(postfixlist)
@@ -1099,18 +1117,27 @@ class Manager(node.Node):
 		if not lappdatalist:
 			# slow er method get all application names and then filter.
 			apnames = self.getApplicationNames()
+			apnames = list(filter((lambda x: x not in self.apnames), apnames))
 			for n in apnames:
 				lapps = self._getLaunchedApplicationByName(appname=n)
 				if lapps:
 					lappdatalist.extend(lapps) # only one item in apps
-		# reverse sort by DEE_id so that the most recent is at the front
+		# reverse sort by dbid so that the most recent is at the front
 		history_ids = list(map((lambda x: x.dbid), lappdatalist))
 		history_ids.sort()
+		# keep session_history at front of the final list
+		session_history_ids = list(map((lambda x:x.dbid), session_lappdatalist))
+		session_history_ids.reverse()
+		history_ids.extend(session_history_ids)
 		history_ids.reverse()
-		history = list(map((lambda x: leginondata.LaunchedApplicationData().direct_query(x)['application']['name']), history_ids))
+		# contruct final history
 		amap = {}
-		for i,n in enumerate(history):
-			amap[n] = lappdatalist[i]['launchers']
+		history = []
+		for lid in history_ids:
+			l = leginondata.LaunchedApplicationData().direct_query(lid)
+			n = l['application']['name']
+			history.append(n)
+			amap[n] = l['launchers']
 		return history, amap
 
 	def onApplicationStarting(self, name, nnodes):
