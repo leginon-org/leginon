@@ -478,7 +478,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 		### motioncor2 format
 		log2 = self.framestackpath[:-4]+'_Log.motioncor2.txt'
 		f = open(log2, "w")
-		f.write(outbuffer)
+		f.write(outbuffer.decode())
 		f.close()
 
 		### this is unnecessary, need to figure out how to convert outbuffer from subprocess PIPE to readable format
@@ -510,7 +510,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 		if 'FtBin' in list(self.alignparams.keys()):
 			binning = self.alignparams['FtBin']
 		shifts_adjusted = []
-		midval = len(shifts)/2
+		midval = int(len(shifts)/2)
 		midshx = shifts[midval][0]
 		midshy = shifts[midval][1]
 		for l in shifts:

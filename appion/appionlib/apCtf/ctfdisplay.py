@@ -30,9 +30,6 @@ from PIL import ImageDraw
 from scipy import ndimage
 import scipy.stats
 
-import logging
-logging.basicConfig(filename='LOG.log', encoding='utf-8', level=logging.ERROR)
-
 class CtfDisplay(object):
 	#====================
 	#====================

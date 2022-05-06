@@ -8,8 +8,6 @@ import math
 import random
 import pickle
 import functools
-import logging
-logging.basicConfig(filename='errors.log', encoding='utf-8', level=logging.ERROR)
 #appion
 from appionlib import apDisplay
 from appionlib import apDatabase
@@ -90,6 +88,7 @@ class AppionLoop(appionScript.AppionScript):
 
 				### START any custom functions HERE:
 				results = self.loopProcessImage(imgdata)
+
 				### WRITE db data
 				if self.badprocess is False:
 					if self.params['commit'] is True:
@@ -113,6 +112,7 @@ class AppionLoop(appionScript.AppionScript):
 			if self.notdone is True:
 				self.notdone = self._waitForMoreImages()
 			#END NOTDONE LOOP
+			
 		self.postLoopFunctions()
 		self.close()
 
@@ -569,6 +569,7 @@ class AppionLoop(appionScript.AppionScript):
 				apDisplay.printMsg("MRC List: "+str(len(self.params['mrcnames']))+" : "+str(self.params['mrcnames']))
 			apDisplay.printMsg("Session: "+str(self.params['sessionname'])+" : "+str(self.params['preset']))
 			apDisplay.printError("no files specified")
+		#print(self.imgtree)
 		precount = len(self.imgtree)
 		apDisplay.printMsg("Found "+str(precount)+" images in "+apDisplay.timeString(time.time()-startt))
 

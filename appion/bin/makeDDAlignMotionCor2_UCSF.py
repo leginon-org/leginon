@@ -104,7 +104,9 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		# NOTE: self.params in self.framealigner alignparam mapping are directly transferred.
 		self.framealigner.setKV(self.dd.getKVFromImage(self.dd.image))
 		self.framealigner.setTotalRawFrames(self.dd.getNumberOfFrameSaved())
-		is_eer = self.dd.image['camera']['eer frames']
+		is_eer = False
+		if 'eer frames' in self.dd.image['camera'].keys():
+			is_eer = self.dd.image['camera']['eer frames']
 		self.framealigner.setIsEer(is_eer)
 		if self.params['totaldose'] is not None:
 			totaldose = self.params['totaldose']

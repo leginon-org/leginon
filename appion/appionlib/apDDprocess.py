@@ -124,10 +124,12 @@ class DirectDetectorProcessing(object):
 
 	def getRawFrameStackExtension(self,imagedata):
 		self.extname = 'mrc'
-		if imagedata['camera']['tiff frames']:
-			self.extname = 'tif'
-		if imagedata['camera']['eer frames']:
-			self.extname = 'eer'
+		if 'tiff frames' in imagedata['camera'].keys():
+			if imagedata['camera']['tiff frames']:
+				self.extname = 'tif'
+		if 'eer frames' in imagedata['camera'].keys():
+			if imagedata['camera']['eer frames']:
+				self.extname = 'eer'
 		return self.extname
 		
 	def getFrameStackPath(self,temp=False):

@@ -186,6 +186,34 @@ def getStarFileColumnLabels(starfile):
 		if len(l) > 2:
 			return labels
 
+def getColumnLabels(pfile):
+    # Go through header of particle file & get column info
+    optics_labels = []
+    particle_labels = []
+    f = open(pfile)
+    particle_lines = False
+    for line in f:
+        if line.startswith("data_particles") or line.startswith("data_\n"):
+            particle_lines = True
+        if line.startswith("#"):
+            continue
+        l = line.strip().split()
+        if not particle_lines and line[:4] == "_rln":
+            optics_labels.append(l[0])
+            continue
+        elif particle_lines and line[:4] == "_rln":
+            particle_labels.append(l[0])
+            continue
+        # if past the header section, stop
+        if particle_lines and (len(l) > 2):
+            break
+    if "_rlnOpticsGroup" not in particle_labels:
+        exit(
+            "This script requires optics groups (Relion 3.1 or later). Try reconscripts/groupImageShifts_3point0.py"
+        )
+    f.close()
+    return optics_labels, particle_labels
+
 def getColumnFromRelionLine(line,col):
 	# return a specified column (starting with 0)
 	l = line.strip().split()
@@ -197,7 +225,9 @@ def getMrcParticleFilesFromStar(starfile):
 	# returns array of mrc files containing particles
 	# first get header info
 	mrclist = []
-	for p in getPartsFromStar(starfile):
+	# parts = getPartsFromStar(starfile)
+	parts = starParticleArray(starfile)
+	for p in parts:
 		micro = p.split('@')[1]
 		# Relion usually uses relative paths, check:
 		if micro[0]!="/":
@@ -214,6 +244,22 @@ def getPartsFromStar(starfile):
 		p=getColumnFromRelionLine(line,namecol)
 		if p: partlist.append(p)
 	return partlist
+	
+def starParticleArray(starfile):
+	# same function as getPartsFromStar for Relion >= 3.1
+	optics_labels, particle_labels = getColumnLabels(starfile)
+	namecol = particle_labels.index('_rlnImageName')
+	partlist = []
+	particle_lines = False
+	for line in open(starfile):
+		if line.startswith("data_particles") or line.startswith("data_\n"):
+			particle_lines = True
+		if particle_lines:
+			p = getColumnFromRelionLine(line, namecol)
+			if p: 
+				partlist.append(p)
+	return partlist
+
 
 def writeRelionStarHeader(labels, outstarfile):
 	ofile = open(outstarfile,'w')

@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import logging
-logging.basicConfig(level=logging.INFO, filename='stacklog.log')
 
 #pythonlib
 import os
@@ -152,6 +150,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		
 		### merge image particles into big stack
 		totalpart = self.mergeImageStackIntoBigStack(self.imgstackfile, imgdata)
+		
 		### create a stack average every so often
 		if self.stats['lastpeaks'] > 0:
 			totalPartices = self.existingParticleNumber+self.stats['peaksum']+self.stats['lastpeaks']
@@ -1185,7 +1184,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		# for Relion
 		if self.params['filetype'] == "relion":
 			# make sure Relion is loaded:
-			apRelion.getRelionVersion()
+			apRelion.getRelionVersion() # abonham
 
 			if self.params['bgradius'] is None:
 				apDisplay.printError("Relion requires a bgradius value")
@@ -1275,15 +1274,19 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 			# make sure scaled pixel size is correct in output star file:
 			# get the first available mag and detector pixel size
-			labels = apRelion.getStarFileColumnLabels(rootname+".star")
+			optics_labels, particle_labels = apRelion.getColumnLabels(rootname+".star")
+			
 			for line in open(rootname+".star"):
 				l = line.strip().split()
 				if (len(l)<3 or line.startswith("#")): continue
-				dpixsize = float(l[labels.index("_rlnDetectorPixelSize")])
-				mag = float(l[labels.index("_rlnMagnification")])
-				apix = dpixsize/mag*1e4
+				try:
+					dpixsize = float(l[particle_labels.index("_rlnDetectorPixelSize")])
+					mag = float(l[particle_labels.index("_rlnMagnification")])
+					apix = dpixsize/mag*1e4
+				except:
+					apix = float(l[optics_labels.index("_rlnImagePixelSize")]) 
 				break
-
+			
 			# if the scaled pixels size isn't write, rewrite star file
 			sc_apix = self.params['apix']*self.params['bin']
 			# only check to 2 decimal points
@@ -1293,19 +1296,42 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				shutil.move(rootname+".star",rootname+".backup.star")
 
 				f = open(rootname+".star",'w')
-				for line in open(rootname+".backup.star"):
-					l = line.strip().split()
-					if (len(l)<3 or line.startswith("#")):
-						f.write(line)
-						continue
-					for i in range(len(labels)):
-						if i>0 and i<(len(labels)): f.write(" ")
-						if labels[i] in ("_rlnMicrographName","_rlnImageName"):
-							f.write(l[i])
-						elif labels[i] == "_rlnDetectorPixelSize":
-							f.write("%12.6f"%(float(l[i])*self.params['bin']))
-						else: f.write("%12s"%l[i])
-					f.write("\n")
+				if len(optics_labels) == 0:
+					for line in open(rootname+".backup.star"):
+						l = line.strip().split()
+						if (len(l)<3 or line.startswith("#")):
+							f.write(line)
+							continue
+						for i in range(len(particle_labels)):
+							if i>0 and i<(len(particle_labels)): f.write(" ")
+							if particle_labels[i] in ("_rlnMicrographName","_rlnImageName"):
+								f.write(l[i])
+							elif particle_labels[i] == "_rlnDetectorPixelSize":
+								f.write("%12.6f"%(float(l[i])*self.params['bin']))
+							else: f.write("%12s"%l[i])
+						f.write("\n")
+				else:
+					particle_lines = False
+					for line in open(rootname+".backup.star"):
+						if line.startswith("data_particles") or line.startswith("data_\n"):
+							particle_lines = True
+						l = line.strip().split()
+						if (len(l)<3 or line.startswith("#")):
+							f.write(line)
+							continue
+						if not particle_lines:
+							for i in range(len(optics_labels)):
+								if i>0 and i<(len(optics_labels)): f.write(" ")
+								if optics_labels[i] == "_rlnImagePixelSize":
+									f.write("%12.6f"%(float(l[i])*self.params['bin']))
+								else: f.write("%12s"%l[i])
+						if particle_lines:
+							for i in range(len(particle_labels)):
+								if i>0 and i<(len(particle_labels)): f.write(" ")
+								if particle_labels[i] in ("_rlnMicrographName","_rlnImageName"):
+									f.write(l[i])
+								else: f.write("%12s"%l[i])
+						f.write("\n")
 				f.close()
 				#os.remove(rootname+".backup.star")
 
@@ -1327,12 +1353,12 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 		stackpath = os.path.join(self.params['rundir'], self.params['single'])
 		averagefile = os.path.join(self.params['rundir'],'average.mrc')
-
+		print(stackpath)
 		if self.params['filetype']=='relion':
 			mrcfiles = apRelion.getMrcParticleFilesFromStar(stackpath)
 			stackTools.averageStackList(mrcfiles, averagefile)
 		else:
-			apStack.averageStack(stackpath) ## 
+			apStack.averageStack(stackpath)
 		### Create Stack Mean Plot
 		if self.params['commit'] is True and self.params['meanplot'] is True:
 			stackid = apStack.getStackIdFromPath(stackpath)
