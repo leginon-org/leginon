@@ -8,6 +8,8 @@ import math
 import random
 import pickle
 import functools
+import logging
+logging.basicConfig(filename='errors.log', level=logging.ERROR)
 #appion
 from appionlib import apDisplay
 from appionlib import apDatabase
