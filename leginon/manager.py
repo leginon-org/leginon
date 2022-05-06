@@ -1103,7 +1103,11 @@ class Manager(node.Node):
 				lapps = self._getLaunchedApplicationByName(appname=n)
 				if lapps:
 					lappdatalist.extend(lapps) # only one item in apps
-		history = map((lambda x: x['application']['name']), lappdatalist)
+		# reverse sort by DEE_id so that the most recent is at the front
+		history_ids = list(map((lambda x: x.dbid), lappdatalist))
+		history_ids.sort()
+		history_ids.reverse()
+		history = list(map((lambda x: leginondata.LaunchedApplicationData().direct_query(x)['application']['name']), history_ids))
 		amap = {}
 		for i,n in enumerate(history):
 			amap[n] = lappdatalist[i]['launchers']
