@@ -210,9 +210,16 @@ class Node(correctorclient.CorrectorClient):
 								self.settings[key][skey] = copy.deepcopy(self.defaultsettings[key][skey])
 
 	def researchDBSettings(self, settingsclass, inst_alias, user=None):
-		# load the requested user settings
+		# load the session settings in case the same user is operating more than one scope.
 		if user is None:
-			user = self.session['user']
+			qdata = settingsclass(initializer={'session': self.session,
+																						'name': inst_alias})
+			settings_list = self.research(qdata, results=1)
+			if settings_list:
+				return settings_list
+			else:
+				user = self.session['user']
+		# load the requested user settings
 		qsession = leginondata.SessionData(initializer={'user': user})
 		qdata = settingsclass(initializer={'session': qsession,
 																						'name': inst_alias})
