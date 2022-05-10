@@ -174,7 +174,7 @@ class Node(correctorclient.CorrectorClient):
 		if not hasattr(self, 'settingsclass'):
 			return
 
-		settings = self.reseachDBSettings(self.settingsclass, self.name, user)
+		settings = self.researchDBSettings(self.settingsclass, self.name, user)
 
 		# if that failed, use hard coded defaults
 		if not settings:
@@ -209,7 +209,7 @@ class Node(correctorclient.CorrectorClient):
 								# use default value of the node
 								self.settings[key][skey] = copy.deepcopy(self.defaultsettings[key][skey])
 
-	def reseachDBSettings(self, settingsclass, inst_alias, user=None):
+	def researchDBSettings(self, settingsclass, inst_alias, user=None):
 		# load the requested user settings
 		if user is None:
 			user = self.session['user']

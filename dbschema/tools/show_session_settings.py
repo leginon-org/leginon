@@ -24,7 +24,7 @@ class SettingsNode(object):
 		if not hasattr(self, 'settingsclass'):
 			return
 
-		settings = self.reseachDBSettings(self.settingsclass, self.name, user)
+		settings = self.researchDBSettings(self.settingsclass, self.name, user)
 
 		# if that failed, use hard coded defaults
 		if not settings:
@@ -59,7 +59,7 @@ class SettingsNode(object):
 								# use default value of the node
 								self.settings[key][skey] = copy.deepcopy(self.defaultsettings[key][skey])
 
-	def reseachDBSettings(self, settingsclass, inst_alias, user=None):
+	def researchDBSettings(self, settingsclass, inst_alias, user=None):
 		'''
 		Get Settings from the user or admin values before the session
 		was created.
