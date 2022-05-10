@@ -199,7 +199,8 @@ class Focuser(singlefocuser.SingleFocuser):
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		'''
 		this replaces singlefocuser.Focuser.acquire()
-		Instead of doing all sequence of autofocus, we do one
+		Instead of doing all sequence of autofocus, we do the one set by
+		self.current_focus_sequence_step each time this is called.
 		'''
 		self.new_acquire = True
 
@@ -229,13 +230,16 @@ class Focuser(singlefocuser.SingleFocuser):
 				self.clearBeamPath()
 				status = self.processFocusSetting(setting, emtarget=emtarget)
 				self.stopTimer('processFocusSetting')
+				#Focuser loops every targets for each focus_step
+				# Therefore, needs reset after each time processFocusSetting is done.
+				is_failed = self.resetComaCorrection()
 				## TEST ME
 				## repeat status means give up and do the what over ???
 
 
 		# aquire and save the focus image
 		# only needed at the last target
-		if status != 'repeat' and self.settings['acquire final'] and  self.is_last_target_and_focus_step:
+		if status != 'repeat' and self.settings['acquire final'] and self.is_last_target_and_focus_step:
 			self.acquireFinal(presetdata, emtarget)
 		return status
 

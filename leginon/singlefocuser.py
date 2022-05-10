@@ -273,6 +273,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			measure_status = 'aborted'
 		finally:
 			self.logger.info('Set beam tilt back')
+			# this beam tilt includes aberration correction
 			self.btcalclient.setBeamTilt(beamtilt0)
 			if measure_status:
 				return measure_status
@@ -289,7 +290,6 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		fitmin = correction['min']
 
 		resultdata.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':fitmin, 'drift': lastdrift})
-		self.btcalclient.setBeamTilt(beamtilt0)
 		return 'ok'
 
 		#####################################################################
@@ -624,6 +624,8 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			self.clearBeamPath()
 			status = self.processFocusSetting(setting, emtarget=emtarget)
 			self.stopTimer('processFocusSetting')
+			# need to reset for each focus_sequence for aberration correction
+			is_failed = self.resetComaCorrection()
 			## repeat means give up and do the whole target over
 			if status == 'repeat':
 				return 'repeat'
