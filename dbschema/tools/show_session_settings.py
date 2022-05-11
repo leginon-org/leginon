@@ -66,7 +66,13 @@ class SettingsNode(object):
 		'''
 		# load the requested user settings
 		if user is None:
-			user = self.session['user']
+			qdata = settingsclass(initializer={'session': self.session,
+																						'name': inst_alias})
+			settings_list = self.research(qdata, results=1)
+			if settings_list:
+				return settings_list
+			else:
+				user = self.session['user']
 		qsession = leginondata.SessionData(initializer={'user': user})
 		qdata = settingsclass(initializer={'session': qsession,
 																						'name': inst_alias})
