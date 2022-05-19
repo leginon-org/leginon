@@ -86,8 +86,8 @@ class Constrainer(object):
 
 # Compare two tuples based on their second value.
 # This is used for sorting list of (filename, time) by time.
-def cmp2(a, b):
-	return cmp(a[1], b[1])
+# def cmp2(a, b):
+# 	return cmp(a[1], b[1])
 
 
 class CacheFS(fs.osfs.OSFS):
@@ -104,17 +104,17 @@ class CacheFS(fs.osfs.OSFS):
 	def __init__(self, cachedir, maxsize):
 		fs.osfs.OSFS.__init__(self, cachedir)
 		self.constrainer = Constrainer(maxsize, self.remove)
-		try:
-			files = list(self.walkfiles())
-		except AttributeError:
-			files = list(self.walk.files())
+		# try:
+		# 	files = list(self.walkfiles())
+		# except AttributeError:
+		# 	files = list(self.walk.files())
 
-		fileatimes = [(f,self.getinfo(f)['accessed_time']) for f in files]
-		fileatimes.sort(cmp2)
-		files = [fa[0] for fa in fileatimes]
+		# fileatimes = [(f,self.getinfo(f)['accessed_time']) for f in files]
+		# fileatimes.sort(cmp2)
+		# files = [fa[0] for fa in fileatimes]
 
-		for f in files:
-			self.constrainer.insert(f, self.getsize(f))
+		# for f in files:
+		# 	self.constrainer.insert(f, self.getsize(f))
 
 	def close_callback(self, name):
 		newsize = self.getsize(name)
