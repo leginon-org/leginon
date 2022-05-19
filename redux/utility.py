@@ -48,8 +48,8 @@ def json_convert(obj):
 			return str(obj)
 		elif isinstance(obj, numpy.ndarray):
 			return obj.tolist()	
-		elif isinstance(obj, buffer):
-			return str(obj)
+		elif isinstance(obj, bytes):
+			return obj.decode()
 		raise ValueError('cannot convert %s' % (obj,))
 
 ## now use the conversion function in either of the two modules
