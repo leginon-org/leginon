@@ -62,16 +62,21 @@ class Format(redux.pipe.Pipe):
 		return image
 
 	def run_pil(self, input, oformat, rgb, overlay, overlaycolor):
-		pil_image = scipy.misc.toimage(input, cmin=0, cmax=255)
+		# pil_image = scipy.misc.toimage(input, cmin=0, cmax=255)
+		pil_image = Image.fromarray(input)
 		if rgb or overlay:
 			pil_image = pil_image.convert('RGBA')
 		if overlay:
 			pil_image = self.overlay_mask(pil_image, overlay, overlaycolor)
-		file_object = io.StringIO()
+		file_object = io.BytesIO()
+
+		# -- this is very likely wrong :) but i get an image --
+		pil_image = pil_image.convert("RGB")
+
 		pil_image.save(file_object, oformat)
-		image_string = file_object.getvalue()
+		image = file_object.getvalue()
 		file_object.close()
-		return image_string
+		return image
 
 	def make_dirname(self):
 		self._dirname = None
