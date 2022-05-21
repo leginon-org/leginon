@@ -10,6 +10,7 @@ import wx
 from leginon import leginondata
 from leginon import projectdata
 from leginon import gridserver
+from leginon import settingsfun
 import leginon.session
 import leginon.leginonconfig
 import leginon.ddinfo
@@ -110,7 +111,7 @@ class SessionCreator(object):
 		self.project = self.linkSessionProject(self.project_id)
 		self.setDataFromOld('C2ApertureSizeData',old_session)
 		self.clients = self.setDataFromOld('ConnectToClientsData',old_session)['clients']
-		self.setDataFromOld('LaunchedApplicationData',old_session)
+		self.launched_app = self.setDataFromOld('LaunchedApplicationData',old_session)
 		self.copyPresets(old_session)
 
 	def makeNewSessionFromOld(self, old_session, comment):
@@ -231,6 +232,40 @@ def start(sessionname, clientlist, gridslot,z, task='atlas'):
 	from leginon import start
 	start.start(options)
 
+class SessionSettingsCopier(object):
+	'''
+	Copy application settings from an old session to the new session.
+	'''
+	def __init__(self, session, old_session, application):
+		self.session = session
+		self.old_session = old_session
+		nodes = self.getApplicationNodes(application)
+		for n in nodes:
+			class_name = n['class string']
+			settings_classname = settingsfun.getSettingsName(class_name)
+			if not settings_classname:
+				continue
+			try:
+				settings_class = getattr(leginondata, settings_classname)
+				alias = n['alias']
+				old_settings = self._getOldDBSettings(settings_class, alias)[0]
+			except Exception as e:
+				print('Error getting old settings: %s' % e)
+				continue
+			if old_settings:
+				q = settings_class(initializer=old_settings)
+				q['session'] = self.session
+				q.insert()
+
+	def getApplicationNodes(self, appdata):
+		nodeinstance = leginondata.NodeSpecData(application=appdata)
+		return nodeinstance.query()
+
+	def _getOldDBSettings(self, settingsclass, inst_alias):
+		'''
+		Return settings based on the old session which might belong to a different user.
+		'''
+		return settingsfun.researchDBSettings(settingsclass, inst_alias, self.old_session, None)
 
 if __name__ == "__main__":
 	answer = raw_input('Enter autoloader cassette-grid mapping filename (leave it blank to use gui): ')
@@ -302,6 +337,9 @@ if __name__ == "__main__":
 		if i == 0:
 			first_session = app2.session
 			first_slot = slot_number
+			# copy the last settings from the old session instead of most recent user settings.
+			launched_app = app2.launched_app
+			app3 = SessionSettingsCopier(first_session, app2.old_session, launched_app['application'])
 		time.sleep(1.0) # to prevent session out of order on the viewer.
 	app2.saveAutoTaskOrder(task_order)
 	#start the first session.  The rest will be set from Manager.
