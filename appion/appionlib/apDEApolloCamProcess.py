@@ -53,7 +53,7 @@ class DEApolloCamProcessing(apDDprocess.DDFrameProcessing):
                         apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
                 session_frame_path = self.getSessionFramePathFromImage(imagedata)
                 # frame stackfile is image filename plus '.tif'
-                rawframedir = os.path.join(session_frame_path,'%s.tif' % imagedata['filename']) 
+                rawframedir = os.path.join(session_frame_path,'%s.frames.tif' % imagedata['filename']) 
                 if not self.waitForPathExist(rawframedir,30):
                         apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
                 return rawframedir
