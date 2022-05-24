@@ -915,9 +915,10 @@ class Manager(node.Node):
 		nodename = ievent['node']
 		if isinstance(ievent, event.ActivateNotificationEvent):
 			self.tem_host = ievent['tem_host']
-			self.timeout_minutes = ievent['timeout_minutes']
-			msg = '%.1f minutes timeout and error notification is activated' % (self.timeout_minutes)
-			self.slackNotification(msg)
+			if not ievent['silent']:
+				self.timeout_minutes = ievent['timeout_minutes']
+				msg = '%.1f minutes timeout and error notification is activated' % (self.timeout_minutes)
+				self.slackNotification(msg)
 			# reset
 			self.notifyerror = True
 			# first allow timer to restart, if was set to false by completing a timeout

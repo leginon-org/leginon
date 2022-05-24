@@ -119,6 +119,7 @@ class ActivateNotificationEvent(NotificationEvent):
 		return NotificationEvent.typemap() + (
 			('tem_host', str),
 			('timeout_minutes', float),
+			('silent', bool),
 		)
 	typemap = classmethod(typemap)
 

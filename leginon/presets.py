@@ -321,7 +321,7 @@ class PresetsManager(node.Node):
 		self.getPresetsFromDB()
 		self.start()
 
-	def toggleInstrumentTimeout(self):
+	def toggleInstrumentTimeout(self, silent=False):
 		if self.idleactive:
 			self.idleactive = False
 			self.outputEvent(event.DeactivateNotificationEvent())
@@ -331,7 +331,7 @@ class PresetsManager(node.Node):
 			self.idleactive = True
 			tem_hostname = self.getTemHostname()
 			timeout_minutes = self.settings['idle minute']
-			self.outputEvent(event.ActivateNotificationEvent(tem_host=tem_hostname, timeout_minutes=timeout_minutes))
+			self.outputEvent(event.ActivateNotificationEvent(tem_host=tem_hostname, timeout_minutes=timeout_minutes, silent=silent))
 			self.logger.info('Idle and Instrument error notification activated')
 
 	def lock(self, n):
@@ -2113,8 +2113,8 @@ class PresetsManager(node.Node):
 		'''
 		# set to the opposite of what we want
 		self.idleactive = not evt['active']
-		# then toggle on it to trigger downstream effects.
-		self.toggleInstrumentTimeout()
+		# then toggle on it to trigger downstream effects. keep it silent on slack
+		self.toggleInstrumentTimeout(silent=True)
 
 	def handleIdleTimedOutEvent(self, evt):
 		temname = None
