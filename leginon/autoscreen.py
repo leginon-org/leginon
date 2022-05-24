@@ -22,6 +22,8 @@ from leginon.gui.wx import AutoScreenProject
 class Options(object):
 	pass
 
+user_map = leginon.session.getUserFullnameMap()
+
 class SessionSetCreator(object):
 	def __init__(self):
 		self.old_session = None
@@ -114,8 +116,18 @@ class SessionCreator(object):
 		self.launched_app = self.setDataFromOld('LaunchedApplicationData',old_session)
 		self.copyPresets(old_session)
 
+	def getUser(self):
+		user_fullname = leginon.leginonconfig.USERNAME
+		search_name = user_fullname.strip().lower()
+		if search_name in user_map:
+			return user_map[search_name]
+		else:
+			print('Error: current leginon.cfg user %s not found.' % user_fullname)
+			print('     Use example session user to create sessions.')
+			return self.old_session['user']
+
 	def makeNewSessionFromOld(self, old_session, comment):
-		user = old_session['user']
+		user = self.getUser()
 		holder = old_session['holder']
 		name = self.getSessionName()
 		directory = leginon.leginonconfig.IMAGE_PATH
