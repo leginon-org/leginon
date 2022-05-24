@@ -242,30 +242,54 @@ class SessionSettingsCopier(object):
 		nodes = self.getApplicationNodes(application)
 		for n in nodes:
 			class_name = n['class string']
+			alias = n['alias']
 			settings_classname = settingsfun.getSettingsName(class_name)
 			if not settings_classname:
 				continue
 			try:
-				settings_class = getattr(leginondata, settings_classname)
-				alias = n['alias']
-				old_settings = self._getOldDBSettings(settings_class, alias)[0]
+				self.copyOldSettings(settings_classname, alias)
 			except Exception as e:
-				print('Error getting old settings: %s' % e)
+				print(e)
 				continue
-			if old_settings:
-				q = settings_class(initializer=old_settings)
-				q['session'] = self.session
-				q.insert()
+			if 'Focuser' in class_name:
+				settings_classname = 'FocusSequenceData'
+				seqdata = self.copyOldSettings(settings_classname, alias)
+				for step_name in seqdata['sequence']:
+					self.copyOldFocusSettings(alias, step_name)
+
+	def copyOldFocusSettings(self, alias, step_name):
+		settings_classname = 'FocusSettingData'
+		settings_class = getattr(leginondata, settings_classname)
+		extra = ('node name', alias)
+		try:
+			old_settings = settingsfun.researchDBSettings(settings_class, step_name, self.old_session, None, extra)[0]
+		except IndexError as e:
+			print('ERROR: no focus settings found, use default')
+			return
+		q = settings_class(initializer=old_settings)
+		q['session'] = self.session
+		q.insert()
+		return q
+
+	def copyOldSettings(self, settings_classname, alias):
+		settings_class = getattr(leginondata, settings_classname)
+		old_settings = self._getOldDBSettings(settings_class, alias)[0]
+		if old_settings:
+			q = settings_class(initializer=old_settings)
+			q['session'] = self.session
+			q.insert()
+		return q
+
 
 	def getApplicationNodes(self, appdata):
 		nodeinstance = leginondata.NodeSpecData(application=appdata)
 		return nodeinstance.query()
 
-	def _getOldDBSettings(self, settingsclass, inst_alias):
+	def _getOldDBSettings(self, settingsclass, inst_alias, extra=None):
 		'''
 		Return settings based on the old session which might belong to a different user.
 		'''
-		return settingsfun.researchDBSettings(settingsclass, inst_alias, self.old_session, None)
+		return settingsfun.researchDBSettings(settingsclass, inst_alias, self.old_session, None, extra)
 
 if __name__ == "__main__":
 	answer = raw_input('Enter autoloader cassette-grid mapping filename (leave it blank to use gui): ')

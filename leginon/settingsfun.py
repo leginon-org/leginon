@@ -4,14 +4,21 @@ Settings functions available outside node class.
 """
 from leginon import leginondata
 
-def researchDBSettings(settingsclass, inst_alias, session=None, user=None):
+def researchDBSettings(settingsclass, inst_alias, session=None, user=None, extra=None):
 	'''
 	return settings in the order of session, user, admin
 	'''
 	# load the session settings in case the same user is operating more than one scope.
+	alias_fieldname = 'name'
+	if settingsclass.__name__ in ('FocusSequenceData',):
+		alias_fieldname = 'node name'
+	if extra:
+		k,v = extra
 	if session:
-		qdata = settingsclass(initializer={'session': session,
-																					'name': inst_alias})
+		qdata = settingsclass(initializer={'session': session})
+		qdata[alias_fieldname] = inst_alias
+		if extra:
+			qdata[k] = v
 		settings_list = qdata.query(results=1)
 		if settings_list:
 			return settings_list
@@ -20,8 +27,10 @@ def researchDBSettings(settingsclass, inst_alias, session=None, user=None):
 	if user:
 		# load the most recent requested user settings
 		qsession = leginondata.SessionData(initializer={'user': user})
-		qdata = settingsclass(initializer={'session': qsession,
-																					'name': inst_alias})
+		qdata = settingsclass(initializer={'session': session})
+		qdata[alias_fieldname] = inst_alias
+		if extra:
+			qdata[k] = v
 		settings_list = qdata.query(results=1)
 	else:
 		settings_list = []
@@ -33,13 +42,20 @@ def researchDBSettings(settingsclass, inst_alias, session=None, user=None):
 			settings_list = [settings,]
 	return settings_list
 
-def getDBAdminSettings(settingsclass, inst_alias):
+def getDBAdminSettings(settingsclass, inst_alias, extra=None):
 	"""
 	Get one administrator settings for the node instance.
 	Returns empty dictionary if not found.
 	"""
 	admin_settings = {}
-	qdata = settingsclass(initializer={'isdefault': True, 'name': inst_alias})
+	alias_fieldname = 'name'
+	if settingsclass.__name__ in ('FocusSequenceData',):
+		alias_fieldname = 'node name'
+	qdata = settingsclass()
+	qdata[alias_fieldname] = inst_alias
+	if extra:
+		k,v = extra
+		qdata[k] = v
 	results = qdata.query(results=1)
 	if results:
 		admin_settings = results[0]
