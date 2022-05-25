@@ -309,6 +309,7 @@ class PresetsManager(node.Node):
 		self.recover_beamtilt = threading.Event()
 
 		# timeout thread
+		self._idle_lock = threading.Lock()
 		self.idleactive = False
 
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
@@ -2111,14 +2112,17 @@ class PresetsManager(node.Node):
 		'''
 		Set the active status of error notification/timeout timer from manager
 		'''
+		self._idle_lock.acquire()
 		# set to the opposite of what we want
 		self.idleactive = not evt['active']
 		# then toggle on it to trigger downstream effects. keep it silent on slack
 		self.toggleInstrumentTimeout(silent=True)
+		self._idle_lock.release()
 
 	def handleIdleTimedOutEvent(self, evt):
+		self._idle_lock.acquire()
 		temname = None
-		self.logger.info('Idled for too long.  Finishing....')
+		self.logger.info('Idled too long.  Finishing....')
 		try:
 			presetname = self.currentpreset['name']
 			temname = self.currentpreset['tem']['name']
@@ -2143,7 +2147,9 @@ class PresetsManager(node.Node):
 		else:
 			self.logger.error('No valid preset to set tem to close column valve')
 		# deactivate idle and error notification
-		self.toggleInstrumentTimeout()
+		if self.idleactive:
+			self.toggleInstrumentTimeout()
+		self._idle_lock.release()
 
 	def handleUpdatePresetEvent(self, evt):
 		presetname = evt['name']
