@@ -1267,8 +1267,11 @@ class Manager(node.Node):
 			self.autoStartApplication(self.auto_task)
 		else:
 			# finishing
-			self.timeout_minutes = 0
+			# refs #12774 Setting timout_minutes to 0.5 triggers cloumn valve closing upon
+			# slackTimerNotification but avoid immediate idle timeout again.
+			self.timeout_minutes = 0.5
 			self.slackTimeoutNotification('autotasks all finished')
+			self.setTimeoutTimerStatus(False)
 
 	def killApplication(self):
 		self.cancelTimeoutTimer()
