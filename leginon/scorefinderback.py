@@ -18,6 +18,12 @@ import os
 
 from leginon import icefinderback, statshole, lattice
 
+class ScoreResultMissingError(Exception):
+	'''Raised when score result is missing.  This assumes script fails.
+	Requests from user to downgrade this because it is too often.
+	'''
+	pass
+
 ###################
 ### Because of the use of __result, the subclass don't get them as attribute. AC 2021
 ###################
@@ -175,7 +181,7 @@ class HoleFinder(icefinderback.IceFinder):
 		outpath = self.getOutPath()
 		if not os.path.isfile(outpath):
 			self.update_result('holes', [])
-			raise RuntimeError('hole finder did not run: %s missing' % outpath)
+			raise ScoreResultMissingError('hole finder did not run: %s missing' % outpath)
 			return
 		f = open(outpath,'r')
 		# returns one line

@@ -900,7 +900,7 @@ class Manager(node.Node):
 		self.timer = threading.Timer(timeout,self.slackTimeoutNotification)
 		self.timer.start()
 		if self.timer_debug:
-			print 'timer started with timeout set to %.0f sec' % timeout
+			print('timer restarted with timeout set to %.0f sec' % timeout)
 
 	# Node Error Notification
 	def handleNodeLogError(self, ievent):
@@ -915,9 +915,10 @@ class Manager(node.Node):
 		nodename = ievent['node']
 		if isinstance(ievent, event.ActivateNotificationEvent):
 			self.tem_host = ievent['tem_host']
-			self.timeout_minutes = ievent['timeout_minutes']
-			msg = '%.1f minutes timeout and error notification is activated' % (self.timeout_minutes)
-			self.slackNotification(msg)
+			if not ievent['silent']:
+				self.timeout_minutes = ievent['timeout_minutes']
+				msg = '%.1f minutes timeout and error notification is activated' % (self.timeout_minutes)
+				self.slackNotification(msg)
 			# reset
 			self.notifyerror = True
 			# first allow timer to restart, if was set to false by completing a timeout
@@ -1266,8 +1267,12 @@ class Manager(node.Node):
 			self.autoStartApplication(self.auto_task)
 		else:
 			# finishing
-			self.timeout_minutes = 0
+			current_timeout = self.timeout_minutes + 0
+			self.cancelTimeoutTimer()
 			self.slackTimeoutNotification('autotasks all finished')
+			# refs #12775 prevent autorun
+			self.autorun = False
+			self.notifyerror = False
 
 	def killApplication(self):
 		self.cancelTimeoutTimer()
@@ -1275,6 +1280,8 @@ class Manager(node.Node):
 		self.timer = None
 		self.application.kill()
 		self.application = None
+		# refs #12775 need to reset so it does not broadcase while launching new app or node.
+		self.broadcast = []
 		self.onApplicationKilled()
 
 	def loadApp(self, name):

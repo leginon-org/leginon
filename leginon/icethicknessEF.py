@@ -224,7 +224,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		'''
 		if type(self.last_acq_node) == type({}) and self.last_acq_node['is_direct_bound'] == True:
 			settingsclassname = self.last_acq_node['node']['class string']+'SettingsData'
-			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.last_acq_node['node']['alias'])
+			results= self.researchDBSettings(getattr(leginondata,settingsclassname),self.last_acq_node['node']['alias'])
 			if not results:
 				# default acquisition settings waiting is False. However, admin default
 				# should be o.k.

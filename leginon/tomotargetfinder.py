@@ -70,7 +70,7 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 		if not self.next_acq_node:
 			return None
 		settingsclassname = self.next_acq_node['node']['class string']+'SettingsData'
-		results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['node']['alias'])
+		results= self.researchDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['node']['alias'])
 		acqsettings = results[0]
 		try:
 			return (acqsettings['tilt min'],acqsettings['tilt max'])
@@ -182,7 +182,7 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 		try:
 			# get settings for the next Acquisition node
 			settingsclassname = self.next_acq_node['node']['class string']+'SettingsData'
-			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['node']['alias'])
+			results= self.researchDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['node']['alias'])
 			acqsettings = results[0]
 			# use first preset in preset order for display
 			presetname = acqsettings['track preset']
@@ -212,7 +212,7 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 		try:
 			# get settings for the next Acquisition node
 			settingsclassname = self.focus_node['class string']+'SettingsData'
-			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.focus_node['alias'])
+			results= self.researchDBSettings(getattr(leginondata,settingsclassname),self.focus_node['alias'])
 			acqsettings = results[0]
 			# use first preset in preset order for display
 			presetlist = acqsettings['preset order']

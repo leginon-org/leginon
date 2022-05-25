@@ -180,6 +180,19 @@ def getSessions(userdata, n=None):
 			break
 	return names, sessiondatalist
 
+def getUserFullnameMap():
+	'''
+	return dictionary of userdata with lower case fullname as the key.
+	'''
+	users = leginon.leginondata.UserData().query()
+	fullname_map = {}
+	for u in users:
+		if u['noleginon']:
+			continue
+		fullname = '%s %s' % (u['firstname'].strip().lower(),u['lastname'].strip().lower())
+		fullname_map[fullname] = u
+	return fullname_map
+
 def hasGridHook():
 	try:
 		server_configs = moduleconfig.getConfigured('gridhook.cfg', 'leginon')
