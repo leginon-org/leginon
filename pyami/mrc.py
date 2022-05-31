@@ -267,7 +267,7 @@ the header data.
 	'''
 	### check for a valid machine stamp in header, with or without byteswap
 	stampswapped = None
-	machstamp = headerbytes[212:216]
+	machstamp = numpy.fromfile(headerbytes, dtype='int32')[212:216]
 	machstamp = numpy.fromstring(machstamp, dtype='int32', count=1)
 	machstampint = machstamp[0]
 	if machstampint in intbyteorder:
@@ -311,10 +311,10 @@ def parseHeader(headerbytes):
 	ftype = numpy.dtype('float32')
 
 	## check if data needs to be byte swapped
-	swapped = isSwapped(headerbytes)
-	if swapped:
-		itype = itype.newbyteorder()
-		ftype = ftype.newbyteorder()
+	# swapped = isSwapped(headerbytes)
+	# if swapped:
+	# 	itype = itype.newbyteorder()
+	# 	ftype = ftype.newbyteorder()
 
 	## Convert 1k header into both floats and ints to make it easy
 	## to extract all the info.
@@ -322,8 +322,12 @@ def parseHeader(headerbytes):
 	## remainder of data are text labels
 	## ** should use numpy.frombuffer or http://construct.wikispaces.com/
 	headerarray = {}
-	headerarray['float32'] = numpy.fromstring(headerbytes, dtype=ftype, count=224)
-	headerarray['int32'] = numpy.fromstring(headerbytes, dtype=itype, count=224)
+	try:
+		headerarray['float32'] = numpy.fromstring(headerbytes, dtype=ftype, count=224)
+		headerarray['int32'] = numpy.fromstring(headerbytes, dtype=itype, count=224)
+	except:
+		headerarray['float32'] = numpy.fromfile(headerbytes, dtype=ftype, count=224)
+		headerarray['int32'] = numpy.fromfile(headerbytes, dtype=itype, count=224)
 
 	## fill in header dictionary with all the info
 	newheader = {}
@@ -359,8 +363,8 @@ def parseHeader(headerbytes):
 	## header, which may be invalid.  This allows the data to be read
 	## properly.  Also figure out the numpy shape of the data from dimensions.
 	dtype = numpy.dtype(mrc2numpy[newheader['mode']])
-	if swapped:
-		dtype = dtype.newbyteorder()
+	# if swapped:
+	# 	dtype = dtype.newbyteorder()
 	newheader['dtype'] = dtype
 	if newheader['nz'] > 1:
 		## 3D data

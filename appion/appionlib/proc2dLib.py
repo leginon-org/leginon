@@ -75,7 +75,7 @@ class RunProc2d(object):
 		self.approc2d.params[name] = value
 
 	def run(self):
-		apDisplay.printWarning("Using old apProc2dlib which is known to have out of memory issues")
+		#apDisplay.printWarning("Using old apProc2dlib which is known to have out of memory issues")
 		self.approc2d.checkConflicts()
 		self.approc2d.start()
 		#self.approc2d.close()

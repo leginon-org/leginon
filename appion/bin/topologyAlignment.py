@@ -135,9 +135,12 @@ class TopologyRepScript(appionScript.AppionScript):
 		if not self.params['mask']:
 			self.params['mask'] = (self.boxsize/2)-2
 		self.workingmask = math.floor(self.params['mask']/self.params['bin'])
-		if self.params['mramethod'] == 'imagic':
-			self.imagicroot = apIMAGIC.checkImagicExecutablePath()
-			self.imagicversion = apIMAGIC.getImagicVersion(self.imagicroot)
+		try:
+			if self.params['mramethod'] == 'imagic':
+				self.imagicroot = apIMAGIC.checkImagicExecutablePath()
+				self.imagicversion = apIMAGIC.getImagicVersion(self.imagicroot)
+		except:
+			self.imagicversion = 'NaN'
 
 	#=====================
 	def setRunDir(self):
@@ -151,7 +154,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		self.params['runtime'] = time.time() - self.t0
 		self.params['timestamp'] = self.timestamp
 		paramfile = "topolrep-"+self.timestamp+"-params.pickle"
-		pf = open(paramfile, "w")
+		pf = open(paramfile, "wb") # abonham - was w
 		pickle.dump(self.params, pf)
 		pf.close()
 
@@ -385,7 +388,7 @@ class TopologyRepScript(appionScript.AppionScript):
 			self.params['maxage'],
 			numClasses
 		)
-		cancmd = self.params['canexe']+canopts
+		cancmd = self.params['canexe'].decode()+canopts
 		self.params['currentnumclasses'] = numClasses
 
 		apDisplay.printMsg("running CAN:")
@@ -406,7 +409,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		# remove class files
 		for spif in spifiles:
 			os.remove(spif)
-
+			
 		# align resulting classes
 		self.alignClasses()
 		
@@ -1124,7 +1127,7 @@ class TopologyRepScript(appionScript.AppionScript):
 				# set up next iteration directory
 				self.params['currentiter'] = i
 				self.params['iterdir'] = os.path.abspath("iter%02i" % i)
-				self.params['iterdir'] = string.replace(self.params['iterdir'],"/jetstor/APPION","")
+				self.params['iterdir'] = self.params['iterdir'].replace("/jetstor/APPION","")
 				if os.path.exists(self.params['iterdir']):
 					apDisplay.printError("Error: directory '%s' exists, aborting alignment" % self.params['iterdir'])
 

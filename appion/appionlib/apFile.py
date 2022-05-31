@@ -149,8 +149,8 @@ def getBoxSize(filename, msg=True):
 		headerdict = apImagicFile.readImagicHeader(headerfilename)
 		shape = (headerdict['rows'], headerdict['lines'], headerdict['nimg'])
 		return shape
-	if filename[-4:] == '.mrc':
-		headerdict = mrc.parseHeader(filename)
+	if '.mrc' in filename[-5:]: 
+		headerdict = mrc.readHeaderFromFile(filename)
 		shape = headerdict['shape']
 		if len(shape) == 2:
 			return (shape[0], shape[1], 1)
@@ -205,7 +205,7 @@ def numImagesInStack(imgfile, boxsize=None):
 		imgmem = boxsize*(boxsize+2)*4
 		numimg = int('%d' % (os.stat(imgfile)[6]/imgmem))
 	elif imgfile.endswith(".star"):
-		return len(apRelion.getPartsFromStar(imgfile))
+		return len(apRelion.starParticleArray(imgfile))
 	else:
 		apDisplay.printError("numImagesInStack() requires an IMAGIC, SPIDER, or RELION stack")
 	return numimg

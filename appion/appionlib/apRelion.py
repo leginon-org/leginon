@@ -227,6 +227,7 @@ def getMrcParticleFilesFromStar(starfile):
 	mrclist = []
 	# parts = getPartsFromStar(starfile)
 	parts = starParticleArray(starfile)
+	
 	for p in parts:
 		micro = p.split('@')[1]
 		# Relion usually uses relative paths, check:
