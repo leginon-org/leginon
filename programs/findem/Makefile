@@ -1,10 +1,10 @@
 f90=gfortran
-f77=g77
+f77=gfortran -std=legacy
 cc=gcc
 ar=ar cr
-LPATH=.
+LPATH=./mrcpackage/lib
 BINPATH=.
-FFLAGS=-O3 -w -march=native -mtune=native
+FFLAGS=-O3 -w -march=native -mtune=native -std=legacy
 CFLAGS=-O3 -w -march=native -mtune=native
 LIBS=$(LPATH)/imlib2010.a $(LPATH)/ifftlib.a $(LPATH)/genlib.a $(LPATH)/misclib.a $(LPATH)/plot2klib.a
 ARCH=$(shell uname -i)

@@ -515,7 +515,7 @@ class MotionCor2_UCSF(DDFrameAligner):
                 if 'FtBin' in list(self.alignparams.keys()):
                         binning = self.alignparams['FtBin']
                 shifts_adjusted = []
-                midval = int(len(shifts)//2)
+                midval = int(len(shifts)/2)
                 midshx = shifts[midval][0]
                 midshy = shifts[midval][1]
                 for l in shifts:
