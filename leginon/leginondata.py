@@ -1924,7 +1924,7 @@ class RegionFinderSettingsData(TargetFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class BlobFinderSettingsData(Data):
+class BlobFinderSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
 			('on', bool),
@@ -1941,11 +1941,12 @@ class BlobFinderSettingsData(Data):
 		)
 	typemap = classmethod(typemap)
 
-class TargetGroupingSettingsData(Data):
+class TargetGroupingSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
 			('total targets', int),
 			('classes', int),
+			('group method', str),
 		)
 	typemap = classmethod(typemap)
 
