@@ -406,6 +406,8 @@ class TargetScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['target grouping']['classes'], (1, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		sz.Add(self.createGroupMethodSizer(), (2,0),(1,2),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_LEFT)
 		
 		tm_sz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Cover each square with:')
@@ -414,11 +416,23 @@ class TargetScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'targets')
 		tm_sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(tm_sz, (2, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(tm_sz, (3, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		# finalize
 		sz.AddGrowableCol(1)
 		sbsz1.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 		return [sbsz1, ]
+
+	def createGroupMethodSizer(self):
+		groupmethods = self.node.getGroupMethodChoices()
+		self.widgets['target grouping']['group method'] = Choice(self, -1, choices=groupmethods)
+		szgroupmethod = wx.GridBagSizer(5, 5)
+		szgroupmethod.Add(wx.StaticText(self, -1, 'Each group has equal'),
+										(0, 0), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		szgroupmethod.Add(self.widgets['target grouping']['group method'],
+										(0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		return szgroupmethod
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
