@@ -5,6 +5,7 @@ import json
 import sinedon
 from sinedon import dbconfig
 from leginon import leginondata
+from leginon import settingsfun
 import time
 
 class DataJsonMaker(object):
@@ -152,23 +153,11 @@ class SettingsJsonMaker(DataJsonMaker):
 				self.publish(results)
 
 	def exportSettingsByClassAndAlias(self,allalias):
-		unusual_settingsnames = {
-				'AlignZeroLossPeak': 'AlignZLPSettingsData',
-				'MeasureDose':None,
-				'IntensityCalibrator':None,
-				'AutoNitrogenFiller':'AutoFillerSettingsData',
-				'BufferCycler':'BufferCyclerSettingsData',
-				'EM':None,
-				'FileNames':'ImageProcessorSettingsData',
-				'IcethicknessEF': 'ZeroLossIceThicknessSettingsData',
-		}
 		aliaskeys = allalias.keys()
 		aliaskeys.sort()
 		focuser_alias ={}
 		for classname in aliaskeys:
-			settingsname = classname+'SettingsData'
-			if classname in unusual_settingsnames.keys():
-				settingsname = unusual_settingsnames[classname]
+			settingsname = settingsfun.getSettingsName(classname,)
 			if not settingsname:
 				continue
 			if classname in aliaskeys:
