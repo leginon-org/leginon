@@ -1000,3 +1000,15 @@ class Jeol1230(tem.TEM):
 		# valid values: imaging or diffraction
 		pass
 
+	def getProjectionSubModeName(self):
+		mag = self.getMagnification()
+		if mag < 1000:
+			return 'lowmag'
+		else:
+			return 'mag1'
+
+	def getProjectionSubModeId(self):
+		name = getProjectionSubModeName()
+		if name == 'lowmag':
+			return 0
+		return 1
