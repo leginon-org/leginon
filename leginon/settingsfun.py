@@ -27,7 +27,7 @@ def researchDBSettings(settingsclass, inst_alias, session=None, user=None, extra
 	if user:
 		# load the most recent requested user settings
 		qsession = leginondata.SessionData(initializer={'user': user})
-		qdata = settingsclass(initializer={'session': session})
+		qdata = settingsclass(initializer={'session': qsession})
 		qdata[alias_fieldname] = inst_alias
 		if extra:
 			qdata[k] = v

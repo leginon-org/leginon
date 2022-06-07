@@ -153,6 +153,7 @@ class Jeol1230(tem.TEM):
 			print 'from jeol1230.py findMagnifications'
 		magnifications = self.jeol1230lib.magnification
 		self.setMagnifications(magnifications)
+		self.projection_submode_map = self.jeol1230lib.mapProjectionSubmode()
 		return True
 
 	# check if self.magnifications is initialized sucessfully
@@ -999,4 +1000,3 @@ class Jeol1230(tem.TEM):
 	def setProjectionMode(self, value):
 		# valid values: imaging or diffraction
 		pass
-
