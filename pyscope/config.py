@@ -28,7 +28,7 @@ def parse():
 	filenames = [os.path.join(confdir, 'instruments.cfg') for confdir in confdirs]
 	# take the last existing one only.  This is needed because module name
 	# in instruments.cfg is not used.
-	filenames = pyami.fileutil.check_exist_one_file(filenames)
+	filenames = pyami.fileutil.check_exist_one_file(filenames, combine=False)
 	try:
 		configfiles = configparser.read(filenames)
 	except:
