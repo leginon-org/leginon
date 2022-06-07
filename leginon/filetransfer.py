@@ -25,7 +25,7 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 		self.refcopy = None
 		if not self.is_win32:
 			self.refcopy = ReferenceCopier()
-			self.setSourceHead(self.params['local_ref_head'])
+			self.refcopy.setSourceHead(self.params['local_ref_head'])
 
 	def setOptions(self, parser):
 		# options
