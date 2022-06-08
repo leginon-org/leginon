@@ -11,12 +11,12 @@ def getDefaultConfigs():
 	return dconfig
 
 try:
-	configs = moduleconfig.getConfigured('pyami.cfg', package='pyami', combine=True)
+	configs = moduleconfig.getConfigured('pyami.cfg', package='pyami', combine=False)
 except:
 	configs = getDefaultConfigs()
 
 def getLoadedConfigs():
-	return moduleconfig.getConfigured('pyami.cfg', package='pyami', combine=True)
+	return moduleconfig.getConfigured('pyami.cfg', package='pyami', combine=False)
 
 def getHostMappings():
 	hostdict = configs['my ip map'].copy()
