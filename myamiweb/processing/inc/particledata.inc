@@ -6464,7 +6464,7 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 					$addition_parts[0] = $_SESSION['username']; #for topaz and reporting http://emg.nysbc.org/redmine/issues/7962#note-5
 				}					
 				if (defined('APPION_REPLACEMENT_PART')) {
-				    $addition_parts = array_merge(array_slice($addition_parts, 0, $session_index-1), array("appion"), array_slice($addition_parts, $session_index-1));
+				    $addition_parts = array_merge(array_slice($addition_parts, 0, $session_index-1), array(APPION_REPLACEMENT_PART), array_slice($addition_parts, $session_index-1));
 				}
 				$appion_path = Path::formatEndPath(Path::formatEndPath($appion_path).implode(DS,$addition_parts));
 				
