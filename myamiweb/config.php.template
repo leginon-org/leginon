@@ -179,8 +179,6 @@ define('APPION_PARENT_ADDITION',0);
 // The result is a subdivision of data by user or group before appion/leginon directories.
 //define('APPION_PARENT_REPLACEMENT',-2); 
 
-//define('APPION_REPLACEMENT_PART','appion');
-
 // --- direct detector frame transfer initiated by user, not rawtransfer.py //
 //define('FRAME_TRANSFER_BY_USER', false);
 
