@@ -3143,6 +3143,7 @@ class BufferHostData(DigitalCameraData):
 			('buffer hostname', str),
 			('buffer base path', str),
 			('disabled', bool),
+			('append full head', bool),
 		)
 	typemap = classmethod(typemap)
 
