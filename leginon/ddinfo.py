@@ -119,7 +119,7 @@ def getBufferFrameSessionPathFromImage(imdata):
 		return False
 	# by using os.path.join, '/' need to be removed in legsplit[-1]
 	if host['append full head']:
-		session_part = 'leginon'.join(legsplit[:-1])
+		session_part = 'leginon'.join(legsplit[:-1])[1:]
 		session_part += legsplit[-1][1:]
 	else:
 		session_part = legsplit[-1][1:]
