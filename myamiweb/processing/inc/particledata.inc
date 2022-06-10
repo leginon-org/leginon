@@ -6454,6 +6454,10 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 			if (defined('APPION_PARENT_REPLACEMENT') && APPION_PARENT_REPLACEMENT < 0) {
 				# replace one part into DEFAULT_APPION_PATH
 				$replace_part = $parts[$leginon_index+APPION_PARENT_REPLACEMENT];
+				if ($_SESSION['username']){
+					$login_user = $_SESSION['username']; #for topaz and reporting http://emg.nysbc.org/redmine/issues/7962#note-5
+					$replace_part = $login_user;
+				}
 				$appion_parts = explode(DS,$appion_path);
 				array_splice($appion_parts,$appion_index+APPION_PARENT_REPLACEMENT,1,array($replace_part));
 				$appion_path = Path::formatEndPath(implode(DS,$appion_parts));
@@ -6462,7 +6466,7 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 				$addition_parts = array_splice($parts,$session_index-APPION_PARENT_ADDITION,APPION_PARENT_ADDITION);
 				if ($_SESSION['username']){
 					$addition_parts[0] = $_SESSION['username']; #for topaz and reporting http://emg.nysbc.org/redmine/issues/7962#note-5
-				}					
+				}
 				if (defined('APPION_REPLACEMENT_PART')) {
 				    $addition_parts = array_merge(array_slice($addition_parts, 0, $session_index-1), array(APPION_REPLACEMENT_PART), array_slice($addition_parts, $session_index-1));
 				}
