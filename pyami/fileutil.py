@@ -160,5 +160,29 @@ def unixChangeOwnership(uid,gid,pathname, recursive=False):
 	p = subprocess.Popen(cmd, shell=True)
 	p.wait()
 
+cache_name = 'LEGINON_READONLY_IMAGE_PATH'
+def getExistingCacheFile(session_image_path, filename):
+	'''
+	Use environment variable LEGINON_READONLY_IMAGE_PATH to define
+	prepended session_image_path to the cached files.
+	'''
+	def getCacheHeads():
+		if not cache_name in os.environ.keys():
+			return []
+		cache_heads = os.environ[cache_name].split(':')
+		for c in cache_heads:
+			c = os.path.abspath(c)
+		return cache_heads
+	cache_heads = getCacheHeads()
+	for c in cache_heads:
+		c = os.path.abspath(c)
+		if os.path.isdir(c):
+			clean_path = os.path.abspath(session_image_path)[1:] # strip the first '/'
+			cache_path = os.path.join(c, clean_path)
+			fullname = os.path.join(cache_path, filename)
+			if os.path.exists(fullname):
+				return fullname
+	return None
+
 if __name__ == '__main__':
 	print getMyFilename()

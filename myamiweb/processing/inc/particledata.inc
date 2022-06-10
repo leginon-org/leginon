@@ -6454,17 +6454,21 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 			if (defined('APPION_PARENT_REPLACEMENT') && APPION_PARENT_REPLACEMENT < 0) {
 				# replace one part into DEFAULT_APPION_PATH
 				$replace_part = $parts[$leginon_index+APPION_PARENT_REPLACEMENT];
+				if ($_SESSION['username']){
+					$login_user = $_SESSION['username']; #for topaz and reporting http://emg.nysbc.org/redmine/issues/7962#note-5
+					$replace_part = $login_user;
+				}
 				$appion_parts = explode(DS,$appion_path);
 				array_splice($appion_parts,$appion_index+APPION_PARENT_REPLACEMENT,1,array($replace_part));
 				$appion_path = Path::formatEndPath(implode(DS,$appion_parts));
 			}
 			if ($parent_addition_number > 0) {
-				// add extra directory division prior to sessionname
 				$addition_parts = array_splice($parts,$session_index-APPION_PARENT_ADDITION,APPION_PARENT_ADDITION);
 				if ($_SESSION['username']){
 					$addition_parts[0] = $_SESSION['username']; #for topaz and reporting http://emg.nysbc.org/redmine/issues/7962#note-5
-				}					
+				}
 				$appion_path = Path::formatEndPath(Path::formatEndPath($appion_path).implode(DS,$addition_parts));
+				
 			}
 		} else {
 			// use default alone
