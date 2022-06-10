@@ -189,7 +189,13 @@ def getUserFullnameMap():
 	for u in users:
 		if u['noleginon']:
 			continue
+		if u['firstname'] is None or u['lastname'] is None:
+			# Must have firstname and lastname
+			# This entry occurs when deon fails at NYSBC.
+			continue
 		fullname = '%s %s' % (u['firstname'].strip().lower(),u['lastname'].strip().lower())
+		if fullname == ' ':
+			continue
 		fullname_map[fullname] = u
 	return fullname_map
 
