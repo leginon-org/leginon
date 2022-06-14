@@ -34,15 +34,16 @@ if (is_array($data) && (count($data)> 1)) {
 	$dbemgraph= new dbemgraph($data, 'x', 'y');
 	if ($viewdata) {
 		$dbemgraph->dumpData(array('x', 'y'));
-	}
-	$dbemgraph->title="Frame Movement (Angstrom)";
-	$dbemgraph->xaxistitle="x drift (Angstrom)";
-	$dbemgraph->yaxistitle="y drift (Angstrom)";
-	$dbemgraph->markstart=true;
+	} else {
+		$dbemgraph->title="Frame Movement (Angstrom)";
+		$dbemgraph->xaxistitle="x drift (Angstrom)";
+		$dbemgraph->yaxistitle="y drift (Angstrom)";
+		$dbemgraph->markstart=true;
 
-	$dbemgraph->proportion(0.0);
-	$dbemgraph->dim($width,$height);
-	$dbemgraph->graph();
+		$dbemgraph->proportion(0.0);
+		$dbemgraph->dim($width,$height);
+		$dbemgraph->graph();
+	}
 } else {
 	$image_util = new imageUtil();
 	$error_text = "No movie alignment log available";

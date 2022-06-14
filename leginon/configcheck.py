@@ -19,6 +19,13 @@ def printError(str):
 	else:
 		print "\033[1;31m"+msg+"\033[0m"
 
+def printWarning(str):
+	msg = "Non-Fatal Failure: %s"%(str)
+	if sys.platform == 'win32':
+		print msg
+	else:
+		print "\033[1;33m"+msg+"\033[0m"
+
 def printSearch(filename):
 	msg = "Looking for %s in:" %(filename)
 	if sys.platform == 'win32':
@@ -85,10 +92,10 @@ def checkInstrumentConfig():
 	print "\t",confdirs
 	try:
 		from pyscope import config
-	except Exception, e:
-		printError(e)
+		config.parse()
+	except Exception as e:
+		printWarning('No instrument.cfg configured.  Fatal only if an instrument is needed on this host.')
 		return
-	config.parse()
 	allconfigfiles = config.configfiles
 	printResult('instruments',allconfigfiles)
 

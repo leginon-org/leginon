@@ -132,6 +132,9 @@ class ModuleConfigParser(object):
 			# combine all confdirs
 			confdirs = pyami.fileutil.get_config_dirs(package_name=self.package)
 			filenames = [os.path.join(confdir, self.config_filename) for confdir in confdirs]
+			one_exists = sum(map((lambda x:os.path.exists(x)),filenames))
+			if not one_exists:
+				raise IOError('please configure at least one of these:  %s' % (filenames,))
 			return filenames
 
 	def parse(self):

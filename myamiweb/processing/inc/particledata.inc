@@ -2497,6 +2497,9 @@ class particledata {
 
 	function getAlignLogShiftFromDDAlignedImageId($result_imgid,$apix=1)
 	{
+		//use database record if available
+		$dbdata = $this->getFrameTrajectoryPositionsFromImageId($result_imgid,$apix);
+		if (count($dbdata) > 0) return $dbdata;
 		// get Alignlog path
 		$align_log = $this->getAlignLogPathFromDDAlignedImageId($result_imgid);
 		// get shift data
@@ -2515,6 +2518,21 @@ class particledata {
 				}
 			}
 		} else {return $align_log;}
+		return $data;
+	}
+
+	function getFrameTrajectoryPositionsFromImageId($result_imgid,$apix=1) {
+		$q = "SELECT `SEQ|pos_x` as pos_x, `SEQ|pos_y` as pos_y, "
+			."number_of_positions FROM `ApDDFrameTrajectoryData` "
+			."WHERE `REF|leginondata|AcquisitionImageData|image`=".$result_imgid." "
+			.";";
+		list($r) = $this->mysql->getSQLResult($q);
+		$data = array();
+		$xs = explode(',',substr($r['pos_x'],1,-1));
+		$ys = explode(',',substr($r['pos_y'],1,-1));
+		for ($i=0; $i < (int) $r['number_of_positions']; $i++) {
+			$data[] = array('x'=>((float) $xs[$i])*$apix,'y'=> ((float) $ys[$i])*$apix);
+		}
 		return $data;
 	}
 
@@ -6454,17 +6472,21 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 			if (defined('APPION_PARENT_REPLACEMENT') && APPION_PARENT_REPLACEMENT < 0) {
 				# replace one part into DEFAULT_APPION_PATH
 				$replace_part = $parts[$leginon_index+APPION_PARENT_REPLACEMENT];
+				if ($_SESSION['username']){
+					$login_user = $_SESSION['username']; #for topaz and reporting http://emg.nysbc.org/redmine/issues/7962#note-5
+					$replace_part = $login_user;
+				}
 				$appion_parts = explode(DS,$appion_path);
 				array_splice($appion_parts,$appion_index+APPION_PARENT_REPLACEMENT,1,array($replace_part));
 				$appion_path = Path::formatEndPath(implode(DS,$appion_parts));
 			}
 			if ($parent_addition_number > 0) {
-				// add extra directory division prior to sessionname
 				$addition_parts = array_splice($parts,$session_index-APPION_PARENT_ADDITION,APPION_PARENT_ADDITION);
 				if ($_SESSION['username']){
 					$addition_parts[0] = $_SESSION['username']; #for topaz and reporting http://emg.nysbc.org/redmine/issues/7962#note-5
-				}					
+				}
 				$appion_path = Path::formatEndPath(Path::formatEndPath($appion_path).implode(DS,$addition_parts));
+				
 			}
 		} else {
 			// use default alone

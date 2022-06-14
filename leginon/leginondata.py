@@ -8,7 +8,7 @@ import leginonconfig
 import sinedon.newdict
 import sinedon.data
 import os
-from pyami import weakattr
+from pyami import weakattr, fileutil
 import projectdata
 
 Data = sinedon.data.Data
@@ -696,11 +696,19 @@ class ImageData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
-	def getpath(self):
-		'''return image path for this image'''
+	def getpath(self, read=True):
+		'''return image path for this image. Local cache is first checked if read is True.
+			Define environment variable LEGINON_READONLY_IMAGE_PATH and rsync
+			the global image path under it.
+		'''
 		try:
 			impath = self['session']['image path']
 			impath = leginonconfig.mapPath(impath)
+			if read:
+				# access cache
+				fullname = fileutil.getExistingCacheFile(impath, self.filename())
+				if fullname:
+					impath = os.path.dirname(fullname)
 		except:
 			raise
 			impath = os.path.abspath(os.path.curdir)
@@ -711,7 +719,7 @@ class ImageData(InSessionData):
 		create a directory for this image file if it does not exist.
 		return the full path of this directory.
 		'''
-		impath = self.getpath()
+		impath = self.getpath(read=False)
 		leginonconfig.mkdirs(impath)
 		return impath
 
@@ -3135,6 +3143,7 @@ class BufferHostData(DigitalCameraData):
 			('buffer hostname', str),
 			('buffer base path', str),
 			('disabled', bool),
+			('append full head', bool),
 		)
 	typemap = classmethod(typemap)
 
