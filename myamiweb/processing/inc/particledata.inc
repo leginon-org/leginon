@@ -2497,6 +2497,9 @@ class particledata {
 
 	function getAlignLogShiftFromDDAlignedImageId($result_imgid,$apix=1)
 	{
+		//use database record if available
+		$dbdata = $this->getFrameTrajectoryPositionsFromImageId($result_imgid,$apix);
+		if (count($dbdata) > 0) return $dbdata;
 		// get Alignlog path
 		$align_log = $this->getAlignLogPathFromDDAlignedImageId($result_imgid);
 		// get shift data
@@ -2515,6 +2518,21 @@ class particledata {
 				}
 			}
 		} else {return $align_log;}
+		return $data;
+	}
+
+	function getFrameTrajectoryPositionsFromImageId($result_imgid,$apix=1) {
+		$q = "SELECT `SEQ|pos_x` as pos_x, `SEQ|pos_y` as pos_y, "
+			."number_of_positions FROM `ApDDFrameTrajectoryData` "
+			."WHERE `REF|leginondata|AcquisitionImageData|image`=".$result_imgid." "
+			.";";
+		list($r) = $this->mysql->getSQLResult($q);
+		$data = array();
+		$xs = explode(',',substr($r['pos_x'],1,-1));
+		$ys = explode(',',substr($r['pos_y'],1,-1));
+		for ($i=0; $i < (int) $r['number_of_positions']; $i++) {
+			$data[] = array('x'=>((float) $xs[$i])*$apix,'y'=> ((float) $ys[$i])*$apix);
+		}
 		return $data;
 	}
 
