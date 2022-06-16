@@ -93,10 +93,12 @@ class ReferenceJsonLoader(jsonfun.DataJsonLoader):
 		# add instrument as key
 		kwargs['scope']['tem'] = None
 		self.data['scope'] = self.insertClass('ScopeEMData', kwargs['scope'])
-		kwargs['dark']['image'] = None
-		self.data['dark'] = self.insertClass('DarkImageData', kwargs['dark'])
-		kwargs['bright']['image'] = None
-		self.data['bright'] = self.insertClass('BrightImageData', kwargs['bright'])
+		if kwargs['dark']:
+			kwargs['dark']['image'] = None
+			self.data['dark'] = self.insertClass('DarkImageData', kwargs['dark'])
+		if kwargs['bright']:
+			kwargs['bright']['image'] = None
+			self.data['bright'] = self.insertClass('BrightImageData', kwargs['bright'])
 		self.data['norm'] = self.insertClass('NormImageData', kwargs)
 
 	def processCorrectorPlanData(self, datadict):
