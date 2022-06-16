@@ -141,11 +141,17 @@ class ReferenceJsonMaker(jsonfun.DataJsonMaker):
 		camdict = self.makeClassDict(normdata['camera'])
 		scopedict = self.makeClassDict(normdata['scope'])
 		# set value in referenced image to be the same as norm
-		darkdict = self.makeClassDict(normdata['dark'])
-		darkdict = self.modifyReferenceDict(darkdict, 'dark', file_prefix, camdict, scopedict)
+		if normdata['dark']:
+			darkdict = self.makeClassDict(normdata['dark'])
+			darkdict = self.modifyReferenceDict(darkdict, 'dark', file_prefix, camdict, scopedict)
+		else:
+			darkdict = None
 		#
-		brightdict = self.makeClassDict(normdata['bright'])
-		brightdict = self.modifyReferenceDict(brightdict, 'bright', file_prefix, camdict, scopedict)
+		if normdata['bright']:
+			brightdict = self.makeClassDict(normdata['bright'])
+			brightdict = self.modifyReferenceDict(brightdict, 'bright', file_prefix, camdict, scopedict)
+		else:
+			brightdict = None
 		#
 		normdict = self.makeClassDict(normdata)
 		normdict = self.modifyReferenceDict(normdict, 'norm', file_prefix, camdict, scopedict)

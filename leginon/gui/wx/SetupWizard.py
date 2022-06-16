@@ -903,6 +903,8 @@ class SetupWizard(wx.wizard.Wizard):
 			#Issue #4634 use insert method so that self.session becomes sinedon
 			#query result after this first insert.
 			self.session.insert()
+			#Reservation can be canceled since self.session is inserted
+			leginon.session.cancelReservation()
 			projectid = self.projectpage.getSelectedProjectId()
 			project_experiment = self.setup.linkSessionProject(self.session['name'], projectid)
 			self.publish(project_experiment, database=True)

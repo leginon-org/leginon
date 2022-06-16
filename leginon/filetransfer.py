@@ -312,6 +312,7 @@ class ReferenceCopier(object):
 		linelist.append('%d' % (int(rotate)*90))
 		linelist.append('%d' % (dark_scale))
 		# reference images
+		copied = False
 		for reftype in ('norm','dark'):
 			self.printDebug('RUNNING %s' % reftype)
 			refdata = imagedata[reftype]
@@ -342,10 +343,12 @@ class ReferenceCopier(object):
 						linelist.append(reffilename+'.mrc')
 						continue
 					# have something to process.
+					copied = True
 					print('Copying %s reference for image %s ....' % (reftype, imagedata['filename']))
 					refimage = self.getRefArray(refdata)
 					# write the original in its original name
 					pyami.mrc.write(refimage,reffilepath)
+					print('  %s -> %s' % (refdata_reffilepath, reffilepath))
 					refimage = self.modifyRefImage(refimage)
 					# scale dark image if needed to one frame
 					if reftype == 'dark' and not (refimage.max() == refimage.min() and refimage.mean() == 0):
@@ -357,6 +360,7 @@ class ReferenceCopier(object):
 						# record modified reference and save
 						reffilename = reffilename+'_mod'
 						reffilepath = os.path.join(self.refdir,reffilename+'.mrc')
+						print('Modified reference is saved to %s' % (reffilepath))
 						pyami.mrc.write(refimage,reffilepath)
 				linelist.append(reffilename+'.mrc')
 
@@ -378,8 +382,9 @@ class ReferenceCopier(object):
 		linestr = '\t'.join(linelist)
 		linestr += '\n'
 		self.writeUniqueLineToFile(self.reflistpath, frame_dst_name,linestr)
-		print('Setting ownership')
-		pyami.fileutil.unixChangeOwnership(self.uid,self.gid,self.refdir,recursive=True)
+		if copied:
+			print('Setting ownership')
+			pyami.fileutil.unixChangeOwnership(self.uid,self.gid,self.refdir,recursive=True)
 
 	def writeUniqueLineToFile(self,filepath, match_string,line_string):
 		# check if the match_string is already there
