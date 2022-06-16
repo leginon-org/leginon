@@ -18,11 +18,11 @@ def convertStringToSQL(value):
 	else:
 		return "'"+value+"'"
 
-class CalibrationJsonLoader(jsonfun.DataJsonLoader):
+class ReferenceJsonLoader(jsonfun.DataJsonLoader):
 	def __init__(self,params):
 		tem_hostname, tem_name, cam_hostname, camera_name = self.validateInput(params)
 		print tem_hostname, tem_name
-		super(CalibrationJsonLoader,self).__init__(leginondata)
+		super(ReferenceJsonLoader,self).__init__(leginondata)
 		self.data = {}
 		self.setSessionData()
 		self.ccddata = self.getCameraInstrumentData(cam_hostname,camera_name)
@@ -95,6 +95,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		self.data['scope'] = self.insertClass('ScopeEMData', kwargs['scope'])
 		kwargs['dark']['image'] = None
 		self.data['dark'] = self.insertClass('DarkImageData', kwargs['dark'])
+		kwargs['bright']['image'] = None
 		self.data['bright'] = self.insertClass('BrightImageData', kwargs['bright'])
 		self.data['norm'] = self.insertClass('NormImageData', kwargs)
 
@@ -154,7 +155,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		ptemid = None # tem with pixel calibration is checked first.
 		if r:
 			t = r[0]['tem']
-			answer = raw_input(' Is %s %s the tem to import calibration ? Y/y/N/n ' % (t['hostname'], t['name']))
+			answer = raw_input(' Is %s %s the tem to import ? Y/y/N/n ' % (t['hostname'], t['name']))
 			if answer.lower() == 'y':
 				return t
 			ptemid = t.dbid
@@ -166,7 +167,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		if len(other_tems) == 1:
 			return other_tems[0]
 		for t in other_tems:
-			answer = raw_input(' Is %s %s the tem to import calibration ? Y/y/N/n ' % (t['hostname'], t['name']))
+			answer = raw_input(' Is %s %s the tem to import ? Y/y/N/n ' % (t['hostname'], t['name']))
 			if answer.lower() == 'y':
 				return t
 		print "  No tem found"
@@ -181,12 +182,12 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			# do not process without administrator.
 			print " Need administrator user to import"
 			self.close(True)
-		name=session.suggestName()+'_ref'
-		q = session.createSession(admin_user,name,'import references from json',leginonconfig.IMAGE_PATH)
-		q['hidden'] = True
-		q.insert()
-		self.session = q
-		fileutil.mkdirs(q['image path'])
+		try:
+			self.session = session.createReferenceSession(admin_user, None)
+		except Exception as e:
+			raise
+			print("Error setting session: %s" % (e))
+		fileutil.mkdirs(self.session['image path'])
 
 	def printQuery(self, q):
 		print q
@@ -203,6 +204,6 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			sys.exit(1)
 
 if __name__=='__main__':
-	app = CalibrationJsonLoader(sys.argv)
+	app = ReferenceJsonLoader(sys.argv)
 	app.run()
 	 
