@@ -167,6 +167,8 @@ class UploadStack(appionScript.AppionScript):
 			'user': user,
 			'hidden': False,
 			'image path': imagedirectory,
+			'uid': os.getuid(),
+			'gid': os.getgid(),
 		}
 		sessionq = leginon.leginondata.SessionData(initializer=initializer)
 		# FIX ME: self.publish does not exist

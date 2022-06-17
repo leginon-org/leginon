@@ -227,14 +227,22 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 			}
 		return frame_files
 
-	def _getUidGid(self, image_path):
+	def _getUidGid(self, imdata):
 		# Get user id and group id of the image path to be used for frames_path
 		if sys.platform == 'win32':
 			uid, gid = 100, 100
 		else:
-			stat = os.stat(image_path)
-			uid = stat.st_uid
-			gid = stat.st_gid
+			# use session record if available
+			if 'uid' in imdata['session'].keys() and imdata['session']['uid'] and imdata['session']['gid']:
+				return imdata['session']['uid'], imdata['session']['gid']
+			try:
+				stat = os.stat(image_path)
+			except Exception as e:
+				print("    %s not accessible, either, for retrieving uid, gid, Use current path" % image_path)
+				stat = os.stat('./')
+			finally:
+				uid = stat.st_uid
+				gid = stat.st_gid
 		return uid, gid
 
 	def run(self):
@@ -498,7 +506,7 @@ def testRefCopy():
 	app = ReferenceCopier(debug=True)
 	imagedata = leginon.leginondata.AcquisitionImageData.direct_query(749)
 	image_path = imagedata['session']['image path']
-	stat = os.stat(image_path)
+	stat = os.stat(imagedata)
 	uid = stat.st_uid
 	gid = stat.st_gid
 	app.setFrameDir('/Users/acheng/tests/test_copyref/',uid, gid)

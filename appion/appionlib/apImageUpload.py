@@ -490,7 +490,9 @@ class ImageLoader(appionLoop2.AppionLoop):
 			'user': user,
 			'hidden': False,
 			'image path': imagedirectory,
-			'frame path': leginon.ddinfo.getRawFrameSessionPathFromSessionPath(imagedirectory)
+			'frame path': leginon.ddinfo.getRawFrameSessionPathFromSessionPath(imagedirectory),
+			'uid': os.getuid(),
+			'gid': os.getgid(),
 		}
 		sessionq = leginon.leginondata.SessionData(initializer=initializer)
 		sessiondata = self.publish(sessionq)
