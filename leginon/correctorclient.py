@@ -85,10 +85,13 @@ class CorrectorClient(cameraclient.CameraClient):
 		this will not try to access a file on an unmounted disk which freezes the program.
 		'''
 		if ref_path and ref_path not in ref['session']['image path']:
-			self.logger.warning('Searching only reference in %s' % ref_path)
+			self.logger.info('Searching only reference in %s' % ref_path)
 			ref = self.researchReferenceOnlyInPath(refimageq, ref_path)
+			if not hasattr(ref,'dbid'):
+				return None
 		if not hasattr(ref,'imagereadable') or not ref.imagereadable():
-			self.logger.error('%s data id=%d found but its image array not readable' % (type, ref.dbid))
+			if hasattr(ref,'dbid'):
+				self.logger.error('%s data id=%d image array not readable' % (type, ref.dbid))
 			return None
 
 		shape = ref.imageshape() # read shape without loading the array
