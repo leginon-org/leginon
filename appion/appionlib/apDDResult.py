@@ -90,7 +90,7 @@ class DDResults(object):
 		xydict['y'] = map((lambda x: x[1]), positions)
 		return xydict
 
-	def saveFrameTrajectory(self, rundata, xydict, limit=10, reference_index=None, particle=None):
+	def saveFrameTrajectory(self, rundata, xydict, limit=20, reference_index=None, particle=None):
 		'''
 		Save appiondata ApDDFrameTrajectoryData
 		'''
