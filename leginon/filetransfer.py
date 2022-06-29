@@ -227,14 +227,22 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 			}
 		return frame_files
 
-	def _getUidGid(self, image_path):
+	def _getUidGid(self, imdata):
 		# Get user id and group id of the image path to be used for frames_path
 		if sys.platform == 'win32':
 			uid, gid = 100, 100
 		else:
-			stat = os.stat(image_path)
-			uid = stat.st_uid
-			gid = stat.st_gid
+			# use session record if available
+			if 'uid' in imdata['session'].keys() and imdata['session']['uid'] and imdata['session']['gid']:
+				return imdata['session']['uid'], imdata['session']['gid']
+			try:
+				stat = os.stat(image_path)
+			except Exception as e:
+				print("    %s not accessible, either, for retrieving uid, gid, Use current path" % image_path)
+				stat = os.stat('./')
+			finally:
+				uid = stat.st_uid
+				gid = stat.st_gid
 		return uid, gid
 
 	def run(self):
@@ -312,6 +320,7 @@ class ReferenceCopier(object):
 		linelist.append('%d' % (int(rotate)*90))
 		linelist.append('%d' % (dark_scale))
 		# reference images
+		copied = False
 		for reftype in ('norm','dark'):
 			self.printDebug('RUNNING %s' % reftype)
 			refdata = imagedata[reftype]
@@ -342,10 +351,12 @@ class ReferenceCopier(object):
 						linelist.append(reffilename+'.mrc')
 						continue
 					# have something to process.
+					copied = True
 					print('Copying %s reference for image %s ....' % (reftype, imagedata['filename']))
 					refimage = self.getRefArray(refdata)
 					# write the original in its original name
 					pyami.mrc.write(refimage,reffilepath)
+					print('  %s -> %s' % (refdata_reffilepath, reffilepath))
 					refimage = self.modifyRefImage(refimage)
 					# scale dark image if needed to one frame
 					if reftype == 'dark' and not (refimage.max() == refimage.min() and refimage.mean() == 0):
@@ -357,6 +368,7 @@ class ReferenceCopier(object):
 						# record modified reference and save
 						reffilename = reffilename+'_mod'
 						reffilepath = os.path.join(self.refdir,reffilename+'.mrc')
+						print('Modified reference is saved to %s' % (reffilepath))
 						pyami.mrc.write(refimage,reffilepath)
 				linelist.append(reffilename+'.mrc')
 
@@ -378,8 +390,9 @@ class ReferenceCopier(object):
 		linestr = '\t'.join(linelist)
 		linestr += '\n'
 		self.writeUniqueLineToFile(self.reflistpath, frame_dst_name,linestr)
-		print('Setting ownership')
-		pyami.fileutil.unixChangeOwnership(self.uid,self.gid,self.refdir,recursive=True)
+		if copied:
+			print('Setting ownership')
+			pyami.fileutil.unixChangeOwnership(self.uid,self.gid,self.refdir,recursive=True)
 
 	def writeUniqueLineToFile(self,filepath, match_string,line_string):
 		# check if the match_string is already there
@@ -493,7 +506,7 @@ def testRefCopy():
 	app = ReferenceCopier(debug=True)
 	imagedata = leginon.leginondata.AcquisitionImageData.direct_query(749)
 	image_path = imagedata['session']['image path']
-	stat = os.stat(image_path)
+	stat = os.stat(imagedata)
 	uid = stat.st_uid
 	gid = stat.st_gid
 	app.setFrameDir('/Users/acheng/tests/test_copyref/',uid, gid)

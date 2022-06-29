@@ -187,12 +187,7 @@ class RawTransfer(filetransfer.FileTransfer):
 			print '**running', src_path
 			# determine user and group of leginon data
 			filename = imdata['filename']
-			if sys.platform == 'win32':
-				uid, gid = 100, 100
-			else:
-				stat = os.stat(image_path)
-				uid = stat.st_uid
-				gid = stat.st_gid
+			uid, gid = self._getUidGid(imdata)
 			# make full dst_path
 			imname = filename + dst_suffix
 			# full path of frames

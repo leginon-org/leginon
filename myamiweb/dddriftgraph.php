@@ -28,17 +28,27 @@ $presets = $leginondata->getPresets($aligned_imgid, array('pixelsize'));
 $pixelsize = $presets['pixelsize']*$imageinfo['binning'];
 
 $particle=new particledata;
+// returned data has n, positions, last as keys
 $data = $particle->getAlignLogShiftFromDDAlignedImageId($aligned_imgid,$pixelsize*1e10);
 
-if (is_array($data) && (count($data)> 1)) {
-	$dbemgraph= new dbemgraph($data, 'x', 'y');
+if (is_array($data) && $data['n']> 1) {
+	$dbemgraph= new dbemgraph($data['positions'], 'x', 'y');
 	if ($viewdata) {
 		$dbemgraph->dumpData(array('x', 'y'));
 	} else {
-		$dbemgraph->title="Frame Movement (Angstrom)";
+		$dbemgraph->title="Frame Positions (Angstrom)";
+		$dbemgraph->subtitle="solid blue=1st frame";
 		$dbemgraph->xaxistitle="x drift (Angstrom)";
 		$dbemgraph->yaxistitle="y drift (Angstrom)";
 		$dbemgraph->markstart=true;
+		$saved_n = count($data['positions']);
+		if ($data['n'] > $saved_n) {
+			// not all frame positions are saved in db.
+			$dbemgraph->subtitle=$dbemgraph->subtitle.", showing first ".$saved_n." frames + solid red=last frame";
+			$dbemgraph->extend2last=true;
+			$dbemgraph->lastx= (float) $data['last']['x'];
+			$dbemgraph->lasty= (float) $data['last']['y'];
+		}
 
 		$dbemgraph->proportion(0.0);
 		$dbemgraph->dim($width,$height);
