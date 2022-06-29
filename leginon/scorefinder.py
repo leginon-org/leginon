@@ -68,7 +68,12 @@ class ScoreTargetFinder(icetargetfinder.IceTargetFinder):
 		threshold = self.settings['score threshold']
 		# configure and run
 		self.hf.configure_holefinder(script, job_name, mrc_path, out_dir=self.session['image path'], score_key=self.settings['score key'], threshold=threshold)
-		self.hf.run_holefinder()
+		try:
+			self.hf.run_holefinder()
+		except scorefinderback.ScoreResultMissingError as e:
+			self.logger.warning(e)
+		except Exception:
+			raise
 		return
 
 	def storeHoleStatsData(self, score_prefs, input_name='holes'):

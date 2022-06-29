@@ -910,6 +910,8 @@ class SetupWizard(wx.adv.Wizard):
 			#Issue #4634 use insert method so that self.session becomes sinedon
 			#query result after this first insert.
 			self.session.insert()
+			#Reservation can be canceled since self.session is inserted
+			leginon.session.cancelReservation()
 			projectid = self.projectpage.getSelectedProjectId()
 			project_experiment = self.setup.linkSessionProject(self.session['name'], projectid)
 			self.publish(project_experiment, database=True)
@@ -1127,17 +1129,8 @@ class Setup(object):
 		return _indexBy('name', projectdatalist)
 
 	def createSession(self, user, name, description, directory):
-		imagedirectory = os.path.join(leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
-		framepath = leginon.ddinfo.getRawFrameSessionPathFromSessionPath(imagedirectory)
-		initializer = {
-			'name': name,
-			'comment': description,
-			'user': user,
-			'image path': imagedirectory,
-			'frame path': framepath,
-			'hidden': False,
-		}
-		return leginon.leginondata.SessionData(initializer=initializer)
+		# get unpublished new SessionData instance
+		return leginon.session.createSession(user, name, description, directory, holder=None, hidden=False)
 
 	def linkSessionProject(self, sessionname, projectid):
 		if self.projectdata is None:

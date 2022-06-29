@@ -3,7 +3,7 @@ This modules defines functions for creating sessions and reserving a session
 name while in the process of creating a session.
 '''
 
-import os.path
+import os
 import time
 
 from pyami import moduleconfig
@@ -101,21 +101,23 @@ def makeSuffix(t):
 		suffix += alphabet[r]
 	return suffix
 
-def suggestName():
+def suggestName(is_ref=False):
 	'''
 	Suggest a session name.
 	'''
 	prefix = getSessionPrefix()
 	date_str = time.strftime('%y%b%d').lower()
-	prefix_date_str = prefix + date_str
+	if is_ref:
+		ref_str='_ref_'
+	else:
+		ref_str=''
 	#
-	alphabet = 'abcdefghijklmnopqrstuvwxyz'
 	trial = 0
 	session_name = None
 	# keep trying until a non-reserved or saved session name is found.
 	while not session_name:
 		suffix = makeSuffix(trial)
-		maybe_name = prefix + date_str + suffix
+		maybe_name = prefix + date_str + ref_str + suffix
 		try:
 			makeReservation(maybe_name)
 		except ReservationFailed as e:
@@ -126,8 +128,12 @@ def suggestName():
 			break
 	return session_name
 
-def createSession(user, name, description, directory, holder=None):
-	imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
+def createSession(user, name, description, directory, holder=None, hidden=False):
+	'''
+	Initialize a new session without saving.
+	'''
+	leginon_directory = leginon.leginonconfig.unmapPath(directory)
+	imagedirectory = os.path.join(leginon_directory, name, 'rawdata').replace('\\', '/')
 	framedirectory = leginon.ddinfo.getRawFrameSessionPathFromSessionPath(imagedirectory)
 	initializer = {
 		'name': name,
@@ -137,8 +143,36 @@ def createSession(user, name, description, directory, holder=None):
 		'frame path': framedirectory,
 		'hidden': False,
 		'holder': holder,
+		'uid': os.getuid(),
+		'gid': os.getgid(),
 	}
 	return leginon.leginondata.SessionData(initializer=initializer)
+
+def createReferenceSession(user, current_session):
+	'''
+	Initialize a new reference session with saving.
+	'''
+	session_name = suggestName(is_ref=True)
+
+	ref_directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.REF_PATH)
+	image_directory = leginon.leginonconfig.unmapPath(leginon.leginonconfig.IMAGE_PATH)
+	if ref_directory is not None:
+		directory = ref_directory
+	elif image_directory is not None:
+		directory = image_directory
+	else:
+		# equivalent of leginonconfig.IMAGE_PATH but based on the possibly
+		# modified session image path.
+		this_session_directory = os.path.dirname(current_session['image path'].split(current_session['name'])[0])
+		directory = this_session_directory
+
+	description = 'reference images'
+	session = createSession(user, session_name, description, directory, holder=None, hidden=True)
+	session.insert()
+	cancelReservation()
+	refsession = leginon.leginondata.ReferenceSessionData(session=session)
+	refsession.insert()
+	return session
 
 def linkSessionProject(sessionname, projectid):
 	if projectdata is None:
@@ -179,6 +213,25 @@ def getSessions(userdata, n=None):
 		if n is None:
 			break
 	return names, sessiondatalist
+
+def getUserFullnameMap():
+	'''
+	return dictionary of userdata with lower case fullname as the key.
+	'''
+	users = leginon.leginondata.UserData().query()
+	fullname_map = {}
+	for u in users:
+		if u['noleginon']:
+			continue
+		if u['firstname'] is None or u['lastname'] is None:
+			# Must have firstname and lastname
+			# This entry occurs when deon fails at NYSBC.
+			continue
+		fullname = '%s %s' % (u['firstname'].strip().lower(),u['lastname'].strip().lower())
+		if fullname == ' ':
+			continue
+		fullname_map[fullname] = u
+	return fullname_map
 
 def hasGridHook():
 	try:

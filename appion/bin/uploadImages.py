@@ -256,6 +256,8 @@ class UploadImages(appionScript.AppionScript):
 		sessionq['comment'] = self.params['description']
 		sessionq['user'] = userdata
 		sessionq['hidden'] = False
+		sessionq['uid'] = os.getuid()
+		sessionq['gid'] = os.getgid()
 
 		projectdata = leginon.projectdata.projects.direct_query(self.params['projectid'])
 

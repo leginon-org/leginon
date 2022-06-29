@@ -15,6 +15,7 @@ config_locations = [os.path.join(confdir, configfilename) for confdir in confdir
 pyami.fileutil.check_exist_one_file(config_locations)
 
 cparser = configparser.ConfigParser()
+# Combine sections of the same name from all existing files in conf_files
 configfiles = cparser.read(config_locations)
 
 def tail(modulename):

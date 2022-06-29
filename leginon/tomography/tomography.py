@@ -427,7 +427,6 @@ class Tomography(leginon.acquisition.Acquisition):
 			imagedata1 = self.acquireCorrectedCameraImageData(1)
 			self.panel.viewer.addImage(imagedata1['image'])
 
-			self.presetsclient.toScope(preset_name)
 			## return to tomography preset
 			if emtarget['movetype'] == 'image shift':
 				presetdata = self.presetsclient.getPresetFromDB(preset_name)

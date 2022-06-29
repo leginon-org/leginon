@@ -135,7 +135,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'''
 		if type(self.last_acq_node)==type({}):
 			settingsclassname = self.last_acq_node['node']['class string']+'SettingsData'
-			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.last_acq_node['node']['alias'])
+			results= self.researchDBSettings(getattr(leginondata,settingsclassname),self.last_acq_node['node']['alias'])
 			if not results:
 				# default acquisition settings waiting is False. However, admin default
 				# should be o.k.
@@ -765,7 +765,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		try:
 			# get settings for the next Acquisition node
 			settingsclassname = self.next_acq_node['node']['class string']+'SettingsData'
-			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['node']['alias'])
+			results= self.researchDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['node']['alias'])
 			acqsettings = results[0]
 			# use first preset in preset order for display
 			presetlist = acqsettings['preset order']
