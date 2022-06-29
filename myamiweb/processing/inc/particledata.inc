@@ -2505,6 +2505,7 @@ class particledata {
 		// get shift data
 		$data = array();
 		if (is_file($align_log)) {
+			$pdata = array();
 			$text = file_get_contents($align_log);
 			$bits = explode('Sum Frame',$text);
 			if (count($bits) > 1) {
@@ -2513,9 +2514,12 @@ class particledata {
 					$shiftbits = explode('with xy shift:',$shiftline);
 					if (count($shiftbits) > 1) {
 						$shifts = explode(' ',trim($shiftbits[1]));
-						$data[] = array('x'=>((float) $shifts[0])*$apix,'y'=> ((float) $shifts[count($shifts)-1])*$apix);
+						$pdata[] = array('x'=>((float) $shifts[0])*$apix,'y'=> ((float) $shifts[count($shifts)-1])*$apix);
 					}
 				}
+				$last_x = (float) $pdata[-1]['x']*$apix;
+				$last_y = (float) $pdata[-1]['y']*$apix;
+				$data = array('n'=>count($bits),'last'=>array('x'=>$last_x, 'y'=>$last_y), 'positions'=>$pdata);
 			}
 		} else {return $align_log;}
 		return $data;
@@ -2523,16 +2527,20 @@ class particledata {
 
 	function getFrameTrajectoryPositionsFromImageId($result_imgid,$apix=1) {
 		$q = "SELECT `SEQ|pos_x` as pos_x, `SEQ|pos_y` as pos_y, "
-			."number_of_positions FROM `ApDDFrameTrajectoryData` "
+			."number_of_positions, last_x, last_y FROM `ApDDFrameTrajectoryData` "
 			."WHERE `REF|leginondata|AcquisitionImageData|image`=".$result_imgid." "
 			.";";
 		list($r) = $this->mysql->getSQLResult($q);
 		$data = array();
+		$pdata = array();
 		$xs = explode(',',substr($r['pos_x'],1,-1));
 		$ys = explode(',',substr($r['pos_y'],1,-1));
-		for ($i=0; $i < (int) $r['number_of_positions']; $i++) {
-			$data[] = array('x'=>((float) $xs[$i])*$apix,'y'=> ((float) $ys[$i])*$apix);
+		for ($i=0; $i < (int) count($xs); $i++) {
+			$pdata[] = array('x'=>((float) $xs[$i])*$apix,'y'=> ((float) $ys[$i])*$apix);
 		}
+		$data['n'] = $r['number_of_positions'];
+		$data['last'] = array('x'=>((float) $r['last_x'])*$apix,'y'=> ((float) $r['last_y'])*$apix);
+		$data['positions'] = $pdata;
 		return $data;
 	}
 
