@@ -196,7 +196,7 @@ class BlobSampler(object):
 			self.logger.info('Number of filtered blobs (%d) < number of requested targets (%d). Use all.' % (total_blobs, total_targets_need))
 			return self.blobs
 		n_class = self.n_class
-		n_available_in_classes = map((lambda x: len(self.index_groups[x])), range(n_class))
+		n_available_in_classes = list(map((lambda x: len(self.index_groups[x])), range(n_class)))
 		nsample_in_classes = self._getNumberOfSamplesInClasses(n_available_in_classes)
 		# get a list at least as long as total_targets_need
 		samples = []
@@ -232,7 +232,7 @@ class BlobTopScoreSampler(BlobSampler):
 				blob_indices_at_score_in_class[score] = []
 			blob_indices_at_score_in_class[score].append(i)
 		# sort the blobs by score in float
-		keys = blob_indices_at_score_in_class.keys()
+		keys = list(blob_indices_at_score_in_class.keys())
 		keys.sort()
 		keys.reverse()
 		sample_blobs_in_class = []
