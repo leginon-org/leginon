@@ -16,6 +16,8 @@ import pickle
 ## appion
 from appionlib import apDisplay
 
+from contextlib import redirect_stdout
+
 ####
 # This is a low-level file with NO database connections
 # Please keep it this way
@@ -153,6 +155,7 @@ def getGPUVendor():
 	if not pciexe: pciexe = getExecPath("/sbin/lspci")
 	if pciexe is None:
 		return None
+	
 	proc = subprocess.Popen(pciexe, shell=True, stdout=subprocess.PIPE)
 	proc.wait()
 	lines = proc.stdout.readlines()
@@ -577,7 +580,7 @@ def getRgbFile(msg=True):
 def getNumProcessors(msg=True):
 	# First see if on a PBS cluster:
 	if 'PBS_NODEFILE' in os.environ:
-		cmd = "wc -l $PBS_NODEFILE | awk '{print $1}'"
+		cmd = "wc -l $PBS_NODEFILE"# | awk '{print $1}'"
 		nproc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.read().strip()
 		nproc = int(nproc)
 

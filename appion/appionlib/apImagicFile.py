@@ -23,8 +23,10 @@ from scipy import ndimage
 # Please keep it this way
 ####
 
-# allow to use half of the free memory
-bytelimit = mem.free()*1024 / 2
+# # allow to use half of the free memory
+# bytelimit = mem.free()*1024 / 2
+# allow to use 0.7 of the free memory, temporarily
+bytelimit = mem.free()*1024*0.7
 
 #===============
 def compareHeader(hfile1, hfile2, numround=1):

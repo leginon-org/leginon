@@ -489,6 +489,8 @@ Create a 1024 byte header string from a header dictionary.
 		if ftype == 'string':
 			length = field[2]
 			nzeros = length - len(value)
+			if type(value) == str:
+				value = value.encode()
 			fullfield = value + zeros(nzeros)
 			fields.append(fullfield)
 		elif ftype == 'int32':

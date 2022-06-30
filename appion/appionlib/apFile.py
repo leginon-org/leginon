@@ -206,8 +206,10 @@ def numImagesInStack(imgfile, boxsize=None):
 		numimg = int('%d' % (os.stat(imgfile)[6]/imgmem))
 	elif imgfile.endswith(".star"):
 		return len(apRelion.starParticleArray(imgfile))
+	elif 'mrc' in imgfile[-4:]:
+		numimg = mrc.readHeaderFromFile(imgfile)['nz']
 	else:
-		apDisplay.printError("numImagesInStack() requires an IMAGIC, SPIDER, or RELION stack")
+		apDisplay.printError("numImagesInStack() requires an IMAGIC, SPIDER, or RELION stack (or .mrc[s]...)")
 	return numimg
 
 def safeSymLink(source, destination):

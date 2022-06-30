@@ -257,7 +257,7 @@ class ApProc2d(basicScript.BasicScript):
 				os.remove(filename)
 
 		#Determine extension
-		if filename.endswith('.mrc'):
+		if filename.endswith('.mrc') or filename.endswith('.mrcs'):
 			if os.path.exists(filename):
 				partarray = numpy.array(partlist)
 				mrc.append(partarray, filename)
@@ -297,7 +297,7 @@ class ApProc2d(basicScript.BasicScript):
 		if not os.path.exists(self.params['outfile']):
 			self.params['append'] = False
 			return 0
-
+		# print(self.params['outfile'])
 		### out file exists
 		try:
 			existheader = self.readFileHeader(self.params['outfile'])

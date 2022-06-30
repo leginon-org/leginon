@@ -883,6 +883,8 @@ class TopologyRepScript(appionScript.AppionScript):
 
             gc.collect()
 
+            raise Exception
+
             self.rotations = pd.DataFrame()
 
             if self.params["storagemethod"] == "disk":
