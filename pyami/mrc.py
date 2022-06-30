@@ -485,7 +485,11 @@ Create a 1024 byte header string from a header dictionary.
 		if ftype == 'string':
 			length = field[2]
 			nzeros = length - len(value)
-			fullfield = value + zeros(nzeros)
+			if value:
+				fullfield = value + zeros(nzeros)
+			else:
+				# empty string remains as str type and can not __add__ to bytes in python3
+				fullfield = zeros(nzeros)
 			fields.append(fullfield)
 		elif ftype == 'int32':
 			fields.append(valueToInt(value))
