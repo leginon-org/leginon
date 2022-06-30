@@ -863,6 +863,9 @@ class TopologyRepScript(appionScript.AppionScript):
                 "normalization"
             ] = True  # True uses default boxnorm, see imagenorm and apCAN for details
 
+            if self.params['storagemethod'] == 'disk':
+                process_params['partfile'] = self.params['localstack']
+
             print("\nParticle preprocessing parameters:")
             for key in process_params:
                 print(f"{key} = {process_params[key]}")
@@ -883,15 +886,13 @@ class TopologyRepScript(appionScript.AppionScript):
 
             gc.collect()
 
-            raise Exception
-
             self.rotations = pd.DataFrame()
 
             if self.params["storagemethod"] == "disk":
-                print("Writing stack data to disk...")
+                # print("Writing stack data to disk...")
                 # raise Exception
                 del self.classes
-                mrc.write(self.orig_stack, self.params["localstack"])
+                # mrc.write(self.orig_stack, self.params["localstack"])
                 del self.orig_stack
                 self.rotations.to_csv(self.params["rotations"])
                 del self.rotations
@@ -1003,7 +1004,7 @@ class TopologyRepScript(appionScript.AppionScript):
         # get particle information from rotation dataframe
         rotations = self.get_rotations()
         if type(rotations) == str:
-            rotations = pd.read_csv(rotations)
+            rotations = pd.read_csv(rotations, index_col=0)
 
         # store contents in array
         for i in range(len(rotations)):

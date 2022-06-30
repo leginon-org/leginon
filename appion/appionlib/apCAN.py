@@ -103,64 +103,47 @@ def array_from_star(starfile):
 
 
 def process_particle(particle, params=None):
-    s = sys.getsizeof(particle)
-    if params is None:
-        particle, params = particle
     ### step 1 filter particle
     if params["lowpass"]:
         particle = imagefilter.lowPassFilter(
             particle, apix=params["apix"], radius=params["lowpass"]
         )
-    s1 = sys.getsizeof(particle)
-    print(f"Sf1: {s1/s:.2f}")
     if params["highpass"]:
         particle = imagefilter.tanhHighPassFilter(
             particle, params["highpass"], apix=params["apix"]
         )
-    s2 = sys.getsizeof(particle)
-    print(f"Sf2: {s2/s:.2f}")
     ### step 2 unless specified, invert the images # moved to process_stack()
     # if params["invert"] is True:
     #     particle = -1.0 * particle
     ### step 3 normalize particle
     # normoptions = ('none', 'boxnorm', 'edgenorm', 'rampnorm', 'parabolic') #normalization
-    # if params["normalization"] in [True, "boxnorm"]:
-    #     particle = imagenorm.normStdev(particle)
-    # elif params["normalization"] == "edgenorm":
-    #     particle = imagenorm.edgeNorm(particle)
-    # elif params["normalization"] == "rampnorm":
-    #     particle = imagenorm.rampNorm(particle)
-    # elif params["normalization"] == "parabolic":
-    #     particle = imagenorm.parabolicNorm(particle)
-    if params["normalization"] is not None:
-        particle = (particle - particle.mean())/particle.std()
-    s3 = sys.getsizeof(particle)
-    print(f"Sf3: {s3/s:.2f}")
+    if params["normalization"] in [True, "boxnorm"]:
+        particle = imagenorm.normStdev(particle)
+    elif params["normalization"] == "edgenorm":
+        particle = imagenorm.edgeNorm(particle)
+    elif params["normalization"] == "rampnorm":
+        particle = imagenorm.rampNorm(particle)
+    elif params["normalization"] == "parabolic":
+        particle = imagenorm.parabolicNorm(particle)
+    # if params["normalization"] is not None:
+    #     particle = (particle - particle.mean())/particle.std()
     ### step 4: decimate/bin particles if specified
     ### binning is last, so we maintain most detail and do not have to deal with binned apix
     if params["bin"] > 1:
         particle = imagefun.bin2(particle, params["bin"])
-    s4 = sys.getsizeof(particle)
-    print(f"Sf4: {s4/s:.2f}")
-    raise Exception
     return particle
 
 
 def process_stack(stack, params):
-    import sys
-    sz = sys.getsizeof(stack)
-    print("Processing stack...")
     # return stack 
     stack = numpy.stack(
-        Parallel(n_jobs=1)(
+        Parallel(n_jobs=-1)(
             delayed(process_particle)(part, params) for part in tqdm(stack)
         ),
         axis=0,
     )
     gc.collect()
-    SZ = sys.getsizeof(stack)
-    print('Processing effect on object "size":')
-    print(round(SZ/sz, 2))
+
     # with mp.Pool(processes=N) as pool:
     #     stack = pool.map(process_particle, [(stack[i], params) for i in range(len(stack))])
     #     stack = numpy.stack(stack)
@@ -171,6 +154,11 @@ def process_stack(stack, params):
     # gc.collect()
 
     # stack = numpy.stack([process_particle(stack[i], params) for i in tqdm(range(len(stack)))])
+
+    if 'partfile' in params.keys():
+        print("Writing preprocessed particle stack to disk...")
+        mrc.write(stack, params['partfile'])
+        gc.collect()
 
     return stack
 
@@ -506,163 +494,163 @@ def CAN(input_stack, output_stack, can_params, process_params=None, return_parts
     if process_params is not None:
         image_data = process_stack(image_data, process_params)
 
-    # dims = image_data.shape
-    # stack_hed = dict(
-    #     zip(
-    #         ["nimg", "rows", "lines", "npix"],
-    #         [dims[0], dims[1], dims[2], dims[1] * dims[2]],
-    #     )
+    dims = image_data.shape
+    stack_hed = dict(
+        zip(
+            ["nimg", "rows", "lines", "npix"],
+            [dims[0], dims[1], dims[2], dims[1] * dims[2]],
+        )
+    )
+
+    print("DIAGNOSTIC FILE INFO")
+    for key in stack_hed.keys():
+        print(f"{key} = {stack_hed[key]}")
+    print("\n ")
+    # define object in accordance with C program's use, for development convenience
+    iHeader = Header()
+    iHeader.pixels = stack_hed["npix"]
+    iHeader.count = stack_hed["nimg"]
+    iHeader.nx = stack_hed["rows"]
+    iHeader.ny = stack_hed["lines"]
+    Node.d = iHeader.pixels
+
+    # print(
+    #     f"Read {iHeader.count} images from {filename} with {iHeader.pixels} dimensions each"
     # )
 
-    # print("DIAGNOSTIC FILE INFO")
-    # for key in stack_hed.keys():
-    #     print(f"{key} = {stack_hed[key]}")
-    # print("\n ")
-    # # define object in accordance with C program's use, for development convenience
-    # iHeader = Header()
-    # iHeader.pixels = stack_hed["npix"]
-    # iHeader.count = stack_hed["nimg"]
-    # iHeader.nx = stack_hed["rows"]
-    # iHeader.ny = stack_hed["lines"]
-    # Node.d = iHeader.pixels
+    # Create first nodes
+    firstNode = image_data.sum(axis=0) / len(image_data)
+    secondNode = firstNode.copy()
+    firstNode = Node(firstNode, 0)
+    secondNode = Node(secondNode, 0)
+    nodeVec = [firstNode, secondNode]
+    nodeVec[0].makeEdge(nodeVec[1])
 
-    # # print(
-    # #     f"Read {iHeader.count} images from {filename} with {iHeader.pixels} dimensions each"
-    # # )
+    # Loop through algorithm
+    currentImageIndex = 0
+    closestDist = 1000000000
+    sec_closestDist = 1000000000
 
-    # # Create first nodes
-    # firstNode = image_data.sum(axis=0) / len(image_data)
-    # secondNode = firstNode.copy()
-    # firstNode = Node(firstNode, 0)
-    # secondNode = Node(secondNode, 0)
-    # nodeVec = [firstNode, secondNode]
-    # nodeVec[0].makeEdge(nodeVec[1])
+    closestInd = -1
+    sec_closestInd = -1
+    tempDist = 0
 
-    # # Loop through algorithm
-    # currentImageIndex = 0
-    # closestDist = 1000000000
-    # sec_closestDist = 1000000000
+    distFilename = outfile.replace("mrcs", "error")
+    distFile = open(distFilename, "wb")
 
-    # closestInd = -1
-    # sec_closestInd = -1
-    # tempDist = 0
+    for i in range(numPres):
+        currentImageIndex = randint(0, iHeader.count - 1)
+        closestDist = 1000000000
+        sec_closestDist = 1000000000
+        if i % 1000 == 0:
+            print(f"Presenting network with image {i} of {numPres}")
+            print(f"Learning values are: {Node.primLearn:.2e} and {Node.secLearn:.2e}")
+            print(f"Nodes present = {len(nodeVec)}")
 
-    # distFilename = outfile.replace("mrcs", "error")
-    # distFile = open(distFilename, "wb")
+            avgEdge = 0
+            avgAge = 0
 
-    # for i in range(numPres):
-    #     currentImageIndex = randint(0, iHeader.count - 1)
-    #     closestDist = 1000000000
-    #     sec_closestDist = 1000000000
-    #     if i % 1000 == 0:
-    #         print(f"Presenting network with image {i} of {numPres}")
-    #         print(f"Learning values are: {Node.primLearn:.2e} and {Node.secLearn:.2e}")
-    #         print(f"Nodes present = {len(nodeVec)}")
+            for countEdge in range(len(nodeVec)):
+                avgEdge += nodeVec[countEdge].getNumEdges()
+                avgAge += nodeVec[countEdge].getTotEdgeAge()
 
-    #         avgEdge = 0
-    #         avgAge = 0
+            avgAge /= avgEdge
+            avgEdge /= len(nodeVec)
 
-    #         for countEdge in range(len(nodeVec)):
-    #             avgEdge += nodeVec[countEdge].getNumEdges()
-    #             avgAge += nodeVec[countEdge].getTotEdgeAge()
+            print(f"Avgerage connectivity = {avgEdge:.2f}")
+            print(f"Average edge age = {avgAge:.2f}\n")
 
-    #         avgAge /= avgEdge
-    #         avgEdge /= len(nodeVec)
+        closestInd = -1
+        sec_closestInd = -1
+        for j in range(len(nodeVec)): # could parallelize here 
+            tempDist = nodeVec[j].checkDist(
+                image_data[currentImageIndex]
+            )  # nodeVec[j].myLocation is on the order of 10**5
 
-    #         print(f"Avgerage connectivity = {avgEdge:.2f}")
-    #         print(f"Average edge age = {avgAge:.2f}\n")
+            if tempDist < closestDist:
+                sec_closestDist = closestDist
+                sec_closestInd = closestInd
+                closestDist = tempDist
+                closestInd = j
+            elif tempDist < sec_closestDist:
+                sec_closestDist = tempDist
+                sec_closestInd = j
+        distFile.write(f"{i}\t{closestDist}\n".encode())
+        # now we have the best 2 nodes -> adjust closest and create connection if none exists
+        nodeVec[closestInd].moveToward(
+            image_data[currentImageIndex]
+        )  # learning takes place here!
+        nodeVec[closestInd].addError(closestDist)
+        nodeVec[closestInd].makeEdge(
+            nodeVec[sec_closestInd]
+        )  # connect first and second
 
-    #     closestInd = -1
-    #     sec_closestInd = -1
-    #     for j in range(len(nodeVec)): # could parallelize here 
-    #         tempDist = nodeVec[j].checkDist(
-    #             image_data[currentImageIndex]
-    #         )  # nodeVec[j].myLocation is on the order of 10**5
+        # decrease learning rates as data is presented.  Allows for convergence
+        Node.secLearn = en * (numPres - (i / LAMBDA_DECAY)) / numPres
+        Node.primLearn = eb * (numPres - (i / LAMBDA_DECAY)) / numPres
 
-    #         if tempDist < closestDist:
-    #             sec_closestDist = closestDist
-    #             sec_closestInd = closestInd
-    #             closestDist = tempDist
-    #             closestInd = j
-    #         elif tempDist < sec_closestDist:
-    #             sec_closestDist = tempDist
-    #             sec_closestInd = j
-    #     distFile.write(f"{i}\t{closestDist}\n".encode())
-    #     # now we have the best 2 nodes -> adjust closest and create connection if none exists
-    #     nodeVec[closestInd].moveToward(
-    #         image_data[currentImageIndex]
-    #     )  # learning takes place here!
-    #     nodeVec[closestInd].addError(closestDist)
-    #     nodeVec[closestInd].makeEdge(
-    #         nodeVec[sec_closestInd]
-    #     )  # connect first and second
+        for eDec in range(len(nodeVec)):
+            nodeVec[eDec].decreaseError(D_ERROR_FACTOR)  # decrease everyone's error
 
-    #     # decrease learning rates as data is presented.  Allows for convergence
-    #     Node.secLearn = en * (numPres - (i / LAMBDA_DECAY)) / numPres
-    #     Node.primLearn = eb * (numPres - (i / LAMBDA_DECAY)) / numPres
+        # add another node if it's time
+        if (len(nodeVec) < maxNodes) and (i % addInterval == 0) and (i > 0):
+            topError = 0
+            topInd = -1
+            for loop in range(len(nodeVec)):
+                if nodeVec[loop].getError() > topError:
+                    topError = nodeVec[loop].getError()
+                    topInd = loop
 
-    #     for eDec in range(len(nodeVec)):
-    #         nodeVec[eDec].decreaseError(D_ERROR_FACTOR)  # decrease everyone's error
+            if nodeVec[topInd].getNumEdges() == 0:
+                closestDist = 1000000000
+                closestInd = -1
+                for loop in range(len(nodeVec)):
+                    if topInd != loop:
+                        tempDist = nodeVec[loop].checkDist(nodeVec[topInd].getLoc()) # could parallelize 
+                        if tempDist < closestDist:
+                            closestDist = tempDist
+                            closestInd = loop
+                nodeVec[topInd].makeEdge(nodeVec[closestInd])
+                print("Creating edge for node addition...")
 
-    #     # add another node if it's time
-    #     if (len(nodeVec) < maxNodes) and (i % addInterval == 0) and (i > 0):
-    #         topError = 0
-    #         topInd = -1
-    #         for loop in range(len(nodeVec)):
-    #             if nodeVec[loop].getError() > topError:
-    #                 topError = nodeVec[loop].getError()
-    #                 topInd = loop
+            nodeVec.append(nodeVec[topInd].makeNode())
+    distFile.close()
 
-    #         if nodeVec[topInd].getNumEdges() == 0:
-    #             closestDist = 1000000000
-    #             closestInd = -1
-    #             for loop in range(len(nodeVec)):
-    #                 if topInd != loop:
-    #                     tempDist = nodeVec[loop].checkDist(nodeVec[topInd].getLoc()) # could parallelize 
-    #                     if tempDist < closestDist:
-    #                         closestDist = tempDist
-    #                         closestInd = loop
-    #             nodeVec[topInd].makeEdge(nodeVec[closestInd])
-    #             print("Creating edge for node addition...")
+    for i in range(iHeader.count):
+        if i % 1000 == 0:
+            print(f"Calculating class average {i}")
+        closestDist = 1000000000
+        closestInd = -1
+        for j in range(len(nodeVec)):
+            tempDist = nodeVec[j].checkDist(image_data[i])
+            if tempDist < closestDist:
+                closestDist = tempDist
+                closestInd = j
+        if closestInd >= 0:
+            nodeVec[closestInd].addToAvg(image_data[i], i + 1)
+        else:
+            print(f"Unable to find closest node for iamge {i}")
 
-    #         nodeVec.append(nodeVec[topInd].makeNode())
-    # distFile.close()
+    for i in range(len(nodeVec)):
+        nodeVec[i].calcAvg()
 
-    # for i in range(iHeader.count):
-    #     if i % 1000 == 0:
-    #         print(f"Calculating class average {i}")
-    #     closestDist = 1000000000
-    #     closestInd = -1
-    #     for j in range(len(nodeVec)):
-    #         tempDist = nodeVec[j].checkDist(image_data[i])
-    #         if tempDist < closestDist:
-    #             closestDist = tempDist
-    #             closestInd = j
-    #     if closestInd >= 0:
-    #         nodeVec[closestInd].addToAvg(image_data[i], i + 1)
-    #     else:
-    #         print(f"Unable to find closest node for iamge {i}")
+    for i in range(len(nodeVec)):
+        outfile_list = outfile.replace(".mrcs", "") + "_class_"
+        if i < 9:
+            outfile_list += f"000{i+1}"
+        elif i < 99:
+            outfile_list += f"00{i+1}"
+        elif i < 999:
+            outfile_list += f"0{i+1}"
+        else:
+            outfile_list += f"{i+1}"
+        outfile_list += ".spi"
 
-    # for i in range(len(nodeVec)):
-    #     nodeVec[i].calcAvg()
-
-    # for i in range(len(nodeVec)):
-    #     outfile_list = outfile.replace(".mrcs", "") + "_class_"
-    #     if i < 9:
-    #         outfile_list += f"000{i+1}"
-    #     elif i < 99:
-    #         outfile_list += f"00{i+1}"
-    #     elif i < 999:
-    #         outfile_list += f"0{i+1}"
-    #     else:
-    #         outfile_list += f"{i+1}"
-    #     outfile_list += ".spi"
-
-    #     classList = open(outfile_list, "wb")
-    #     parts = nodeVec[i].getParts()
-    #     for j in range(len(parts)):
-    #         classList.write(f"\t{j+1}\t1\t{parts[j]}".encode())
-    #     classList.close()
+        classList = open(outfile_list, "wb")
+        parts = nodeVec[i].getParts()
+        for j in range(len(parts)):
+            classList.write(f"\t{j+1}\t1\t{parts[j]}".encode())
+        classList.close()
 
     ############################################
 
@@ -670,9 +658,9 @@ def CAN(input_stack, output_stack, can_params, process_params=None, return_parts
 
     # modifying iHeader (original input header) to be output for all images sequentially
 
-    outstack = image_data[:maxNodes] # generate meaningless stack for testing purposes -- uncomment 491 to 655 when done
+    # outstack = image_data[:maxNodes] # generate meaningless stack for testing purposes -- uncomment 491 to 655 when done
 
-    # outstack = numpy.stack([nodeVec[i].getAvgLoc() for i in range(len(nodeVec))])
+    outstack = numpy.stack([nodeVec[i].getAvgLoc() for i in range(len(nodeVec))])
     if outfile is not None:
         mrc.write(outstack, outfile)
 
