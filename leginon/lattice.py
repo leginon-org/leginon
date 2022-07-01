@@ -142,13 +142,51 @@ class Lattice(object):
 				self.lattice_points_err[closest] = err
 				self.points.append(point)
 
+def sortPointsByDistances(points, center=(0,0)):
+	if len(points) < 2:
+		return points
+	pointdistances = {}
+	distlist = []
+	for point in points:
+		dist = math.hypot(point[0]-center[0],point[1]-center[1])
+		if dist in distlist:
+			dist = dist+0.0001
+		pointdistances[dist] = point
+		distlist.append(dist)
+	distlist.sort()
+	newpoints = []
+	for dist in distlist:
+		newpoints.append(pointdistances[dist])
+	return newpoints
+
 def pointsToFakeLattice(points):
-	# create a lattice instance that includes all points
+	# create a lattice instance that includes all points.  The first is center.
 	if points:
 		lat = Lattice(points[0], 1, 0.0)
 		if len(points) > 1:
 			for point in points[1:]:
 				lat.points.append(point)
+			points = sortPointsByDistances(points, center=points[0])
+			if len(points) > 2:
+				v0 = (points[1][0] - points[0][0], points[1][1] - points[0][1])
+				angle = 0.0
+				n = 2
+				# iterate until find one not on the same line.
+				while n < len(points) and (angle < math.radians(10) or math.pi - angle < math.radians(10)):
+					v1 = (points[0][0] - points[n][0], points[0][1] - points[n][1])
+					mv0 = numpy.array(v0)
+					mv1 = numpy.array(v1)
+					angle = math.acos(mv0.dot(mv1)/(numpy.linalg.norm(mv0)*numpy.linalg.norm(mv1)))
+					n += 1
+				if n == len(points):
+					# points all on a line.  Probable too few points
+					# assume square.
+					v1 = (v0[1], -v0[0])
+			else:
+				v0 = (points[1][1] - points[0][1], points[1][0] - points[0][0])
+				v1 = (v0[1], -v0[0])
+			m = numpy.array((v0,v1), numpy.float32)
+			lat.matrix = m
 		return lat
 
 def pointsToLattice(points, spacing, tolerance, first_is_center=False):
@@ -177,23 +215,6 @@ def pointsToLattice(points, spacing, tolerance, first_is_center=False):
 				best_lattice = lat
 	return best_lattice
 
-def sortPointsByDistances(points, center=(0,0)):
-	if len(points) < 2:
-		return points
-	pointdistances = {}
-	distlist = []
-	for point in points:
-		dist = math.hypot(point[0]-center[0],point[1]-center[1])
-		if dist in distlist:
-			dist = dist+0.0001
-		pointdistances[dist] = point
-		distlist.append(dist)
-	distlist.sort()
-	newpoints = []
-	for dist in distlist:
-		newpoints.append(pointdistances[dist])
-	return newpoints
-
 if __name__ == '__main__':
 	from numpy.random import randint
 	import profile
@@ -214,4 +235,4 @@ if __name__ == '__main__':
 	keys = lat.lattice_points.keys()
 	keys.sort()
 	for key in keys:
-		print key, lat.lattice_points[key]
+		print(key, lat.lattice_points[key])
