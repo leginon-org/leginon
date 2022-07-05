@@ -235,6 +235,7 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 			# use session record if available
 			if 'uid' in imdata['session'].keys() and imdata['session']['uid'] and imdata['session']['gid']:
 				return imdata['session']['uid'], imdata['session']['gid']
+			image_path = imdata['session']['image path']
 			try:
 				stat = os.stat(image_path)
 			except Exception as e:
