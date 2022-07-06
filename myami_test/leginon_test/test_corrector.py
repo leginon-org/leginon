@@ -106,19 +106,22 @@ class TestCorrector(unittest.TestCase):
 		t0 = time.time()
 		norm = self.c_client.retrieveCorrectorImageData('norm', scopedata, cameradata, channel)
 		print('retrieve norm image took %.2f seconds' % (time.time()-t0))
-		if dark is None or norm is None:
+		if norm is None:
 			self.c_client.logger.warning('Cannot find references, image will not be normalized')
-			return False
+			return True
 		t0 = time.time()
 		rawarray = self.imagedata['image']
 		print('read imagedata image took %.2f seconds' % (time.time()-t0))
 		if not self.c_client.isFakeImageObj(self.imagedata):
 			t0 = time.time()
-			darkarray = self.c_client.prepareDark(dark, self.imagedata)
-			print('prepare dose-matched dark image took %.2f seconds' % (time.time()-t0))
-			t0 = time.time()
 			normarray = norm['image']
 			print('link normarry took %.2f seconds' % (time.time()-t0))
+			if dark:
+				t0 = time.time()
+				darkarray = self.c_client.prepareDark(dark, self.imagedata)
+				print('prepare dose-matched dark image took %.2f seconds' % (time.time()-t0))
+			else:
+				darkarray = numpy.zeros(normarray.shape)
 			t0 = time.time()
 			r = self.c_client.normalizeImageArray(rawarray,darkarray,normarray, 'GatanK2' in cameradata['ccdcamera']['name'])
 			print('doing array normalization took %.2f seconds' % (time.time()-t0))
