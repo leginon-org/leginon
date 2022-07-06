@@ -63,7 +63,7 @@ if __name__ == '__main__':
 	app.setNewParentPath(new_parent)
 	old_path_list = app.queryOldPath()
 	print 'Found %d records' % (len(old_path_list))
-	if len(old_path_list) and raw_input('Ready to update ? (Y/N)(y/n)').lower() == 'y':
+	if len(old_path_list):
 		print 'do it'
 		app.updatePath(old_path_list)
 
