@@ -17,6 +17,7 @@ import apRelion
 from appionlib.apImage import imagenorm, imagefilter
 from pyami import mrc, imagefun
 from apImagicFile import readImagic
+import apDisplay
 
 import numpy as numpy
 
@@ -25,7 +26,7 @@ from joblib import Parallel, delayed
 import psutil
 import multiprocessing as mp
 
-import gc 
+import gc
 
 N = mp.cpu_count()
 
@@ -131,17 +132,26 @@ def process_particle(particle, params=None):
     ### binning is last, so we maintain most detail and do not have to deal with binned apix
     if params["bin"] > 1:
         particle = imagefun.bin2(particle, params["bin"])
+
+    if particle.dtype != numpy.float32:
+        return particle.astype(numpy.float32)
+
     return particle
 
 
 def process_stack(stack, params):
-    # return stack 
-    stack = numpy.stack(
-        Parallel(n_jobs=-1)(
-            delayed(process_particle)(part, params) for part in tqdm(stack)
-        ),
-        axis=0,
+    # return stack
+    apDisplay.printMsg('Processing stack')
+    stack = Parallel(n_jobs=-1)(
+        delayed(process_particle)(part, params) for part in tqdm(stack)
     )
+
+    gc.collect()
+
+    apDisplay.printMsg('Converting list to numpy array')
+
+    stack = numpy.stack(stack, axis=0)
+
     gc.collect()
 
     # with mp.Pool(processes=N) as pool:
@@ -150,14 +160,14 @@ def process_stack(stack, params):
     # if params["premask"]:
     #     stack = mask_stack(stack)
     # if params["invert"]:
-    #     stack *= -1 
+    #     stack *= -1
     # gc.collect()
 
     # stack = numpy.stack([process_particle(stack[i], params) for i in tqdm(range(len(stack)))])
 
-    if 'partfile' in params.keys():
-        print("Writing preprocessed particle stack to disk...")
-        mrc.write(stack, params['partfile'])
+    if "partfile" in params.keys():
+        apDisplay.printMsg("Writing preprocessed particle stack to disk")
+        mrc.write(stack, params["partfile"])
         gc.collect()
 
     return stack
@@ -320,7 +330,7 @@ class Node:
             totalDist += dX ** 2 + dY ** 2
         return totalDist
 
-    # # # # # # # # 
+    # # # # # # # #
 
     def setDim(self, d):
         self.dim = d
@@ -401,7 +411,6 @@ class Edge:
 class Header:
     def __init__(self):
         pass
-
 
 
 def CAN(input_stack, output_stack, can_params, process_params=None, return_parts=False):
@@ -562,7 +571,7 @@ def CAN(input_stack, output_stack, can_params, process_params=None, return_parts
 
         closestInd = -1
         sec_closestInd = -1
-        for j in range(len(nodeVec)): # could parallelize here 
+        for j in range(len(nodeVec)):  # could parallelize here
             tempDist = nodeVec[j].checkDist(
                 image_data[currentImageIndex]
             )  # nodeVec[j].myLocation is on the order of 10**5
@@ -606,7 +615,9 @@ def CAN(input_stack, output_stack, can_params, process_params=None, return_parts
                 closestInd = -1
                 for loop in range(len(nodeVec)):
                     if topInd != loop:
-                        tempDist = nodeVec[loop].checkDist(nodeVec[topInd].getLoc()) # could parallelize 
+                        tempDist = nodeVec[loop].checkDist(
+                            nodeVec[topInd].getLoc()
+                        )  # could parallelize
                         if tempDist < closestDist:
                             closestDist = tempDist
                             closestInd = loop
