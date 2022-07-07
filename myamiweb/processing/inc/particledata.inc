@@ -2525,7 +2525,35 @@ class particledata {
 		return $data;
 	}
 
+	function getDDAlignedImagesFromOneImageId($imgid) {
+		// Find all aligned images from one of them. Such as a and a-DW
+		$q = "SELECT pair.`REF|leginondata|AcquisitionImageData|result` result_imgid "
+			.", pair.`REF|leginondata|AcquisitionImageData|source` source_imgid "
+			."FROM `ApDDAlignImagePairData` pair "
+			."WHERE pair.`REF|leginondata|AcquisitionImageData|result` = ".$imgid." "
+			."ORDER BY pair.`DEF_timestamp` DESC ";
+		list($r)=$this->mysql->getSQLResult($q);
+		// Find from source
+		if ( is_array($r) && $r ) {
+		$q = "SELECT pair.`REF|leginondata|AcquisitionImageData|result` result_imgid "
+			."FROM `ApDDAlignImagePairData` pair "
+			."WHERE pair.`REF|leginondata|AcquisitionImageData|source` = ".$r['source_imgid']." "
+			."ORDER BY pair.`DEF_timestamp` DESC ";
+		}
+		return $this->mysql->getSQLResult($q);
+	}
+
 	function getFrameTrajectoryPositionsFromImageId($result_imgid,$apix=1) {
+		$pair = $this->getDDAlignedImagesFromOneImageId($result_imgid);
+		foreach($pair as $p) {
+			// return the one with TrajectoryPositions
+			$dbdata = $this->_getFrameTrajectoryPositionsFromImageId($p['result_imgid'],$apix);
+			if (count($dbdata) > 0 && $dbdata['n'] > 0) return $dbdata;
+		}
+		return array();
+	}
+
+	function _getFrameTrajectoryPositionsFromImageId($result_imgid,$apix=1) {
 		$q = "SELECT `SEQ|pos_x` as pos_x, `SEQ|pos_y` as pos_y, "
 			."number_of_positions, last_x, last_y FROM `ApDDFrameTrajectoryData` "
 			."WHERE `REF|leginondata|AcquisitionImageData|image`=".$result_imgid." "
