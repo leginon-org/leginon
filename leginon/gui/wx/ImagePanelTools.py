@@ -360,6 +360,10 @@ class ImageTool(object):
 		pass
 
 	#--------------------
+	def OnCtrlLeftClick(self, evt):
+		pass
+
+	#--------------------
 	def OnRightClick(self, evt):
 		pass
 
@@ -472,6 +476,9 @@ class FitShapeTool(TraceTool):
 			self.imagepanel.UpdateDrawing()
 
 	def OnShiftLeftClick(self, evt):
+		'''
+		Make a rectangle with two previous left clicks and known center.
+		'''
 		if not self.button.GetToggle():
 			return
 		self.leftisdown = False
@@ -486,10 +493,35 @@ class FitShapeTool(TraceTool):
 			self.fitted_shape_points = self.drawShape()
 			self.imagepanel.UpdateDrawing()
 
+	def OnCtrlLeftClick(self, evt):
+		'''
+		Fit trace with ellipse and then draw as bounding rectangle.
+		'''
+		if not self.button.GetToggle():
+			return
+		self.leftisdown = False
+		self.rightisdown = False
+		# the first xypath may be a left-over from previous mouse-down.
+		# often offset from others.
+		self.xypath.pop(0)
+		self.fitted_shape_points = self.ellipsePoints(self.xypath)
+		self.shape_params['shape'] = 'rectangle'
+		self.fitted_shape_points = self.drawShape()
+
 	def distance(self, p1, p2):
 		return math.hypot(p2[0]-p1[0], p2[1]-p1[1])
 
 	def ellipsePoints(self, points):
+		n = len(points)
+		if n > 60:
+			delta = n / 60.0
+			base = 0
+			new_points = []
+			for i in range(n):
+				if math.floor(base*delta) == i:
+					new_points.append(points[i])
+					base += 1
+			points = new_points
 		try:
 			params = pyami.ellipse.solveEllipseB2AC(points)
 		#params = pyami.ellipse.solveEllipseGander(points)
@@ -503,7 +535,10 @@ class FitShapeTool(TraceTool):
 		return self.drawShape()
 
 	def rectanglePoints(self,points):
-		if self.shape_params['center'] is None:
+		'''
+		Rectangle from two adjacent corners and predefined center.
+		'''
+		if self.shape_params is None or self.shape_params['center'] is None:
 			return
 		dx = []
 		dy = []
