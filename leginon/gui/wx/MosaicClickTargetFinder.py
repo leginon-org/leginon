@@ -156,6 +156,8 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		dialog.Destroy()
 
 	def onFindSquaresButton(self, evt):
+		xys = self.imagepanel.shapetool.fitted_shape_points
+		threading.Thread(target=self.node.guiTargetMask, args=[xys,]).start()
 		threading.Thread(target=self.node.autoTargetFinder).start()
 
 	def doneTargetList(self):
