@@ -44,7 +44,7 @@ if (is_array($data) && $data['n']> 1) {
 		$saved_n = count($data['positions']);
 		if ($data['n'] > $saved_n) {
 			// not all frame positions are saved in db.
-			$dbemgraph->subtitle=$dbemgraph->subtitle.", showing first ".$saved_n." frames + solid red=last frame";
+			$dbemgraph->subtitle=$dbemgraph->subtitle.", showing first ".$saved_n." frames + solid red=last frame @ ".$data['n'];
 			$dbemgraph->extend2last=true;
 			$dbemgraph->lastx= (float) $data['last']['x'];
 			$dbemgraph->lasty= (float) $data['last']['y'];
