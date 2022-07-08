@@ -55,7 +55,7 @@ function is_redux_error($img) {
 }
 
 function echo_image($img) {
-	header("Content-Type: image/jpeg");
+	header("Content-Type: image/png");
 	header("Content-Length: " . strlen($img));
 	echo($img);
 }
@@ -65,7 +65,7 @@ $rtfile = $ctfdata['path'].'/'.$basename;
 
 $img_requester = new imageRequester();
 foreach (array($rtfile, $opfile) as &$path) {
-    $img = $img_requester->requestImage($path, 'JPEG');
+    $img = $img_requester->requestImage($path, 'PNG', $shape=false, $scaleType=false);
     if (!is_redux_error($img)) {
 		echo_image($img);
 		exit;
