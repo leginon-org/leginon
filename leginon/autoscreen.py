@@ -219,7 +219,16 @@ def readMapFile(filepath):
 			# list of slot number and comment so that it is ordered
 			info = {'slot_number':int(bits[0]),'comment':bits[1],'project_id':None}
 			if len(bits) == 3:
-				info['project_id']=int(bits[2])
+				# try preoject name
+				r = projectdata.projects(name=bits[2]).query(results=1)
+				if r:
+					info['project_id']=r[0].dbid
+				else:
+					# assume it is project dbid
+					try:
+						info['project_id']=int(bits[2])
+					except:
+						raise ValueError('project field must match a project name or an integer project id: %s' % bits[2])
 			grid_info_map.append(info)
 		else:
 			raise ValueError('Incorrect file format.  Must use tab to separate slot_number and session_description')
