@@ -1122,17 +1122,8 @@ class Setup(object):
 		return _indexBy('name', projectdatalist)
 
 	def createSession(self, user, name, description, directory):
-		imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
-		framepath = leginon.ddinfo.getRawFrameSessionPathFromSessionPath(imagedirectory)
-		initializer = {
-			'name': name,
-			'comment': description,
-			'user': user,
-			'image path': imagedirectory,
-			'frame path': framepath,
-			'hidden': False,
-		}
-		return leginon.leginondata.SessionData(initializer=initializer)
+		# get unpublished new SessionData instance
+		return leginon.session.createSession(user, name, description, directory, holder=None, hidden=False)
 
 	def linkSessionProject(self, sessionname, projectid):
 		if self.projectdata is None:

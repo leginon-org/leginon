@@ -138,6 +138,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 
 		self.existing_targets = {}
 		self.last_xys = [] # last acquisition targets found in autofinder
+		self.mask_xys = []
 		self.clearTiles()
 
 		self.reference_target = None
@@ -189,6 +190,12 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# TODO: auto submit targets if from auto run.
 		self.notifyAutoDone('atlas')
 
+	def guiTargetMask(self, xys):
+		'''
+		get mask fitted shape vertices in a list of (x,y) at mosaic
+		'''
+		self.mask_xys = xys
+
 	def autoTargetFinder(self):
 		"""
 		automated target finder.  This includes general finder and then ranker to filter
@@ -223,6 +230,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		xytargets['acquisition']=[]
 		###################################
 		#
+		blobs = self.filterBlobsByMask(blobs)
 		xys = self.runBlobRankFilter(blobs, xytargets)
 		message = 'found %s squares' % (len(xys),)
 		self.last_xys = xys
@@ -1125,6 +1133,17 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			self.settings['blobs']['max filter size'] = size_max
 			self.setSettings(self.settings, False)
 			return
+
+	def filterBlobsByMask(self, blobs):
+		if len(self.mask_xys) < 3:
+			return blobs
+		s = self.finder_scale_factor
+		finder_vertices = map((lambda x: (x[1]//s,x[0]//s)),self.mask_xys)
+		new_blobs = []
+		def blob_in_polygon(x):
+			return polygon.point_inside_polygon(x['center'][0], x['center'][1], finder_vertices)
+		blobs = filter((lambda x: blob_in_polygon(x.stats)), blobs)
+		return blobs
 
 	def runBlobRankFilter(self, finder_blobs, xytargets):
 		'''

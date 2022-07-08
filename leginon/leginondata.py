@@ -89,7 +89,8 @@ class SessionData(Data):
 			('comment', str),
 			('holder', GridHolderData),
 			('hidden', bool),
-			('remote passcode', str),
+			('uid', int),
+			('gid', int),
 		)
 	typemap = classmethod(typemap)
 

@@ -3,7 +3,7 @@ This modules defines functions for creating sessions and reserving a session
 name while in the process of creating a session.
 '''
 
-import os.path
+import os
 import time
 
 from pyami import moduleconfig
@@ -132,7 +132,8 @@ def createSession(user, name, description, directory, holder=None, hidden=False)
 	'''
 	Initialize a new session without saving.
 	'''
-	imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
+	leginon_directory = leginon.leginonconfig.unmapPath(directory)
+	imagedirectory = os.path.join(leginon_directory, name, 'rawdata').replace('\\', '/')
 	framedirectory = leginon.ddinfo.getRawFrameSessionPathFromSessionPath(imagedirectory)
 	initializer = {
 		'name': name,
@@ -142,6 +143,8 @@ def createSession(user, name, description, directory, holder=None, hidden=False)
 		'frame path': framedirectory,
 		'hidden': False,
 		'holder': holder,
+		'uid': os.getuid(),
+		'gid': os.getgid(),
 	}
 	return leginon.leginondata.SessionData(initializer=initializer)
 

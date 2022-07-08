@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 '''
 Config file selection and parameter parsing.
-It choose one file in the three possible locations according
-to pyami.fileutil unlike sinedon.dbconfig, leginon.leginonconfigparser
-There are three levels of dictionary structure.
-This is mainly used to define instrument behavior.
+
+combine = True use three levels of dictionary structure.
+i.e. like sinedon.cfg, leginon.cfg in sinedon.dbconfig and leginon.leginonconfigparser
+
+combine = False choose one file in the three possible locations according
+to pyami.fileutil
+This is mainly used to define instrument and host-specific behavior
 '''
 import copy
 import sys

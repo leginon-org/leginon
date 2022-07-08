@@ -391,6 +391,7 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		if type(self.hf.lattice_matrix) != type(None):
 			self.lattice_matrix = self.hf.lattice_matrix
 		if type(self.lattice_matrix) == type(None):
+			self.logger.warning('No lattice matrix found. Use non-lattice method')
 			return self.centerCarbonWithoutLattice(points)
 		imshape = self.hf['original'].shape
 		center_point = imshape[1]//2,imshape[0]//2

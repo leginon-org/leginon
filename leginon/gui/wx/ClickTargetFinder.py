@@ -23,7 +23,7 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		leginon.gui.wx.TargetFinder.Panel.initialize(self)
 		self.SettingsDialog = leginon.gui.wx.TargetFinder.SettingsDialog
 
-		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
+		self.imagepanel = leginon.gui.wx.TargetPanel.ShapeTargetImagePanel(self, -1)
 		# standard tools
 		self.addTargetTools()
 		self.imagepanel.addTypeTool('Image', display=True)

@@ -42,8 +42,8 @@ foreach ($imagestatsdata as $imagestats ) {
 	// pixelsize from getPresets is camera pixel ?
 	$pixelsize = $presets['pixelsize']*$imageinfo['binning'];
 	$shift_data = $particle->getAlignLogShiftFromDDAlignedImageId($aligned_imgId,$pixelsize*1e10);
-	if (is_array($shift_data) && count($shift_data) > 0 ) {
-		$shift_distances = $particle->getShiftDistancesFromPositions($shift_data);
+	if (is_array($shift_data) && count($shift_data['positions']) > 1 ) {
+		$shift_distances = $particle->getShiftDistancesFromPositions($shift_data['positions']);
 		// sorted from high to low
 		rsort($shift_distances);
 		if ( count($shift_distances) < $topn+$offsetn ) continue;

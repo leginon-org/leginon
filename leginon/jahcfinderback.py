@@ -342,6 +342,8 @@ class HoleFinder(icefinderback.IceFinder):
 				accept_all = False
 			else:
 				# accept all points
+				im_center = self.im_shape[0]//2, self.im_shape[1]//2
+				points = lattice.sortPointsByDistances(points, center=im_center)
 				best_lattice = lattice.pointsToFakeLattice(points)
 				accept_all = True
 

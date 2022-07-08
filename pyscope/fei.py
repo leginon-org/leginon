@@ -2034,6 +2034,12 @@ class Glacios(Arctica):
 	column_type = 'talos'
 	use_normalization = True
 
+class EFGlacios(Arctica):
+	name = 'EF-Glacios'
+	column_type = 'talos'
+	use_normalization = True
+	projection_lens_program = 'EFTEM'
+
 #### Diffraction Instrument
 class DiffrTecnai(Tecnai):
 	name = 'DiffrTecnai'
