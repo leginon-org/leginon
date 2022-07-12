@@ -145,7 +145,7 @@ def create_circular_mask(h, w, center=None, radius=None, soft_mask=True):
     mask = 1 * (dist_from_center <= radius)
     if soft_mask:
         mask = mask.astype("float64")
-        sigma = radius / 4
+        sigma = radius / 12
         for i in range(len(mask)):
             for j in range(len(mask[0])):
                 if mask[i, j] == 0:
@@ -163,10 +163,11 @@ def mask_stack(stack, radius=None, soft_mask=True):
     return stack
 
 
-def center_image(image, mask=1):
+def center_image(image, mask=1, max_shift=0.05):
     """
     Image centering with normalization, masking, and CoM calculation.
     Returns the orgininal image shifted. 
+    Max shift units are relative.
     """
     # Process image for center calculation
     normalized = normalize_image(image)
@@ -174,7 +175,13 @@ def center_image(image, mask=1):
     positive_array[positive_array <= 0] = 0
     masked_positive = positive_array * mask
     cy, cx = center_of_mass(masked_positive)
-    y_shift, x_shift = image.shape[0] / 2 - cy, image.shape[1] / 2 - cx
+    y_dim, x_dim = image.shape
+    max_dy, max_dx = max_shift * y_dim / 2, max_shift * x_dim / 2
+    y_shift, x_shift = y_dim / 2 - cy, x_dim / 2 - cx
+    y_shift, x_shift = (
+        numpy.sign(y_shift) * min(abs(y_shift), max_dy),
+        numpy.sign(x_shift) * min(abs(x_shift), max_dx),
+    )
     # shift the orgininal image
     centered = ndimage.shift(image, [y_shift, x_shift], mode="wrap")
     return centered
@@ -863,8 +870,8 @@ class TopologyRepScript(appionScript.AppionScript):
                 "normalization"
             ] = True  # True uses default boxnorm, see imagenorm and apCAN for details
 
-            if self.params['storagemethod'] == 'disk':
-                process_params['partfile'] = self.params['localstack']
+            if self.params["storagemethod"] == "disk":
+                process_params["partfile"] = self.params["localstack"]
 
             print("\nParticle preprocessing parameters:")
             for key in process_params:
