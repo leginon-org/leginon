@@ -370,9 +370,11 @@ class Tecnai(tem.TEM):
 	def hasColdFeg(self):
 		if self.source:
 			try:
-				should_flash = self.source.Flashing.IsFlashingAdvised()
-			except AttributeError as e:
-				print(e)
+				should_flash = self.source.Flashing.IsFlashingAdvised(self.getFlashType())
+			except AttributeError:
+				return False
+			except Exception as e:
+				print('hasColdFeg exception %s' % e)
 				return False
 			return True
 
