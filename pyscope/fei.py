@@ -88,7 +88,7 @@ class Tecnai(tem.TEM):
 		self.tem_constants = comtypes.client.Constants(self.tecnai)
 
 		try:
-			self.adv_instr = fei_advscripting.connectToFEIAdvScripting()
+			self.adv_instr = fei_advscripting.connectToFEIAdvScripting().instr
 			self.source = self.adv_instr.Source
 		except Exception as e:
 			print 'unable to initialize Advanced Scriptiong interface, %s' % e
