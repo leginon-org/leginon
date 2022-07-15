@@ -88,12 +88,11 @@ class Tecnai(tem.TEM):
 		self.tem_constants = comtypes.client.Constants(self.tecnai)
 
 		try:
-			self.adv = fei_advscripting.connectToFEIAdvScripting()
-			self.source = self.adv.Source
+			self.adv_instr = fei_advscripting.connectToFEIAdvScripting()
+			self.source = self.adv_instr.Source
 		except Execeptiion as e:
-			print 'unable to initialize Advanced Scriptiong interface, %s' % msg
-			print(e)
-			self.adv = None
+			print 'unable to initialize Advanced Scriptiong interface, %s' % e
+			self.adv_instr = None
 			self.source = None
 		try:
 			self.tom = comtypes.client.CreateObject('TEM.Instrument.1')
@@ -377,15 +376,18 @@ class Tecnai(tem.TEM):
 				return False
 			return True
 
+	def getFlashingAdvised(self):
+		try:
+			should_flash = self.source.Flashing.IsFlashingAdvised(self.getFlashType())
+		except AttributeError as e:
+			print(e)
+			return False
+		return True
+
 	def getFlashType(self):
 		FlashingType_LowT = 0
 		FlashingType_HighT = 1
-		try:
-			allow_highT_flashing = self.source.Flashing.IsFlashingAdviced(FLashingType_HighT)
-		except:
-			return FlashingType_LowT
-		if allow_highT_flashing:
-			return FlashingType_HighT
+		# set to lowT for now
 		return FlashingType_LowT
 
 	def getColdFegFlashing(self):
@@ -397,7 +399,7 @@ class Tecnai(tem.TEM):
 		if not self.hasColdFeg():
 			return
 		ftype = self.getFlashType()
-		if state == 'on':
+		if state == 'on' and self.getFlashingAdvised()
 			self.source.Flashing.PerformFlashing(ftype)
 
 	def getGunTilt(self):

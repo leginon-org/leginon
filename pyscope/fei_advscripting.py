@@ -3,10 +3,18 @@ from pyami import moduleconfig
 configs = moduleconfig.getConfigured('fei.cfg')
 
 
-SIMULATION = True
+SIMULATION = False
 
-if not SIMULATION:
+class FEIAdvScriptingConnection(object):
+	instr = None
+
+if SIMULATION:
+	import simscripting
+	connection = simscripting.Connection()
+else:
+	import comtypes
 	import comtypes.client
+	connection = FEIAdvScriptingConnection()
 
 def chooseTEMAdvancedScriptingName():
 	if 'version' not in configs.keys() or 'tfs_software_version' not in configs['version'].keys():
