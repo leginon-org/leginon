@@ -90,7 +90,7 @@ class Tecnai(tem.TEM):
 		try:
 			self.adv_instr = fei_advscripting.connectToFEIAdvScripting()
 			self.source = self.adv_instr.Source
-		except Execeptiion as e:
+		except Exception as e:
 			print 'unable to initialize Advanced Scriptiong interface, %s' % e
 			self.adv_instr = None
 			self.source = None
