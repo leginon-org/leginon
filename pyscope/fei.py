@@ -12,6 +12,7 @@ import os
 import datetime
 import math
 from pyami import moduleconfig
+from pyscope import fei_advscripting
 
 # API notes:
 #COMError from TEMScripting is not consistent in which
@@ -85,6 +86,15 @@ class Tecnai(tem.TEM):
 		if self.tecnai is None:
 			raise RuntimeError('unable to initialize Tecnai interface')
 		self.tem_constants = comtypes.client.Constants(self.tecnai)
+
+		try:
+			self.adv = fei_advscripting.connectToFEIAdvScripting()
+			self.source = self.adv.Source
+		except Execeptiion as e:
+			print 'unable to initialize Advanced Scriptiong interface, %s' % msg
+			print(e)
+			self.adv = None
+			self.source = None
 		try:
 			self.tom = comtypes.client.CreateObject('TEM.Instrument.1')
 		except com_module.COMError, (hr, msg, exc, arg):
@@ -357,7 +367,39 @@ class Tecnai(tem.TEM):
 
 	def getScreenCurrent(self):
 		return float(self.tecnai.Camera.ScreenCurrent)
-	
+
+	def hasColdFeg(self):
+		if self.source:
+			try:
+				should_flash = self.source.Flashing.IsFlashingAdvised()
+			except AttributeError as e:
+				print(e)
+				return False
+			return True
+
+	def getFlashType(self):
+		FlashingType_LowT = 0
+		FlashingType_HighT = 1
+		try:
+			allow_highT_flashing = self.source.Flashing.IsFlashingAdviced(FLashingType_HighT)
+		except:
+			return FlashingType_LowT
+		if allow_highT_flashing:
+			return FlashingType_HighT
+		return FlashingType_LowT
+
+	def getColdFegFlashing(self):
+		return 'off'
+
+	def setColdFegFlashing(self,state):
+		# 'on' starts flashing, 'off' stops flashing
+		# tfs flashing can not be stopped.
+		if not self.hasColdFeg():
+			return
+		ftype = self.getFlashType()
+		if state == 'on':
+			self.source.Flashing.PerformFlashing(ftype)
+
 	def getGunTilt(self):
 		value = {'x': None, 'y': None}
 		value['x'] = float(self.tecnai.Gun.Tilt.X)
