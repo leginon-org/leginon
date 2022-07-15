@@ -399,7 +399,7 @@ class Tecnai(tem.TEM):
 		if not self.hasColdFeg():
 			return
 		ftype = self.getFlashType()
-		if state == 'on' and self.getFlashingAdvised()
+		if state == 'on' and self.getFlashingAdvised():
 			self.source.Flashing.PerformFlashing(ftype)
 
 	def getGunTilt(self):
