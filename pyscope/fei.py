@@ -68,6 +68,7 @@ class Tecnai(tem.TEM):
 		self.corrected_alpha_stage = self.getFeiConfig('stage','do_stage_alpha_backlash')
 		self.alpha_backlash_delta = self.getFeiConfig('stage','stage_alpha_backlash_angle_delta')
 		self.normalize_all_after_setting = self.getFeiConfig('optics','force_normalize_all_after_setting')
+		self.cold_feg_flash_types = {'low':0,'high':1}
 		try:
 			com_module.CoInitializeEx(com_module.COINIT_MULTITHREADED)
 		except:
@@ -370,7 +371,8 @@ class Tecnai(tem.TEM):
 	def hasColdFeg(self):
 		if self.source:
 			try:
-				should_flash = self.source.Flashing.IsFlashingAdvised(self.getFlashType())
+				# test on lowT type.
+				should_flash = self.source.Flashing.IsFlashingAdvised(self.cold_feg_flash_types['low'])
 			except AttributeError:
 				return False
 			except Exception as e:
@@ -378,19 +380,20 @@ class Tecnai(tem.TEM):
 				return False
 			return True
 
-	def getFlashingAdvised(self):
+	def getFlashingAdvised(self, flash_type):
 		try:
-			should_flash = self.source.Flashing.IsFlashingAdvised(self.getFlashType())
+			flash_type_constant = self.cold_feg_flash_types[flash_type]
+			should_flash = self.source.Flashing.IsFlashingAdvised(flash_type_constant)
 		except AttributeError as e:
 			print(e)
 			return False
-		return True
-
-	def getFlashType(self):
-		FlashingType_LowT = 0
-		FlashingType_HighT = 1
-		# set to lowT for now
-		return FlashingType_LowT
+		except KeyError:
+			print('flash type can only be %s' % list(self,cold_feg_flash_types.keys()))
+			return False
+		except Exception as e:
+			print('other getFlashAdvised exception %s' % e)
+			return False
+		return should_flash
 
 	def getColdFegFlashing(self):
 		return 'off'
@@ -400,9 +403,20 @@ class Tecnai(tem.TEM):
 		# tfs flashing can not be stopped.
 		if not self.hasColdFeg():
 			return
-		ftype = self.getFlashType()
-		if state == 'on' and self.getFlashingAdvised():
-			self.source.Flashing.PerformFlashing(ftype)
+		# low temperature (lowT) flashing can be done any time even if not advised.
+		# highT flashing can only be done if advised.
+		# It will give COMError if tried
+		if state != 'on':
+			# tfs flashing can not be stopped.
+			return
+		for flash_type in ('high','low'):
+			if self.getFlashingAdvised(flash_type):
+				try:
+					self.source.Flashing.PerformFlashing(type_constant)
+					# no need to do lowT flashing if highT is done
+					break
+				except Exception as e:
+					raise RuntimeError(e)
 
 	def getGunTilt(self):
 		value = {'x': None, 'y': None}
