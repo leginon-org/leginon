@@ -970,4 +970,12 @@ class Falcon4EC(Falcon3EC):
 			return None
 		return files[-1]
 
+class Falcon4EC(Falcon4EC):
+	name = 'Falcon4EC'
+	camera_name = 'EF-Falcon'
+	binning_limits = [1,2,4]
+	electron_counting = True
+	intensity_averaged = False
+	base_frame_time = 0.02907 # seconds
+	physical_frame_rate = 250 # rolling shutter frames per second
 
