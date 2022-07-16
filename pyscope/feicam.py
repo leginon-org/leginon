@@ -970,7 +970,7 @@ class Falcon4EC(Falcon3EC):
 			return None
 		return files[-1]
 
-class Falcon4EC(Falcon4EC):
+class Falcon4ECef(Falcon4EC):
 	name = 'Falcon4EC'
 	camera_name = 'EF-Falcon'
 	binning_limits = [1,2,4]
