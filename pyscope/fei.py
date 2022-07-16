@@ -388,7 +388,7 @@ class Tecnai(tem.TEM):
 			print(e)
 			return False
 		except KeyError:
-			print('flash type can only be %s' % list(self,cold_feg_flash_types.keys()))
+			print('flash type can only be %s' % list(self.cold_feg_flash_types.keys()))
 			return False
 		except Exception as e:
 			print('other getFlashAdvised exception %s' % e)
