@@ -188,7 +188,13 @@ class TEM(baseinstrument.BaseInstrument):
 	def getBeamBlankedDuringCameraExchange(self):
 		return True
 
+	def hasColdFeg(self):
+		return False
+
 	def getColdFegFlashing(self):
+		'''
+		return the state of flashing ('on','off','error'
+		'''
 		return 'off'
 
 	def setColdFegFlashing(self,state):

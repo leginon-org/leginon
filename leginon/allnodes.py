@@ -260,6 +260,9 @@ noderegistry.registerNodeClass(BufferCycler,classtype)
 from conditioner import AutoNitrogenFiller
 noderegistry.registerNodeClass(AutoNitrogenFiller,classtype)
 
+from cfegconditioner import ColdFegFlasher
+noderegistry.registerNodeClass(ColdFegFlasher,classtype)
+
 from phaseplatealigner import PhasePlateAligner
 noderegistry.registerNodeClass(PhasePlateAligner,classtype)
 
