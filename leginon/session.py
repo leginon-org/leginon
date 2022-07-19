@@ -141,7 +141,7 @@ def createSession(user, name, description, directory, holder=None, hidden=False)
 		'user': user,
 		'image path': imagedirectory,
 		'frame path': framedirectory,
-		'hidden': False,
+		'hidden': hidden,
 		'holder': holder,
 		'uid': os.getuid(),
 		'gid': os.getgid(),
