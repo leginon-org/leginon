@@ -20,6 +20,7 @@ import math
 import gui.wx.JAHCFinder
 import version
 import itertools
+import numpy
 
 invsqrt2 = math.sqrt(2.0)/2.0
 default_template = os.path.join(version.getInstalledLocation(),'holetemplate.mrc')
@@ -95,8 +96,9 @@ class JAHCFinder(icetargetfinder.IceTargetFinder):
 
 		self.foc_counter = itertools.count()
 		self.foc_activated = False
-
-		self.start()
+		self.lattice_matrix = self.hf.lattice_matrix
+		if self.__class__ == JAHCFinder:
+			self.start()
 
 	def correlateTemplate(self):
 		'''
@@ -253,7 +255,7 @@ class JAHCFinder(icetargetfinder.IceTargetFinder):
 		# ice
 		self.ice()
 
-	def storeHoleFinderPrefsData(self, imagedata):
+	def _getHolePrefs(self, imagedata):
 		hfprefs = leginondata.HoleFinderPrefsData()
 		hfprefs.update({
 			'session': self.session,
@@ -292,7 +294,10 @@ class JAHCFinder(icetargetfinder.IceTargetFinder):
 			'file-diameter': self.settings['file diameter'],
 			'template-filename': self.settings['template filename'],
 		})
+		return hfprefs
 
+	def storeHoleFinderPrefsData(self, imagedata):
+		hfprefs = self._getHolePrefs(imagedata)
 		self.publish(hfprefs, database=True)
 		return hfprefs
 

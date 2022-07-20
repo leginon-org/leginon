@@ -27,6 +27,8 @@ from pyami import mysocket
 # autotask
 from leginon import autotask
 
+from sinedon import directq
+
 import socket
 from wx import PyDeadObjectError
 import gui.wx.Manager
@@ -898,7 +900,7 @@ class Manager(node.Node):
 		self.timer = threading.Timer(timeout,self.slackTimeoutNotification)
 		self.timer.start()
 		if self.timer_debug:
-			print 'timer started with timeout set to %.0f sec' % timeout
+			print('timer restarted with timeout set to %.0f sec' % timeout)
 
 	# Node Error Notification
 	def handleNodeLogError(self, ievent):
@@ -913,9 +915,10 @@ class Manager(node.Node):
 		nodename = ievent['node']
 		if isinstance(ievent, event.ActivateNotificationEvent):
 			self.tem_host = ievent['tem_host']
-			self.timeout_minutes = ievent['timeout_minutes']
-			msg = '%.1f minutes timeout and error notification is activated' % (self.timeout_minutes)
-			self.slackNotification(msg)
+			if not ievent['silent']:
+				self.timeout_minutes = ievent['timeout_minutes']
+				msg = '%.1f minutes timeout and error notification is activated' % (self.timeout_minutes)
+				self.slackNotification(msg)
 			# reset
 			self.notifyerror = True
 			# first allow timer to restart, if was set to false by completing a timeout
@@ -991,12 +994,8 @@ class Manager(node.Node):
 							hiddens.append(appname)
 						else:
 							apps[appname] = app
-		if not show_hidden:
-			history, map = self.getApplicationHistory()
-			for appname in history:
-				if appname not in apps:
-					app = application.Application(self, name=appname)
-					apps[appname] = app
+		#	adding hidden apps from history when show_hidden is False is removed
+		# to improve the speed.
 		appnames = apps.keys()
 		appnames.sort()
 		orderedapps = ordereddict.OrderedDict()
@@ -1015,7 +1014,10 @@ class Manager(node.Node):
 				affixlist = ['%d' % affixlist]
 			if type(affixlist) == type(''):
 				# single entry is translated to string, not list of string
-				affixlist = [affixlist]
+				if affixlist == '':
+					affixlist = []
+				else:
+					affixlist = [affixlist]
 		except IOError:
 			affixlist = []
 		except KeyError:
@@ -1025,41 +1027,118 @@ class Manager(node.Node):
 			raise ValueError('unknown application %s error: %s' % (affix_type,str(e)))
 		return affixlist
 
-	def getApplicationHistory(self):
+	def _getAppNamesFromPrefix(self, f):
+		'''
+		Use direct mysql query to return prefix application names.
+		'''
+		q = " SELECT name from ApplicationData where name like '%s%%'; " % (f,)
+		results = directq.complexMysqlQuery('leginondata',q)
+		return list(set(map((lambda x: x['name']),results)))
+
+	def _getAppNamesFromPostfix(self, f):
+		'''
+		Use direct mysql query to return postfix application names.
+		'''
+		q = " SELECT name from ApplicationData where name like '%%%s'; " % (f,)
+		results = directq.complexMysqlQuery('leginondata',q)
+		return list(set(map((lambda x: x['name']),results)))
+
+	def _getLaunchedApplicationByName(self, appname=''):
+		'''
+		Return most recent launched application data by user,
+		90 day limit, and application name.
+		'''
+		t0=time.time()
+		app = leginondata.ApplicationData(hide=False, name=appname)
 		initializer = {'session': leginondata.SessionData(user=self.session['user']),
-										'application': leginondata.ApplicationData()}
-		appdata = leginondata.LaunchedApplicationData(initializer=initializer)
-		appdatalist = self.research(appdata, timelimit='-90 0:0:0')
+					'application': app}
+		lappdata = leginondata.LaunchedApplicationData(initializer=initializer)
+		lappdatalist = self.research(lappdata, timelimit='-90 0:0:0',results=1)
+		return lappdatalist
+
+	def _getPrefixUserLaunchedApplications(self, prefixlist):
+		'''
+		Return launched spplication results by prefix list, session user,
+		and time limit.
+		'''
+		lappdatalist = []
+		for f in prefixlist:
+			names = self._getAppNamesFromPrefix(f)
+			names = list(filter((lambda x: x not in self.apnames), names))
+			for n in names:
+				apps = self._getLaunchedApplicationByName(appname=n)
+				if apps:
+					lappdatalist.extend(apps) # only one item in apps
+					self.apnames.append(n)
+		return lappdatalist
+
+	def _getPostfixUserLaunchedApplications(self, postfixlist):
+		'''
+		Return launched application results by postfix list, session user,
+		and time limit.
+		'''
+		lappdatalist = []
+		for f in postfixlist:
+			names = self._getAppNamesFromPostfix(f)
+			names = list(filter((lambda x: x not in self.apnames), names))
+			for n in names:
+				apps = self._getLaunchedApplicationByName(appname=n)
+				if apps:
+					lappdatalist.extend(apps) # only one item in apps
+					self.apnames.append(n)
+		return lappdatalist
+
+	def _getSessionLaunchedApplications(self):
+		lappdatalist_long = leginondata.LaunchedApplicationData(session=self.session).query()
+		lappdatalist=[]
+		for lapp in lappdatalist_long:
+			name = lapp['application']['name']
+			if name not in self.apnames:
+				self.apnames.append(name)
+				lappdatalist.append(lapp)
+		return lappdatalist
+
+	def getApplicationHistory(self):
+		t0 = time.time()
 		prefixlist = self.getApplicationAffixList('prefix')
 		postfixlist = self.getApplicationAffixList('postfix')
-		history = []
+		lappdatalist = []
+		self.apnames = []
+		# keep session history
+		session_lappdatalist = self._getSessionLaunchedApplications()
+		session_history = list(self.apnames)
+		# faster if prefix or postfix is set when the same applications were
+		# used by the same user many times.
+		if prefixlist:
+			lapps = self._getPrefixUserLaunchedApplications(prefixlist,)
+			lappdatalist.extend(lapps)
+		if postfixlist:
+			lapps = self._getPostfixUserLaunchedApplications(postfixlist)
+			lappdatalist.extend(lapps)
+		if not lappdatalist:
+			# slow er method get all application names and then filter.
+			apnames = self.getApplicationNames()
+			apnames = list(filter((lambda x: x not in self.apnames), apnames))
+			for n in apnames:
+				lapps = self._getLaunchedApplicationByName(appname=n)
+				if lapps:
+					lappdatalist.extend(lapps) # only one item in apps
+		# reverse sort by dbid so that the most recent is at the front
+		history_ids = list(map((lambda x: x.dbid), lappdatalist))
+		history_ids.sort()
+		# keep session_history at front of the final list
+		session_history_ids = list(map((lambda x:x.dbid), session_lappdatalist))
+		session_history_ids.reverse()
+		history_ids.extend(session_history_ids)
+		history_ids.reverse()
+		# contruct final history
 		amap = {}
-		for a in appdatalist:
-			name =  a['application']['name']
-			if a['application']['hide']:
-				continue
-			if prefixlist:
-				# filter by prefix
-				found_prefix = False
-				for prefix in prefixlist:
-					if name.startswith(str(prefix)):
-						found_prefix = True
-						break
-				if not found_prefix:
-					continue
-			if postfixlist:
-				# filter by prefix
-				found_postfix = False
-				for postfix in postfixlist:
-					if name.endswith(str(postfix)):
-						found_postfix = True
-						break
-				if not found_postfix:
-					continue
-			# add to history
-			if name not in history:
-				history.append(name)
-				amap[name] = a['launchers']
+		history = []
+		for lid in history_ids:
+			l = leginondata.LaunchedApplicationData().direct_query(lid)
+			n = l['application']['name']
+			history.append(n)
+			amap[n] = l['launchers']
 		return history, amap
 
 	def onApplicationStarting(self, name, nnodes):
@@ -1164,9 +1243,17 @@ class Manager(node.Node):
 			ievent['grid'] = None
 			ievent['stagez'] = self.autostagez
 			self.outputEvent(ievent, node_name, wait=False, timeout=None)
+		# let square finder node knows what the task is.
+		for class_name in self.square_finder_class_names:
+			node_name = self.auto_class_aliases[class_name]
+			if node_name is not None:
+				ievent = event.NotifyTaskTypeEvent()
+				ievent['task'] = task
+				self.outputEvent(ievent, node_name, wait=False, timeout=None)
 		self.auto_atlas_done.clear()
-		# TODO: Listen to atlas finished
+		# Listen to atlas finished
 		self.auto_atlas_done.wait()
+		#
 		if task == 'full':
 			#submit auto square target and move on.
 			class_names = filter((lambda x: self.auto_class_aliases[x] is not None), self.square_finder_class_names)
@@ -1188,8 +1275,12 @@ class Manager(node.Node):
 			self.autoStartApplication(self.auto_task)
 		else:
 			# finishing
-			self.timeout_minutes = 0
+			current_timeout = self.timeout_minutes + 0
+			self.cancelTimeoutTimer()
 			self.slackTimeoutNotification('autotasks all finished')
+			# refs #12775 prevent autorun
+			self.autorun = False
+			self.notifyerror = False
 
 	def killApplication(self):
 		self.cancelTimeoutTimer()
@@ -1197,6 +1288,8 @@ class Manager(node.Node):
 		self.timer = None
 		self.application.kill()
 		self.application = None
+		# refs #12775 need to reset so it does not broadcase while launching new app or node.
+		self.broadcast = []
 		self.onApplicationKilled()
 
 	def loadApp(self, name):

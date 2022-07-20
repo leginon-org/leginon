@@ -2186,13 +2186,17 @@ class leginondata {
 
 	}
 
+	function getEngine() {
+		return (defined('DB_ENGINE')) ? DB_ENGINE: '';
+	}
 	function importTables($filename) {
 		$app = new XMLApplicationImport($filename);
 		$sqldef = $app->getSQLDefinitionQueries();
 		$sqldata = $app->getSQLDataQueries();
 		$fieldtypes = $app->getFieldTypes();
+		$engine = $this->getEngine();
 		if ($this->mysql->checkDBConnection()) {
-			$this->mysql->SQLAlterTables($sqldef, $fieldtypes);
+			$this->mysql->SQLAlterTables($sqldef, $fieldtypes, $engine);
 			foreach ((array)$sqldata as $table=>$queries) {
 				foreach($queries as $query) {
 					eval("\$sqlinsert= \"".addslashes($query)."\";");
@@ -3455,6 +3459,22 @@ class leginondata {
 			."ON t.`REF|AcquisitionImageData|image`=a.DEF_id "
 			."where a.`DEF_id`=".$imgId." "
 			."AND t.status like 'new' GROUP BY t.`number` ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getDequeuedByTargetList($tlistId) {
+		$q="SELECT t.`DEF_id` as id, t.`REF|QueueData|queue` as qid, "
+			."t.`REF|ImageTargetListData|list` as tlist from DequeuedImageTargetListData t "
+			."where t.`REF|ImageTargetListData|list`=".$tlistId." ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getDoneByTargetList($tlistId) {
+		$q="SELECT t.`DEF_id` as id, "
+			."t.`REF|ImageTargetListData|list` as tlist from DoneImageTargetListData t "
+			."where t.`REF|ImageTargetListData|list`=".$tlistId." ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}

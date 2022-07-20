@@ -16,7 +16,13 @@ from pyami import imagefun, mrc, arraystats
 import pyami.circle
 import os
 
-from leginon import icefinderback, statshole
+from leginon import icefinderback, statshole, lattice
+
+class ScoreResultMissingError(Exception):
+	'''Raised when score result is missing.  This assumes script fails.
+	Requests from user to downgrade this because it is too often.
+	'''
+	pass
 
 ###################
 ### Because of the use of __result, the subclass don't get them as attribute. AC 2021
@@ -52,6 +58,7 @@ class HoleFinder(icefinderback.IceFinder):
 		}
 		self.setComponents()
 		self.setDefaults()
+		self.lattice_matrix = None
 
 	def setComponents(self):
 		## other necessary components
@@ -90,13 +97,19 @@ class HoleFinder(icefinderback.IceFinder):
 	def updateHoles(self, holes):
 		self.__update_result('holes', holes)
 
+	def update_result(self, key, image):
+		self.__update_result(key, image)
+
+	def get_result(self, key):
+		return self.__results[key]
+
 	def configure_holefinder(self, script=None, job_name='hole', in_path=None, out_dir=None, score_key=None, threshold=None):
 		'''
 		configuration for holefinder to run. Each non-None kwarg is added.
 		'''
-		if not in_path and self.__results['original']:
+		if not in_path and self.get_result('original'):
 			self.temp_in_path = '%s.mrc' % job_name
-			mrc.write(self.__results['original'], self.temp_in_path)
+			mrc.write(self.get_result('original'), self.temp_in_path)
 			in_path = self.temp_in_path
 		if not script or not in_path or not out_dir:
 				raise ValueError('incomplete configuration')
@@ -132,7 +145,7 @@ class HoleFinder(icefinderback.IceFinder):
 		'''
 		Return external hole finder holes found
 		'''
-		if self.__results['original'] is None:
+		if self.get_result('original') is None:
 			raise RuntimeError('need original image to run hole finding')
 		self.temp_in_path = None
 
@@ -167,13 +180,15 @@ class HoleFinder(icefinderback.IceFinder):
 		'''
 		outpath = self.getOutPath()
 		if not os.path.isfile(outpath):
-			self.__update_result('holes', [])
-			raise RuntimeError('hole finder did not run: %s missing' % outpath)
+			self.update_result('holes', [])
+			raise ScoreResultMissingError('hole finder did not run: %s missing' % outpath)
 			return
 		f = open(outpath,'r')
 		# returns one line
 		line = f.readlines()[0]
 		hole_dicts = json.loads(line)
+		# set lattice matrix for centerCarbon
+		self.setLatticeMatrix(hole_dicts)
 		holes = []
 		score_key = self.holefinder_config['score_key']
 		for n, h in enumerate(hole_dicts):
@@ -186,6 +201,23 @@ class HoleFinder(icefinderback.IceFinder):
 			if self.holefinder_config['threshold'] is None or h[score_key] >= self.holefinder_config['threshold']:
 				holes.append(statshole.StatsHole(h, n,[score_key,'convolved'])) # (row, col)
 		self.updateHoles(holes)
+
+	def setLatticeMatrix(self, hole_dicts):
+		"""
+		set lattice_matrix from unfiltered hole centers.
+		"""
+		# Ptolemy currently only do square lattice.
+		# blob center here is in r,c
+		b_centers = map((lambda x: self.jsonCenterToHoleCenter(x['center'])), hole_dicts)
+		im_center = self.im_shape[0]//2, self.im_shape[1]//2
+		b_centers = lattice.sortPointsByDistances(b_centers, center=im_center)
+		b_centers = lattice.sortPointsByDistances(b_centers, center=b_centers[0])
+		c0 = b_centers[0]
+		v1 = b_centers[1][0]-c0[0], b_centers[1][1]-c0[1]
+		# default is square lattice
+		v2 = v1[1], -v1[0]
+		m = numpy.array([[v1[0],v1[1]],[v2[0],v2[1]]])
+		self.lattice_matrix = m
 
 	def getOutPath(self):
 		"""
@@ -210,94 +242,6 @@ class HoleFinder(icefinderback.IceFinder):
 		if tmax is not None:
 			self.filter_config['tmax'] = tmax
 
-	def filter_score(self, tmin=None, tmax=None):
-		'''
-		Make holes2 that contains only good holes with score filter thresholds
-		in filter_config.  This is not currently used in ScoreTargetFinder because
-		we need ice thickness filter as hole2.
-		Instead, holefinder_config['threshold'] is used as tmin score filter.
-		'''
-		if self.__results['holes'] is None:
-			raise RuntimeError('need holes to filter by score')
-		score_key = self.holefinder_config['score_key']
-		self.configure_filter(tmin=tmin,tmax=tmax)
-		holes = self.__results['holes']
-		holes2 = []
-		tmin = self.filter_config['tmin']
-		tmax = self.filter_config['tmax']
-		for hole in holes:
-			if score_key not in hole.stats:
-				## no score
-				continue
-			score = hole.stats[score_key]
-			if (tmin <= score <= tmax):
-				holes2.append(hole)
-				hole.stats['good'] = True
-			else:
-				hole.stats['good'] = False
-
-	def calc_holestats(self, radius=None, input_name='holes'):
-		'''
-		This adds hole stats to holes.  Note: Need to copy this in
-		subclasses since self.__results are not accessible in the subclass.
-		'''
-		if self.__results[input_name] is None:
-			raise RuntimeError('need holes to calculate hole stats')
-		self.configure_holestats(radius=radius)
-		holes = list(self.__results[input_name])
-		holes = self.holestats.calc_stats(holes)
-		self.__update_result(input_name, holes)
-
-	def filter_good(self, input_name='holes2'):
-		'''
-		This filter holes with good is True.  Note: Need to copy this in
-		subclasses since self.__results are not accessible in the subclass.
-		'''
-		holes = list(self.__results[input_name])
-		holes = self.good.filter_good(holes)
-		self.__update_result('holes2', holes)
-
-	def calc_ice(self, i0=None, tmin=None, tmax=None, input_name='holes'):
-		'''
-		Set result holes2 that contains only good holes from ice thickness thresholds
-		in ice_config.
-		Duplicates what is in icefinderback because __results must be in the same module.
-		'''
-		if self.__results[input_name] is None:
-			raise RuntimeError('need holes to calculate ice')
-		self.configure_ice(i0=i0,tmin=tmin,tmax=tmax)
-		holes = self.__results[input_name]
-		holes, holes2 = self.ice.calc_ice(holes)
-		self.__update_result('holes2', holes)
-		self.__update_result('holes2', holes2)
-
-	def make_convolved(self, input_name='holes'):
-		"""
-		Sample results of the input_name.
-		Duplicates what is in icefinderback because __results must be in the same module.
-		"""
-		if self.__results[input_name] is None:
-			raise RuntimeError('need %s to generate convolved targets' % input_name)
-			return
-		# convolve from these goodholes
-		goodholes = list(self.__results[input_name])
-		conv_vect = self.convolve.configs['conv_vect'] # list of (del_r,del_c)s
-		# reset before start
-		self.__update_result('holes2', [])
-		if not conv_vect:
-			return
-		#real part
-		convolved = self.convolve.make_convolved(goodholes)
-		self.__update_result('holes2', convolved)
-
-	def sampling(self, input_name='holes2'):
-		"""
-		Duplicates what is in icefinderback because __results must be in the same module.
-		"""
-		holes = self.__results[input_name]
-		sampled = self.sample.sampleHoles(holes)
-		self.__update_result(input_name, sampled)
-
 	def find_holes(self):
 		'''
 		For testing purpose. Configuration must be done already.
@@ -311,7 +255,6 @@ class HoleFinder(icefinderback.IceFinder):
 		self.calc_holestats(input_name='holes2')
 		self.calc_ice(input_name='holes2')
 		self.sampling(input_name='holes2')
-
 
 if __name__ == '__main__':
 	from pyami import mrc

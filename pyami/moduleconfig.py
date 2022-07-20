@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 '''
 Config file selection and parameter parsing.
-It choose one file in the three possible locations according
-to pyami.fileutil.
-There are three levels of dictionary structure.
+
+combine = True use three levels of dictionary structure.
+i.e. like sinedon.cfg, leginon.cfg in sinedon.dbconfig and leginon.leginonconfigparser
+
+combine = False choose one file in the three possible locations according
+to pyami.fileutil
+This is mainly used to define instrument and host-specific behavior
 '''
 import copy
 import sys
@@ -13,13 +17,14 @@ import imp
 import pyami.fileutil
 
 class ModuleConfigParser(object):
-	def __init__(self,filename,package='pyscope'):
+	def __init__(self,filename,package='pyscope', combine=False):
 		self.configparser = ConfigParser.SafeConfigParser()
 		self.configured = {}
 		self.config_filename = filename
 		self.configfiles = None
 		self.configpath = None
 		self.package = package
+		self.combine = combine
 
 
 	def newHierarchyDict(self,keys,value):
@@ -123,16 +128,28 @@ class ModuleConfigParser(object):
 		if not one_exists:
 			raise IOError('please configure at least one of these:  %s' % (filenames,))
 
+	def getConfigPaths(self):
+		if self.combine == False:
+			return self.getConfigPath()
+		else:
+			# combine all confdirs
+			confdirs = pyami.fileutil.get_config_dirs(package_name=self.package)
+			filenames = [os.path.join(confdir, self.config_filename) for confdir in confdirs]
+			one_exists = sum(map((lambda x:os.path.exists(x)),filenames))
+			if not one_exists:
+				raise IOError('please configure at least one of these:  %s' % (filenames,))
+			return filenames
+
 	def parse(self):
 		'''
 		Select one of the three possible filepath and parse
 		for parameters.
 		'''
-		configpath = self.getConfigPath()
+		configpaths = self.getConfigPaths()
 		try:
-			self.configfiles = self.configparser.read([configpath,])
+			self.configfiles = self.configparser.read(configpaths)
 		except:
-			raise IOError('error reading %s' % (configpath,))
+			raise IOError('error reading %s' % (configpaths,))
 
 		# parse
 		names = self.configparser.sections()
@@ -155,21 +172,21 @@ def getConfigPath(config_file='jeol.cfg', package='pyscope'):
 	configpath = app.getConfigPath()
 	return configpath
 
-def getConfigured(config_file='jeol.cfg', package='pyscope'):
+def getConfigured(config_file='jeol.cfg', package='pyscope', combine=False):
 	'''
 	External call for getting the parameter dictionary from config_file.
 	'''
-	app = ModuleConfigParser(config_file, package=package)
+	app = ModuleConfigParser(config_file, package=package, combine=combine)
 	configured = app.configured
 	if not configured:
 		configured = app.parse()
 	return configured
 
-def testOneConfig(config_file,package_name):
+def testOneConfig(config_file,package_name, combine=False):
 	from pyami import testfun
 	module = 'moduleconfig loading %s in %s subpackage' % (config_file, package_name)
 	try:
-		configs = getConfigured(config_file, package=package_name)
+		configs = getConfigured(config_file, package=package_name, combine=combine)
 		if type(configs) == type({}) and configs.keys():
 			testfun.printResult(module,True)
 		else:
@@ -178,8 +195,10 @@ def testOneConfig(config_file,package_name):
 		testfun.printResult(module,False,e)
 
 def test():
-	testOneConfig('leginon.cfg','leginon')
-	testOneConfig('sinedon.cfg','leginon')
+	testOneConfig('leginon.cfg','leginon', True)
+	testOneConfig('instruments.cfg','pyscope', False)
+	#print(getConfigured('instruments.cfg', 'pyscope', False))
+	print(getConfigured('leginon.cfg', 'leginon', True))
 
 if __name__ == '__main__':
 	test()

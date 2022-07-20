@@ -18,7 +18,7 @@ import numpy
 import copy
 import gui.wx.Focuser
 import player
-
+from leginon import settingsfun
 
 class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 	panelclass = gui.wx.Focuser.Panel
@@ -79,6 +79,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		self.imageshiftcalclient = calibrationclient.ImageShiftCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
 		self.focus_sequence = self.researchFocusSequence()
+		self.setFocusSequence(self.focus_sequence, self.session['user']['username']=='administrator', init=True)
 
 	def validatePresets(self):
 		### check normal manualfocuschecker presets
@@ -103,22 +104,12 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 				raise acquisition.InvalidPresetsSequence('bad preset %s in focus sequence %s' % (presetname, settingname))
 
 	def researchFocusSequence(self):
-		user_data = self.session['user']
-		initializer = {
-			'session': leginondata.SessionData(user=user_data),
-			'node name': self.name,
-		}
-		query = leginondata.FocusSequenceData(initializer=initializer)
+		settings_classname = 'FocusSequenceData'
+		settings_class = getattr(leginondata, settings_classname)
 		try:
-			focus_sequence_data = self.research(query, results=1)[0]
-		except IndexError:
-			# if that failed, try to load default settings from DB
-			query = leginondata.FocusSequenceData(initializer={'isdefault': True, 'node name': self.name})
-			try:
-				focus_sequence_data = self.research(query, results=1)[0]
-			except IndexError:
-				return []
-
+			focus_sequence_data = settingsfun.researchDBSettings(settings_class, self.name, self.session, None)[0]
+		except IndexError as e:
+			return []
 		sequence = []
 		has_manual_on = False
 		for name in focus_sequence_data['sequence']:
@@ -134,20 +125,12 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		return sequence
 
 	def researchFocusSetting(self, name):
-		initializer = {
-			'session': leginondata.SessionData(user=self.session['user']),
-			'node name': self.name,
-			'name': name,
-		}
-		query = leginondata.FocusSettingData(initializer=initializer)
+		settings_classname = 'FocusSettingData'
+		settings_class = getattr(leginondata, settings_classname)
+		extra = ('node name', self.name)
 		try:
-			focus_setting_data = self.research(query, results=1)[0]
+			focus_setting_data = settingsfun.researchDBSettings(settings_class, name, self.session, None, extra)[0]
 		except IndexError:
-			# if that failed, try to load default settings from DB
-			query = leginondata.FocusSettingData(initializer={'isdefault': True, 'node name': self.name, 'name': name})
-			try:
-				focus_setting_data = self.research(query, results=1)[0]
-			except IndexError:
 					return None
 		focus_setting = focus_setting_data.toDict()
 		del focus_setting['session']
@@ -157,9 +140,9 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 	def getFocusSequence(self):
 		return [setting.copy() for setting in self.focus_sequence]
 
-	def setFocusSequence(self, sequence, isdefault=False):
+	def setFocusSequence(self, sequence, isdefault=False, init=False):
 		sequence_names = [s['name'] for s in sequence]
-		if sequence_names != [s['name'] for s in self.focus_sequence]:
+		if init or sequence_names != [s['name'] for s in self.focus_sequence]:
 			initializer = {
 				'session': self.session,
 				'sequence': sequence_names,
@@ -172,7 +155,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			sequence_data = leginondata.FocusSequenceData(initializer=initializer)
 			self.publish(sequence_data, database=True, dbforce=True)
 		for setting in sequence:
-			if setting != self.researchFocusSetting(setting['name']):
+			if init or setting != self.researchFocusSetting(setting['name']):
 				initializer = setting.copy()
 				initializer['session'] = self.session
 				initializer['node name'] = self.name
@@ -273,6 +256,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			measure_status = 'aborted'
 		finally:
 			self.logger.info('Set beam tilt back')
+			# this beam tilt includes aberration correction
 			self.btcalclient.setBeamTilt(beamtilt0)
 			if measure_status:
 				return measure_status
@@ -289,7 +273,6 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		fitmin = correction['min']
 
 		resultdata.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':fitmin, 'drift': lastdrift})
-		self.btcalclient.setBeamTilt(beamtilt0)
 		return 'ok'
 
 		#####################################################################
@@ -624,6 +607,8 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			self.clearBeamPath()
 			status = self.processFocusSetting(setting, emtarget=emtarget)
 			self.stopTimer('processFocusSetting')
+			# need to reset for each focus_sequence for aberration correction
+			is_failed = self.resetComaCorrection()
 			## repeat means give up and do the whole target over
 			if status == 'repeat':
 				return 'repeat'

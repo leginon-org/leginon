@@ -10,6 +10,7 @@ import wx
 from leginon import leginondata
 from leginon import projectdata
 from leginon import gridserver
+from leginon import settingsfun
 import leginon.session
 import leginon.leginonconfig
 import leginon.ddinfo
@@ -20,6 +21,8 @@ from leginon.gui.wx import AutoScreenProject
 
 class Options(object):
 	pass
+
+user_map = leginon.session.getUserFullnameMap()
 
 class SessionSetCreator(object):
 	def __init__(self):
@@ -110,11 +113,21 @@ class SessionCreator(object):
 		self.project = self.linkSessionProject(self.project_id)
 		self.setDataFromOld('C2ApertureSizeData',old_session)
 		self.clients = self.setDataFromOld('ConnectToClientsData',old_session)['clients']
-		self.setDataFromOld('LaunchedApplicationData',old_session)
+		self.launched_app = self.setDataFromOld('LaunchedApplicationData',old_session)
 		self.copyPresets(old_session)
 
+	def getUser(self):
+		user_fullname = leginon.leginonconfig.USERNAME
+		search_name = user_fullname.strip().lower()
+		if search_name in user_map:
+			return user_map[search_name]
+		else:
+			print('Error: current leginon.cfg user %s not found.' % user_fullname)
+			print('     Use example session user to create sessions.')
+			return self.old_session['user']
+
 	def makeNewSessionFromOld(self, old_session, comment):
-		user = old_session['user']
+		user = self.getUser()
 		holder = old_session['holder']
 		name = self.getSessionName()
 		directory = leginon.leginonconfig.IMAGE_PATH
@@ -206,7 +219,16 @@ def readMapFile(filepath):
 			# list of slot number and comment so that it is ordered
 			info = {'slot_number':int(bits[0]),'comment':bits[1],'project_id':None}
 			if len(bits) == 3:
-				info['project_id']=int(bits[2])
+				# try preoject name
+				r = projectdata.projects(name=bits[2]).query(results=1)
+				if r:
+					info['project_id']=r[0].dbid
+				else:
+					# assume it is project dbid
+					try:
+						info['project_id']=int(bits[2])
+					except:
+						raise ValueError('project field must match a project name or an integer project id: %s' % bits[2])
 			grid_info_map.append(info)
 		else:
 			raise ValueError('Incorrect file format.  Must use tab to separate slot_number and session_description')
@@ -231,6 +253,64 @@ def start(sessionname, clientlist, gridslot,z, task='atlas'):
 	from leginon import start
 	start.start(options)
 
+class SessionSettingsCopier(object):
+	'''
+	Copy application settings from an old session to the new session.
+	'''
+	def __init__(self, session, old_session, application):
+		self.session = session
+		self.old_session = old_session
+		nodes = self.getApplicationNodes(application)
+		for n in nodes:
+			class_name = n['class string']
+			alias = n['alias']
+			settings_classname = settingsfun.getSettingsName(class_name)
+			if not settings_classname:
+				continue
+			try:
+				self.copyOldSettings(settings_classname, alias)
+			except Exception as e:
+				print(e)
+				continue
+			if 'Focuser' in class_name:
+				settings_classname = 'FocusSequenceData'
+				seqdata = self.copyOldSettings(settings_classname, alias)
+				for step_name in seqdata['sequence']:
+					self.copyOldFocusSettings(alias, step_name)
+
+	def copyOldFocusSettings(self, alias, step_name):
+		settings_classname = 'FocusSettingData'
+		settings_class = getattr(leginondata, settings_classname)
+		extra = ('node name', alias)
+		try:
+			old_settings = settingsfun.researchDBSettings(settings_class, step_name, self.old_session, None, extra)[0]
+		except IndexError as e:
+			print('ERROR: no focus settings found, use default')
+			return
+		q = settings_class(initializer=old_settings)
+		q['session'] = self.session
+		q.insert()
+		return q
+
+	def copyOldSettings(self, settings_classname, alias):
+		settings_class = getattr(leginondata, settings_classname)
+		old_settings = self._getOldDBSettings(settings_class, alias)[0]
+		if old_settings:
+			q = settings_class(initializer=old_settings)
+			q['session'] = self.session
+			q.insert()
+		return q
+
+
+	def getApplicationNodes(self, appdata):
+		nodeinstance = leginondata.NodeSpecData(application=appdata)
+		return nodeinstance.query()
+
+	def _getOldDBSettings(self, settingsclass, inst_alias, extra=None):
+		'''
+		Return settings based on the old session which might belong to a different user.
+		'''
+		return settingsfun.researchDBSettings(settingsclass, inst_alias, self.old_session, None, extra)
 
 if __name__ == "__main__":
 	answer = raw_input('Enter autoloader cassette-grid mapping filename (leave it blank to use gui): ')
@@ -302,6 +382,9 @@ if __name__ == "__main__":
 		if i == 0:
 			first_session = app2.session
 			first_slot = slot_number
+			# copy the last settings from the old session instead of most recent user settings.
+			launched_app = app2.launched_app
+			app3 = SessionSettingsCopier(first_session, app2.old_session, launched_app['application'])
 		time.sleep(1.0) # to prevent session out of order on the viewer.
 	app2.saveAutoTaskOrder(task_order)
 	#start the first session.  The rest will be set from Manager.

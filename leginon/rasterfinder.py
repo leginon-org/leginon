@@ -9,22 +9,20 @@
 #
 
 from leginon import leginondata
-import targetfinder
+from leginon import icetargetfinder
+from leginon import rasterfinderback
 import threading
-import ice
 import numpy
 import math
 import pyami.quietscipy
-from scipy import ndimage
-from pyami import arraystats
 import gui.wx.RasterFinder
 import polygon
 import itertools
 
-class RasterFinder(targetfinder.TargetFinder):
+class RasterFinder(icetargetfinder.IceTargetFinder):
 	panelclass = gui.wx.RasterFinder.Panel
 	settingsclass = leginondata.RasterFinderSettingsData
-	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
+	defaultsettings = dict(icetargetfinder.IceTargetFinder.defaultsettings)
 	defaultsettings.update({
 		'skip': False,
 		'publish polygon': False,
@@ -42,26 +40,15 @@ class RasterFinder(targetfinder.TargetFinder):
 		'raster limit asymm': None,
 		'raster symmetric': True,
 		'select polygon': False,
-		'ice box size': 15.0,
-		'ice thickness': 1000.0,
-		'ice min mean': 0.05,
-		'ice max mean': 0.2,
-		'ice max std': 0.2,
-		'ice min std': 0.0,
-		'focus convolve': False,
-		'focus convolve template': [],
-		'focus constant template': [],
-		'focus one': False,
-		'acquisition convolve': False,
-		'acquisition convolve template': [],
-		'acquisition constant template': [],
-		'focus interval': 1,
 	})
 	def __init__(self, id, session, managerlocation, **kwargs):
-		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
-		self.icecalc = ice.IceCalculator()
+		icetargetfinder.IceTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
+		self.hf = rasterfinderback.HoleFinder()
+		self.hf.logger = self.logger
+
 		self.rasterpoints = None
 		self.polygonrasterpoints = None
+		self.lattice_matrix = self.hf.lattice_matrix
 
 		self.userpause = threading.Event()
 		self.images = {
@@ -69,15 +56,14 @@ class RasterFinder(targetfinder.TargetFinder):
 		}
 		self.imagetargets = {
 			'Original': {},
-			'Polygon': {},
 			'Raster': {},
+			'Polygon': {},
 			'Final': {},
 		}
 
-		self.foc_counter = itertools.count()
-		self.foc_activated = False
+		if self.__class__ == RasterFinder:
+			self.start()
 
-		self.start()
 
 	def autoSpacingAngle(self):
 		try:
@@ -121,7 +107,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		
 		spacing = numpy.hypot(*p2)
 		angle = numpy.arctan2(*p2)
-		angle = math.degrees(angle)
+		angle = math.degrees(angle) # +x to +y is positive
 		
 		return spacing, angle
 
@@ -129,7 +115,6 @@ class RasterFinder(targetfinder.TargetFinder):
 		"""
 		from center of image, generate a raster of points
 		"""
-		#print "xy raster"
 		try:
 			imageshape = self.currentimagedata['image'].shape
 		except:
@@ -151,64 +136,18 @@ class RasterFinder(targetfinder.TargetFinder):
 		else:
 			x0 = float(self.settings['raster center x'])
 			y0 = float(self.settings['raster center y'])
-		points = []
-
-		#new stuff
-		xlist = numpy.asarray(range(xpoints), dtype=numpy.float32)
-		xlist -= ndimage.mean(xlist)
-		ylist = numpy.asarray(range(ypoints), dtype=numpy.float32)
-		ylist -= ndimage.mean(ylist)
-
-		for xt in xlist:
-			xshft = xt * xspacing
-			for yt in ylist:
-				yshft = yt * yspacing
-				xrot = xshft * numpy.cos(radians) - yshft * numpy.sin(radians) 
-				yrot = yshft * numpy.cos(radians) + xshft * numpy.sin(radians)
-				x = int(xrot + x0)
-				y = int(yrot + y0)
-				if x < 0 or x >= imageshape[1]: continue
-				if y < 0 or y >= imageshape[0]: continue
-				points.append( (x,y) )
-
+		self.hf.configure_raster(x0,y0,xspacing,yspacing,xpoints,ypoints, radians)
+		self.hf.make_raster_points()
 		#old stuff
+		points = self.hf['raster']
 		self.setTargets(points, 'Raster')
 		self.rasterpoints = points
 		self.logger.info('Full raster has %s points' % (len(points),))
 
-	def createRasterOld(self):
-		'''
-		from center of image, generate a raster of points
-		'''
-		print "normal raster"
-		imageshape = self.currentimagedata['image'].shape
-		spacing = self.settings['raster spacing']
-		limit = self.settings['raster limit']
-		radians = 3.14159 * self.settings['raster angle'] / 180
-		if self.settings['raster center on image']:
-			rcenter = imageshape[0]/2
-			ccenter = imageshape[1]/2
-		else:
-			ccenter = self.settings['raster center x']
-			rcenter = self.settings['raster center y']
-		points = []
-		for rlayer in range(-limit, limit+1):
-			r = rlayer * spacing
-			for clayer in range(-limit, limit+1):
-				c = clayer * spacing
-				rr = -1 * c * numpy.sin(radians) + r * numpy.cos(radians)
-				cc =  c * numpy.cos(radians) + r * numpy.sin(radians)
-				rr = int(rr + rcenter)
-				cc = int(cc + ccenter)
-				if rr < 0 or rr >= imageshape[0]: continue
-				if cc < 0 or cc >= imageshape[1]: continue
-				points.append((int(cc),int(rr)))
-
-		self.setTargets(self.transpose_points(points), 'Raster')
-		self.rasterpoints = points
-		self.logger.info('Full raster has %s points' % (len(points),))
-
 	def waitForPolygon(self):
+		'''
+		Wait for polygon selection if desired, and then set the polygon for filtering.
+		'''
 		## user part
 		if self.settings['select polygon']:
 			self.setTargets([], 'Polygon Vertices')
@@ -223,153 +162,26 @@ class RasterFinder(targetfinder.TargetFinder):
 		self.setPolygon()
 
 	def setPolygon(self):
+		'''
+		Use polygon to filter raster points. Stats are calculated and set for
+		display.  This is called from test button.
+		'''
 		vertices = self.panel.getTargetPositions('Polygon Vertices')
 		if len(vertices) < 3:
-			self.polygonrasterpoints = self.rasterpoints
+			self.polygonrasterpoints = self.hf['raster']
 		else:
-			self.polygonrasterpoints = polygon.pointsInPolygon(self.rasterpoints, vertices)
-		self.setTargets(self.polygonrasterpoints, 'Polygon Raster')
-
-	def get_box_stats(self, image, coord, boxsize):
-		## select the region of interest
-		b2 = boxsize / 2
-		rmin = int(coord[1]-b2)
-		rmax = int(coord[1]+b2)
-		cmin = int(coord[0]-b2)
-		cmax = int(coord[0]+b2)
-		## beware of boundaries
-		if rmin < 0:  rmin = 0
-		if rmax >= image.shape[0]:  rmax = image.shape[0]-1
-		if cmin < 0:  cmin = 0
-		if cmax >= image.shape[1]:  cmax = image.shape[1]-1
-
-		subimage = image[rmin:rmax+1, cmin:cmax+1]
-		roi = numpy.ravel(subimage)
-		mean = arraystats.mean(roi)
-		std = arraystats.std(roi)
-		n = len(roi)
-		stats = {'mean':mean, 'std': std, 'n':n}
-		return stats
-
-	def ice(self):
-		i0 = self.settings['ice thickness']
-		tmin = self.settings['ice min mean']
-		tmax = self.settings['ice max mean']
-		tstdmax = self.settings['ice max std']
-		tstdmin = self.settings['ice min std']
-		boxsize = self.settings['ice box size']
-
-		self.icecalc.set_i0(i0)
-
-		## calculate stats around each raster point
-		goodpoints = []
-		if self.polygonrasterpoints is None:
-			self.polygonrasterpoints= []
-		for rasterpoint in self.polygonrasterpoints:
-			box_stats = self.get_box_stats(self.currentimagedata['image'], rasterpoint, boxsize)
-			t = self.icecalc.get_thickness(box_stats['mean'])
-			ts = self.icecalc.get_stdev_thickness(box_stats['std'], box_stats['mean'])
-			if (tmin <= t <= tmax) and (tstdmin <= ts <= tstdmax):
-				goodpoints.append(rasterpoint)
-
-		self.logger.info('%s points with good ice' % (len(goodpoints),))
-
-		# activate if counter is at a multiple of interval
-		interval = self.settings['focus interval']
-		if interval and not (self.foc_counter.next() % interval):
-			self.foc_activated = True
-		else:
-			self.foc_activated = False
-
-		### run template convolution
-		# takes x,y instead of row,col
-		if self.settings['focus convolve']:
-			focus_points = self.applyTargetTemplate(goodpoints, 'focus')
-		else:
-			focus_points = []
-		if self.settings['acquisition convolve']:
-			acq_points = self.applyTargetTemplate(goodpoints, 'acquisition')
-		else:
-			acq_points = goodpoints
-
-		## add constant targets
-		if self.foc_activated:
-			const_foc = self.settings['focus constant template']
-			focus_points.extend(const_foc)
-		const_acq = self.settings['acquisition constant template']
-		acq_points.extend(const_acq)
-
-		## limit to one focus based on thresholds
-		focusone = self.settings['focus one']
-		if focusone:
-			## calculate stats around each focus point
-			goodpoints = []
-			for focuspoint in focus_points:
-				box_stats = self.get_box_stats(self.currentimagedata['image'], focuspoint, boxsize)
-				t = self.icecalc.get_thickness(box_stats['mean'])
-				ts = self.icecalc.get_stdev_thickness(box_stats['std'], box_stats['mean'])
-				if (tmin <= t <= tmax) and (tstdmin <= ts <= tstdmax):
-					goodpoints.append(focuspoint)
-			if goodpoints:
-				## pick first good focus point
-				focus_points = [goodpoints[0]]
-			else:
-				## pick first of original focus points
-				focus_points = focus_points[0:1]
-
-		self.setTargets(acq_points, 'acquisition', block=True)
-		self.setTargets(focus_points, 'focus', block=True)
-
-	def applyTargetTemplate(self, centers, type):
-		if type == 'focus':
-			if not self.foc_activated:
-				return []
-			vects = self.settings['focus convolve template']
-		elif type == 'acquisition':
-			vects = self.settings['acquisition convolve template']
-		newtargets = []
-		for center in centers:
-			for vect in vects:
-				target = center[0]+vect[0], center[1]+vect[1]
-				newtargets.append(target)
-		return newtargets
+			self.polygonrasterpoints = polygon.pointsInPolygon(self.hf['raster'], vertices)
+		self.hf.points_to_holes(self.polygonrasterpoints)
+		self.calcHoleStats()
+		targets = self. getTargetsWithStats(input_name='holes')
+		if targets is not None:
+			self.logger.info('Number of polygon raster: %s' % (len(targets),))
+			self.setTargets(targets, 'Polygon Raster')
 
 	def everything(self):
 		self.createRaster()
 		self.waitForPolygon()
-		# ice
 		self.ice()
-
-	def waitForUserCheck(self):
-			self.setStatus('user input')
-			self.twobeeps()
-			self.logger.info('Waiting for user to check targets...')
-			self.panel.submitTargets()
-			self.userpause.clear()
-			self.userpause.wait()
-			self.setStatus('processing')
-
-	def findTargets(self, imdata, targetlist):
-		## display image
-		self.setImage(imdata['image'], 'Original')
-
-		## automated part
-		self.currentimagedata = imdata
-		if not self.settings['skip']:
-			if self.isFromNewParentImage(imdata):
-				self.logger.debug('Reset focus counter')
-				self.foc_counter = itertools.count()
-				self.resetLastFocusedTargetList(targetlist)
-			self.everything()
-
-		## user part
-		if self.settings['user check']:
-			while True:
-				self.waitForInteraction(imdata)
-				if not self.processPreviewTargets(imdata, targetlist):
-					break
-			self.panel.targetsSubmitted()
-		self.setStatus('idle')
 
 	def _publishFoundTargets(self, imdata, targetlist):
 		super(RasterFinder, self)._publishFoundTargets(imdata, targetlist)

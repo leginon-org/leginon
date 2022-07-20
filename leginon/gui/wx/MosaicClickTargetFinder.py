@@ -32,6 +32,8 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('focus', False)
 		self.imagepanel.selectiontool.setEnableSettings('focus', False)
 
+		self.toolbar.InsertTool(3, leginon.gui.wx.ToolBar.ID_PAUSE,
+			'pause',shortHelpString='Pause before Autosubmit')
 		self.toolbar.InsertSeparator(4)
 
 		self.toolbar.InsertTool(5, leginon.gui.wx.ToolBar.ID_TILES,
@@ -54,6 +56,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 	def addExampleTargetTool(self):
 		self.imagepanel.addTargetTool('example', wx.GREEN, shape='<>', target=True)
 		self.imagepanel.selectiontool.setDisplayed('example', True)
+
 	def addOtherTools(self):
 		self.toolbar.InsertSeparator(10)
 		self.toolbar.InsertTool(11, leginon.gui.wx.ToolBar.ID_ALIGN,
@@ -75,6 +78,8 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 											id=leginon.gui.wx.ToolBar.ID_REFRESH)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onShowPositionButton,
 											id=leginon.gui.wx.ToolBar.ID_CURRENT_POSITION)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPauseTool,
+											id=leginon.gui.wx.ToolBar.ID_PAUSE)
 
 		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 		self.addOtherBindings()
@@ -93,8 +98,14 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
+	def onPauseTool(self, evt):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+		threading.Thread(target=self.node.guiPauseBeforeSubmit).start()
+
 	def onSubmitTool(self, evt):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True)
 		threading.Thread(target=self._onSubmitTool, args=(evt,)).start()
 
 	def _onSubmitTool(self, evt):
@@ -102,6 +113,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 
 	def onTargetsSubmitted(self, evt):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True)
 
 	def onTilesButton(self, evt):
 		choices = self.node.getMosaicNames()
@@ -156,6 +168,8 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		dialog.Destroy()
 
 	def onFindSquaresButton(self, evt):
+		xys = self.imagepanel.shapetool.fitted_shape_points
+		threading.Thread(target=self.node.guiTargetMask, args=[xys,]).start()
 		threading.Thread(target=self.node.autoTargetFinder).start()
 
 	def doneTargetList(self):
@@ -406,6 +420,8 @@ class TargetScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['target grouping']['classes'], (1, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		sz.Add(self.createGroupMethodSizer(), (2,0),(1,2),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_LEFT)
 		
 		tm_sz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Cover each square with:')
@@ -414,11 +430,23 @@ class TargetScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'targets')
 		tm_sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(tm_sz, (2, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(tm_sz, (3, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		# finalize
 		sz.AddGrowableCol(1)
 		sbsz1.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 		return [sbsz1, ]
+
+	def createGroupMethodSizer(self):
+		groupmethods = self.node.getGroupMethodChoices()
+		self.widgets['target grouping']['group method'] = Choice(self, -1, choices=groupmethods)
+		szgroupmethod = wx.GridBagSizer(5, 5)
+		szgroupmethod.Add(wx.StaticText(self, -1, 'Each group has equal'),
+										(0, 0), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		szgroupmethod.Add(self.widgets['target grouping']['group method'],
+										(0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		return szgroupmethod
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):

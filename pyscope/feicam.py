@@ -895,12 +895,20 @@ class Falcon3(FeiCam):
 		'''
 		Frame Flip is defined as up-down flip
 		'''
+		flip = self.getFeiConfig('camera','eer_frame_flip')
+		# so far only certain version of software and eer needs this.
+		if self.save_frames and self.frame_format == 'eer' and flip is not None:
+			return flip
 		return False
 
 	def getFrameRotate(self):
 		'''
 		Frame Rotate direction is defined as x to -y rotation applied after up-down flip
 		'''
+		rotate = self.getFeiConfig('camera','eer_frame_rotate')
+		# so far only certain version of software and eer needs this.
+		if self.save_frames and self.frame_format == 'eer' and rotate is not None:
+			return rotate
 		return 0
 
 	def getUseFrames(self):
@@ -962,4 +970,12 @@ class Falcon4EC(Falcon3EC):
 			return None
 		return files[-1]
 
+class Falcon4ECef(Falcon4EC):
+	name = 'Falcon4EC'
+	camera_name = 'EF-Falcon'
+	binning_limits = [1,2,4]
+	electron_counting = True
+	intensity_averaged = False
+	base_frame_time = 0.02907 # seconds
+	physical_frame_rate = 250 # rolling shutter frames per second
 

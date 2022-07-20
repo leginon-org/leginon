@@ -106,18 +106,28 @@ def open_if_not_exists(filename):
 	f = os.fdopen(fd, 'r+')
 	return f
 
-def check_exist_one_file(filenames):
+def check_exist_one_file(filenames, combine=True):
 	'''
 	This is used in configuration parsing. Since we don't combine configs but
-	use the last existing in the list, this function returns that one in a list.
+	use the last existing in the list by default, this function returns
+	that one in a list. combine=True will return all existing filenames.
 	'''
 	one_exists = False
 	rev_filenames = list(filenames)
 	rev_filenames.reverse()
-	for filename in rev_filenames:
-		if os.path.exists(filename):
+	if not combine:
+		for filename in rev_filenames:
+			if os.path.exists(filename):
+				one_exists = True
+				return [filename,]
+	else:
+		exist_filenames = []
+		for filename in filenames:
+			if os.path.exists(filename):
+				exist_filenames.append(filename)
+		if exist_filenames:
 			one_exists = True
-			return [filename,]
+			return exist_filenames
 	if not one_exists:
 		msg = 'please configure at least one of these:  %s' % (filenames,)
 		if sys.platform == 'win32':
@@ -149,6 +159,30 @@ def unixChangeOwnership(uid,gid,pathname, recursive=False):
 	print cmd
 	p = subprocess.Popen(cmd, shell=True)
 	p.wait()
+
+cache_name = 'LEGINON_READONLY_IMAGE_PATH'
+def getExistingCacheFile(session_image_path, filename):
+	'''
+	Use environment variable LEGINON_READONLY_IMAGE_PATH to define
+	prepended session_image_path to the cached files.
+	'''
+	def getCacheHeads():
+		if not cache_name in os.environ.keys():
+			return []
+		cache_heads = os.environ[cache_name].split(':')
+		for c in cache_heads:
+			c = os.path.abspath(c)
+		return cache_heads
+	cache_heads = getCacheHeads()
+	for c in cache_heads:
+		c = os.path.abspath(c)
+		if os.path.isdir(c):
+			clean_path = os.path.abspath(session_image_path)[1:] # strip the first '/'
+			cache_path = os.path.join(c, clean_path)
+			fullname = os.path.join(cache_path, filename)
+			if os.path.exists(fullname):
+				return fullname
+	return None
 
 if __name__ == '__main__':
 	print getMyFilename()

@@ -2497,11 +2497,15 @@ class particledata {
 
 	function getAlignLogShiftFromDDAlignedImageId($result_imgid,$apix=1)
 	{
+		//use database record if available
+		$dbdata = $this->getFrameTrajectoryPositionsFromImageId($result_imgid,$apix);
+		if (count($dbdata) > 0) return $dbdata;
 		// get Alignlog path
 		$align_log = $this->getAlignLogPathFromDDAlignedImageId($result_imgid);
 		// get shift data
 		$data = array();
 		if (is_file($align_log)) {
+			$pdata = array();
 			$text = file_get_contents($align_log);
 			$bits = explode('Sum Frame',$text);
 			if (count($bits) > 1) {
@@ -2510,11 +2514,61 @@ class particledata {
 					$shiftbits = explode('with xy shift:',$shiftline);
 					if (count($shiftbits) > 1) {
 						$shifts = explode(' ',trim($shiftbits[1]));
-						$data[] = array('x'=>((float) $shifts[0])*$apix,'y'=> ((float) $shifts[count($shifts)-1])*$apix);
+						$pdata[] = array('x'=>((float) $shifts[0])*$apix,'y'=> ((float) $shifts[count($shifts)-1])*$apix);
 					}
 				}
+				$last_x = (float) $pdata[-1]['x']*$apix;
+				$last_y = (float) $pdata[-1]['y']*$apix;
+				$data = array('n'=>count($bits),'last'=>array('x'=>$last_x, 'y'=>$last_y), 'positions'=>$pdata);
 			}
 		} else {return $align_log;}
+		return $data;
+	}
+
+	function getDDAlignedImagesFromOneImageId($imgid) {
+		// Find all aligned images from one of them. Such as a and a-DW
+		$q = "SELECT pair.`REF|leginondata|AcquisitionImageData|result` result_imgid "
+			.", pair.`REF|leginondata|AcquisitionImageData|source` source_imgid "
+			."FROM `ApDDAlignImagePairData` pair "
+			."WHERE pair.`REF|leginondata|AcquisitionImageData|result` = ".$imgid." "
+			."ORDER BY pair.`DEF_timestamp` DESC ";
+		list($r)=$this->mysql->getSQLResult($q);
+		// Find from source
+		if ( is_array($r) && $r ) {
+		$q = "SELECT pair.`REF|leginondata|AcquisitionImageData|result` result_imgid "
+			."FROM `ApDDAlignImagePairData` pair "
+			."WHERE pair.`REF|leginondata|AcquisitionImageData|source` = ".$r['source_imgid']." "
+			."ORDER BY pair.`DEF_timestamp` DESC ";
+		}
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getFrameTrajectoryPositionsFromImageId($result_imgid,$apix=1) {
+		$pair = $this->getDDAlignedImagesFromOneImageId($result_imgid);
+		foreach($pair as $p) {
+			// return the one with TrajectoryPositions
+			$dbdata = $this->_getFrameTrajectoryPositionsFromImageId($p['result_imgid'],$apix);
+			if (count($dbdata) > 0 && $dbdata['n'] > 0) return $dbdata;
+		}
+		return array();
+	}
+
+	function _getFrameTrajectoryPositionsFromImageId($result_imgid,$apix=1) {
+		$q = "SELECT `SEQ|pos_x` as pos_x, `SEQ|pos_y` as pos_y, "
+			."number_of_positions, last_x, last_y FROM `ApDDFrameTrajectoryData` "
+			."WHERE `REF|leginondata|AcquisitionImageData|image`=".$result_imgid." "
+			.";";
+		list($r) = $this->mysql->getSQLResult($q);
+		$data = array();
+		$pdata = array();
+		$xs = explode(',',substr($r['pos_x'],1,-1));
+		$ys = explode(',',substr($r['pos_y'],1,-1));
+		for ($i=0; $i < (int) count($xs); $i++) {
+			$pdata[] = array('x'=>((float) $xs[$i])*$apix,'y'=> ((float) $ys[$i])*$apix);
+		}
+		$data['n'] = $r['number_of_positions'];
+		$data['last'] = array('x'=>((float) $r['last_x'])*$apix,'y'=> ((float) $r['last_y'])*$apix);
+		$data['positions'] = $pdata;
 		return $data;
 	}
 
@@ -6454,17 +6508,21 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 			if (defined('APPION_PARENT_REPLACEMENT') && APPION_PARENT_REPLACEMENT < 0) {
 				# replace one part into DEFAULT_APPION_PATH
 				$replace_part = $parts[$leginon_index+APPION_PARENT_REPLACEMENT];
+				if ($_SESSION['username']){
+					$login_user = $_SESSION['username']; #for topaz and reporting http://emg.nysbc.org/redmine/issues/7962#note-5
+					$replace_part = $login_user;
+				}
 				$appion_parts = explode(DS,$appion_path);
 				array_splice($appion_parts,$appion_index+APPION_PARENT_REPLACEMENT,1,array($replace_part));
 				$appion_path = Path::formatEndPath(implode(DS,$appion_parts));
 			}
 			if ($parent_addition_number > 0) {
-				// add extra directory division prior to sessionname
 				$addition_parts = array_splice($parts,$session_index-APPION_PARENT_ADDITION,APPION_PARENT_ADDITION);
 				if ($_SESSION['username']){
 					$addition_parts[0] = $_SESSION['username']; #for topaz and reporting http://emg.nysbc.org/redmine/issues/7962#note-5
-				}					
+				}
 				$appion_path = Path::formatEndPath(Path::formatEndPath($appion_path).implode(DS,$addition_parts));
+				
 			}
 		} else {
 			// use default alone

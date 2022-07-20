@@ -12,10 +12,14 @@ class imageRequester {
 		if (empty($filepath)) return false;
 		$redux = new redux($filepath, $oFormat);
 		$redux->setPipeline('standard');
-		$redux->setScaleType($scaleType);
-		$redux->setShape($shape);
-		$redux->setScaleMin($scaleMin);
-		$redux->setScaleMax($scaleMax);
+		if ($scaleType) {
+			$redux->setScaleType($scaleType);
+			$redux->setScaleMin($scaleMin);
+			$redux->setScaleMax($scaleMax);
+		}
+		if ($shape) {
+			$redux->setShape($shape);
+		}
 		$redux->setPadShape(array($_POST['padShapeX'], $_POST['padShapeY']));
 		$redux->setPadPos(array($_POST['padPosX'], $_POST['padPoxY']));
 		$redux->setPadValue($_POST['padValue']);

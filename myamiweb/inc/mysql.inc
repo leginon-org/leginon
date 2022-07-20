@@ -455,7 +455,7 @@ class mysql {
 		return true;
 	}
 
-	function SQLAlterTables($sqldef, $fieldtypes) {
+	function SQLAlterTables($sqldef, $fieldtypes, $engine='') {
 		if (!is_array($fieldtypes) || !is_array($sqldef))
 			return False;
 		$changes = "";
@@ -474,7 +474,9 @@ class mysql {
 					}
 				}
 			} else {
-				$q[] = $sqldef[$table];
+				$def_q = $sqldef[$table];
+				if (!empty($engine)) $def_q = substr_replace($def_q,' ENGINE='.$engine.'; ',-1);
+				$q[] = $def_q;
 				$changes .= "CREATE $table <br>";
 			}
 		}

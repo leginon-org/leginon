@@ -41,6 +41,14 @@ class jeol1230lib(object):
 		self.zero_olh = int(self.zeroDefocus['zero_olh'])
 		self.wait_time = 0.1
 
+	def mapProjectionSubmode(self):
+		submode_map = {}
+		for m in self.lowMag:
+			submode_map[m] = ('lowmag',0)
+		for m in self.highMag:
+			submode_map[m] = ('mag1',1)
+		return submode_map
+
 	# read four lens currents correspondint to eucentric focus, two for lowMag, two for highMag
 	def readZeroDefocus(self):
 		zeroDefocus = {'zero_time': None, 'zero_oml': None, 'zero_omh': None,'zero_oll': None,'zero_olh': None}

@@ -198,30 +198,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		#	self.logger.info('%d target(s) will be ignored' % len(ignored))
 		return completed_targets, good_targets, rejects
 
-	def experimentalSettingsAlternation(self):
-		########## THIS IS EXPERIMENTAL AND SHOULD NOT BE USED ###############
-#####################################################################
-		import random
-		import os.path
-		homedir = os.path.expanduser('~')
-		filename = os.path.join(homedir, 'settings_list.txt')
-		try:
-			f = open(filename)
-		except:
-			print '****** No ~/settings_list.txt'
-			pass
-		else:
-			lines = f.readlines()
-			f.close()
-			node_name = lines[0].strip()
-			if node_name == self.name:
-				idlines = lines[1:]
-				ids_strings = map(str.strip, idlines)
-				ids_ints = map(int, ids_strings)
-				id = random.choice(ids_ints)
-				print '************** Loading new settings:', id
-				self.loadSettingsByID(id)
-
 	def postQueueCount(self, count):
 		if not hasattr(self, 'remote_queue_count'):
 			if self.remote:
@@ -368,10 +344,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			# pause but not stop
 			state = self.pauseCheck('paused after waiting for processing rejected targets')
 
-		# Experimental
-		if False:
-			self.experimentalSettingsAlternation()
-
 		self.logger.info('Original tilt %.2f degrees.' % (original_position['a']*180.0/math.pi))
 		self.logger.info('Parent tilt %.2f degrees.' % (self.targetlist_reset_tilt*180.0/math.pi))
 		# process the good ones
@@ -489,16 +461,20 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		good_target_count = len(good_targets)
 		# Approach 1: order targets 
 		remaining_targets = good_targets
+		targetliststatus = 'success'
 		while True:
 			index_order = self.makeTargetIndexOrder(remaining_targets)
 			if index_order:
 				i = index_order[0]
 				target = remaining_targets[i]
-			else:
+			elif remaining_targets:
 				# abort the targets
 				targetliststatus = 'aborted'
 				for t in good_targets:
 					self.reportTargetStatus(t, 'aborted')
+				break
+			else:
+				# end of good targets
 				break
 			# target adjustment may have changed the tilt.
 			if self.getIsResetTiltInList() and self.is_firstimage:
@@ -610,9 +586,12 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 	def park(self):
 		self.logger.info('parking...')
-		self.instrument.tem.ColumnValvePosition = 'closed'
-		self.instrument.tem.StagePosition = {'x': 0, 'y': 0}
-		self.logger.warning('column valves closed and stage reset')
+		try:
+			self.instrument.tem.ColumnValvePosition = 'closed'
+			self.instrument.tem.StagePosition = {'x': 0, 'y': 0}
+			self.logger.warning('column valves closed and stage reset')
+		except Exception as e:
+			self.logger.error('Parking error: %s' % e )
 
 	def waitForRejects(self):
 		# wait for other targets to complete

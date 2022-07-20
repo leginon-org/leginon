@@ -11,12 +11,20 @@ def getDefaultConfigs():
 	return dconfig
 
 try:
-	configs = moduleconfig.getConfigured('pyami.cfg', package='pyami')
+	# combine is set to false because this is only meaningful to be at one level: Host
+	configs = moduleconfig.getConfigured('pyami.cfg', package='pyami', combine=False)
 except:
 	configs = getDefaultConfigs()
 
 def getLoadedConfigs():
-	return moduleconfig.getConfigured('pyami.cfg', package='pyami')
+	'''
+	Test Function that handles IOError and return empty list.  This does not
+	set default.
+	'''
+	try:
+		return moduleconfig.getConfigured('pyami.cfg', package='pyami', combine=False)
+	except:
+		return []
 
 def getHostMappings():
 	hostdict = configs['my ip map'].copy()

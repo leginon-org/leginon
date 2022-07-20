@@ -433,7 +433,7 @@ class ClickAndTargetImagePanel(TargetImagePanel):
 class ShapeTargetImagePanel(TargetImagePanel):
 	def __init__(self, parent, id, disable=False, imagesize=(512,512), mode="horizontal"):
 		super(ShapeTargetImagePanel, self).__init__(parent, id, imagesize, mode)
-		self.addTool(leginon.gui.wx.ImagePanelTools.FitShapeTool(self, self.toolsizer))
+		self.shapetool = self.addTool(leginon.gui.wx.ImagePanelTools.FitShapeTool(self, self.toolsizer))
 		self.panel.Bind(wx.EVT_MOTION, self.OnMotion)
 		self.sizer.Layout()
 		self.Fit()
