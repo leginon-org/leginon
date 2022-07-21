@@ -660,7 +660,7 @@ def CAN(input_stack, output_stack, can_params, process_params=None, return_parts
         classList = open(outfile_list, "wb")
         parts = nodeVec[i].getParts()
         for j in range(len(parts)):
-            classList.write(f"\t{j+1}\t1\t{parts[j]}".encode())
+            classList.write(f"\t{j+1}\t1\t{parts[j]}\n".encode())
         classList.close()
 
     ############################################

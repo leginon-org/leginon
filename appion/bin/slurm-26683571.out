@@ -1,0 +1,34 @@
+import: unable to open X server `localhost:11.0' @ error/import.c/ImportImageCommand/344.
+import: unable to open X server `localhost:11.0' @ error/import.c/ImportImageCommand/344.
+import: unable to open X server `localhost:11.0' @ error/import.c/ImportImageCommand/344.
+import: unable to open X server `localhost:11.0' @ error/import.c/ImportImageCommand/344.
+import: unable to open X server `localhost:11.0' @ error/import.c/ImportImageCommand/344.
+import: unable to open X server `localhost:11.0' @ error/import.c/ImportImageCommand/344.
+import: unable to open X server `localhost:11.0' @ error/import.c/ImportImageCommand/344.
+import: unable to open X server `localhost:11.0' @ error/import.c/ImportImageCommand/344.
+import: unable to open X server `localhost:11.0' @ error/import.c/ImportImageCommand/344.
+import: unable to open X server `localhost:11.0' @ error/import.c/ImportImageCommand/344.
+/var/spool/slurm/d/job26683571/slurm_script: line 16: from: command not found
+/var/spool/slurm/d/job26683571/slurm_script: line 17: from: command not found
+import: unable to open X server `localhost:11.0' @ error/import.c/ImportImageCommand/344.
+import: unable to open X server `localhost:11.0' @ error/import.c/ImportImageCommand/344.
+import: unable to open X server `localhost:11.0' @ error/import.c/ImportImageCommand/344.
+import: unable to open X server `localhost:11.0' @ error/import.c/ImportImageCommand/344.
+/var/spool/slurm/d/job26683571/slurm_script: line 22: from: command not found
+/var/spool/slurm/d/job26683571/slurm_script: line 23: from: command not found
+/var/spool/slurm/d/job26683571/slurm_script: line 24: from: command not found
+/var/spool/slurm/d/job26683571/slurm_script: line 25: from: command not found
+import: unable to open X server `localhost:11.0' @ error/import.c/ImportImageCommand/344.
+/var/spool/slurm/d/job26683571/slurm_script: line 29: from: command not found
+/var/spool/slurm/d/job26683571/slurm_script: line 30: from: command not found
+/var/spool/slurm/d/job26683571/slurm_script: line 31: from: command not found
+/var/spool/slurm/d/job26683571/slurm_script: line 32: from: command not found
+/var/spool/slurm/d/job26683571/slurm_script: line 33: from: command not found
+/var/spool/slurm/d/job26683571/slurm_script: line 34: from: command not found
+/var/spool/slurm/d/job26683571/slurm_script: line 35: from: command not found
+/var/spool/slurm/d/job26683571/slurm_script: line 36: from: command not found
+/var/spool/slurm/d/job26683571/slurm_script: line 37: from: command not found
+/var/spool/slurm/d/job26683571/slurm_script: line 38: from: command not found
+/var/spool/slurm/d/job26683571/slurm_script: line 39: from: command not found
+/var/spool/slurm/d/job26683571/slurm_script: line 49: syntax error near unexpected token `('
+/var/spool/slurm/d/job26683571/slurm_script: line 49: `def record_memory(old_mems=None, index=None, write=False):'

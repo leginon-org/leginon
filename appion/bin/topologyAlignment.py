@@ -145,7 +145,7 @@ def create_circular_mask(h, w, center=None, radius=None, soft_mask=True):
     mask = 1 * (dist_from_center <= radius)
     if soft_mask:
         mask = mask.astype("float64")
-        sigma = radius / 4
+        sigma = radius / 12
         for i in range(len(mask)):
             for j in range(len(mask[0])):
                 if mask[i, j] == 0:
@@ -163,10 +163,11 @@ def mask_stack(stack, radius=None, soft_mask=True):
     return stack
 
 
-def center_image(image, mask=1):
+def center_image(image, mask=1, max_shift=0.05):
     """
     Image centering with normalization, masking, and CoM calculation.
     Returns the orgininal image shifted. 
+    Max shift units are relative.
     """
     # Process image for center calculation
     normalized = normalize_image(image)
@@ -174,7 +175,13 @@ def center_image(image, mask=1):
     positive_array[positive_array <= 0] = 0
     masked_positive = positive_array * mask
     cy, cx = center_of_mass(masked_positive)
-    y_shift, x_shift = image.shape[0] / 2 - cy, image.shape[1] / 2 - cx
+    y_dim, x_dim = image.shape
+    max_dy, max_dx = max_shift * y_dim / 2, max_shift * x_dim / 2
+    y_shift, x_shift = y_dim / 2 - cy, x_dim / 2 - cx
+    y_shift, x_shift = (
+        numpy.sign(y_shift) * min(abs(y_shift), max_dy),
+        numpy.sign(x_shift) * min(abs(x_shift), max_dx),
+    )
     # shift the orgininal image
     centered = ndimage.shift(image, [y_shift, x_shift], mode="wrap")
     return centered
@@ -710,7 +717,7 @@ class TopologyRepScript(appionScript.AppionScript):
 
         sqlcmd = (
             "INSERT INTO `ApAlignReferenceData` ("
-            + "`refnum`,`iteration`,`mrcsfile`,"
+            + "`refnum`,`iteration`,`imagicfile`,"
             + "`REF|ApAlignRunData|alignrun`,`REF|ApPathData|path`) "
         )
         sqlcmd += "VALUES " + ",".join(reflistvals)
@@ -719,7 +726,7 @@ class TopologyRepScript(appionScript.AppionScript):
         # get DEF_ids from inserted references
         refq = appiondata.ApAlignReferenceData()
         refq["iteration"] = self.params["currentiter"]
-        refq["mrcsfile"] = os.path.basename(self.params["currentcls"])
+        refq["imagicfile"] = os.path.basename(self.params["currentcls"])
         refq["path"] = appiondata.ApPathData(
             path=os.path.abspath(self.params["rundir"])
         )
@@ -753,7 +760,7 @@ class TopologyRepScript(appionScript.AppionScript):
                     "%3i%% complete, %s left    \r"
                     % (pleft, apDisplay.timeString(tleft))
                 )
-
+            
             partnum = int(partdict["partnum"])
             refnum = partrefdict[partnum]
             refnum_dbid = refdbiddict[refnum]
@@ -863,8 +870,8 @@ class TopologyRepScript(appionScript.AppionScript):
                 "normalization"
             ] = True  # True uses default boxnorm, see imagenorm and apCAN for details
 
-            if self.params['storagemethod'] == 'disk':
-                process_params['partfile'] = self.params['localstack']
+            if self.params["storagemethod"] == "disk":
+                process_params["partfile"] = self.params["localstack"]
 
             print("\nParticle preprocessing parameters:")
             for key in process_params:
@@ -889,10 +896,7 @@ class TopologyRepScript(appionScript.AppionScript):
             self.rotations = pd.DataFrame()
 
             if self.params["storagemethod"] == "disk":
-                # print("Writing stack data to disk...")
-                # raise Exception
                 del self.classes
-                # mrc.write(self.orig_stack, self.params["localstack"])
                 del self.orig_stack
                 self.rotations.to_csv(self.params["rotations"])
                 del self.rotations
@@ -1346,13 +1350,15 @@ class TopologyRepScript(appionScript.AppionScript):
         # move back to starting directory
         os.chdir(self.params["rundir"])
 
-        # move aligned stack to current directory for appionweb
+        # saving original stack as "aligned stack" for database commitment purposes. 
+        # Previously, moved aligned stack to current directory for appionweb. 
         if not os.path.isfile("mrastack.mrcs"):
             if self.params["storagemethod"] == "memory":
-                mrc.write(self.aligned, "mrastack.mrcs")
+                # mrc.write(self.aligned, "mrastack.mrcs") # see above comment
+                mrc.write(self.orig_stack, "mrastack.mrcs") 
             elif self.params["storagemethod"] == "disk":
-                shutil.move(self.params["alignedstack"], "mrastack.mrcs")
-                cmd = f"rm {self.params['localstack']}"
+                shutil.move(self.params["localstack"], "mrastack.mrcs")
+                cmd = f"rm {self.params['alignedstack']}"
                 os.system(cmd)
 
         ### create an average mrc of final references
