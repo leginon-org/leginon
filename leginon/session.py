@@ -143,8 +143,8 @@ def createSession(user, name, description, directory, holder=None, hidden=False)
 		'frame path': framedirectory,
 		'hidden': hidden,
 		'holder': holder,
-		'uid': os.getuid(),
-		'gid': os.getgid(),
+		'uid': os.stat(os.path.expanduser('~')).st_uid, #os.stat is platform independant
+		'gid': os.stat(os.path.expanduser('~')).st_gid
 	}
 	return leginon.leginondata.SessionData(initializer=initializer)
 

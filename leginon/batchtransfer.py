@@ -298,6 +298,7 @@ class RawTransfer(filetransfer.FileTransfer):
 		mode_str = self.params['mode_str']
 		src_path = self.get_source_path()
 		print('Source path:  %s' % (src_path,))
+		self.hidden_path = self.get_hidden_path()
 		file_map = self.getFrameFileMap(src_path)
 		dst_head = self.get_dst_head()
 		if dst_head:
@@ -307,6 +308,10 @@ class RawTransfer(filetransfer.FileTransfer):
 			print('Iterating %s' % (session_name))
 			intersection_images = self.getIntersectionImages(session_maps[session_name],file_map)
 			self.runSession(session_name,intersection_images,method,mode_str)
+		names = os.listdir(src_path)
+		for name in names:
+			bad_path=os.path.join(src_path, name)
+			self.handleBadFile(bad_path, method)
 
 if __name__ == '__main__':
 		a = RawTransfer()
