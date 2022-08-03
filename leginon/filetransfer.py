@@ -247,21 +247,18 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 
 	def _getUidGid(self, imdata):
 		# Get user id and group id of the image path to be used for frames_path
-		if sys.platform == 'win32':
-			uid, gid = 100, 100
-		else:
-			# use session record if available
-			if 'uid' in imdata['session'].keys() and imdata['session']['uid'] and imdata['session']['gid']:
-				return imdata['session']['uid'], imdata['session']['gid']
-			image_path = imdata['session']['image path']
-			try:
-				stat = os.stat(image_path)
-			except Exception as e:
-				print("    %s not accessible, either, for retrieving uid, gid, Use current path" % image_path)
-				stat = os.stat('./')
-			finally:
-				uid = stat.st_uid
-				gid = stat.st_gid
+		# use session record if available
+		if 'uid' in imdata['session'].keys() and imdata['session']['uid'] and imdata['session']['gid']:
+			return imdata['session']['uid'], imdata['session']['gid']
+		image_path = imdata['session']['image path']
+		try:
+			stat = os.stat(image_path)
+		except Exception as e:
+			print("    %s not accessible, either, for retrieving uid, gid, Use current path" % image_path)
+			stat = os.stat('./')
+		finally:
+			uid = stat.st_uid
+			gid = stat.st_gid
 		return uid, gid
 
 	def run(self):
