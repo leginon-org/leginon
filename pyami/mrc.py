@@ -267,7 +267,7 @@ the header data.
 	'''
 	### check for a valid machine stamp in header, with or without byteswap
 	stampswapped = None
-	machstamp = numpy.fromfile(headerbytes, dtype='int32')[212:216]
+	machstamp = headerbytes[212:216]
 	machstamp = numpy.fromstring(machstamp, dtype='int32', count=1)
 	machstampint = machstamp[0]
 	if machstampint in intbyteorder:
@@ -311,10 +311,10 @@ def parseHeader(headerbytes):
 	ftype = numpy.dtype('float32')
 
 	## check if data needs to be byte swapped
-	# swapped = isSwapped(headerbytes)
-	# if swapped:
-	# 	itype = itype.newbyteorder()
-	# 	ftype = ftype.newbyteorder()
+	swapped = isSwapped(headerbytes)
+	if swapped:
+		itype = itype.newbyteorder()
+		ftype = ftype.newbyteorder()
 
 	## Convert 1k header into both floats and ints to make it easy
 	## to extract all the info.
