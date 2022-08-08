@@ -12,7 +12,6 @@ import os
 import datetime
 import math
 from pyami import moduleconfig
-from pyscope import fei_advscripting
 
 # API notes:
 #COMError from TEMScripting is not consistent in which
@@ -40,6 +39,9 @@ except ImportError:
 configs = moduleconfig.getConfigured('fei.cfg')
 configpath = moduleconfig.getConfigPath('fei.cfg')
 
+HAS_CFEG = False
+if HAS_CFEG:
+	from pyscope import fei_advscripting
 class MagnificationsUninitialized(Exception):
 	pass
 
@@ -92,7 +94,7 @@ class Tecnai(tem.TEM):
 			self.adv_instr = fei_advscripting.connectToFEIAdvScripting().instr
 			self.source = self.adv_instr.Source
 		except Exception as e:
-			print 'unable to initialize Advanced Scriptiong interface, %s' % e
+			#print 'unable to initialize Advanced Scriptiong interface, %s' % e
 			self.adv_instr = None
 			self.source = None
 		try:
