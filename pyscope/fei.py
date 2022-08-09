@@ -413,8 +413,9 @@ class Tecnai(tem.TEM):
 			return
 		for flash_type in ('high','low'):
 			if self.getFlashingAdvised(flash_type):
+				flash_type_constant = self.cold_feg_flash_types[flash_type]
 				try:
-					self.source.Flashing.PerformFlashing(type_constant)
+					self.source.Flashing.PerformFlashing(flash_type_constant)
 					# no need to do lowT flashing if highT is done
 					break
 				except Exception as e:
