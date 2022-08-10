@@ -1167,7 +1167,6 @@ class DDFrameProcessing(DirectDetectorProcessing):
         def getDarkRefMrcPath(self):
                 return self.dark_path
 
-
         def makeCorrectedFrameStack_cpu(self, use_full_raw_area=False):
                 '''
                 Creates a file of gain/dark corrected stack of frames

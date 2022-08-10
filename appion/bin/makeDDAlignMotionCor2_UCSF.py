@@ -13,6 +13,7 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
                 super(MotionCor2UCSFAlignStackLoop,self).setupParserOptions()
 
                 self.parser.add_option("--gpuids", dest="gpuids", default='0')
+                
                 self.parser.add_option("--nrw", dest="nrw", type="int", default=1,
                         help="Number (1, 3, 5, ...) of frames in running average window. 0 = disabled", metavar="INT")
 
