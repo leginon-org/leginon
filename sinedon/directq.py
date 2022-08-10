@@ -9,7 +9,6 @@
 import time
 import sinedon
 import sqldb
-import _mysql_exceptions
 
 connections = {}
 
