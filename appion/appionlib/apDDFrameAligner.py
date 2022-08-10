@@ -535,7 +535,6 @@ class MotionCor2_UCSF(DDFrameAligner):
                 f.close()
                 
 
-
                 
 if __name__ == '__main__':
         filepath = '/Users/acheng/testdata/frames/22jan14a/rawdata/22jan14a_00019en.frames.mrc'
