@@ -54,7 +54,7 @@ def profile(func, *args, **kwargs):
                     format_bytes(lib_after - lib_before),
                     elapsed_time))
         # logging.info(msg)
-        print(msg)
+        # print(msg)
         return result, msg 
     if inspect.isfunction(func):
         return wrapper

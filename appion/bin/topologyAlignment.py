@@ -19,7 +19,7 @@ import pandas as pd
 from skimage.registration import phase_cross_correlation
 from skimage.transform import warp_polar, rotate
 from scipy import ndimage
-from scipy.ndimage.measurements import center_of_mass
+from scipy.ndimage import center_of_mass
 
 # appion
 import sinedon.directq
@@ -48,15 +48,8 @@ def record_memory(old_mems=None, index=None, write=False):
             columns=["phase", "RSS", "VMS", "SHR", "LIB"],
         )
     else:
-        mems = old_mems.append(
-            dict(
-                zip(
-                    ["phase", "RSS", "VMS", "SHR", "LIB"],
-                    [index] + list(get_process_memory()),
-                )
-            ),
-            ignore_index=True,
-        )
+        mems = old_mems.copy()
+        mems.loc[len(mems.index)] = [index] + list(get_process_memory())
     if write:
         mems.to_csv("mems")
     return mems
@@ -93,7 +86,7 @@ def align_stack(ref_stack, parts, prerotations=None, return_rotations=False):
 
     if prerotations is not None:
         if prerotations.shape[-1] > 0:
-            apDisplay.printMsg("Preparing original stack for alignement...")
+            apDisplay.printMsg("Preparing original stack for alignement")
             parts = Parallel(n_jobs=-1)(
                 delayed(rotate)(parts[i], prerotations.iloc[i].sum())
                 for i in range(len(parts))
@@ -101,7 +94,7 @@ def align_stack(ref_stack, parts, prerotations=None, return_rotations=False):
             parts = numpy.stack(parts)
             gc.collect()
 
-    apDisplay.printMsg("Aligning stack to class averages...")
+    apDisplay.printMsg("Aligning stack to class averages")
     if return_rotations:
         aligned = Parallel(n_jobs=-1)(
             delayed(align_particle)(polar_refs, parts[i], True)
@@ -204,7 +197,8 @@ def process_stack(stack):
     """
     Center, mask, and normalize stack.
     """
-    print("Processing stack...")
+    print("\n")
+    apDisplay.printMsg("Processing stack")
     mask = create_circular_mask(stack.shape[-2], stack.shape[-1])
     processed = numpy.stack(
         Parallel(n_jobs=-1)(
@@ -228,7 +222,7 @@ def stack_self_sort(stack, order_list=False):
     polar_stack = warp_stack(stack)
     error_matrix = numpy.zeros((N, N))
     error_sums = []
-    print("Sorting stack...")
+    apDisplay.printMsg("Sorting stack")
     for i in tqdm(range(N - 1)):
         for j in range(i + 1, N):
             s, e, p = phase_cross_correlation(
@@ -246,7 +240,7 @@ def stack_self_sort(stack, order_list=False):
 
 def stack_self_align(stack, n=10):
     """ Establish global alignment of stack, where n is the number of iterations."""
-    print("Aligning stack...")
+    apDisplay.printMsg("Aligning stack")
     N = len(stack)
     aligned = stack.copy()
     polar = numpy.stack([warp_polar(aligned[i]) for i in range(N)])
@@ -760,7 +754,7 @@ class TopologyRepScript(appionScript.AppionScript):
                     "%3i%% complete, %s left    \r"
                     % (pleft, apDisplay.timeString(tleft))
                 )
-            
+
             partnum = int(partdict["partnum"])
             refnum = partrefdict[partnum]
             refnum_dbid = refdbiddict[refnum]
@@ -857,9 +851,11 @@ class TopologyRepScript(appionScript.AppionScript):
         outfile = "classes"
 
         apDisplay.printMsg("running CAN:")
+        print("\n")
         print("CAN parameters:")
         for key in can_params:
-            print(key, "=", can_params[key])
+            if key != 'numClasses':
+                print(key, "=", can_params[key])
         if self.params["currentiter"] == 0:
             # If it is the first time executing CAN, then read the .star stack file, and process the particles
             process_params = {  # should be self.stack['...']
@@ -875,7 +871,10 @@ class TopologyRepScript(appionScript.AppionScript):
 
             print("\nParticle preprocessing parameters:")
             for key in process_params:
-                print(f"{key} = {process_params[key]}")
+                if key == 'apix':
+                    print(f"{key} = {process_params[key]:.2f}")
+                else:
+                    print(f"{key} = {process_params[key]}")
 
             can_output = apCAN.CAN(
                 self.stack["file"],
@@ -1069,6 +1068,7 @@ class TopologyRepScript(appionScript.AppionScript):
     # =====================
     def sortFinalAverages(self):
         ### sort class averages using cross correlation
+        print("\n")
         apDisplay.printMsg("Sorting final class averages")
 
         # read stack
@@ -1164,8 +1164,8 @@ class TopologyRepScript(appionScript.AppionScript):
             )
         self.dumpParameters()
 
-        log_file = f"{self.params['rundir']}/memLog_{self.params['storagemethod']}.log"
-        logging.basicConfig(filename=log_file, level=logging.INFO)
+        # log_file = f"{self.params['rundir']}/memLog_{self.params['storagemethod']}.log"
+        # logging.basicConfig(filename=log_file, level=# logging.INFO)
 
         ### process stack to local file
         self.params["localstack"] = os.path.join(
@@ -1287,7 +1287,7 @@ class TopologyRepScript(appionScript.AppionScript):
                     # self.alignedstack = mrc.read(self.params["alignedstack"])
                     mem = record_memory(mem, index)
                     x, log = self.runCAN()
-                    logging.log(20, log)
+                    # logging.log(20, log)
                     continue
 
                 # MRA -- align particles to existing class averages
@@ -1299,7 +1299,7 @@ class TopologyRepScript(appionScript.AppionScript):
                     self.get_rotations(),
                     return_rotations=True,
                 )
-                logging.log(20, log)
+                # logging.log(20, log)
                 if self.params["storagemethod"] == "disk":
                     mrc.write(self.aligned, self.params["alignedstack"])
                     del self.aligned
@@ -1310,12 +1310,13 @@ class TopologyRepScript(appionScript.AppionScript):
                 index = "preCAN-" + str(i)
                 mem = record_memory(mem, index)
                 x, log = self.runCAN()
-                logging.log(20, log)
+                # logging.log(20, log)
                 index = "postCAN-" + str(i)
             mem = record_memory(mem, index)
             aligntime = time.time() - aligntime
+            print("\n")
             time_msg = "Alignment time: " + apDisplay.timeString(aligntime)
-            logging.log(20, time_msg)
+            # logging.log(20, time_msg)
             apDisplay.printMsg(time_msg)
 
         ## set upload information params:
@@ -1350,12 +1351,12 @@ class TopologyRepScript(appionScript.AppionScript):
         # move back to starting directory
         os.chdir(self.params["rundir"])
 
-        # saving original stack as "aligned stack" for database commitment purposes. 
-        # Previously, moved aligned stack to current directory for appionweb. 
+        # saving original stack as "aligned stack" for database commitment purposes.
+        # Previously, moved aligned stack to current directory for appionweb.
         if not os.path.isfile("mrastack.mrcs"):
             if self.params["storagemethod"] == "memory":
                 # mrc.write(self.aligned, "mrastack.mrcs") # see above comment
-                mrc.write(self.orig_stack, "mrastack.mrcs") 
+                mrc.write(self.orig_stack, "mrastack.mrcs")
             elif self.params["storagemethod"] == "disk":
                 shutil.move(self.params["localstack"], "mrastack.mrcs")
                 cmd = f"rm {self.params['alignedstack']}"
@@ -1370,7 +1371,7 @@ class TopologyRepScript(appionScript.AppionScript):
         if self.params["commit"] is True:
             self.insertRunIntoDatabase()
             self.insertParticlesIntoDatabase(partlist, partrefdict)
-        mem = record_memory(mem, index="end of start()", write=True)
+        mem = record_memory(mem, index="end of start()", write=False) # set write=True for a complete memory log 
 
 
 # =====================

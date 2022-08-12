@@ -148,7 +148,7 @@ def process_stack(stack, params):
 
     gc.collect()
 
-    apDisplay.printMsg('Converting list to numpy array')
+    apDisplay.printMsg('Converting to stack')
 
     stack = numpy.stack(stack, axis=0)
 
@@ -511,6 +511,7 @@ def CAN(input_stack, output_stack, can_params, process_params=None, return_parts
         )
     )
 
+    print("\n")
     print("DIAGNOSTIC FILE INFO")
     for key in stack_hed.keys():
         print(f"{key} = {stack_hed[key]}")
