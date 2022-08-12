@@ -40,7 +40,7 @@ configs = moduleconfig.getConfigured('fei.cfg')
 configpath = moduleconfig.getConfigPath('fei.cfg')
 
 def configHasColdFeg():
-	if 'has_cold_feg' in configs and configs['has_cold_feg']==True:
+	if 'source' in configs and 'has_cold_feg' in configs['source'] and configs['source']['has_cold_feg']==True:
 		return True
 	return False
 
