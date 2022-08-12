@@ -432,7 +432,7 @@ class Tecnai(tem.TEM):
 		# Cold FEG beam current is used to decide whether to flash or not.
 		# Unit is Amp.  Returns -1.0 if not available
 		if self.source and self.hasColdFeg():
-			return float(self.source.BeamCurent)
+			return float(self.source.BeamCurrent)
 		return -1.0
 
 	def getExtractorVoltage(self):
