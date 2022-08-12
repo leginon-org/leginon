@@ -195,9 +195,9 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
         self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_BROWSE_IMAGES, False)
         self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CHECK_DOSE,
                              'dose',
-                             shortHelpString='Check dose')
+                             shortHelp='Check dose')
         self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,
-                             'refresh', shortHelpString='Reset Learning')
+                             'refresh', shortHelp='Reset Learning')
 
         self.toolbar.Bind(wx.EVT_TOOL, self.onResetTiltSeriesList,
                             id=leginon.gui.wx.ToolBar.ID_REFRESH)

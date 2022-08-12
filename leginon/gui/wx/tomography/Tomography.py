@@ -549,12 +549,12 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		leginon.gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_BROWSE_IMAGES, False)
 		self.toolbar.InsertTool(5, leginon.gui.wx.ToolBar.ID_ABORT_ONE_TARGET,
-						'stopone', shortHelpString='Abort single tilt series')
+						'stopone', shortHelp='Abort single tilt series')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CHECK_DOSE,
 							 'dose',
-							 shortHelpString='Check dose')
+							 shortHelp='Check dose')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,
-							 'refresh', shortHelpString='Reset Learning')
+							 'refresh', shortHelp='Reset Learning')
 
 		self.toolbar.Bind(wx.EVT_TOOL, self.onResetTiltSeriesList,
 											id=leginon.gui.wx.ToolBar.ID_REFRESH)
