@@ -67,10 +67,10 @@ class Correlator(object):
 		if shape[0] == shape[1] and (shape[0] % int(self.correlation_binning)) == 0:
 			return array
 		minsize = min(shape)
-		worksize = (min(shape) / int(self.correlation_binning)) * self.correlation_binning
-		offsety = (shape[0] - worksize) / 2
+		worksize = (min(shape) // int(self.correlation_binning)) * self.correlation_binning
+		offsety = (shape[0] - worksize) // 2
 		endy = offsety + worksize
-		offsetx = (shape[1] - worksize) / 2
+		offsetx = (shape[1] - worksize) // 2
 		endx = offsetx + worksize
 		return array[offsety:endy,offsetx:endx]
 
@@ -161,15 +161,15 @@ if __name__ == '__main__':
 		if max_newsize >= origsize:
 			return 1
 		## try to find binning that will make new image size <= newsize
-		bin = origsize / max_newsize
+		mybin = origsize / max_newsize
 		remain = origsize % max_newsize
 		while remain:
-			bin += 1
-			remain = origsize % bin
-			newsize = float(origsize) / bin
+			mybin += 1
+			remain = origsize % mybin
+			newsize = float(origsize) / mybin
 			if newsize < min_newsize:
 				return None
-		return bin
+		return mybin
 	
 	imgs = pickle.load(open('imgs_1.p','rb'))
 	lpf = 1.5
