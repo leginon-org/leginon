@@ -31,11 +31,11 @@ def readStarFileDataBlock(starfile, datablock):
 
 def writeLoopDictToStarFile(loopDict, datablockname, starfilename):
 
-	labels = loopDict[0].keys()
+	labels = list(loopDict[0].keys())
 	valueSets = []
 	for line in loopDict:
 		params = ""
-		for p in line.values():
+		for p in list(line.values()):
 			params += " %s" % p
 		valueSets.append(params)
 	star = starFile.StarFile(starfilename)
@@ -116,30 +116,30 @@ def excludeClassesFromRelionDataFile2(starfile, outlist, *classlist):
 	f.close()
 	loopDictNew = starFile.LoopBlock
 #	loopDictNew = []
-	print dir(loopDict), "loop Dict"
-	print dir(loopDictNew), "loop Dict New"
-	print len(loopDict), "length of loop Dict"
-	print loopDict[0]
+	print(dir(loopDict), "loop Dict")
+	print(dir(loopDictNew), "loop Dict New")
+	print(len(loopDict), "length of loop Dict")
+	print(loopDict[0])
 	for gp in goodparts:
 		loopDictNew.append(loopDict[gp-1])
-	print len(loopDictNew), "length of loop Dict New"
+	print(len(loopDictNew), "length of loop Dict New")
 	dataBlockNew = starFile.DataBlock("data_images")
 	dataBlockNew.setLoopBlocks([loopDictNew])
-	print dir(dataBlockNew)
-	print len(dataBlockNew.loopBlocks)
+	print(dir(dataBlockNew))
+	print(len(dataBlockNew.loopBlocks))
 	star.setDataBlock(dataBlockNew,"data_images")
 	dbnew = star.getDataBlock("data_images")
-	print dbnew.name, "****"
-	print dir(dbnew)
-	print len(dbnew.loopBlocks)
+	print(dbnew.name, "****")
+	print(dir(dbnew))
+	print(len(dbnew.loopBlocks))
 	loopDict = dbnew.getLoopDict()
-	print len(loopDict)
+	print(len(loopDict))
 	star.write("destination.star")
 
 def listFileFromRelionStarFile(starfile, outlist, datablock="data_images"):
 	### write out an EMAN-style list file (numbering starts with 0) based on a relion star file with images and image numbers
 
- 	star = starFile.StarFile(starfile)
+	star = starFile.StarFile(starfile)
 	star.read()
 	dataBlock = star.getDataBlock(datablock)
 	loopDict = dataBlock.getLoopDict()
@@ -186,6 +186,34 @@ def getStarFileColumnLabels(starfile):
 		if len(l) > 2:
 			return labels
 
+def getColumnLabels(pfile):
+    # Go through header of particle file & get column info
+    optics_labels = []
+    particle_labels = []
+    f = open(pfile)
+    particle_lines = False
+    for line in f:
+        if line.startswith("data_particles") or line.startswith("data_\n"):
+            particle_lines = True
+        if line.startswith("#"):
+            continue
+        l = line.strip().split()
+        if not particle_lines and line[:4] == "_rln":
+            optics_labels.append(l[0])
+            continue
+        elif particle_lines and line[:4] == "_rln":
+            particle_labels.append(l[0])
+            continue
+        # if past the header section, stop
+        if particle_lines and (len(l) > 2):
+            break
+    if "_rlnOpticsGroup" not in particle_labels:
+        exit(
+            "This script requires optics groups (Relion 3.1 or later). Try reconscripts/groupImageShifts_3point0.py"
+        )
+    f.close()
+    return optics_labels, particle_labels
+
 def getColumnFromRelionLine(line,col):
 	# return a specified column (starting with 0)
 	l = line.strip().split()
@@ -197,7 +225,10 @@ def getMrcParticleFilesFromStar(starfile):
 	# returns array of mrc files containing particles
 	# first get header info
 	mrclist = []
-	for p in getPartsFromStar(starfile):
+	# parts = getPartsFromStar(starfile)
+	parts = starParticleArray(starfile)
+	
+	for p in parts:
 		micro = p.split('@')[1]
 		# Relion usually uses relative paths, check:
 		if micro[0]!="/":
@@ -214,6 +245,22 @@ def getPartsFromStar(starfile):
 		p=getColumnFromRelionLine(line,namecol)
 		if p: partlist.append(p)
 	return partlist
+	
+def starParticleArray(starfile):
+	# same function as getPartsFromStar for Relion >= 3.1
+	optics_labels, particle_labels = getColumnLabels(starfile)
+	namecol = particle_labels.index('_rlnImageName')
+	partlist = []
+	particle_lines = False
+	for line in open(starfile):
+		if line.startswith("data_particles") or line.startswith("data_\n"):
+			particle_lines = True
+		if particle_lines:
+			p = getColumnFromRelionLine(line, namecol)
+			if p: 
+				partlist.append(p)
+	return partlist
+
 
 def writeRelionStarHeader(labels, outstarfile):
 	ofile = open(outstarfile,'w')
@@ -356,7 +403,7 @@ def adjustPartDict(relionpartdict, reflist):
 		'spread': float(relionpartdict['_rlnMaxValueProbDistribution']), #check for better
 	}
 	if particleNumber < 10:
-		print "%03d -- %.1f -- %s"%(particleNumber, newpartdict['inplane'], relionpartdict['_rlnAnglePsi'])
+		print("%03d -- %.1f -- %s"%(particleNumber, newpartdict['inplane'], relionpartdict['_rlnAnglePsi']))
 	return newpartdict
 
 def wrap360(theta):

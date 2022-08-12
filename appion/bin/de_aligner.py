@@ -25,7 +25,7 @@ class ExampleScript(appionScript.AppionScript):
 	def setupParserOptions(self):
 		configuration_options = deProcessFrames.ConfigurationOptions( )
 		options_list = configuration_options.get_options_list( )
-		sections = options_list.keys( )
+		sections = list(options_list.keys( ))
 		for section in sections :
 			for option in options_list[ section ] :
 				if section == 'gainreference' or section == 'darkreference':
@@ -104,7 +104,7 @@ class ExampleScript(appionScript.AppionScript):
 		masterlist=[]
 		for particle in stackdata:
 			parentimage=particle['particle']['image']['filename']
-			if parentimage in imagedict.keys():
+			if parentimage in list(imagedict.keys()):
 				imagedict[parentimage].append(particle['particle'])
 			else:
 				imagedict[parentimage]=[]
@@ -118,10 +118,10 @@ class ExampleScript(appionScript.AppionScript):
 			parentimage=key
 			framespath=particlelst[0]['image']['session']['frame path']
 			
-			print cameratype
+			print(cameratype)
 			if 'Gatan' in cameratype:
 				#prepare frames
-				print framespath
+				print(framespath)
 				
 				#prepare frame directory
 				framespathname=os.path.join(self.params['rundir'],parentimage+'.frames')
@@ -129,15 +129,15 @@ class ExampleScript(appionScript.AppionScript):
 					pass
 				else:
 					os.mkdir(framespathname)
-				print framespathname
+				print(framespathname)
 				
 				mrcframestackname=parentimage+'.frames.mrc'
 				
-				print mrcframestackname
+				print(mrcframestackname)
 				
 				nframes=particlelst[0]['image']['camera']['nframes']
 				
-				print "Extracting frames for", mrcframestackname
+				print("Extracting frames for", mrcframestackname)
 				for n in range(nframes):
 					a=mrc.read(os.path.join(framespath,mrcframestackname),n)
 					numpil.write(a,imfile=os.path.join(framespathname,'RawImage_%d.tif' % (n)), format='tiff')
@@ -145,11 +145,11 @@ class ExampleScript(appionScript.AppionScript):
 			elif 'DE' in cameratype:
 				framespathname=os.path.join(framespath,parentimage+'.frames')
 			
-			print os.getcwd()
-			print framespathname
+			print(os.getcwd())
+			print(framespathname)
 			#generate DE script call
 			if os.path.exists(framespathname):
-				print "found frames for", parentimage
+				print("found frames for", parentimage)
 
 				nframes=particlelst[0]['image']['camera']['nframes']
 				boxname=parentimage + '.box'
@@ -165,10 +165,10 @@ class ExampleScript(appionScript.AppionScript):
 				darknframes=particlelst[0]['image']['dark']['camera']['nframes']
 				brightref=os.path.join(brightrefpath,brightrefname+'.mrc')
 				darkref=os.path.join(darkrefpath,darkrefname+'.mrc')
-				print brightref
-				print darkref			
+				print(brightref)
+				print(darkref)			
 				apBoxer.processParticleData(particle['particle']['image'],boxsize,particlelst,shiftdata,boxpath)
-				print framespathname			
+				print(framespathname)			
 
 				#set appion specific options
 				self.params['gainreference_filename']=brightref
@@ -189,7 +189,7 @@ class ExampleScript(appionScript.AppionScript):
 				os.mkdir(outpath)
 				
 				command=['deProcessFrames.py']
-				keys=self.params.keys()
+				keys=list(self.params.keys())
 				keys.sort()
 				for key in keys:
 					param=self.params[key]
@@ -201,7 +201,7 @@ class ExampleScript(appionScript.AppionScript):
 						command.append(option)
 				command.append(outpath)
 				command.append(framespathname)
-				print command
+				print(command)
 				if self.params['dryrun'] is False:
 					subprocess.call(command)
 					
@@ -210,24 +210,24 @@ class ExampleScript(appionScript.AppionScript):
 		for n,particledict in enumerate(masterlist):
 			parentimage=particledict['key']
 			correctedpath=os.path.join(self.params['rundir'],parentimage)
-			print correctedpath
+			print(correctedpath)
 			if os.path.exists(correctedpath):
 			
 				correctedparticle=glob.glob(os.path.join(correctedpath,('%s.*.region_%03d.*' % (parentimage,particledict['index']))))
-				print os.path.join(correctedpath,('%s.*.region_%03d.*' % (parentimage,particledict['index'])))
-				print correctedparticle
+				print(os.path.join(correctedpath,('%s.*.region_%03d.*' % (parentimage,particledict['index']))))
+				print(correctedparticle)
 				#sys.exit()
 				command=['proc2d',correctedparticle[0], newstackname]
 				if self.params['output_rotation'] !=0:
 					command.append('rot=%d' % self.params['output_rotation'])
 				
 				if self.params['show_DE_command'] is True:
-					print command
+					print(command)
 				subprocess.call(command)
 			else:
-				print "did not find frames for ", parentimage
+				print("did not find frames for ", parentimage)
 				command=['proc2d', origstackpath, newstackname,('first=%d' % n), ('last=%d' % n)]
-				print command
+				print(command)
 				if self.params['dryrun'] is False:
 					subprocess.call(command)
 				
@@ -243,7 +243,7 @@ class ExampleScript(appionScript.AppionScript):
 		apStack.commitSubStack(self.params, newname=newstackname)
 		apStack.averageStack(stack=newstackname)
 		
-		print "Done!!!!"
+		print("Done!!!!")
 				
 		
 			

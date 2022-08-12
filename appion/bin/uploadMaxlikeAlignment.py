@@ -9,7 +9,7 @@ import shutil
 import re
 import glob
 import numpy
-import cPickle
+import pickle
 #appion
 from appionlib import appionScript
 from appionlib import apDisplay
@@ -238,7 +238,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		if not os.path.isfile(paramfile):
 			apDisplay.printError("Could not find run parameters file: "+paramfile)
 		f = open(paramfile, "r")
-		runparams = cPickle.load(f)
+		runparams = pickle.load(f)
 		if not 'localstack' in runparams:
 			runparams['localstack'] = self.params['timestamp']+".hed"
 		if not 'student' in runparams:
@@ -503,7 +503,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			fname = files[i]
 			refdict = reflist[i]
 			if refdict['partnum'] != i+1:
-				print i, refdict['partnum']
+				print(i, refdict['partnum'])
 				apDisplay.printError("sorting error in reflist, see neil")
 			refarray = spider.read(fname)
 			xyshift = (refdict['xshift'], refdict['yshift'])
@@ -585,7 +585,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		self.resdict = {}
 		boxsizetuple = apFile.getBoxSize(alignimagicfile)
 		boxsize = boxsizetuple[0]
-		for refnum in reflistsdict.keys():
+		for refnum in list(reflistsdict.keys()):
 			partlist = reflistsdict[refnum]
 			esttime = 3e-6 * len(partlist) * boxsize**2
 			apDisplay.printMsg("Ref num %d; %d parts; est time %s"

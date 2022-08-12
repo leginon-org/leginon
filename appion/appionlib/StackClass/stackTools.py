@@ -293,7 +293,7 @@ if __name__ == '__main__':
 	else:
 		stackfile = 'stackfile.mrc'
 		if not os.path.isfile(stackfile):
-			print "creating huge stack"
+			print("creating huge stack")
 			shape = (10,256,256)
 			a = numpy.random.random(shape)
 			mrc.write(a, stackfile)
@@ -302,5 +302,5 @@ if __name__ == '__main__':
 				a = numpy.random.random(shape)
 				mrc.append(a, stackfile)
 				time.sleep(0.001)
-			print "done"
+			print("done")
 		averageStack(stackfile, 'average.mrc')

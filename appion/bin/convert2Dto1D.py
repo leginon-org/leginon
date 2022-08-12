@@ -62,7 +62,7 @@ def funcrad(r, xdata=None, rdata=None):
 def run():
 	env = mrc.read("/home/vossman/myami/appion/appionlib/data/envelopeImage.mrc")
 	#env = imagefun.bin2(env, 16)
-	print env.shape
+	print(env.shape)
 	xcenter = (env.shape[0] - 1)/2.0
 	ycenter = (env.shape[1] - 1)/2.0
 	radialsize = int(math.ceil(max(env.shape[0], env.shape[1])/math.sqrt(2.0)))
@@ -81,7 +81,7 @@ def run():
 	### read data and apply
 	for x in range(env.shape[0]):
 		if x % 100 == 0:
-			print x
+			print(x)
 		for y in range(env.shape[1]):
 			radius = math.hypot(x - xcenter, y - ycenter)
 			intesity = env[x,y]

@@ -66,18 +66,18 @@ class CtfDisplay(object):
 		index -= requestVal - left < right - requestVal
 		fitError = 2*abs(data[index] - requestVal)/(data[index] + requestVal)
 		if False and self.debug is True or fitError > 0.5:
-			print "searchSorted Debug"
-			print "... requestVal = %.8f"%(requestVal)
-			print "... len(data) = %d"%(len(data))
-			print "... return index = %d"%(index)
+			print("searchSorted Debug")
+			print("... requestVal = %.8f"%(requestVal))
+			print("... len(data) = %d"%(len(data)))
+			print("... return index = %d"%(index))
 			if index > 0:
-				print "... data[index-1] = %.8f"%(data[index-1])
-			print "... data[index] = %.8f"%(data[index])
+				print("... data[index-1] = %.8f"%(data[index-1]))
+			print("... data[index] = %.8f"%(data[index]))
 			try:
-				print "... data[index+1] = %.8f"%(data[index+1])
+				print("... data[index+1] = %.8f"%(data[index+1]))
 			except IndexError:
 				pass
-			print "... error = %.8f"%(fitError)
+			print("... error = %.8f"%(fitError))
 		if fitError > 0.5:
 			apDisplay.printWarning("very large error in point conversion")
 		return int(index)
@@ -95,25 +95,25 @@ class CtfDisplay(object):
 		extremaVal = extremaList[extremaIndex]
 		index = self.searchSorted(extremaVal, pixelrdata)
 		if False and self.debug is True:
-			print "extremaToIndex Debug"
-			print "... requestVal = %.8f"%(requestVal)
-			print "... extremaIndex = %d"%(extremaIndex)
+			print("extremaToIndex Debug")
+			print("... requestVal = %.8f"%(requestVal))
+			print("... extremaIndex = %d"%(extremaIndex))
 			if extremaIndex < 100:
-				print "... extremaList = ", numpy.array(extremaList, dtype=numpy.uint16)[extremaIndex/2:extremaIndex*2]
+				print("... extremaList = ", numpy.array(extremaList, dtype=numpy.uint16)[extremaIndex/2:extremaIndex*2])
 			if extremaIndex > 0:
-				print "... extremaList[extremaIndex-1] = %.8f"%(extremaList[extremaIndex-1])
-			print "... extremaVal = extremaList[extremaIndex] = %.8f"%(extremaVal)
+				print("... extremaList[extremaIndex-1] = %.8f"%(extremaList[extremaIndex-1]))
+			print("... extremaVal = extremaList[extremaIndex] = %.8f"%(extremaVal))
 			try:
-				print "... extremaList[extremaIndex+1] = %.8f"%(extremaList[extremaIndex+1])
+				print("... extremaList[extremaIndex+1] = %.8f"%(extremaList[extremaIndex+1]))
 			except IndexError:
 				pass
-			print "... return index = %d"%(index)
-			print "... extremaVal = %.4f"%(extremaVal)
+			print("... return index = %d"%(index))
+			print("... extremaVal = %.4f"%(extremaVal))
 			if index > 0:
-				print "... pixelrdata[index-1] = %.4f"%(pixelrdata[index-1])
-			print "... pixelrdata[index] = %.4f"%(pixelrdata[index])
+				print("... pixelrdata[index-1] = %.4f"%(pixelrdata[index-1]))
+			print("... pixelrdata[index] = %.4f"%(pixelrdata[index]))
 			try:
-				print "... pixelrdata[index+1] = %.4f"%(pixelrdata[index+1])
+				print("... pixelrdata[index+1] = %.4f"%(pixelrdata[index+1]))
 			except IndexError:
 				pass
 		return index
@@ -165,9 +165,9 @@ class CtfDisplay(object):
 			mergeIndexes.extend(endIndexes)
 			mergeIndexes.sort()
 			if self.debug is True:
-				print "StartIndexes", startIndexes
-				print "EndIndexes", endIndexes
-				print "MergeIndexes", mergeIndexes
+				print("StartIndexes", startIndexes)
+				print("EndIndexes", endIndexes)
+				print("MergeIndexes", mergeIndexes)
 			try:
 				minGap = numpy.diff(mergeIndexes).min()
 			except:
@@ -184,7 +184,7 @@ class CtfDisplay(object):
 		MAIN CTF normalization loop - this is the heart of Neil's CTF method
 		"""
 		if numpy.any(numpy.isnan(zdata2d)):  #note does not work with 'is True'
-			print ("zdata2d.min()=%.2f"%(zdata2d.min()))
+			print(("zdata2d.min()=%.2f"%(zdata2d.min())))
 			apDisplay.printError("Major Error (NaN) in original 2D image, zdata2d")
 
 		###
@@ -212,7 +212,7 @@ class CtfDisplay(object):
 		if self.debug:
 			imagestat.printImageInfo(zdata2d)
 		if numpy.any(numpy.isnan(zdata2d)):  #note does not work with 'is True'
-			print ("zdata2d.min()=%.2f"%(zdata2d.min()))
+			print(("zdata2d.min()=%.2f"%(zdata2d.min())))
 			apDisplay.printError("Major Error (NaN) in original 2D image, zdata2d")
 		### do the elliptical average
 		if self.ellipratio is None:
@@ -262,7 +262,7 @@ class CtfDisplay(object):
 			valley = ctftools.getCtfExtrema(meandefocus, self.trimfreq*1e10, self.cs, self.volts,
 				self.ampcontrast, self.extra_phase_shift, numzeros=numzeros, zerotype="valley")
 			if valley[-1] < maxExtrema and numzeros < 1e5:
-				print "debug", valley[-1], "? < ?", maxExtrema, "++", numzeros
+				print("debug", valley[-1], "? < ?", maxExtrema, "++", numzeros)
 				apDisplay.printMsg("far from focus images, increasing number of extrema (%d)"%(numzeros))
 				numzeros *= 2
 				continue
@@ -271,7 +271,7 @@ class CtfDisplay(object):
 			peak = ctftools.getCtfExtrema(meandefocus, self.trimfreq*1e10, self.cs, self.volts,
 				self.ampcontrast, self.extra_phase_shift, numzeros=numzeros, zerotype="peak")
 			if peak[-1] < maxExtrema  and numzeros < 1e5:
-				print "debug", peak[-1], "? < ?", maxExtrema, "++", numzeros
+				print("debug", peak[-1], "? < ?", maxExtrema, "++", numzeros)
 				apDisplay.printMsg("far from focus images, increasing number of extrema (%d)"%(numzeros))
 				numzeros *= 2
 				continue
@@ -285,7 +285,7 @@ class CtfDisplay(object):
 				apDisplay.printMsg("Low pass filter of %.1f pixels"%(distanceBetweenFinalPeaks/3.0))
 			rotdata = onedimfilter.reflectTanhLowPassFilter(rotdata, distanceBetweenFinalPeaks/3.0)
 			if numpy.any(numpy.isnan(rotdata)):  #note does not work with 'is True'
-				print ("rotdata.min()=%.2f"%(rotdata.min()))
+				print(("rotdata.min()=%.2f"%(rotdata.min())))
 				apDisplay.printError("Major Error (NaN) in elliptical average, rotdata")
 
 		### get all peak (not valley)
@@ -311,13 +311,13 @@ class CtfDisplay(object):
 			numSections = int(math.floor(minExtrema/float(extremaPerSection)))+1
 			apDisplay.printMsg("reducing the number of sections to: %d"%(numSections))
 		if self.debug is True:
-			print "Extrema available in image = %d peaks, %d valleys"%(numPeaks, numValleys)
-			print "Peak points", numpy.array(peak, dtype=numpy.uint16)[:numPeaks+1]
-			print "Valley points", numpy.array(valley, dtype=numpy.uint16)[:numValleys+1]
-			print "Maximum point in FFT = %d"%(maxExtrema)
+			print("Extrema available in image = %d peaks, %d valleys"%(numPeaks, numValleys))
+			print("Peak points", numpy.array(peak, dtype=numpy.uint16)[:numPeaks+1])
+			print("Valley points", numpy.array(valley, dtype=numpy.uint16)[:numValleys+1])
+			print("Maximum point in FFT = %d"%(maxExtrema))
 
 		if self.debug is True:
-			print "Elliptical CTF limits %.1f A -->> %.1fA"%(1./raddata.min(), 1./raddata.max())
+			print("Elliptical CTF limits %.1f A -->> %.1fA"%(1./raddata.min(), 1./raddata.max()))
 
 		apDisplay.printMsg("Determine and subtract noise model")
 		CtfNoise = ctfnoise.CtfNoise()
@@ -362,12 +362,12 @@ class CtfDisplay(object):
 		#do like a minimum filter
 		fitvalleydata = ctfnoise.peakExtender(raddata, rotdata, valleyradii, "below")
 		if numpy.any(numpy.isnan(fitvalleydata)):  #note does not work with 'is True'
-			print ("fitvalleydata.min()=%.2f"%(fitvalleydata.min()))
+			print(("fitvalleydata.min()=%.2f"%(fitvalleydata.min())))
 			apDisplay.printError("Major Error (NaN) in fitvalleydata")
 		fitvalleydata = (rotdata+3*fitvalleydata)/4.0
 		fitvalleydata = ndimage.minimum_filter(fitvalleydata, 3)
 		if numpy.any(numpy.isnan(fitvalleydata)):  #note does not work with 'is True'
-			print ("fitvalleydata.min()=%.2f"%(fitvalleydata.min()))
+			print(("fitvalleydata.min()=%.2f"%(fitvalleydata.min())))
 			apDisplay.printError("Major Error (NaN) in fitvalleydata data")
 
 		### fit function below log(CTF), i.e., noise model
@@ -412,9 +412,9 @@ class CtfDisplay(object):
 				overlapStart = insertEnd
 				overlapEnd = mergeIndexes[section*2+2]
 				if self.debug is True:
-					print "section %d mergedata"%(section), mergedata.shape
-					print "\tinsert from %d to %d (%d)"%(insertStart,insertEnd, insertEnd-insertStart)
-					print "\toverlap from %d to %d (%d)"%(overlapStart,overlapEnd, overlapEnd-overlapStart)
+					print("section %d mergedata"%(section), mergedata.shape)
+					print("\tinsert from %d to %d (%d)"%(insertStart,insertEnd, insertEnd-insertStart))
+					print("\toverlap from %d to %d (%d)"%(overlapStart,overlapEnd, overlapEnd-overlapStart))
 				scale = numpy.arange(overlapEnd-overlapStart, dtype=numpy.float32)
 				scale /= scale.max()
 				scale *= math.pi/2.0
@@ -427,15 +427,15 @@ class CtfDisplay(object):
 					overlapData,
 					))
 			if self.debug is True:
-				print "section %d mergedata"%(section+1), mergedata.shape
+				print("section %d mergedata"%(section+1), mergedata.shape)
 			### add last section
 			startIndex = noiseEndIndexes[-2]
 			endIndex = len(rotdata)
 			if self.debug is True:
-				print "\t", mergedata.shape, endIndex-startIndex
+				print("\t", mergedata.shape, endIndex-startIndex)
 			mergedata = numpy.hstack((mergedata, noiseDataList[-1][startIndex:endIndex]))
 			if self.debug is True:
-				print "section %d mergedata"%(section+2), mergedata.shape
+				print("section %d mergedata"%(section+2), mergedata.shape)
 			noisedata = mergedata.copy()
 
 		### DO THE SUBTRACTION
@@ -459,9 +459,9 @@ class CtfDisplay(object):
 		absnormexprotdata = numpy.where(normexprotdata<minval, minval, normexprotdata)
 		normlogrotdata = numpy.log(absnormexprotdata)
 		if self.debug is True:
-			print "normlogrotdata=", normlogrotdata[:3], normlogrotdata[-3:]
+			print("normlogrotdata=", normlogrotdata[:3], normlogrotdata[-3:])
 		if numpy.any(numpy.isnan(normlogrotdata)):  #note does not work with 'is True'
-			print ("absnormexprotdata.min()=%.2f"%(absnormexprotdata.min()))
+			print(("absnormexprotdata.min()=%.2f"%(absnormexprotdata.min())))
 			apDisplay.printError("Major Error (NaN) in log normalization of CTF data")
 
 		###
@@ -486,7 +486,7 @@ class CtfDisplay(object):
 		#convert back to exponential data for fitting...
 		expnormlogrotdata = numpy.exp(normlogrotdata)
 		if self.debug is True:
-			print "expnormlogrotdata=", expnormlogrotdata[:3], expnormlogrotdata[-3:]
+			print("expnormlogrotdata=", expnormlogrotdata[:3], expnormlogrotdata[-3:])
 		if numpy.any(numpy.isnan(expnormlogrotdata)): #note does not work with 'is True'
 			apDisplay.printError("Major Error Y-value of NaN")
 
@@ -500,7 +500,7 @@ class CtfDisplay(object):
 		if maxvalue < 1.0:
 			maxvalue = 1.0
 		if self.debug is True:
-			print "max value", maxvalue
+			print("max value", maxvalue)
 		# make fitpeakdata smaller
 		fitpeakdata /= maxvalue
 		if numpy.any(numpy.isnan(fitpeakdata)): #note does not work with 'is True'
@@ -545,9 +545,9 @@ class CtfDisplay(object):
 				overlapStart = insertEnd
 				overlapEnd = mergeIndexes[section*2+2]
 				if self.debug is True:
-					print "section %d mergedata"%(section), mergedata.shape
-					print "\tinsert from %d to %d (%d)"%(insertStart,insertEnd, insertEnd-insertStart)
-					print "\toverlap from %d to %d (%d)"%(overlapStart,overlapEnd, overlapEnd-overlapStart)
+					print("section %d mergedata"%(section), mergedata.shape)
+					print("\tinsert from %d to %d (%d)"%(insertStart,insertEnd, insertEnd-insertStart))
+					print("\toverlap from %d to %d (%d)"%(overlapStart,overlapEnd, overlapEnd-overlapStart))
 				scale = numpy.arange(overlapEnd-overlapStart, dtype=numpy.float32)
 				scale /= scale.max()
 				scale *= math.pi/2.0
@@ -560,22 +560,22 @@ class CtfDisplay(object):
 					overlapData,
 					))
 			if self.debug is True:
-				print "section %d mergedata"%(section+1), mergedata.shape
+				print("section %d mergedata"%(section+1), mergedata.shape)
 			### add last section
 			startIndex = envelopEndIndexes[-2]
 			endIndex = len(normexprotdata)
 			if self.debug is True:
-				print "\t", mergedata.shape, endIndex-startIndex
+				print("\t", mergedata.shape, endIndex-startIndex)
 			mergedata = numpy.hstack((mergedata, envelopDataList[-1][startIndex:endIndex]))
 			if self.debug is True:
-				print "section %d mergedata"%(section+2), mergedata.shape
+				print("section %d mergedata"%(section+2), mergedata.shape)
 			envelopdata = mergedata.copy()
 
 		try:
 			normnormexprotdata = normexprotdata / envelopdata
 		except ValueError:
-			print "raise ValueError"
-			print len(normexprotdata), len(envelopdata)
+			print("raise ValueError")
+			print(len(normexprotdata), len(envelopdata))
 			sys.exit(1)
 
 		###
@@ -663,8 +663,8 @@ class CtfDisplay(object):
 		overconfraddata, overconfdata = ctfres.getCorrelationProfile(raddata,
 			normpeakdata, overctffitdata, peak, self.trimfreq)
 		if self.debug is True:
-			print "confraddata="
-			print numpy.around(confdata[:10], 3)
+			print("confraddata=")
+			print(numpy.around(confdata[:10], 3))
 			imagestat.printImageInfo(confdata)
 		if numpy.any(numpy.isnan(confdata)):  #note does not work with 'is True'
 			apDisplay.printError("Found NaN value, confdata")
@@ -688,7 +688,7 @@ class CtfDisplay(object):
 		# This is not a good test. There are more and more images
 		# at low defocus from phase plate.  It should not crash the program.
 		if self.debug and self.res80 < 6 and self.conf3010 < 0.3:
-			print(numpy.around(confdata[:15],3))
+			print((numpy.around(confdata[:15],3)))
 			apDisplay.printError("confendence below 0.3 and resolution better than 6A")
 
 		###
@@ -847,11 +847,11 @@ class CtfDisplay(object):
 			pyplot.savefig(self.plotsfile, format="png", dpi=300, orientation='landscape', pad_inches=0.0)
 		except:
 			output = self.plotsfile
-                	pyplot.savefig(output[:-3]+"jpg", format="jpg", dpi=300, orientation='landscape', pad_inches=0.0)
-	                os.system("convert "+output[:-3]+"jpg "+output)
-        	        os.remove(output[:-3]+"jpg")
+			pyplot.savefig(output[:-3]+"jpg", format="jpg", dpi=300, orientation='landscape', pad_inches=0.0)
+			os.system("convert "+output[:-3]+"jpg "+output)
+			os.remove(output[:-3]+"jpg")
 		if self.debug is True:
-			print "Showing results"
+			print("Showing results")
 			#pyplot.show()
 			#plotspng = Image.open(self.plotsfile)
 			#plotspng.show()
@@ -993,7 +993,7 @@ class CtfDisplay(object):
 		newlocs = []
 		newlabels = []
 		if self.debug is True:
-			print "maxloc=", maxloc
+			print("maxloc=", maxloc)
 		for loc in locs:
 			if loc < minloc + xstd/4:
 				continue
@@ -1091,7 +1091,7 @@ class CtfDisplay(object):
 
 		### merge information
 		plotlimit2DAngstrom = (self.plotlimit2DAngstrom * self.res80 * self.res50 * maxValleyResolution)**(1/4.)
-		print (self.plotlimit2DAngstrom, self.res80, self.res50, maxValleyResolution)
+		print((self.plotlimit2DAngstrom, self.res80, self.res50, maxValleyResolution))
 		plotlimit2DAngstrom = max(plotlimit2DAngstrom, maxImageResolution)
 		## override
 		#plotlimit2DAngstrom = 3.5
@@ -1100,7 +1100,7 @@ class CtfDisplay(object):
 		origpowerspec = ctftools.trimPowerSpectraToOuterResolution(origpowerspec, plotlimit2DAngstrom, self.trimfreq)
 
 		if self.debug is True:
-			print "origpowerspec shape", origpowerspec.shape
+			print("origpowerspec shape", origpowerspec.shape)
 
 		#compute elliptical average and merge with original image
 		pixelrdata, rotdata = ctftools.ellipticalAverage(origpowerspec, self.ellipratio, self.angle,
@@ -1115,7 +1115,7 @@ class CtfDisplay(object):
 		origpowerspec = imagefilter.tanhHighPassFilter(origpowerspec, 200) ## FIXME
 		origpowerspec = imagenorm.normalizeImage(origpowerspec, stdevLimit=7.0)
 
-		halfshape = origpowerspec.shape[1]/2
+		halfshape = int(origpowerspec.shape[1]/2)
 		halfpowerspec = numpy.hstack( (origpowerspec[:,:halfshape] , ellipavgpowerspec[:,halfshape:] ) )
 		if halfpowerspec.shape != origpowerspec.shape:
 			apDisplay.printError("Error in power spectra creation")
@@ -1134,9 +1134,9 @@ class CtfDisplay(object):
 		self.scaleapix = self.trimapix
 		self.scalefreq = self.trimfreq/scale
 		if self.debug is True:
-			print "orig pixel", self.apix
-			print "trim pixel", self.trimapix
-			print "scale pixel", self.scaleapix
+			print("orig pixel", self.apix)
+			print("trim pixel", self.trimapix)
+			print("scale pixel", self.scaleapix)
 
 		numzeros = 13
 
@@ -1188,7 +1188,7 @@ class CtfDisplay(object):
 		#########
 		perdiff = 2*abs(self.defocus1-self.defocus2)/abs(self.defocus1+self.defocus2)
 		if self.debug is True:
-			print "Percent Difference %.1f"%(perdiff*100)
+			print("Percent Difference %.1f"%(perdiff*100))
 		if perdiff > 0.05:
 			#print self.angle, radii2[0], center
 			x = 1*firstpeak*math.cos(math.radians(self.angle))
@@ -1216,7 +1216,7 @@ class CtfDisplay(object):
 			major = radii1[i]
 			minor = radii2[i]
 			if self.debug is True:
-				print "major=%.1f, minor=%.1f, angle=%.1f"%(major, minor, self.angle)
+				print("major=%.1f, minor=%.1f, angle=%.1f"%(major, minor, self.angle))
 			if minor > powerspec.shape[0]/math.sqrt(3):
 				# this limits how far we draw out the ellipses sqrt(3) to corner, just 2 inside line
 				break
@@ -1270,8 +1270,8 @@ class CtfDisplay(object):
 		bestres = math.ceil(maxres)
 		pixrad = 1.0/(self.scalefreq*bestres)
 		if self.debug is True:
-			print "bestres %d Angstroms (max: %.3f)"%(bestres, maxres)
-			print "pixrad %d (max: %.3f)"%(pixrad, maxrad)
+			print("bestres %d Angstroms (max: %.3f)"%(bestres, maxres))
+			print("pixrad %d (max: %.3f)"%(pixrad, maxrad))
 		if pixrad > maxrad:
 			if self.debug is True:
 				apDisplay.printError("Too big of outer radius to draw")
@@ -1406,7 +1406,7 @@ class CtfDisplay(object):
 		apix and outerresolution must have same units (e.g., Anstroms or meters)
 		"""
 		if self.debug is True:
-			print "Computing power spectra..."
+			print("Computing power spectra...")
 
 		fieldsize = ctfpower.getFieldSize(image.shape)
 		psdlist, freq = ctfpower.powerseries(image, self.apix, fieldsize)
@@ -1429,17 +1429,17 @@ class CtfDisplay(object):
 		mincontribution = corarray.mean() - 1.5*corarray.std()
 		### NOTE: worried that this introduces too much confirmation bias
 		if self.debug is True:
-			print "mincontribution: %.4f"%(mincontribution,)
+			print("mincontribution: %.4f"%(mincontribution,))
 		goodpsdlist = []
 		for i in range(len(psdlist)):
 			#if self.debug is True:
 			if corarray[i] >= mincontribution:
-				print ("* correlation %d: %.5f -> contribution: %.4f"
-					%(i+1, corlist[i], corarray[i],))
+				print(("* correlation %d: %.5f -> contribution: %.4f"
+					%(i+1, corlist[i], corarray[i],)))
 				goodpsdlist.append(psdlist[i]*corarray[i])
 			else:
-				print ("- correlation %d: %.5f -> contribution: %.4f"
-					%(i+1, corlist[i], corarray[i],))
+				print(("- correlation %d: %.5f -> contribution: %.4f"
+					%(i+1, corlist[i], corarray[i],)))
 		apDisplay.printColor("Using %d of %d subfields in final power spectra"
 			%(len(goodpsdlist), len(psdlist)), "cyan")
 		fullpowerspec = numpy.mean(goodpsdlist, axis=0, dtype=numpy.float64)
@@ -1468,7 +1468,7 @@ class CtfDisplay(object):
 		### setup initial parameters for image
 		self.imgname = imgdata['filename']
 		if self.debug is True:
-			print apDisplay.short(self.imgname)
+			print(apDisplay.short(self.imgname))
 		self.powerspecfile = apDisplay.short(self.imgname)+"-powerspec.jpg"
 
 		### get peak of CTF
@@ -1482,7 +1482,7 @@ class CtfDisplay(object):
 				val = 0.0
 			return val
 		#back compatible for those without extra phase
-		if 'extra_phase_shift' in ctfdata.keys():
+		if 'extra_phase_shift' in list(ctfdata.keys()):
 			self.extra_phase_shift = to_float(ctfdata['extra_phase_shift'])
 		else:
 			self.extra_phase_shift = 0.0
@@ -1492,7 +1492,7 @@ class CtfDisplay(object):
 		#ctfdata['apix'] = self.apix
 
 		if self.debug is True:
-			print "Pixelsize (A/pix)", self.apix
+			print("Pixelsize (A/pix)", self.apix)
 
 		apDisplay.printMsg("Reading image...")
 		image = imgdata['image']
@@ -1503,9 +1503,9 @@ class CtfDisplay(object):
 		self.convertDefociToConvention(ctfdata)
 
 		if self.debug is True:
-			for key in ctfdata.keys():
+			for key in list(ctfdata.keys()):
 				if ctfdata[key] is not None and not isinstance(ctfdata[key], dict):
-					print "  ", key, "--", ctfdata[key]
+					print("  ", key, "--", ctfdata[key])
 
 		if fftpath is not None and fftfreq is not None and os.path.isfile(fftpath):
 			powerspec = mrc.read(fftpath).astype(numpy.float64)
@@ -1525,8 +1525,8 @@ class CtfDisplay(object):
 		#powerspec = ndimage.gaussian_filter(powerspec, 3)
 
 		if self.debug is True:
-			print "\torig pixel %.3f freq %.3e"%(self.apix, self.initfreq)
-			print "\ttrim pixel %.3f freq %.3e"%(self.trimapix, self.trimfreq)
+			print("\torig pixel %.3f freq %.3e"%(self.apix, self.initfreq))
+			print("\ttrim pixel %.3f freq %.3e"%(self.trimapix, self.trimfreq))
 
 		### more processing
 		normpowerspec = self.normalizeCtf(powerspec, twod=twod)
@@ -1630,14 +1630,14 @@ if __name__ == "__main__":
 			continue
 		"""
 
-		print ""
-		print "**********************************"
-		print "IMAGE: %s (%d of %d)"%(apDisplay.short(imagename), count, len(imagelist))
-		print "**********************************"
+		print("")
+		print("**********************************")
+		print("IMAGE: %s (%d of %d)"%(apDisplay.short(imagename), count, len(imagelist)))
+		print("**********************************")
 
 		a = CtfDisplay()
 		ctfdisplaydict = a.CTFpowerspec(imgdata, ctfdata)
-		print "**********************************"
+		print("**********************************")
 
 		#if count > 8:
 		#	sys.exit(1)

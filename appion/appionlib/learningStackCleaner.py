@@ -43,18 +43,18 @@ class PCA(object):
 		# calculate the covariance matrix
 		#self.pca = decomposition.KernelPCA(n_components=n_components, kernel='rbf') #our data does not with this
 		if pcaType.lower().startswith('complete'):
-			print "using complete PCA"
+			print("using complete PCA")
 			self.pca = decomposition.PCA(n_components=n_components, whiten=True)
 		elif pcaType.lower().startswith('random'):
-			print "using randomized PCA"
+			print("using randomized PCA")
 			self.pca = decomposition.RandomizedPCA(n_components=n_components, whiten=True)
-		print "performing principal component analysis (pca)"
+		print("performing principal component analysis (pca)")
 		try:
 			self.pca.fit(data)
 		except ValueError:
-			print data
+			print(data)
 			raise ValueError
-		print "pca finished in %.3f seconds"%(time.time()-t0)
+		print("pca finished in %.3f seconds"%(time.time()-t0))
 		return
 
 	#---------------
@@ -62,7 +62,7 @@ class PCA(object):
 		try:
 			evals = self.pca.transform(dataVec.reshape(1, -1))[0]
 		except ValueError:
-			print dataVec
+			print(dataVec)
 			raise ValueError
 		return evals
 
@@ -71,7 +71,7 @@ class PCA(object):
 		try:
 			evals = self.pca.transform(dataVecs)
 		except ValueError:
-			print dataVecs
+			print(dataVecs)
 			raise ValueError
 		return evals
 
@@ -86,7 +86,7 @@ class DataClass(object):
 			tempfile = sys.argv[1]
 			if os.path.exists(tempfile):
 				self.stackfile = tempfile
-		print "stackfile: ", self.stackfile
+		print("stackfile: ", self.stackfile)
 
 		self.numpart = apFile.numImagesInStack(self.stackfile)
 		self.boxsize = apFile.getBoxSize(self.stackfile)[0]
@@ -100,7 +100,7 @@ class DataClass(object):
 		self.imgproc.pixelLimitStDev = 6.0
 		self.imgproc.msg = False
 		### create a map to random particles
-		self.particleMap = range(1, self.numpart+1)
+		self.particleMap = list(range(1, self.numpart+1))
 		random.shuffle(self.particleMap)
 		self.particleTarget = {} #0 = ???, 1 = good, 2 = bad
 		self.lastImageRead = 0
@@ -114,7 +114,7 @@ class DataClass(object):
 	#---------------
 	def getSelectionStatistics(self):
 		goodParticles = 0
-		for key in self.particleTarget.keys():
+		for key in list(self.particleTarget.keys()):
 			if self.particleTarget[key] == 1:
 				goodParticles += 1
 		# goodParticles, assignedParticles, totalParticles
@@ -313,7 +313,7 @@ class DataClass(object):
 	def getParticleDiscrepancyList(self, nimg):
 		if self.classifier is None:
 			return None
-		selectedParticleList = self.particleTarget.keys()
+		selectedParticleList = list(self.particleTarget.keys())
 		if len(selectedParticleList) < nimg:
 			return None
 		probParticleDict = {}
@@ -326,7 +326,7 @@ class DataClass(object):
 				probParticleDict[partnum] = probClass[1]
 		particleNumberList = sorted(probParticleDict, key=lambda k: probParticleDict[k])
 		newlist = particleNumberList[:nimg]
-		print "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+		print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 		probParticleDict2 = {}
 		for partnum in newlist:
 			probClass = self.predictParticleTargetProbability(partnum)
@@ -336,7 +336,7 @@ class DataClass(object):
 
 	#---------------
 	def readTargetImageStats(self):
-		particleIndexes = self.particleTarget.keys()
+		particleIndexes = list(self.particleTarget.keys())
 		particleIndexes.sort()
 		partdata = []
 		for partIndex in particleIndexes:
@@ -350,15 +350,15 @@ class DataClass(object):
 		if choice is None:
 			choice = self.inputdict['inputTypeChoice']
 		if choice.startswith('Good'):
-			for partnum, assignedClass in self.particleTarget.items():
+			for partnum, assignedClass in list(self.particleTarget.items()):
 				if assignedClass == 1:
 					particleIndexes.append(partnum)
 		elif choice.startswith('Bad'):
-			for partnum, assignedClass in self.particleTarget.items():
+			for partnum, assignedClass in list(self.particleTarget.items()):
 				if assignedClass == 2:
 					particleIndexes.append(partnum)
 		else:
-			particleIndexes = self.particleTarget.keys()
+			particleIndexes = list(self.particleTarget.keys())
 		particleIndexes.sort()
 		if readData is False:
 			return particleIndexes
@@ -366,8 +366,8 @@ class DataClass(object):
 		for partnum in particleIndexes:
 			statArray = self.partnumToInputVector(partnum)
 			partdata.append(statArray)
-		print ("read image data for %d partilces in %.3f seconds"
-			%(len(particleIndexes), time.time()-t0))
+		print(("read image data for %d partilces in %.3f seconds"
+			%(len(particleIndexes), time.time()-t0)))
 		return numpy.array(partdata)
 
 	#---------------
@@ -381,8 +381,8 @@ class DataClass(object):
 				matchIndex.append(i)
 				j += 1
 		if len(matchIndex) != len(subSortedList):
-			print bigSortedList
-			print subSortedList
+			print(bigSortedList)
+			print(subSortedList)
 			raise ValueError
 		return matchIndex
 
@@ -404,9 +404,9 @@ class DataClass(object):
 
 		## eigen values
 		t1 = time.time()
-		print "calculating eigen values"
+		print("calculating eigen values")
 		particleEigenValues = self.pca.getEigenValues(partdata)
-		print "eigen values created in %.3f seconds"%(time.time()-t1)
+		print("eigen values created in %.3f seconds"%(time.time()-t1))
 		return particleEigenValues
 
 	#---------------
@@ -414,17 +414,17 @@ class DataClass(object):
 		t0 = time.time()
 		targetData = numpy.array(self.targetDictToList())
 		if len(targetData) < 3:
-			print "pick more particles..."
+			print("pick more particles...")
 			return
 		self.writeListFiles()
 		particleEigenValues = numpy.array(self.particlePCA())
 
-		indices = range(len(targetData))
+		indices = list(range(len(targetData)))
 		random.shuffle(indices)
 		percentTest = 0.2
 		testSize = int(math.ceil(percentTest*len(indices)))
 
-		print "selecting %d particles for test set"%(testSize)
+		print("selecting %d particles for test set"%(testSize))
 
 		trainSetIndex = indices[testSize:]
 		testSetIndex = indices[:testSize]
@@ -455,13 +455,13 @@ class DataClass(object):
 		model with a set of hyperplanes that separate the centers of high density of any pair
 		of two classes.
 		"""
-		print "Training classifier... (please wait)"
+		print("Training classifier... (please wait)")
 		#particleEigenValues = 2d array, rows are individual particles, cols are amount of each eigenvalue
 		#targetData = list of which class items are in, e.g., [2, 2, 2, 1, 2, 1, 1, 1, 1, 2, 1, 2, ]
 		self.classifier.fit(particleEigenValues[trainSetIndex], targetData[trainSetIndex])
-		print "training finished in %.3f seconds"%(time.time()-t1)
+		print("training finished in %.3f seconds"%(time.time()-t1))
 		self.testAccuracy(testSetIndex, particleEigenValues, targetData)
-		print "complete training finished in %.3f seconds"%(time.time()-t0)
+		print("complete training finished in %.3f seconds"%(time.time()-t0))
 
 	#---------------
 	def testAccuracy(self, testSetIndex, particleEigenValues, targetData):
@@ -479,13 +479,13 @@ class DataClass(object):
 		match = numpy.where(targetData[testSetIndex] == predictClass, 1, 0)
 		#print match
 		self.accuracy = match.mean()
-		print "accuracy testing finished in %.3f seconds"%(time.time()-t0)
-		print "SVM accuracy %.4f"%(self.accuracy*100)
+		print("accuracy testing finished in %.3f seconds"%(time.time()-t0))
+		print("SVM accuracy %.4f"%(self.accuracy*100))
 		return
 
 	#---------------
 	def targetDictToList(self):
-		particleIndexes = self.particleTarget.keys()
+		particleIndexes = list(self.particleTarget.keys())
 		particleIndexes.sort()
 		targetList = [self.particleTarget[i] for i in particleIndexes]
 		return targetList
@@ -494,7 +494,7 @@ class DataClass(object):
 	def writeListFiles(self):
 		keepf = open("keepfile.lst", "w")
 		rejectf = open("rejectfile.lst", "w")
-		for partNum in self.particleTarget.keys():
+		for partNum in list(self.particleTarget.keys()):
 			assignment = self.particleTarget[partNum]
 			#write eman numbering starting at zero
 			if assignment == 1:
@@ -508,7 +508,7 @@ class DataClass(object):
 	def assignRemainingTargets(self):
 		assignedSet = set(self.particleTarget.keys())
 		allSet = set(range(1, self.numpart+1))
-		print "assigned %d of %d particles"%(len(assignedSet), len(allSet))
+		print("assigned %d of %d particles"%(len(assignedSet), len(allSet)))
 
 		## Get unassignedSet that are in allSet but not in assignedSet
 		unassignedSet = allSet.difference(assignedSet)
@@ -522,25 +522,25 @@ class DataClass(object):
 			nimg = max(self.inputdict['numDisplayImages'], 99)
 			#subSetSize = len(unassignedArray)/nimg
 			subSetsToCreate = numpy.arange(nimg, len(unassignedArray), nimg)
-			print subSetsToCreate
+			print(subSetsToCreate)
 			setsOfArrays = numpy.split(unassignedArray, subSetsToCreate)
 			for unassignedSubArray in setsOfArrays:
-				print "len(unassignedSubArray)", len(unassignedSubArray)
+				print("len(unassignedSubArray)", len(unassignedSubArray))
 				## Read image data
 				t0 = time.time()
-				print "reading particle data from file..."
+				print("reading particle data from file...")
 				unassignedPartData = []
 				for partnum in unassignedSubArray:
 					statArray = self.partnumToInputVector(partnum)
 					unassignedPartData.append(statArray)
-				print "particles read in %.3f seconds"%(time.time()-t0)
+				print("particles read in %.3f seconds"%(time.time()-t0))
 				unassignedPartData = numpy.array(unassignedPartData)
 
 				## Eigen values
 				t1 = time.time()
-				print "calculating eigen values..."
+				print("calculating eigen values...")
 				particleEigenValues = self.pca.getEigenValues(unassignedPartData)
-				print "eigen values created in %.3f seconds"%(time.time()-t1)
+				print("eigen values created in %.3f seconds"%(time.time()-t1))
 
 				probClasses = self.classifier.predict_proba(particleEigenValues)
 				prob1 = probClasses[:,0]
@@ -553,7 +553,7 @@ class DataClass(object):
 					self.particleTarget[partNum] = predictedClass
 
 		self.writeListFiles()
-		print "finished assigning remaining particles"
+		print("finished assigning remaining particles")
 
 #======================
 #======================
@@ -1279,11 +1279,11 @@ class ClassPanel(wx.Panel):
 
 		}
 		inputTotal = 0
-		for key in inputDict.keys():
+		for key in list(inputDict.keys()):
 			if inputDict[key] is True:
 				inputTotal += 1
 		if inputTotal == 0:
-			print "Error: no inputs selected, auto-check imageStats"
+			print("Error: no inputs selected, auto-check imageStats")
 			self.imageStats.SetValue(True)
 			inputDict['imageStats'] = True
 		return inputDict

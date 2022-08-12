@@ -3,7 +3,7 @@
 # This script provides the user access to the protomo command line interface,
 # allowing for the manual alignment
 
-from __future__ import division
+
 import os
 import re
 import sys
@@ -99,7 +99,7 @@ class ProTomo2ManualAligner(basicScript.BasicScript):
 		paramfilename=seriesname+'.param'
 		paramfilename_full=self.params['rundir']+'/'+paramfilename
 		
-		print ""
+		print("")
 		apDisplay.printMsg("\033[1mAlign images manually (to within ~5% accuracy), Save, & Quit.\033[0m")
 		apDisplay.printMsg("\033[1mQuick Manual Alignment instructions:\033[0m")
 		apDisplay.printMsg("\033[1m    1) View > image, Actions > Show movie. Identify an image in the center of the overall shift range.\033[0m")
@@ -107,7 +107,7 @@ class ProTomo2ManualAligner(basicScript.BasicScript):
 		apDisplay.printMsg("\033[1m    3) First try Actions > Align all. Then 'show movie' again. If it aligned, then File > Save, File > Quit.\033[0m")
 		apDisplay.printMsg("\033[1m    4) If 3) failed, then manually align each nearest-neighbor images by dragging and pressing 'A' to align.\033[0m")
 		apDisplay.printMsg("\033[1mNote: If you get a popup error, then use the Reset button to reset the current image, or Actions > revert to reset all images.\033[0m")
-		print ""
+		print("")
 		
 		manualparam = '%s/more_manual_%s.param' % (self.params['rundir'], base_seriesname)
 		manuali3t = '%s/more_manual_%s.i3t' % (self.params['rundir'], base_seriesname)

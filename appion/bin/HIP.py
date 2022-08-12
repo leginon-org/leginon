@@ -143,7 +143,7 @@ class HipScript(appionScript.AppionScript):
 		if self.params['sessionname'] is None:
 			apDisplay.printError("Please provide a sessionname or run directory")
 		else:
-			print self.params['sessionname']
+			print(self.params['sessionname'])
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		path = os.path.abspath(sessiondata['image path'])
 		path = re.sub("leginon","appion",path)
@@ -190,7 +190,7 @@ class HipScript(appionScript.AppionScript):
 		finalparams.update(apHelicalParams.calculateParams(step, diameter, diaminner, replen, padval))
 		filename = os.path.join(self.params['rundir'], "phoelix_params")
 		f = open(filename, 'w')
-		for (k, v) in finalparams.items():
+		for (k, v) in list(finalparams.items()):
 			f.write("set %s = %s\n" % (k, v))
 		f.close()
 	#=====================
@@ -212,10 +212,10 @@ class HipScript(appionScript.AppionScript):
 			turns = math.floor((twist * subunits)/360)
 		else:
 			turns = math.ceil((twist * subunits)/360)
-		print "subunits=", subunits, "turns=", turns
+		print("subunits=", subunits, "turns=", turns)
 
-		print>>f, 0, 0
-		print>>f2, "ll= ", 0, "bo= ", 0
+		print(0, 0, file=f)
+		print("ll= ", 0, "bo= ", 0, file=f2)
 		i = 1
 		stop = maxll + 1
 		while i <= stop:
@@ -225,8 +225,8 @@ class HipScript(appionScript.AppionScript):
 				if test%subunits == 0:
 					bo = j
 					ll = i
-					print>>f, ll, bo
-					print>>f2, "ll= ", ll, "bo= ", bo
+					print(ll, bo, file=f)
+					print("ll= ", ll, "bo= ", bo, file=f2)
 					j = j+1
 				else:	
 					j = j+1
@@ -244,8 +244,8 @@ class HipScript(appionScript.AppionScript):
 		ll2 = self.params['ll2']
 		bo2 = self.params['bo2']
 
-		print>>f, 0, 0
-		print>>f2, "ll= ", 0, "bo= ", 0
+		print(0, 0, file=f)
+		print("ll= ", 0, "bo= ", 0, file=f2)
 
 		i = 0
 		startll = ll1 - (ll2 * 5)
@@ -263,8 +263,8 @@ class HipScript(appionScript.AppionScript):
 				ll = lla + (ll1 * j)
 				bo = boa + (bo1 * j)
 				if ll > 0 and ll <= self.params['maxll'] and bo >= -1*self.params['maxbo'] and bo <= self.params['maxbo']:
-					print>>f, ll, bo
-					print>>f2, "ll= ", ll, "bo= ", bo
+					print(ll, bo, file=f)
+					print("ll= ", ll, "bo= ", bo, file=f2)
 				if bo == 0:
 					subdict.append(ll)
 				j = j+1
@@ -285,8 +285,8 @@ class HipScript(appionScript.AppionScript):
 				ll = lla + (ll2 * j)
 				bo = boa + (bo2 * j)
 				if ll > 0 and ll <= self.params['maxll'] and bo >= -1*self.params['maxbo'] and bo <= self.params['maxbo']:
-					print>>f, ll, bo
-					print>>f2, "ll= ", ll, "bo= ", bo
+					print(ll, bo, file=f)
+					print("ll= ", ll, "bo= ", bo, file=f2)
 				if bo == 0:
 					subdict.append(ll)
 				j = j+1
@@ -351,7 +351,7 @@ class HipScript(appionScript.AppionScript):
 		rmesq = appiondata.ApRMeasureData()
 		rmesq['volume']=os.path.basename(volumeDensity)
 		rmesq['rMeasure']=resolution
-		print rmesq
+		print(rmesq)
 		return rmesq
 
 	#=====================
@@ -369,9 +369,9 @@ class HipScript(appionScript.AppionScript):
 		if self.params['commit'] is True:
 			HipRun.insert()
 		else:
-			print HipRun
+			print(HipRun)
 		self.params['HipRunID'] = HipRun.dbid
-		print "self.params['HipRunID']",self.params['HipRunID']
+		print("self.params['HipRunID']",self.params['HipRunID'])
 		self.params['HipRun'] = HipRun
 		return HipRun
 
@@ -412,9 +412,9 @@ class HipScript(appionScript.AppionScript):
 		if self.params['commit'] is True:
 			HipParams.insert()	
 		else:
-			print HipParams
+			print(HipParams)
 		self.params['HipParamsID'] = HipParams.dbid
-		print "self.params['HipParamsID']",self.params['HipParamsID']
+		print("self.params['HipParamsID']",self.params['HipParamsID'])
 		return
 
 	#=====================
@@ -460,9 +460,9 @@ class HipScript(appionScript.AppionScript):
 			if self.params['commit'] is True:
 				HipIter.insert()	
 			else:
-				print HipIter
+				print(HipIter)
 			self.params['HipIterID'] = HipIter.dbid
-			print "self.params['HipIterID']",self.params['HipIterID']
+			print("self.params['HipIterID']",self.params['HipIterID'])
 		return
 
 	#=====================
@@ -546,7 +546,7 @@ class HipScript(appionScript.AppionScript):
 			if self.params['commit'] is True:
 				HipParticle.insert()
 			self.params['HipParticleID'] = HipParticle.dbid
-			print "self.params['HipParticleID']",self.params['HipParticleID']
+			print("self.params['HipParticleID']",self.params['HipParticleID'])
 		return
 	#=====================
 	def start(self):

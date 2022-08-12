@@ -1,4 +1,4 @@
-import processingHost
+from . import processingHost
 import subprocess
 
 # dcshrum@fsu.edu

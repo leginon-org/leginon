@@ -9,7 +9,7 @@ import re
 import time
 import math
 import random
-import cPickle
+import pickle
 import glob
 import shutil
 import subprocess
@@ -104,7 +104,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 					while jobn <= self.params['njobs'] and imgnum < len(self.imgtree):
 						#process image(s)
 						#finish up stuff
-						print 2
+						print(2)
 						self.stats['startimage'] = time.time()
 						imgdata = self.imgtree[imgnum]
 						imgnum += 1
@@ -117,7 +117,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 						#process image(s)
 						scratchdir=self._setupScratchDir(imgdata)
 						apDisplay.printMsg('Copying %s data to %s' % (imgdata['filename'], scratchdir))
-						print self.params['handlefiles']
+						print(self.params['handlefiles'])
 						targetdict=self.getTargets(imgdata, scratchdir=scratchdir, handlefiles=self.params['handlefiles'])
 						if len(targetdict) == 0:
 							continue
@@ -135,7 +135,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 						
 						#print command
 						if self.params['dryrun'] is True:
-							print "setting up only the first job and exiting"
+							print("setting up only the first job and exiting")
 							sys.exit()
 						self.launchPBSJob(scratchdir, jobname)
 						# Give system time to start
@@ -175,9 +175,9 @@ class AppionPBS(appionLoop2.AppionLoop):
 					#process image(s)
 					targetdict=self.getTargets(imgdata)
 					command=self.generateCommand(imgdata,targetdict)
-					print command
+					print(command)
 					if self.params['dryrun'] is True:
-						print "just printing the command and exiting"
+						print("just printing the command and exiting")
 						sys.exit()
 					self.executeCommand(command)
 					results=self.collectResults(imgdata)
@@ -279,7 +279,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 		#HACK to remove frames
 		#f.write ('rm -r *.mrc')
 		f.close()
-		print jobpath
+		print(jobpath)
 		return(jobname,donefile)
 
 	#def setupJob(self, command):
@@ -292,7 +292,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 
 	def launchPBSJob(self,scratchdir, jobname):
 		command=[]
-		print self.params['rundir']
+		print(self.params['rundir'])
 		cwd=os.getcwd()
 		os.chdir(scratchdir)
 		if self.params['queue_style']=='PBS':
@@ -311,12 +311,12 @@ class AppionPBS(appionLoop2.AppionLoop):
 				command.append(self.params['queue_name'])
 				
 		command.append(jobname)
-		print command
+		print(command)
 		subprocess.call(command)
 		os.chdir(cwd)
 	
 	def checkJob(self,jobdict):
-		print "job",os.path.join(jobdict['scratchdir'],jobdict['jobname'])
+		print("job",os.path.join(jobdict['scratchdir'],jobdict['jobname']))
 		# wait for donefile to appear
 		apDisplay.printMsg("waiting for %s" % jobdict['donefile'])
 		jobouts=glob.glob(os.path.join(jobdict['scratchdir'],jobdict['donefile']))
@@ -394,7 +394,7 @@ class BinLoop(AppionPBS):
 		return {}	
 
 	def commitToDatabase(self,imgdata):
-		print 'this is where you would commit stuff'
+		print('this is where you would commit stuff')
 		return
 		
 	def getTargets(self, imgdata, scratchdir='', handlefiles='direct'):
@@ -426,8 +426,8 @@ class BinLoop(AppionPBS):
 
 #=====================
 if __name__ == '__main__':
-	print "__init__"
+	print("__init__")
 	imageiter = BinLoop()
-	print "run"
+	print("run")
 	imageiter.run()
 

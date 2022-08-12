@@ -62,14 +62,14 @@ class Prep3DRefinement(appionScript.AppionScript):
 		if self.params['runname'] is None:
 			apDisplay.printError("new runname was not defined")
 		self.params['totalpart'] = apStack.getNumberStackParticlesFromId(self.params['stackid'])
-		if 'last' not in self.params.keys() or self.params['last'] is None:
+		if 'last' not in list(self.params.keys()) or self.params['last'] is None:
 			self.params['last'] = self.params['totalpart']
 		self.boxsize = apStack.getStackBoxsize(self.params['stackid'], msg=False)
 		self.apix = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 		self.refineboxsize = self.boxsize * self.params['bin']
 		### set cs value
 		self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
-		self.modelids = map((lambda x: int(x)),self.params['modelid'].split(','))
+		self.modelids = list(map((lambda x: int(x)),self.params['modelid'].split(',')))
 		self.checkPackageConflicts()
 
 	#=====================
@@ -261,7 +261,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 	#=====================
 	def __saveFilesToSend(self):
 		f = open(os.path.join(self.params['rundir'],'files_to_remote_host'), 'w')
-		f.writelines(map((lambda x: x+'\n'),self.files_to_send))
+		f.writelines(list(map((lambda x: x+'\n'),self.files_to_send)))
 		f.close()
 
 	#=====================
@@ -319,7 +319,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		prepq['session'] = leginondata.SessionData.direct_query(self.params['expid'])
 		prepq['method'] = self.refinemethod
 		prepq['description'] = self.params['description']
-		if 'reconiterid' in self.params.keys() and self.params['reconiterid'] is not None:
+		if 'reconiterid' in list(self.params.keys()) and self.params['reconiterid'] is not None:
 			prepq['paramiter'] = appiondata.ApRefineIterData.direct_query(self.params['reconiterid'])
 		r = prepq.query()
 		if not r:

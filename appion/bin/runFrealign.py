@@ -134,7 +134,7 @@ def setupParserOptions(parser):
 def parserToParams(parser):
 	(options, args) = parser.parse_args()
 	if len(args) > 0:
-		print "Unknown command line arguments: ", args
+		print("Unknown command line arguments: ", args)
 		sys.exit()	
 	if len(sys.argv) < 2:
 		parser.print_help()
@@ -168,7 +168,7 @@ def checkConflicts(params):
 #	self.params['nproc'] = self.params['nodes']*self.params['ppn']
 	### get the symmetry data
 	if params['sym'] is None:
-		print "Error: Symmetry was not defined"
+		print("Error: Symmetry was not defined")
 		sys.exit()
 
 def bc(val):
@@ -305,7 +305,7 @@ def createFrealignJobFile(params, jobfile, outparname, first=1, last=None, recon
 	f.write('echo "END FREALIGN"\n')
 	f.write('\n')
 	f.close()
-	os.chmod(jobfile, 0755)
+	os.chmod(jobfile, 0o755)
 
 #===============
 def createMultipleJobs(params):
@@ -362,7 +362,7 @@ def combineParameterFiles(params):
 				totparams+=1
 	outpar.close()
 	if totparams!=params['last']:
-		print "Error: The number of particle parameters (",totparams,")does not equal the total number of particles(",params['last'],")"
+		print("Error: The number of particle parameters (",totparams,")does not equal the total number of particles(",params['last'],")")
 		sys.exit()
 
 def launchAlignJobs(params):
@@ -379,7 +379,7 @@ def launchJob(params, jobname):
 		cmd.append('-q')
 		cmd.append(params['queue'])
 	cmd.append(jobname)
-	print cmd
+	print(cmd)
 	proc=subprocess.Popen(cmd,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	proc.wait()
 	if params['launcher'] is not None:
@@ -419,9 +419,9 @@ def checkJobs(params, jobids):
 			finishedids.append(finished.split('.')[-1][1:])
 		for job in jobids:
 			if job not in finishedids:
-				print finishedids, jobids
+				print(finishedids, jobids)
 				running=True
-				print 'waiting 5 minutes for jobs to finish'
+				print('waiting 5 minutes for jobs to finish')
 				time.sleep(300)
 				break
 
@@ -436,17 +436,17 @@ def cleanUp(params):
 	files+='frealign*.out' + ' '
 	files+='frealign*.sh.*' + ' '
 	command='tar cf %s %s' % (params['outtar'],files)
-	print command
+	print(command)
 	os.system(command)
 	
 	command='rm %s' % (files)
-	print command
+	print(command)
 	os.system(command)
 
 
 if __name__ =='__main__':
 	
-	print "\n\n"
+	print("\n\n")
 	#setup
 	parser=optparse.OptionParser()
 	setupParserOptions(parser)
@@ -459,7 +459,7 @@ if __name__ =='__main__':
 	
 
 	#create working volume
-	print "Creating working volume"
+	print("Creating working volume")
 	extension=params['invol'].split('.')[-1]
 	if extension=='mrc':
 		params['cform']='M'
@@ -471,7 +471,7 @@ if __name__ =='__main__':
 		imagicroot=os.path.splitext(params['invol'])[0]
 		copyImagic(imagicroot,'working')
 	else:
-		print "Warning: Assuming SPIDER format."
+		print("Warning: Assuming SPIDER format.")
 		params['cform']='S'
 		params['working']='working.spi'		
 		shutil.copyfile(params['invol'],params['working'])
@@ -482,7 +482,7 @@ if __name__ =='__main__':
 	#launch jobs
 	if params['setuponly'] is False:
 		jobids=launchAlignJobs(params)
-		print "Align jobs are", jobids
+		print("Align jobs are", jobids)
 		
 		if params['launcher'] is not None:  #only run this if launcher is specified because non cluster option waits for individual jobs to finish
 			checkJobs(params,jobids)		
@@ -491,15 +491,15 @@ if __name__ =='__main__':
 		combineParameterFiles(params)
 	
 		#launch recon job
-		print "Launching reconstruction job"
+		print("Launching reconstruction job")
 		combinejob=[]
 		combinejob.append(launchJob(params,params['combinejob']))
-		print "Reconstruction job is",combinejob
+		print("Reconstruction job is",combinejob)
 		if params['launcher'] is not None:
 			checkJobs(params,combinejob)
 
 		#copy new volume to outvol
-		print "Copying working volume to outvol"
+		print("Copying working volume to outvol")
 		if params['cform']=='M' or params['cform']=='S':
 			shutil.copyfile(params['working'],params['outvol'])
 		elif params['cform']=='I':
@@ -511,4 +511,4 @@ if __name__ =='__main__':
 		cleanUp(params)
 
 
-	print "Done!"
+	print("Done!")

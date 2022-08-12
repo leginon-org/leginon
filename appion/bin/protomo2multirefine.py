@@ -4,7 +4,7 @@
 # It is highly recommended that this script be run using commands generated through the Appion-Protomo web interface.
 # In the future this should be written to include differing search areas.
 
-from __future__ import division
+
 import os
 import sys
 import glob

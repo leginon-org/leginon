@@ -40,8 +40,8 @@ def printParams(params):
 	a = params['a']
 	b = params['b']
 	alpha = params['alpha']
-	print ("ellip: %.1f x %.1f < %.1f deg"%
-		(a, b, math.degrees(alpha)))
+	print(("ellip: %.1f x %.1f < %.1f deg"%
+		(a, b, math.degrees(alpha))))
 	return
 
 #=========================
@@ -70,7 +70,7 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001,
 	shrinkEdgeMap = numpy.float64(trimZeroEdges(edgeMap))
 	#shrinkEdgeMap = numpy.float64(edgeMap)
 	shape = shrinkEdgeMap.shape
-	print "RANSAC shape", shape
+	print("RANSAC shape", shape)
 
 	## make a list of edges, with x, y radii
 	bottomEdgeMap = numpy.copy(shrinkEdgeMap)
@@ -92,12 +92,12 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001,
 
 	numEdges = shrinkEdgeMap.sum()
 	if numEdges != len(edgeList):
-		print "something weird in array sizes"
+		print("something weird in array sizes")
 		return None
 
 	numSamples = 4
 	if numEdges < numSamples:
-		print "not enough edges"
+		print("not enough edges")
 		return None
 
 	## count rejects
@@ -127,25 +127,25 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001,
 		currentProb = currentProb**(1.0/numSamples)
 
 		if iternum % 500 == 0:
-			print ("RANSAC iter=%d/%d, points=%d, need=%d->%d, bestProb=%.1f, timePer=%.4f"
+			print(("RANSAC iter=%d/%d, points=%d, need=%d->%d, bestProb=%.1f, timePer=%.4f"
 				%(iternum, maxiter, mostGoodPoints, currentProb*numEdges, 
 					finalMinEdges, mostGoodPoints/float(numEdges)*100, 
-					(time.time()-t0)/float(iternum)))
+					(time.time()-t0)/float(iternum))))
 
 		## check to see if we can stop
 		if mostGoodPoints > currentProb*numEdges:
 			#currentProb = mostGoodPoints/float(numEdges)
 			#print "currentProb", currentProb
 			#successProb = 1.0 - math.exp( iternum * math.log(1.0 - currentProb**numSamples) )
-			print "\nRANSAC SUCCESS"
+			print("\nRANSAC SUCCESS")
 			break
 
 		if currentProb < minPercentGoodPoints:
-			print "\nRANSAC FAILURE"
+			print("\nRANSAC FAILURE")
 			break
 
 		if iternum >= maxiter:
-			print "\nRANSAC GAVE UP"
+			print("\nRANSAC GAVE UP")
 			break
 
 		#choose random edges
@@ -161,7 +161,7 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001,
 			currentEdges.append(random.choice(rightEdgeList))
 		##NEIL IDEA: could select a random edge instead of an edge point???
 		if len(currentEdges) < 3:
-			print "error not enough edges"
+			print("error not enough edges")
 			break
 		currentEdges = numpy.array(currentEdges, dtype=numpy.int16)
 
@@ -277,18 +277,18 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001,
 	#bestEllipseList = numpy.array(numpy.where(bestEllipseMap), dtype=numpy.float64).transpose() - center
 	#betterEllipseParams = ellipse.solveEllipseOLS(bestEllipseList)
 
-	print "total iterations", iternum
-	print "\tpercent good points %.1f"%(mostGoodPoints/float(numEdges)*100)
-	print "\ttime per iter %.2f ms"%(1000.*(time.time()-t0)/float(iternum))
-	print "\tvalid ellipses", validEllipse
-	print "\toff-center rejects", distReject
-	print "\tlarge area rejects", areaReject
-	print "\tlarge radius rejects", sizeReject
-	print "\toblong ratio rejects", ratioReject
+	print("total iterations", iternum)
+	print("\tpercent good points %.1f"%(mostGoodPoints/float(numEdges)*100))
+	print("\ttime per iter %.2f ms"%(1000.*(time.time()-t0)/float(iternum)))
+	print("\tvalid ellipses", validEllipse)
+	print("\toff-center rejects", distReject)
+	print("\tlarge area rejects", areaReject)
+	print("\tlarge radius rejects", sizeReject)
+	print("\toblong ratio rejects", ratioReject)
 	if bestEllipseParams is not None:
 		printParams(bestEllipseParams)
 	else:
-		print "Fit failed"
+		print("Fit failed")
 		return None
 
 	return bestEllipseParams
@@ -383,7 +383,7 @@ if __name__ == "__main__":
 
 	t0 = time.time()
 	ellipseParams = ellipseRANSAC(edgeMap)
-	print time.time()-t0, "seconds"
+	print(time.time()-t0, "seconds")
 
 	if ellipseParams is None:
 		raise

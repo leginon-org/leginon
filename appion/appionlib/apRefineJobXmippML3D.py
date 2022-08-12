@@ -6,7 +6,7 @@
 #python
 import os
 import time
-import cPickle
+import pickle
 #appion
 from appionlib import apRefineJob
 from appionlib import apDisplay
@@ -141,7 +141,7 @@ class XmippML3DRefineJob(apRefineJob.RefineJob):
 		### write out python protocol into run directory
 		protocolfile = os.path.join(self.params['remoterundir'],"%s.py" % protocolname)
 		apXmipp.particularizeProtocol(protocol_ml3d, protocolPrm, protocolfile)
-		os.chmod(os.path.join(self.params['rundir'], protocolfile), 0775)
+		os.chmod(os.path.join(self.params['rundir'], protocolfile), 0o775)
 				
 		### Write the parameters for posterior uploading, both generic and specific
 		self.runparams = {}
@@ -162,7 +162,7 @@ class XmippML3DRefineJob(apRefineJob.RefineJob):
 		return protocolfile, protocolPrm
 	
 	def makeNewTrialScript(self):
-		print self.params['modelnames'][0]
+		print(self.params['modelnames'][0])
 		self.addSimpleCommand('ln -s %s %s' % (self.params['modelnames'][0], 
 			os.path.join(self.params['remoterundir'], self.params['modelnames'][0])))
 		partar = os.path.join(self.params['remoterundir'],'partfiles.tar.gz')

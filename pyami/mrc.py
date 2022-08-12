@@ -322,8 +322,12 @@ def parseHeader(headerbytes):
 	## remainder of data are text labels
 	## ** should use numpy.frombuffer or http://construct.wikispaces.com/
 	headerarray = {}
-	headerarray['float32'] = numpy.fromstring(headerbytes, dtype=ftype, count=224)
-	headerarray['int32'] = numpy.fromstring(headerbytes, dtype=itype, count=224)
+	try:
+		headerarray['float32'] = numpy.fromstring(headerbytes, dtype=ftype, count=224)
+		headerarray['int32'] = numpy.fromstring(headerbytes, dtype=itype, count=224)
+	except:
+		headerarray['float32'] = numpy.fromfile(headerbytes, dtype=ftype, count=224)
+		headerarray['int32'] = numpy.fromfile(headerbytes, dtype=itype, count=224)
 
 	## fill in header dictionary with all the info
 	newheader = {}
@@ -359,8 +363,8 @@ def parseHeader(headerbytes):
 	## header, which may be invalid.  This allows the data to be read
 	## properly.  Also figure out the numpy shape of the data from dimensions.
 	dtype = numpy.dtype(mrc2numpy[newheader['mode']])
-	if swapped:
-		dtype = dtype.newbyteorder()
+	# if swapped:
+	# 	dtype = dtype.newbyteorder()
 	newheader['dtype'] = dtype
 	if newheader['nz'] > 1:
 		## 3D data
@@ -486,6 +490,8 @@ Create a 1024 byte header string from a header dictionary.
 			length = field[2]
 			nzeros = length - len(value)
 			if value:
+				if type(value) == str:
+					value = value.encode()
 				fullfield = value + zeros(nzeros)
 			else:
 				# empty string remains as str type and can not __add__ to bytes in python3

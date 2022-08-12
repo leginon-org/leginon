@@ -815,7 +815,7 @@ class OptiMod(appionScript.AppionScript):
 			apXmipp.breakupStackIntoSingleFiles(ravgs)
 			xmippcmd = "xmipp_normalize -i partlist.sel -method OldXmipp"
 			apParam.runCmd(xmippcmd, "Xmipp")
-			for i in classes.keys():
+			for i in list(classes.keys()):
 				emancmd = "proc3d %s %s scale=%.3f clip=%d,%d,%d mask=%s spidersingle" \
 					% (os.path.join(rundir, "%d.mrc" % i), "%d.vol" % i, \
 						(1/self.scalefactor), rbox, rbox, rbox, (mrad / rapix))
@@ -857,7 +857,7 @@ class OptiMod(appionScript.AppionScript):
 		
 		### make chimera snapshots
 		if refine is True:
-			for i in classes.keys():
+			for i in list(classes.keys()):
 				if self.params['mass'] is not None:
 					apChimera.filterAndChimera(
 						os.path.join(self.params['rundir'], "%d_r.mrc" % i),

@@ -3,7 +3,7 @@ import os
 import sys
 import math
 import time
-import cPickle
+import pickle
 #appion
 from appionlib import apDisplay
 from appionlib import apRefineJob
@@ -74,8 +74,8 @@ class RelionSingleModelRefineJob(apRefineJob.RefineJob):
 		'''
 		# use a list, the index starts at zero.
 		degreeToOrderMap = {30:0,15:1,7.5:2,3.7:4,1.8:5,.9:6,.5:7,.2:8,.1:9}
-		print degreeToOrderMap
-		print degrees, type(degrees)
+		print(degreeToOrderMap)
+		print(degrees, type(degrees))
 		degrees = float(degrees)
 		return degreeToOrderMap[degrees]
 
@@ -141,7 +141,7 @@ class RelionSingleModelRefineJob(apRefineJob.RefineJob):
 		
 		command += relionProgramLocation
 		
-		for (key, value) in relionParams.items():
+		for (key, value) in list(relionParams.items()):
 			if ( value is True):
 				command += "--" + key + " "
 			elif ( value is False):

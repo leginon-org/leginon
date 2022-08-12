@@ -6,11 +6,11 @@ from math import pi
 try:
 	import EMAN
 except ImportError:
-	print "EMAN module did not get imported"
+	print("EMAN module did not get imported")
 
 if __name__ == "__main__":
 	if len(sys.argv) !=3:
-		print "Usage: getProjEulers.py <infile> <outfile>\n"
+		print("Usage: getProjEulers.py <infile> <outfile>\n")
 		sys.exit(1)
 
 	projfile = sys.argv[1]

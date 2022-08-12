@@ -123,7 +123,7 @@ class MaskMaker(appionLoop2.AppionLoop):
 			return
 		regionlines=""
 		try:
-			infos.keys()
+			list(infos.keys())
 		except:
 			offset=0
 		else:

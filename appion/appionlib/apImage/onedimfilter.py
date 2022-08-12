@@ -86,7 +86,7 @@ def reflectTanhLowPassFilter(data, radius, apix=1.0, bin=1, fuzzyEdge=4):
 	flipdata = numpy.real(numpy.fft.ifft(fftdata))
 	truncate = numpy.copy(flipdata[:halfsize])
 	if numpy.any(numpy.isnan(truncate)):  #note does not work with 'is True'
-		print(numpy.around(data[:15]))
+		print((numpy.around(data[:15])))
 		apDisplay.printError("All values NaN from tanh filter")
 	return truncate
 
@@ -116,7 +116,7 @@ def reflectTanhHighPassFilter(data, radius, apix=1.0, bin=1, fuzzyEdge=4):
 	flipdata = numpy.real(numpy.fft.ifft(fftdata))
 	truncate = numpy.copy(flipdata[:halfsize])
 	if numpy.any(numpy.isnan(truncate)):  #note does not work with 'is True'
-		print(numpy.around(data[:15]))
+		print((numpy.around(data[:15])))
 		apDisplay.printError("All values NaN from tanh filter")
 	return truncate
 
@@ -156,7 +156,7 @@ if __name__ == '__main__':
 						  0.467,0.450,0.126,0.188,0.146,0.185,0.395,0.156,-0.184,-0.298,-0.246,-0.287,
 						  ])
 	#a = numpy.hstack([a[::-1], a])
-	print len(a)
+	print(len(a))
 	b = tanhLowPassFilter(a, 3)
 	c = reflectTanhLowPassFilter(a, 3)
 	d = scipy.ndimage.gaussian_filter1d(a, 2)

@@ -13,8 +13,8 @@ from scipy import ndimage, optimize
 try:
 	import radermacher
 except:
-	print "using slow tilt angle calculator"
-	import slowmacher as radermacher
+	print("using slow tilt angle calculator")
+	from . import slowmacher as radermacher
 from appionlib import apDisplay
 from appionlib import apPeaks
 from appionlib import apImage

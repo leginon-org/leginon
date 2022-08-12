@@ -127,8 +127,8 @@ class VeryBasicScript(object):
 				appions[p] = None
 			if "leginon" in p:
 				leginons[p] = None
-		leginons = leginons.keys()
-		appions = appions.keys()
+		leginons = list(leginons.keys())
+		appions = list(appions.keys())
 #		if len(appions) > 1:
 #			apDisplay.printWarning("There is more than one appion directory in your PYTHONPATH")
 #			print appions

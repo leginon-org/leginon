@@ -14,7 +14,7 @@ from pyami import imagic2mrc
 def checkImagicExecutablePath():
 	### check for IMAGIC installation
 	d = os.environ
-	if d.has_key('IMAGIC_ROOT'):
+	if 'IMAGIC_ROOT' in d:
 		imagicroot = d['IMAGIC_ROOT']
 	else:
 		apDisplay.printError("$IMAGIC_ROOT directory is not specified, please specify this in your .cshrc / .bashrc")	
@@ -55,7 +55,7 @@ def executeImagicBatchFile(filename, showcmd=True, verbose=False, logfile=None):
 		if verbose is True:
 			out, err = process.communicate()
 			if out is not None and err is not None:
-				print "IMAGIC error", out, err
+				print("IMAGIC error", out, err)
 		else:
 			out, err = process.communicate()
 			### continuous check
@@ -73,7 +73,7 @@ def executeImagicBatchFile(filename, showcmd=True, verbose=False, logfile=None):
 	if tdiff > 20:
 		apDisplay.printMsg("completed in "+apDisplay.timeString(tdiff))
 	elif waited is True:
-		print ""
+		print("")
 
 #======================
 def copyFile(path, file, headers=False):

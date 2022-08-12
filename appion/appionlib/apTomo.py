@@ -1,4 +1,4 @@
-from __future__ import division
+
 import os
 import time
 import math
@@ -176,7 +176,7 @@ def getImageDose(imagedata):
 	return dose
 
 def getAccumulatedDoses(imagelist):
-	doselist = map((lambda x:getImageDose(x)),imagelist)
+	doselist = list(map((lambda x:getImageDose(x)),imagelist))
 	dosearray = numpy.array(doselist)
 	cumarray = numpy.cumsum(dosearray)
 	return cumarray.tolist()
@@ -202,7 +202,7 @@ def orderImageList(frame_tiltdata, non_frame_tiltdata=None, frame_aligned="True"
 	start_tilt = tiltseries['tilt start']
 	if start_tilt == tiltseries['tilt max'] or start_tilt == tiltseries['tilt min']:
 		# Assume tilts are incremental
-		tiltkeys = map((lambda x: math.degrees(x['scope']['stage position']['a'])),imagelist)
+		tiltkeys = list(map((lambda x: math.degrees(x['scope']['stage position']['a'])),imagelist))
 		
 		accumulate_dose = getAccumulatedDoses(imagelist)
 		return tiltkeys,imagelist,accumulate_dose,mrc_files,int(len(tiltkeys)*0.5)
@@ -237,7 +237,7 @@ def orderImageList(frame_tiltdata, non_frame_tiltdata=None, frame_aligned="True"
 	for i,dose_imagedata in enumerate(dose_imagelist):
 		dose_list.append(getImageDose(dose_imagedata))
 	
-	tiltkeys = tiltangledict.keys(); tiltkeys2 = tiltangledict2.keys()
+	tiltkeys = list(tiltangledict.keys()); tiltkeys2 = list(tiltangledict2.keys())
 	tiltkeys.sort(); tiltkeys2.sort()
 	ordered_imagelist = []
 	accumulated_dose_list=[]
@@ -263,7 +263,7 @@ def orderImageList(frame_tiltdata, non_frame_tiltdata=None, frame_aligned="True"
 			return tiltkeys,ordered_imagelist,dose_list,accumulated_dose_list,mrc_files,refimg,defocus_list,apDatabase.getPixelSize(imagedata),dose_imagedata['scope']['magnification']
 	else:
 		# testing with half the data
-		print len(tiltkeys),refimg
+		print(len(tiltkeys),refimg)
 		cut = refimg-1
 		cut2 = len(tiltkeys) -refimg -1
 		cutlist = ordered_imagelist[cut:-cut2]
@@ -271,7 +271,7 @@ def orderImageList(frame_tiltdata, non_frame_tiltdata=None, frame_aligned="True"
 		cutfiles = mrc_files[cut:-cut2]
 		cutdoses = accumulated_dose_list[cut:-cut2]
 		refimg = refimg - cut 
-		print len(cutlist),refimg
+		print(len(cutlist),refimg)
 		return cuttilts,cutlist,cutdoses,cutfiles,refimg
 
 def getCorrelatorBinning(imageshape):
@@ -357,7 +357,7 @@ def alignZeroShiftImages(imagedata1,imagedata2,bin):
 			s = array1.shape
 			minsize = min(s)
 			size = int(minsize / bin) # floored
-			f = map((lambda x: int((x-size*bin)/2)),s) #offsets
+			f = list(map((lambda x: int((x-size*bin)/2)),s)) #offsets
 			array1 = imagefun.bin(array1[f[0]:f[0]+size*bin,f[1]:f[1]+size*bin], bin)
 			array2 = imagefun.bin(array2[f[0]:f[0]+size*bin,f[1]:f[1]+size*bin], bin)
 		shift = simpleCorrelation(array1,array2)
@@ -375,7 +375,7 @@ def alignImages(imagedata1,imagedata2):
 	s = array1.shape
 	minsize = min(s)
 	size = int(minsize)
-	f = map((lambda x: int((x-size)/2)),s) #offsets
+	f = list(map((lambda x: int((x-size)/2)),s)) #offsets
 	array1 = imagefun.bin(array1[f[0]:f[0]+size,f[1]:f[1]+size], 1)
 	array2 = imagefun.bin(array2[f[0]:f[0]+size,f[1]:f[1]+size], 1)
 	shift = simpleCorrelation(array1,array2)
@@ -720,7 +720,7 @@ def uploadTomo(params):
 		index = len(results)+1
 		pixelsize = 1e-10 * apix * subbin
 		runname = params['volume']
-		shape = map((lambda x: x * subbin), params['shape'])
+		shape = list(map((lambda x: x * subbin), params['shape']))
 		dimension = {'x':shape[2],'y':shape[1], 'z':shape[0]}
 		subtomorundata = insertSubTomoRun(sessiondata,
 				None,None,runname,params['invert'],subbin)
@@ -871,7 +871,7 @@ def makeMovie(filename,xsize=512):
 		renders = {'a':{'axis':0,'axisname':'z'},'b':{'axis':1,'axisname':'y'}}
 	else:
 		renders = {'a':{'axis':1,'axisname':'y'},'b':{'axis':0,'axisname':'z'}}
-	keys = renders.keys()
+	keys = list(renders.keys())
 	keys.sort()
 	for key in keys:
 		axis = renders[key]['axis']
@@ -905,7 +905,7 @@ def makeProjection(filename,xsize=512):
 		renders = {'a':{'axis':0,'axisname':'z'},'b':{'axis':1,'axisname':'y'},'c':{'axis':2,'axisname':'x'}}
 	else:
 		renders = {'a':{'axis':1,'axisname':'y'},'b':{'axis':0,'axisname':'z'},'c':{'axis':2,'axisname':'x'}}
-	keys = renders.keys()
+	keys = list(renders.keys())
 	keys.sort()
 	for key in keys:
 		apDisplay.printMsg('project to axis %s' % renders[key]['axisname'])
@@ -989,7 +989,7 @@ def transformTomo(a,name,package,alignpdata,zshift=0.0,bin=1):
 	shift = (alignpdata['xshift']/bin,alignpdata['yshift']/bin,zshift)
 	angle = alignpdata['rotation']
 	mirror = alignpdata['mirror']
-	print 'shift= (%.2f, %.2f, %.2f)' % shift, 'rotate=%.1f deg' % (angle,), 'upside-down=',mirror
+	print('shift= (%.2f, %.2f, %.2f)' % shift, 'rotate=%.1f deg' % (angle,), 'upside-down=',mirror)
 	"""
 		zoom the array by 2 to get better interpretation of noisy volume and then
 		use numpy affine transform to rotate and shift. prefilter should be False to 
@@ -1001,8 +1001,8 @@ def transformTomo(a,name,package,alignpdata,zshift=0.0,bin=1):
 	### order=1 copies values
 	b = ndimage.zoom(a,scale,mode='nearest',prefilter=False,order=1)
 	shape = b.shape
-	center = map((lambda x: x / 2), list(b.shape))
-	shift2 = map((lambda x: x * scale), list(shift))
+	center = list(map((lambda x: x / 2), list(b.shape)))
+	shift2 = list(map((lambda x: x * scale), list(shift)))
 	inboxtuple = list(a.shape)
 	inboxtuple.reverse()
 	if mirror is True:

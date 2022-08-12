@@ -135,7 +135,7 @@ def replaceFormattedStack(stackdata, format, sourcedir,sourcefile):
 		partfilesdir = os.path.join(formattedstackdir,'partfiles')
 		shutil.rmtree(partfilesdir)
 		shutil.copytree('partfiles',os.path.join(formattedstackdir,'partfiles'))
-	elif format in stack_exts.keys():
+	elif format in list(stack_exts.keys()):
 		sourceroot = os.path.splitext(sourcefile)[0]
 		for ext in stack_exts[format]:
 			shutil.copy(sourceroot+ext,os.path.join(formattedstackdir,stackroot+ext))

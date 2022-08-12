@@ -101,6 +101,6 @@ def getAlignedSiblings(fromimage):
 		# Should only have one but if more, take the most recent.
 		sourceimage = pairs[0]['source']
 		allpairs = appiondata.ApDDAlignImagePairData(source=sourceimage).query()
-		siblings = map((lambda x: x['result']), allpairs)
+		siblings = list(map((lambda x: x['result']), allpairs))
 		return siblings
 

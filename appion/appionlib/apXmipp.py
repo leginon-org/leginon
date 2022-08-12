@@ -99,9 +99,9 @@ class breakUpStack(apImagicFile.processStack):
 			try:
 				spider.write(partarray, partfile)
 			except:
-				print partarray
+				print(partarray)
 				apDisplay.printWarning("failed to write spider file for part index %d"%(self.index))
-				print partarray.shape
+				print(partarray.shape)
 				spider.write(partarray, partfile)
 		self.partdocf.write(os.path.abspath(partfile)+" 1\n")
 
@@ -220,7 +220,7 @@ def gatherSingleFilesIntoStack(selfile, stackfile, filetype="spider"):
 	### merge stacks
 	apFile.removeStack(stackfile, warn=False)
 	apImagicFile.mergeStacks(stacklist, stackfile)
-	print stackfile
+	print(stackfile)
 	filepart = apFile.numImagesInStack(stackfile)
 	if filepart != numpart:
 		apDisplay.printError("number merged particles (%d) not equal number expected particles (%d)"%
@@ -282,7 +282,7 @@ def particularizeProtocol(protocolIn, parameters, protocolOut):
 		if endOfHeader:
 			fileOut.write(line)
 		else:
-			for key in parameters.keys():
+			for key in list(parameters.keys()):
 				if not re.match('^'+key,line) is None:
 					line=key+'='+repr(parameters[key])+'\n'
 					break
@@ -299,8 +299,8 @@ def searchTwoLineTextsInFile(filepath,texts):
 	maskline_index=None
 	for l,line in enumerate(lines):
 		if texts[0] in line:
-			print 'candidate line:',line
-			print len(texts)
+			print('candidate line:',line)
+			print(len(texts))
 			if len(texts) == 1:
 				maskline_index=l
 			elif len(texts) == 2 and texts[1] in lines[l+1]:
@@ -336,7 +336,7 @@ def removeBadFilterInRefineOnlyProtocol(protocol):
 	fileIn = open(protocol)
 	fileOut = open(tmp_protocol,'w')
 	maskline_index=searchTwoLineTextsInFile(protocol,['globalFourierMaxFrequencyOfInterest=filter_at_given_resolution'])
-	print 'global',maskline_index
+	print('global',maskline_index)
 	# Making masklines
 	lines = fileIn.readlines()
 	fileIn.close()
@@ -438,8 +438,8 @@ def checkSelOrDocFileRootDirectoryInDirectoryTree(directory, remote_basedir, loc
 	if remote_basedir != local_basedir:
 		modifier = filePathModifier()
 		remote_root, local_root = modifier.findUncommonPathPrefix(remote_basedir, local_basedir)
-		print "remote cluster root path is: ", remote_root
-		print "local cluster root path is: ", local_root
+		print("remote cluster root path is: ", remote_root)
+		print("local cluster root path is: ", local_root)
 			
 		### modify all .sel and .doc files using old_rootdir (remote_root) and new_rootdir (local_root) arguments
 		matches = []
@@ -529,8 +529,8 @@ def importProtocolPythonFile(protocolscript, rundir):
 		if not rundir in sys.path:
 			sys.path.append(os.path.abspath(rundir))
 		p = __import__(protocolscript)		
-	except ImportError, e:
-		print e, "cannot open protocol script, trying to open backup file"
+	except ImportError as e:
+		print(e, "cannot open protocol script, trying to open backup file")
 		try:
 			for root, dirs, files in os.walk(rundir):
 				for name in files:
@@ -538,8 +538,8 @@ def importProtocolPythonFile(protocolscript, rundir):
 						if not root in sys.path:
 							sys.path.append(root)				
 			p = __import__(protocolscript+"_backup")
-		except ImportError, e:
-			print e, "cannot open backup protocol file"
+		except ImportError as e:
+			print(e, "cannot open backup protocol file")
 			apDisplay.printError("could not find protocol file: %s ... try uploading as an external refinement" % protocolscript)
 	return p
 
@@ -553,9 +553,9 @@ def convertSymmetryNameForPackage(inputname):
 	# (5 3 2) EMAN and (2 5 3) crowther icos would have been converted into (2 3 5) 3dem orientation during the preparation
 	xmipp_hedral_symm_names = {'oct':'O','icos (2 3 5) viper/3dem':'I1','icos (2 5 3) crowther':'I1','icos (5 3 2) eman':'I1'}
 	inputname = inputname.lower()
-	if inputname[0] in ('c','d') or inputname in xmipp_hedral_symm_names.values():
+	if inputname[0] in ('c','d') or inputname in list(xmipp_hedral_symm_names.values()):
 		symm_name = inputname.lower().split()[0]
-	elif inputname in xmipp_hedral_symm_names.keys():
+	elif inputname in list(xmipp_hedral_symm_names.keys()):
 		symm_name = xmipp_hedral_symm_names[inputname]
 	else:
 		symm_name = inputname.upper()
@@ -587,7 +587,7 @@ def removeMirrorFromDocfile(docfile_old, docfile_new):
 			count += 1
 	dfn.write("\n")
 	### modify Eulers and write to new docfile
-	for partnum, params in particles.iteritems():
+	for partnum, params in particles.items():
 		dfn.write(" ; %s\n" % params['filename'])
 		p = params['values']
 		phi = float(p[2])

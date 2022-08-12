@@ -91,7 +91,7 @@ class UploadCTF(appionScript.AppionScript):
 			if len(cols) == 15:
 				imgid, nominal, def1, def2, angle, ampcont, extra_phase_shift, res8, res5, res_pkg, conf30, conf5, conf, conf_appion, imgname = cols
 			else:
-				print "skipping line"
+				print("skipping line")
 				continue
 			imgid = int(imgid)
 			if imgid:

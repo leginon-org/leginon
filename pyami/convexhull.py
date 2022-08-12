@@ -60,7 +60,7 @@ def isPointInPolygon(r, P0):
 	P=list(P0)
 	if (P[0] !=P[-1]):
 		P.append(P[0])
-	for i in xrange(len(P[:-1])):
+	for i in range(len(P[:-1])):
 		p, q = P[i], P[i+1]
 		if not (r==p or r==q):
 			if not _isRightTurnOrColinear((p, q, r)):
@@ -73,7 +73,7 @@ def _isPointOnlyInPolygon(r, P0):
 	P=list(P0)
 	if (P[0] !=P[-1]):
 		P.append(P[0])
-	for i in xrange(len(P[:-1])):
+	for i in range(len(P[:-1])):
 		p, q = P[i], P[i+1]
 		if (r==p or r==q):
 			return 1 # It's on

@@ -107,7 +107,7 @@ class Test(appionScript.AppionScript):
 			apTomo.makeProjection(avgvolpath,self.params['maxsize'])
 
 		proshape = profile.shape
-		for id in profiles.keys():
+		for id in list(profiles.keys()):
 			out = open('profile_%05d.txt'%id,'w')
 			for z in range(0,proshape[0]):
 				str = "%5d\t" % z

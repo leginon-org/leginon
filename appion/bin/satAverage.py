@@ -6,13 +6,13 @@ import math
 import sys
 import time
 import re
-import cPickle
+import pickle
 import random
 #eman
 try:
 	import EMAN
 except:
-	print "EMAN module did not get imported"
+	print("EMAN module did not get imported")
 #scipy
 import numpy
 #appion
@@ -74,7 +74,7 @@ class satAverageScript(appionScript.AppionScript):
 		if os.path.isfile(cachefile):
 			apDisplay.printColor("loading refineparticledata from cache file", "cyan")
 			f = open(cachefile, 'r')
-			refineparticledata = cPickle.load(f)
+			refineparticledata = pickle.load(f)
 			f.close()
 		else:
 			refinerundata = appiondata.ApRefineRunData.direct_query(reconid)
@@ -97,7 +97,7 @@ class satAverageScript(appionScript.AppionScript):
 			refineparticledata = refinepartq.query()
 			apDisplay.printMsg("saving refineparticledata to cache file")
 			f = open(cachefile, 'w')
-			cPickle.dump(refineparticledata, f)
+			pickle.dump(refineparticledata, f)
 			f.close()
 
 		apDisplay.printMsg("received "+str(len(refineparticledata))+" particles in "+apDisplay.timeString(time.time()-t0))
@@ -160,7 +160,7 @@ class satAverageScript(appionScript.AppionScript):
 		for partnum in range(len(particles)):
 			quality[partnum] = particles[partnum]['quality_factor']
 			key = ("%.3f_%.3f"%(particles[partnum]['euler1'], particles[partnum]['euler2']))
-			if key not in classes.keys():
+			if key not in list(classes.keys()):
 				classes[key]={}
 				classes[key]['particles']=[]
 				classes[key]['euler1'] = particles[partnum]['euler1']
@@ -174,11 +174,11 @@ class satAverageScript(appionScript.AppionScript):
 		class_stats['min']=quality.min()
 		apDisplay.printMsg("sorted %d particles into %d classes"%(len(particles), len(classes)))
 		### print stats
-		print "-- quality factor stats --"
-		print ("mean/std :: "+str(round(class_stats['meanquality'],2))+" +/- "
-			+str(round(class_stats['stdquality'],2)))
-		print ("min/max  :: "+str(round(class_stats['min'],2))+" <> "
-			+str(round(class_stats['max'],2)))
+		print("-- quality factor stats --")
+		print(("mean/std :: "+str(round(class_stats['meanquality'],2))+" +/- "
+			+str(round(class_stats['stdquality'],2))))
+		print(("min/max  :: "+str(round(class_stats['min'],2))+" <> "
+			+str(round(class_stats['max'],2))))
 		apDisplay.printMsg("finished sorting in "+apDisplay.timeString(time.time()-t0))
 		return classes, class_stats
 
@@ -190,7 +190,7 @@ class satAverageScript(appionScript.AppionScript):
 		if os.path.isfile(cachefile):
 			apDisplay.printColor("loading particle class data from cache file", "cyan")
 			f = open(cachefile, 'r')
-			classes = cPickle.load(f)
+			classes = pickle.load(f)
 			f.close()
 		else:
 			apDisplay.printMsg("determine particle class data from database")
@@ -198,7 +198,7 @@ class satAverageScript(appionScript.AppionScript):
 			classes, cstats = self.determineClasses(particles)
 			f = open(cachefile, 'w')
 			apDisplay.printMsg("saving particle class data to cache file")
-			cPickle.dump(classes, f)
+			pickle.dump(classes, f)
 			f.close()
 		apDisplay.printMsg("received "+str(len(classes))+" classes in "+apDisplay.timeString(time.time()-t0))
 		return classes
@@ -277,7 +277,7 @@ class satAverageScript(appionScript.AppionScript):
 		stackdata = apStack.getOnlyStackData(stackid)
 		stackpath = os.path.join(stackdata['path']['path'], stackdata['name'])
 
-		classkeys = classes.keys()
+		classkeys = list(classes.keys())
 		classkeys.sort()
 
 		classnum=0

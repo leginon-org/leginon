@@ -48,9 +48,9 @@ def fit_map_in_map(map1, map2,
 
 	if len(points) == 0:
 		if use_threshold:
-			print 'No grid points above map threshold.'
+			print('No grid points above map threshold.')
 		else:
-			print 'Map has no non-zero values.'
+			print('Map has no non-zero values.')
 		return
 
 	move_tf, stats = motion_to_maximum(points, point_weights, map2, max_steps,
@@ -66,7 +66,7 @@ def fit_map_in_map(map1, map2,
 		% (stats['correlation'], stats['overlap']) +
 		'	steps = %d, shift = %.3g, angle = %.3g degrees\n'
 		% (stats['steps'], stats['shift'], stats['angle']))
-	print header
+	print(header)
 
 	#tfs = Matrix.transformation_description(move_tf)
 	#print tfs
@@ -96,11 +96,11 @@ def runAlign():
 			continue
 		new_path = os.path.join(aligndir, 'align'+os.path.basename(mrcfile))
 		if os.path.isfile(new_path):
-			print "----------", os.path.basename(mrcfile)
+			print("----------", os.path.basename(mrcfile))
 			continue
-		print ("\n==============================\n", 
+		print(("\n==============================\n", 
 			os.path.basename(mrcfile), 
-			"\n==============================\n")
+			"\n==============================\n"))
 		map2 = open_volume_file(mrcfile)[0]
 		map2.set_parameters(surface_levels = [1.0])
 		new_path = os.path.join(aligndir, 'align'+os.path.basename(mrcfile))

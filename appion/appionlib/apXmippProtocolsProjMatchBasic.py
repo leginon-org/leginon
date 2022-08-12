@@ -100,7 +100,7 @@ def projection_matching_protocol_basic(
 		xdim,ydim=newsel.imgSize()
 		_OuterRadius = (xdim/2) - 1 
 		comment = " Outer radius set to: " + str(_OuterRadius)
-		print '* ' + comment
+		print('* ' + comment)
 		_mylog.info(comment)
 	else:   
 		_OuterRadius=_OuterRadius
@@ -151,7 +151,7 @@ def projection_matching_protocol_basic(
 
 	for _iteration_number in range(_ContinueAtIteration, _NumberofIterations):
 		debug_string =  "ITERATION: " +  str(_iteration_number)
-		print "*", debug_string
+		print("*", debug_string)
 		_mylog.info(debug_string)
 
 		# Create working dir for this iteration and go there
@@ -182,7 +182,7 @@ def projection_matching_protocol_basic(
 				_iteration_number,
 				os.path.join("../Iter_%d" % (_iteration_number), "Iter_%d_reference_volume.vol" % (_iteration_number)))
 		else: 
-			print "skipped masking, no reconstructed volume"
+			print("skipped masking, no reconstructed volume")
 
 		if _DoReconstruction is False and (_iteration_number > 1):
 			shutil.move(os.path.join("../Iter_%d" % (_iteration_number-1), "Iter_%d_reference_volume.vol" % (_iteration_number-1)), \
@@ -240,7 +240,7 @@ def projection_matching_protocol_basic(
 								_PaddingFactor
 								)
 		else: 
-			print "skipped reconstruction"	
+			print("skipped reconstruction")	
 
 		_ConstantToAddToFiltration=arg.getComponentFromVector(_ConstantToAddToFiltration, _iteration_number-1)
 
@@ -254,8 +254,8 @@ def projection_matching_protocol_basic(
 def delete_working_directory(_mylog, _WorkingDir):
     import os
     import shutil
-    print '*********************************************************************'
-    print '* Delete working directory tree'
+    print('*********************************************************************')
+    print('* Delete working directory tree')
     _mylog.info("Delete working directory tree")
 
     if os.path.exists(_WorkingDir):
@@ -266,8 +266,8 @@ def delete_working_directory(_mylog, _WorkingDir):
 #------------------------------------------------------------------------
 def create_working_directory(_mylog, _WorkingDir, _ProjMatchDir, _LibraryDir):
     import os
-    print '*********************************************************************'
-    print '* Create directory ' + _WorkingDir 
+    print('*********************************************************************')
+    print('* Create directory ' + _WorkingDir) 
     _mylog.info("Create working directory " + _WorkingDir )
 
     if not os.path.exists(_WorkingDir):
@@ -300,8 +300,8 @@ def execute_mask(_DoMask,
 		InPutVolume=_ReferenceFileName+".vol"
 	if (_DoMask):
 		MaskedVolume=_ReferenceVolume
-		print '*********************************************************************'
-		print '* Mask the reference volume'
+		print('*********************************************************************')
+		print('* Mask the reference volume')
 		if (_DoSphericalMask):
 			command=' -i '    + InPutVolume + \
 				' -o '    + _ReferenceVolume + \
@@ -320,8 +320,8 @@ def execute_mask(_DoMask,
 		_mylog.info("Skipped Mask")
 		_mylog.info("cp" + InPutVolume +\
 				   " "  + _ReferenceVolume )
-		print '*********************************************************************'
-		print '* Skipped Mask'
+		print('*********************************************************************')
+		print('* Skipped Mask')
 
 #------------------------------------------------------------------------
 # execute_projection_matching
@@ -359,8 +359,8 @@ def execute_projection_matching(_mylog,
 	import launch_job, selfile, docfiles, utils_xmipp
 	  
 	# Project all references
-	print '*********************************************************************'
-	print '* Create projection library'
+	print('*********************************************************************')
+	print('* Create projection library')
 	parameters=' -i '                   + _ReferenceVolume + \
 				' -experimental_images ' +  _InputDocFileName + \
 				' -o '                   + _ProjectLibraryRootName + \
@@ -389,8 +389,8 @@ def execute_projection_matching(_mylog,
 	outputname   = _ProjMatchRootName
 	inputdocfile = _InputDocFileName
 
-	print '*********************************************************************'
-	print '* Perform projection matching'
+	print('*********************************************************************')
+	print('* Perform projection matching')
 	
 	parameters= ' -i '              + inputdocfile + \
 				' -o '              + outputname + \
@@ -473,13 +473,13 @@ def execute_cleanup(_mylog,
    
    if (_DeleteClassAverages):
       message=' CleanUp: deleting directory '+ _ProjMatchDir
-      print '* ',message
+      print('* ',message)
       _mylog.info(message)
       os.system(' rm -r ' + _ProjMatchDir + ' &')
 
    if (_DeleteReferenceProjections):
       message=' CleanUp: deleting directory '+ _LibraryDir
-      print '* ',message
+      print('* ',message)
       _mylog.info(message)
       os.system(' rm -r ' + _LibraryDir + ' &')
 
@@ -500,7 +500,7 @@ def check_file_exists(name,log):
     import os,sys
     if not os.path.exists(name):
         message='Error: File '+name+' does not exist, exiting...'
-        print '*',message
+        print('*',message)
         log.error(message)
         sys.exit()
 

@@ -111,7 +111,7 @@ def canny_edges(image, minedges=5000, maxedges=15000, low_thresh=50, minEdgeRadi
 
 	#print maxs
 
-	maxs = ndimage.measurements.maximum(mag, labels, range(1,numlabels+1))
+	maxs = ndimage.measurements.maximum(mag, labels, list(range(1,numlabels+1)))
 	maxs = numpy.array(maxs, dtype=numpy.float64)
 	high_thresh = maxs.mean()
 	minThresh = maxs.min()
@@ -122,21 +122,21 @@ def canny_edges(image, minedges=5000, maxedges=15000, low_thresh=50, minEdgeRadi
 	while count < 25:
 		t0 = time.time()
 		count += 1
-		maxs = ndimage.measurements.maximum(mag, labels, range(1,numlabels+1))
+		maxs = ndimage.measurements.maximum(mag, labels, list(range(1,numlabels+1)))
 		maxs = numpy.array(maxs, dtype=numpy.float64)
 
 		good_label = (maxs > high_thresh)
 		good_label = numpy.append([False, ], good_label)
 		numgood = good_label.sum()
 		if numgood == numlabels and high_thresh > minThresh:
-			print "ERROR"
+			print("ERROR")
 			maxs.sort()
-			print high_thresh
-			print maxs[:3], maxs[-3:]
-			print maxs[0], ">", high_thresh, "=", maxs[0] > high_thresh
+			print(high_thresh)
+			print(maxs[:3], maxs[-3:])
+			print(maxs[0], ">", high_thresh, "=", maxs[0] > high_thresh)
 			good_label = numpy.zeros((numlabels+1,), dtype=numpy.bool)
 			good_label[1:] = maxs > high_thresh
-			print good_label[:3], good_label[-3:]
+			print(good_label[:3], good_label[-3:])
 			time.sleep(10)
 
 		newedge_map = good_label[labels]
@@ -146,7 +146,7 @@ def canny_edges(image, minedges=5000, maxedges=15000, low_thresh=50, minEdgeRadi
 		#		edge_map[labels==i] = False
 		edge_count = newedge_map.sum()
 
-		print "canny edges=%d, (thresh=%.3f) time=%.6f"%(edge_count, high_thresh, time.time() - t0)
+		print("canny edges=%d, (thresh=%.3f) time=%.6f"%(edge_count, high_thresh, time.time() - t0))
 
 		if edge_count > maxedges:
 			rand = math.sqrt(random.random())

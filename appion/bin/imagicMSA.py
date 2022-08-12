@@ -292,9 +292,9 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		else:
 			self.params['hpfilt_imagic'] = False
 
-		print self.params
-		print "... aligned stack pixel size: "+str(self.params['apix'])
-		print "... aligned stack box size: "+str(self.params['boxsize'])
+		print(self.params)
+		print("... aligned stack pixel size: "+str(self.params['apix']))
+		print("... aligned stack box size: "+str(self.params['boxsize']))
 		apDisplay.printColor("Running IMAGIC .batch file: See imagicMultivariateStatisticalAnalysis.log for details", "cyan")
 
 		### create imagic batch file

@@ -48,7 +48,7 @@ def generateAngular1(shape, xfreq, yfreq):
 	angular = a.angular
 	### raw radius from center
 	#print numpy.around(angular*180/math.pi,1)
-	print "angular 1 complete in %.4f sec"%(time.time()-t0)
+	print("angular 1 complete in %.4f sec"%(time.time()-t0))
 	return angular
 
 #===================
@@ -74,7 +74,7 @@ def generateAngular2(shape, xfreq, yfreq):
 
 	### raw radius from center
 	#print numpy.around(circular*180/math.pi,1)
-	print "angular 2 complete in %.4f sec"%(time.time()-t0)
+	print("angular 2 complete in %.4f sec"%(time.time()-t0))
 	return circular
 
 #===================
@@ -113,7 +113,7 @@ def generateRadial1(shape, xfreq, yfreq):
 	circular = r.radial
 	### raw radius from center
 	#print circular
-	print "radial 1 complete in %.4f sec"%(time.time()-t0)
+	print("radial 1 complete in %.4f sec"%(time.time()-t0))
 	return circular
 
 #===================
@@ -127,7 +127,7 @@ def generateRadial2(shape, xfreq=1.0, yfreq=1.0):
 	this method is about 4x faster than method 1
 	"""
 	t0 = time.time()
-	print shape
+	print(shape)
 	if shape[0] % 2 != 0 or shape[1] % 2 != 0:
 		apDisplay.printError("array shape for radial function must be even")
 
@@ -143,7 +143,7 @@ def generateRadial2(shape, xfreq=1.0, yfreq=1.0):
 		)))
 	### raw radius from center
 	#print circular
-	print "radial 2 complete in %.4f sec"%(time.time()-t0)
+	print("radial 2 complete in %.4f sec"%(time.time()-t0))
 	return circular
 
 #===================
@@ -161,7 +161,7 @@ def generateGaussion1(shape, sigma=None):
 		sigma = numpy.mean(shape)/4.0
 	circular = generateRadial1(shape)
 	circular = numpy.exp(-circular / sigma**2)
-	print "gaussian 1 complete in %.4f sec"%(time.time()-t0)
+	print("gaussian 1 complete in %.4f sec"%(time.time()-t0))
 	return circular
 
 #===================
@@ -174,7 +174,7 @@ def generateGaussion2(shape, sigma=None):
 		sigma = numpy.mean(shape)/4.0
 	circular = generateRadial2(shape)
 	circular = numpy.exp(-circular/sigma**2)
-	print "gaussian 2 complete in %.4f sec"%(time.time()-t0)
+	print("gaussian 2 complete in %.4f sec"%(time.time()-t0))
 	return circular
 
 #===================
@@ -183,4 +183,4 @@ def generateGaussion2(shape, sigma=None):
 if __name__ == "__main__":
 	r = circle.Radial((7,11))
 	a = r.radial
-	print numpy.array(numpy.exp(-a/3)*1000, dtype=numpy.uint16)
+	print(numpy.array(numpy.exp(-a/3)*1000, dtype=numpy.uint16))

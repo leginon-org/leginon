@@ -7,6 +7,7 @@ import math
 import time
 import shutil
 import subprocess
+import traceback
 #appion
 from appionlib import apFile
 from appionlib import apImage
@@ -103,7 +104,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def getCtfProgPath(self):
-		exename = "ctffind4"
+		exename = "ctffind"
 		ctfprgmexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 		if not os.path.isfile(ctfprgmexe):
 			ctfprgmexe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
@@ -195,7 +196,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		#get Defocus in Angstroms
 		self.ctfvalues = {}
 		if self.params['nominal'] is not None:
-			print self.params['nominal']
+			print(self.params['nominal'])
 			nominal = abs(self.params['nominal']*1e4)
 			apDisplay.printWarning("overriding CTF value with user nominal value %.1f A"%(nominal))
 			ctfvalue = None
@@ -306,12 +307,13 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		apDisplay.printMsg("running ctf estimation at "+time.asctime())
 		for paramName in paramInputOrder:
 			apDisplay.printColor("%s = %s"%(paramName,inputparams[paramName]),"magenta")
-		print ""
+		print("")
 		ctfprogproc = subprocess.Popen(self.ctfprgmexe, shell=True, stdin=subprocess.PIPE,)		
 		apDisplay.printColor(self.ctfprgmexe, "magenta")
 		for paramName in paramInputOrder:
 			apDisplay.printColor(inputparams[paramName],"magenta")
-			ctfprogproc.stdin.write(str(inputparams[paramName])+'\n')
+			paramName = str(inputparams[paramName])+'\n'
+			ctfprogproc.stdin.write(paramName.encode())
 		ctfprogproc.communicate()
 		tdiff = time.time()-t0
 		apDisplay.printMsg("ctf estimation completed in "+apDisplay.timeString(tdiff))
@@ -357,7 +359,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 				'confidence_d': round(math.sqrt(abs(float(bits[5]))), 5)
 			}
 
-		if len(self.ctfvalues.keys()) == 0:
+		if len(list(self.ctfvalues.keys())) == 0:
 			apDisplay.printWarning("Invalid %s"%(ctfproglog))
 			self.setBadImage(imgdata)
 			return

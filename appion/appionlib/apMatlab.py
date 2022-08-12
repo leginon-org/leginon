@@ -66,16 +66,16 @@ def runAce(matlab, imgdata, params, showprev=True):
 		bestctfvalue = ctfdb.getBestCtfByResolution(imgdata)
 		if bestctfvalue:
 			bestconf = ctfdb.calculateConfidenceScore(bestctfvalue)
-			print ( "Prev best: '"+bestctfvalue['acerun']['name']+"', conf="+
+			print(( "Prev best: '"+bestctfvalue['acerun']['name']+"', conf="+
 				apDisplay.colorProb(bestconf)+", defocus="+str(round(-1.0*abs(bestctfvalue['defocus1']*1.0e6),2))+
-				" microns" )
+				" microns" ))
 
 	if params['uncorrected']:
 		tmpname='temporaryCorrectedImage.mrc'
 		imgarray = apDBImage.correctImage(imgdata)
 		imgpath = os.path.join(params['rundir'],tmpname)
 		apImage.arrayToMrc(imgarray, imgpath)
-		print "processing", imgpath
+		print("processing", imgpath)
 	else:
 		imgpath = os.path.join(imgdata['session']['image path'], imgname+'.mrc')
 
@@ -162,12 +162,12 @@ def runAceCorrect(imgdict,params):
 
 	ctdimname = imgname
 	ctdimpath = os.path.join(params['rundir'],ctdimname)
-	print "Corrected Image written to " + ctdimpath
+	print("Corrected Image written to " + ctdimpath)
 
 	#pdb.set_trace()
 	acecorrectcommand=("ctfcorrect1('%s', '%s', '%.32f', '%.32f', '%f', '%f', '%f');" % \
 		(imgpath, ctdimpath, ctfvalues['defocus1'], ctfvalues['defocus2'], -ctfvalues['angle_astigmatism'], voltage, apix))
-	print acecorrectcommand
+	print(acecorrectcommand)
 	try:
 		matlab = pymat.open("matlab -nosplash")
 	except:
@@ -289,7 +289,7 @@ def runMatlabScript(matlabscript,xvfb=True):
 	if tdiff > 20:
 		apDisplay.printMsg("completed in "+apDisplay.timeString(tdiff))
 	elif waited is True:
-		print ""
+		print("")
 	proc_code = matlabproc.returncode
 	if proc_code != 0:
 		apDisplay.printWarning("Matlab failed with subprocess error code %d" % proc_code)

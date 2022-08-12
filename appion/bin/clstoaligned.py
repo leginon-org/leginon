@@ -6,7 +6,7 @@
 try:
 	import EMAN
 except ImportError:
-	print "EMAN module did not get imported"
+	print("EMAN module did not get imported")
 import os,sys
 import optparse
 import tarfile
@@ -48,7 +48,7 @@ if __name__ == "__main__":
 	format=params['format'].lower()
 
 	if not os.path.exists(fsp):
-		print "file '%s' does not exist"%fsp
+		print("file '%s' does not exist"%fsp)
 		sys.exit()
 
 	if fsp[-4:] == ".tar":
@@ -58,17 +58,17 @@ if __name__ == "__main__":
 			shutil.rmtree(tmpdir)
 		os.mkdir(tmpdir)
 
-		print "reading",fsp
+		print("reading",fsp)
 		clstar=tarfile.open(fsp)
 		clslist=clstar.getmembers()
 		clsnames=clstar.getnames()
-		print "extracting",fsp,"into temp directory"
+		print("extracting",fsp,"into temp directory")
 		for clsfile in clslist:
 			clstar.extract(clsfile,tmpdir)
 		clstar.close() 
 
 		# combine all cls files into 1
-		print "creating combined LST file"
+		print("creating combined LST file")
 		particles = {} 
 		outcls = "cls.combined.lst"
 		outf = open(outcls,'w')
@@ -81,7 +81,7 @@ if __name__ == "__main__":
 				if len(d)<4:
 					continue
 				particles[int(d[0])]=line
-		parts = particles.keys()
+		parts = list(particles.keys())
 		parts.sort()
 		for p in parts:
 			outf.write(particles[p])
@@ -93,9 +93,9 @@ if __name__ == "__main__":
 	# if using different particle stack
 	if params['stack']:
 		if not os.path.exists(params['stack']):
-			print "Error: stack '%s' does not exist\n"%params['stack']
+			print("Error: stack '%s' does not exist\n"%params['stack'])
 			sys.exit()
-		print "using stack: %s"%params['stack']
+		print("using stack: %s"%params['stack'])
 		f=open(fsp,'r')
 		lines=f.readlines()
 		f.close()
@@ -143,7 +143,7 @@ if __name__ == "__main__":
 	startn = 1
 	if params['noproj'] is True:
 		startn=0
-	print "creating aligned stack"
+	print("creating aligned stack")
 	for i in range(startn,n):
 		a.readImage(fsp,i)
 		a.edgeNormalize()

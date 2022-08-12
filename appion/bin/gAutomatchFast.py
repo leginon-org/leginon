@@ -169,7 +169,7 @@ class gAutomatch(appionLoop2.AppionLoop):
 			# only run when there are no results
 			gautocmd = self.getGautomatchCommand(imgdata)
 			apDisplay.printColor("Running Gautomatch", "purple")
-			print gautocmd
+			print(gautocmd)
 			proc = subprocess.Popen(gautocmd, shell=True)
 			proc.communicate()
 

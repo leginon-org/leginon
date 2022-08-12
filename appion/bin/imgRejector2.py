@@ -149,7 +149,7 @@ class ImageRejector2(appionScript.AppionScript):
 		always return False so that everything is checked.
 		'''
 		if not self.params['commit']:
-			print 'Will need to unhide %s' % (image['filename'])
+			print('Will need to unhide %s' % (image['filename']))
 			return False
 		else:
 			return self.commitToDatabase(image, None)
@@ -200,7 +200,7 @@ class ImageRejector2(appionScript.AppionScript):
 		try:
 			if self.isOutsideCTFRes(ctfdata, self.params['sorttype'],self.params['resmin']):
 				return self.hideImage(imgdata)
-		except Exception, e:
+		except Exception as e:
 			raise
 
 	def hideIceCrystalImage(self, imgdata):
@@ -221,7 +221,7 @@ class ImageRejector2(appionScript.AppionScript):
 		# ApCtfFind4ParamsData
 		if not ctfrun.dbid:
 			return False
-		if ctfrun.dbid in self.isCtffind4_dict.keys():
+		if ctfrun.dbid in list(self.isCtffind4_dict.keys()):
 			return self.isCtffind4_dict[ctfrun.dbid]
 		program_run = apScriptLog.getScriptProgramRunFromRunname(ctfrun['name'],ctfrun['path'])
 		isCtffind4 = program_run and 'ctffind4' in program_run['progname']['name']
@@ -357,7 +357,7 @@ class ImageRejector2(appionScript.AppionScript):
 		'''
 		self.hide_count += 1
 		if not self.params['commit']:
-			print 'Will need to hide %s' % (image['filename'])
+			print('Will need to hide %s' % (image['filename']))
 			return False
 		else:
 			return self.commitToDatabase(image, False)

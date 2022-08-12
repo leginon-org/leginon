@@ -5,7 +5,7 @@ import time
 import os
 import re
 import pprint
-import cPickle
+import pickle
 #appion
 from appionlib import apXml
 from appionlib import apDisplay
@@ -216,7 +216,7 @@ def saveToPickleFile(savedata, filename):
 	if filename[-4:] != ".pik":
 		filename += ".pik"
 	f = open(filename, 'w')
-	cPickle.dump(savedata, f)
+	pickle.dump(savedata, f)
 	f.close()
 	return True
 
@@ -388,7 +388,7 @@ def readFromSpiderFile(filename):
 #---------------------------------------
 def readFromPickleFile(filename):
 	f = open(filename, 'r')
-	savedata = cPickle.load(f)
+	savedata = pickle.load(f)
 	f.close()
 	return savedata
 

@@ -7,6 +7,7 @@ import glob
 import math
 import time
 import shutil
+import string
 import operator
 import subprocess
 from appionlib import apEMAN
@@ -14,7 +15,7 @@ from appionlib.apSpider import emancoran
 try:
 	import EMAN
 except ImportError:
-	print "EMAN module did not get imported"
+	print("EMAN module did not get imported")
 
 def parseInput(args,params):
 	for arg in args:
@@ -47,7 +48,7 @@ def parseInput(args,params):
 			words=elements[1].split(',')
 			params['factornumbers']=words
 		else:
-			print "\nERROR: undefined parameter \'"+arg+"\'\n"
+			print("\nERROR: undefined parameter \'"+arg+"\'\n")
 			sys.exit(1)
 def createDefaults():
 	params={}
@@ -70,7 +71,7 @@ def createDefaults():
 if __name__== '__main__':
 	# write command & time to emanlog if exists:
 	if os.path.exists('refine.log'):
-		cmd = ' '.join(sys.argv)
+		cmd = string.join(sys.argv,' ')
 		apEMAN.writeEMANTime('refine.log',cmd)
 	#Parse inputs
 	args=sys.argv[1:]
@@ -87,7 +88,7 @@ if __name__== '__main__':
 	#Set up for coran
 	params['corandir']=params['corandir']+str(params['iter'])
 	if os.path.exists(params['corandir']):
-		print "WARNING!!! %s exists and is being overwritten" % params['corandir']
+		print("WARNING!!! %s exists and is being overwritten" % params['corandir'])
 		shutil.rmtree(params['corandir'])
 		os.mkdir(params['corandir'])
 	else:
@@ -112,7 +113,7 @@ if __name__== '__main__':
 	
 	projections=EMAN.readImages('proj.hed',-1,-1,0)
 	if len(projections)!=len(clslist):
-		print "Error: Number of projections (%d) not equal to number of classes (%d)" % (len(projections),len(clslist))
+		print("Error: Number of projections (%d) not equal to number of classes (%d)" % (len(projections),len(clslist)))
 		sys.exit()
 
 	### if multiprocessor, create the jobs to run
@@ -130,7 +131,7 @@ if __name__== '__main__':
 				
 				cls = clslist[spnum]
 				clsdir=cls.split('.')[0]+'.dir'
-				print "creating mpi jobfile for "+cls 
+				print("creating mpi jobfile for "+cls) 
 				spidercmd = emancoran.runCoranClass(params,cls)
 				## if enough particles, run spider
 				if spidercmd is not None:
@@ -142,12 +143,12 @@ if __name__== '__main__':
 					f.write(spidercmd)
 					f.write("exit\n")
 					f.close()
-					os.chmod(procfile,0755)
+					os.chmod(procfile,0o755)
 					cscript.write("-np 1 %s\n" % procfile)
 				spnum+=1
 			cscript.close()
-			print "executing coranscript: ",coranscript
-			os.chmod("coranscript.csh",0755)
+			print("executing coranscript: ",coranscript)
+			os.chmod("coranscript.csh",0o755)
 			proc = subprocess.Popen('mpiexec --hostfile $PBS_NODEFILE --app '+coranscript, shell=True)
 			proc.wait()
 			time.sleep(2)
@@ -159,35 +160,35 @@ if __name__== '__main__':
 
 		### make sure class averages were created for all classes if aligned.spi exists,
 		### sometimes for some reason the spider job doesn't run
-                print "Checking that all spider jobs completed"
+                print("Checking that all spider jobs completed")
                 for cls in clslist:
                         clsdir=cls.split('.')[0]+'.dir'
                         alignedfile = os.path.join(clsdir,'aligned.spi')
                         clsavgfile = os.path.join(clsdir,'classes_avg.spi')
 			clscsh=glob.glob(os.path.join(clsdir,'spider.*.csh'))
 			if not clscsh :
-				print "ERROR!!! no spider csh file was created in "+clsdir
+				print("ERROR!!! no spider csh file was created in "+clsdir)
 			if not os.path.exists(alignedfile) and clscsh: 
-				print "WARNING!!! re-executing" + clscsh[0]
+				print("WARNING!!! re-executing" + clscsh[0])
 				proc = subprocess.Popen(clscsh[0])
 				proc.wait()
 			if os.path.exists(alignedfile) and not os.path.exists(clsavgfile):
 				spijobfile='coranfor'+cls.split('.')[0]+'.bat'
-                                print "WARNING!!! rerunning "+spijobfile
+                                print("WARNING!!! rerunning "+spijobfile)
                                 if os.path.exists(os.path.join(clsdir,spijobfile)):
                                         #f = open("spider.log", "a")
                                         spicmd = "spider bat/spi @%s\n" % spijobfile.split('.')[0]
                                         proc = subprocess.Popen("cd %s\n%s\ncd .." % (clsdir,spicmd), shell=True)
                                         proc.wait()
                                 else:
-                                        print "ERROR!!! "+clsdir+"/"+spijobfile+" does not exist"
+                                        print("ERROR!!! "+clsdir+"/"+spijobfile+" does not exist")
 	else:
 		for cls in clslist:
 		## create SPIDER batch file and run coran	
 			spidercmd = emancoran.runCoranClass(params,cls)
 
-	print "classification complete"
-	print "Determining best class averages"
+	print("classification complete")
+	print("Determining best class averages")
 	#Determine best averages
 	#Create list of cc values	
 	for cls in range(0,len(clslist)):
@@ -228,8 +229,7 @@ if __name__== '__main__':
 		classnamepath = os.path.join(clsdir,'classes')
 		for n in sortccindex:
 			## get N imgs
-			nstr = '%d' % n+1
-			clhcbasename = 'clhc_cls'+nstr.zfill(4)
+			clhcbasename = 'clhc_cls'+string.zfill(n+1,4)
 			classname=os.path.join(classnamepath, clhcbasename+'.spi')
 			## save if has cc higher than cutoff
 			if cclist[n] > params['ccCutoff']:
@@ -239,11 +239,10 @@ if __name__== '__main__':
 		
 		### if multiple classes have values higher than cutoff
 		if len(cutofflist) > 1:
-			print "combining "+str(len(cutofflist))+" of "+str(len(cclist))+" classes"
+			print("combining "+str(len(cutofflist))+" of "+str(len(cclist))+" classes")
 			spilist=[]
 			for n in cutofflist:
-				nstr = '%d' % n+1
-				clhcbasename = 'clhc_cls'+nstr.zfill(4)
+				clhcbasename = 'clhc_cls'+string.zfill(n+1,4)
 				classname=os.path.join(classnamepath, clhcbasename+'.spi')
 				spilist.append(classname)
 			classname=os.path.join(classnamepath,'combined.spi')
@@ -266,11 +265,10 @@ if __name__== '__main__':
 		### otherwise just use the best class average
 		else:
 			bestclass=cclist.index(max(cclist))
-			print "Using average %d for class %d" % (bestclass, cls)
+			print("Using average %d for class %d" % (bestclass, cls))
 
 			#get N imgs
-			bstr = '%d' % (bestclass+1)
-			clhcbasename = 'clhc_cls'+bstr.zfill(4)
+			clhcbasename = 'clhc_cls'+string.zfill(bestclass+1,4)
 			classname=os.path.join(classnamepath, clhcbasename+'.spi')
 		
 			nptcls=apEMAN.getNPtcls(classname,spider=True)
@@ -336,13 +334,13 @@ if __name__== '__main__':
 	# create 3d model:
 	make3dcommand='make3d goodavgs.hed out=threed.%d.mrc mask=%d sym=%s pad=%d mode=2 hard=%d' % (params['iter'], params['mask'], params['sym'], pad, params['hard'])
 	apEMAN.writeEMANTime('../refine.log', make3dcommand)
-	print make3dcommand
+	print(make3dcommand)
 	proc = subprocess.Popen(make3dcommand, shell=True)
 	proc.wait()
 
 	proc3dcommand='proc3d threed.%d.mrc ../threed.%da.mrc mask=%d norm' % (params['iter'],params['iter'],params['mask'])
 	apEMAN.writeEMANTime('../refine.log', proc3dcommand)
-	print proc3dcommand
+	print(proc3dcommand)
 	proc = subprocess.Popen(proc3dcommand, shell=True)
 	proc.wait()
 
@@ -350,21 +348,21 @@ if __name__== '__main__':
 		# create even 3d model:
 		make3dcommand='make3d goodavgs.even.hed out=threed.te.mrc mask=%d sym=%s pad=%d mode=2 hard=%d' % (params['mask'], params['sym'], pad, params['hard'])
 		apEMAN.writeEMANTime('../refine.log', make3dcommand)
-		print make3dcommand
+		print(make3dcommand)
 		proc = subprocess.Popen(make3dcommand, shell=True)
 		proc.wait()
 
 		# create odd 3d model:
 		make3dcommand='make3d goodavgs.odd.hed out=threed.to.mrc mask=%d sym=%s pad=%d mode=2 hard=%d' % (params['mask'], params['sym'], pad, params['hard'])
 		apEMAN.writeEMANTime('../refine.log', make3dcommand)
-		print make3dcommand
+		print(make3dcommand)
 		proc = subprocess.Popen(make3dcommand, shell=True)
 		proc.wait()
 	
 		# calculate fsc for even/odd models:
 		fsccommand='proc3d threed.te.mrc threed.to.mrc fsc=../fsc.eotest.%d' % params['iter']
 		apEMAN.writeEMANTime('../refine.log', fsccommand)
-		print fsccommand
+		print(fsccommand)
 		proc = subprocess.Popen(fsccommand, shell=True)
 		proc.wait()
 	
@@ -384,7 +382,7 @@ if __name__== '__main__':
 	proc = subprocess.Popen(lncommand, shell=True)
 	proc.wait()
 
-	print "updating %s" % classfile
+	print("updating %s" % classfile)
 	proc = subprocess.Popen(('tar -cvf %s cls*.lst' % classfile), shell=True)
 	proc.wait()
 	mvcommand='/bin/mv %s ../%s' % (classfile,classfile)
@@ -392,4 +390,4 @@ if __name__== '__main__':
 	proc.wait()
 	
 	
-	print "Done!"
+	print("Done!")

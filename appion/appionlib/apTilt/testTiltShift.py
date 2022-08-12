@@ -10,8 +10,8 @@ from appionlib.apTilt import apTiltShift
 def runTestShift(img1name, img2name, imgpath, tiltdiff, coord):
 	img1path = os.path.join(imgpath, img1name)
 	img2path = os.path.join(imgpath, img2name)
-	print img1path
-	print img2path
+	print(img1path)
+	print(img2path)
 
 	img1 = apImage.binImg(apImage.mrcToArray(img1path),4)
 	img2 = apImage.binImg(apImage.mrcToArray(img2path),4)

@@ -147,10 +147,10 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 		apDisplay.printMsg("do not break function now otherwise it will corrupt stack")
 		#time.sleep(1.0)
-
+		
 		### merge image particles into big stack
 		totalpart = self.mergeImageStackIntoBigStack(self.imgstackfile, imgdata)
-
+		
 		### create a stack average every so often
 		if self.stats['lastpeaks'] > 0:
 			totalPartices = self.existingParticleNumber+self.stats['peaksum']+self.stats['lastpeaks']
@@ -743,10 +743,11 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		if not os.path.isfile(ctfvaluesfile):
 			apDisplay.printError("ctfvaluesfile does not exist")
 
-		ace2exe = self.getACE2Path()
+		ace2exe = self.getACE2Path().decode()
+		# print(ace2exe)
 		outfile = os.path.join(os.getcwd(),imgdata['filename']+".mrc.corrected.mrc")
 
-		ace2cmd = (ace2exe+" -ctf %s -apix %.3f -img %s -out %s" % (ctfvaluesfile, apix, inimgpath,outfile))
+		ace2cmd = (str(ace2exe)+" -ctf %s -apix %.3f -img %s -out %s" % (ctfvaluesfile, apix, inimgpath,outfile))
 		if self.params['fliptype'] == "ace2image":
 			ace2cmd += " -wiener 0.1"
 		apDisplay.printMsg("ace2 command: "+ace2cmd)
@@ -960,7 +961,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			stparamq['normalized'] = True
 
 		if not 'boxSize' in stparamq or stparamq['boxSize'] is None:
-			print stparamq
+			print(stparamq)
 			apDisplay.printError("problem in database insert")
 
 		### create a stack object
@@ -1029,32 +1030,32 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			## if no runinstack found, find out which parameters are wrong:
 			if not rinstack:
 				for i in uniqrundatas[0]:
-					print "r =======",i,"========"
+					print("r =======",i,"========")
 					if uniqrundatas[0][i] != runq[i]:
 						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
 					else:
-						print i, uniqrundatas[0][i], runq[i]
+						print(i, uniqrundatas[0][i], runq[i])
 				for i in uniqrundatas[0]['stackParams']:
-					print "p =======",i,"========"
+					print("p =======",i,"========")
 					if uniqrundatas[0]['stackParams'][i] != stparamq[i]:
 						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
 					else:
-						print i, uniqrundatas[0]['stackParams'][i], stparamq[i]
+						print(i, uniqrundatas[0]['stackParams'][i], stparamq[i])
 				for i in uniqstackdatas[0]:
-					print "s =======",i,"========"
+					print("s =======",i,"========")
 					if str(uniqstackdatas[0][i]) != str(stackq[i]):
 						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
 					else:
-						print i, uniqstackdatas[0][i], stackq[i]
+						print(i, uniqstackdatas[0][i], stackq[i])
 				for i in prevrinstack[0]:
 					if i=='stack' or i=='stackRun':
 						continue
-					print "rin =======",i,"========"
+					print("rin =======",i,"========")
 					if prevrinstack[0][i] != rinstackq[i]:
-						print i, prevrinstack[0][i], rinstackq[i]
+						print(i, prevrinstack[0][i], rinstackq[i])
 						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
 					else:
-						print i, prevrinstack[0][i], rinstackq[i]
+						print(i, prevrinstack[0][i], rinstackq[i])
 				#apDisplay.printError("All parameters for a particular stack must be identical! \n"+\
 				#			     "please check your parameter settings.")
 			apDisplay.printWarning("Stack already exists in database! Will try and appending new particles to stack")
@@ -1176,14 +1177,14 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			self.params['falloff']=int(float(bxlist[3]))
 
 		# bin must be integer if not using Relion:
-		print self.params['bin']
+		print(self.params['bin'])
 		if (not (float(self.params['bin'])).is_integer() and self.params['filetype'] != "relion"):
 			apDisplay.printError("Binning value must be integer unless generating Relion file")
 
 		# for Relion
 		if self.params['filetype'] == "relion":
 			# make sure Relion is loaded:
-			apRelion.getRelionVersion()
+			apRelion.getRelionVersion() # abonham
 
 			if self.params['bgradius'] is None:
 				apDisplay.printError("Relion requires a bgradius value")
@@ -1273,15 +1274,19 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 			# make sure scaled pixel size is correct in output star file:
 			# get the first available mag and detector pixel size
-			labels = apRelion.getStarFileColumnLabels(rootname+".star")
+			optics_labels, particle_labels = apRelion.getColumnLabels(rootname+".star")
+			
 			for line in open(rootname+".star"):
 				l = line.strip().split()
 				if (len(l)<3 or line.startswith("#")): continue
-				dpixsize = float(l[labels.index("_rlnDetectorPixelSize")])
-				mag = float(l[labels.index("_rlnMagnification")])
-				apix = dpixsize/mag*1e4
+				try:
+					dpixsize = float(l[particle_labels.index("_rlnDetectorPixelSize")])
+					mag = float(l[particle_labels.index("_rlnMagnification")])
+					apix = dpixsize/mag*1e4
+				except:
+					apix = float(l[optics_labels.index("_rlnImagePixelSize")]) 
 				break
-
+			
 			# if the scaled pixels size isn't write, rewrite star file
 			sc_apix = self.params['apix']*self.params['bin']
 			# only check to 2 decimal points
@@ -1291,19 +1296,42 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				shutil.move(rootname+".star",rootname+".backup.star")
 
 				f = open(rootname+".star",'w')
-				for line in open(rootname+".backup.star"):
-					l = line.strip().split()
-					if (len(l)<3 or line.startswith("#")):
-						f.write(line)
-						continue
-					for i in range(len(labels)):
-						if i>0 and i<(len(labels)): f.write(" ")
-						if labels[i] in ("_rlnMicrographName","_rlnImageName"):
-							f.write(l[i])
-						elif labels[i] == "_rlnDetectorPixelSize":
-							f.write("%12.6f"%(float(l[i])*self.params['bin']))
-						else: f.write("%12s"%l[i])
-					f.write("\n")
+				if len(optics_labels) == 0:
+					for line in open(rootname+".backup.star"):
+						l = line.strip().split()
+						if (len(l)<3 or line.startswith("#")):
+							f.write(line)
+							continue
+						for i in range(len(particle_labels)):
+							if i>0 and i<(len(particle_labels)): f.write(" ")
+							if particle_labels[i] in ("_rlnMicrographName","_rlnImageName"):
+								f.write(l[i])
+							elif particle_labels[i] == "_rlnDetectorPixelSize":
+								f.write("%12.6f"%(float(l[i])*self.params['bin']))
+							else: f.write("%12s"%l[i])
+						f.write("\n")
+				else:
+					particle_lines = False
+					for line in open(rootname+".backup.star"):
+						if line.startswith("data_particles") or line.startswith("data_\n"):
+							particle_lines = True
+						l = line.strip().split()
+						if (len(l)<3 or line.startswith("#")):
+							f.write(line)
+							continue
+						if not particle_lines:
+							for i in range(len(optics_labels)):
+								if i>0 and i<(len(optics_labels)): f.write(" ")
+								if optics_labels[i] == "_rlnImagePixelSize":
+									f.write("%12.6f"%(float(l[i])*self.params['bin']))
+								else: f.write("%12s"%l[i])
+						if particle_lines:
+							for i in range(len(particle_labels)):
+								if i>0 and i<(len(particle_labels)): f.write(" ")
+								if particle_labels[i] in ("_rlnMicrographName","_rlnImageName"):
+									f.write(l[i])
+								else: f.write("%12s"%l[i])
+						f.write("\n")
 				f.close()
 				#os.remove(rootname+".backup.star")
 
@@ -1325,7 +1353,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 		stackpath = os.path.join(self.params['rundir'], self.params['single'])
 		averagefile = os.path.join(self.params['rundir'],'average.mrc')
-
+		print(stackpath)
 		if self.params['filetype']=='relion':
 			mrcfiles = apRelion.getMrcParticleFilesFromStar(stackpath)
 			stackTools.averageStackList(mrcfiles, averagefile)

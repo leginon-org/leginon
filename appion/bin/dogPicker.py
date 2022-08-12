@@ -26,10 +26,11 @@ class dogPicker(particleLoop2.ParticleLoop):
 
 	#================
 	def checkConflicts(self):
-		if self.params['lowpass'] > 0:
-			apDisplay.printWarning("lowpass filter value greater than zero; will ignore")
-		if self.params['highpass'] > 0:
-			apDisplay.printWarning("highpass filter value greater than zero; will ignore")
+		# Edit by abonham on 19 Apr '22 -- comment out since DP does not use filters and error present
+		# if self.params['lowpass'] > 0:
+		# 	apDisplay.printWarning("lowpass filter value greater than zero; will ignore")
+		# if self.params['highpass'] > 0:
+		# 	apDisplay.printWarning("highpass filter value greater than zero; will ignore")
 		self.params['highpass'] = None
 		self.params['lowpass'] = None
 		if self.params['numslices'] is not None and self.params['numslices'] >= 15:

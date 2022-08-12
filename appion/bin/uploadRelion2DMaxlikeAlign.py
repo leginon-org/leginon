@@ -7,7 +7,7 @@ import time
 import glob
 import numpy
 import shutil
-import cPickle
+import pickle
 #appion
 from appionlib import appionScript
 from appionlib import apFile
@@ -186,7 +186,7 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 			apDisplay.printError("Could not find run parameters file: "+paramfile)
 		apDisplay.printMsg("Reading old parameter file: %s"%(paramfile))
 		f = open(paramfile, "r")
-		runparams = cPickle.load(f)
+		runparams = pickle.load(f)
 		if not 'localstack' in runparams:
 			runparams['localstack'] = self.params['timestamp']+".hed"
 		if not 'student' in runparams:
@@ -395,7 +395,7 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		self.resdict = {}
 		boxsizetuple = apFile.getBoxSize(alignimagicfile)
 		boxsize = boxsizetuple[0]
-		for refnum in reflistsdict.keys():
+		for refnum in list(reflistsdict.keys()):
 			partlist = reflistsdict[refnum]
 			esttime = 3e-6 * len(partlist) * boxsize**2
 			apDisplay.printMsg("? Ref num %d; %d parts; est time %s"
@@ -450,7 +450,7 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		## hopefully this reference stack is not too big to cause memory error
 		stackarray = mrc.read(unaligned_refstack_mrc)
 		## blank out empty classes
-		print stackarray.shape
+		print(stackarray.shape)
 		blank_classes = []
 		for refnum in range(len(stackarray)):
 			if self.class_count.get(refnum, 0) == 0:

@@ -48,7 +48,7 @@ def getVersion():
 	elif prettyversion is not None:
 		version = prettyversion
 	else:
-		raise VersionError, "cound not find appion version number"
+		raise VersionError("cound not find appion version number")
 	return version
 
 version=getVersion()
@@ -86,9 +86,9 @@ if warn_user:
   you do not wish to clutter up with these scripts.
 
   Are you sure you want to continue? (y/n): ''' % (warn_user, len(binfiles))
-	answer = raw_input(message)
+	answer = input(message)
 	if answer != 'y':
-		print 'Installation aborted.'
+		print('Installation aborted.')
 		sys.exit()
 
 distutils.core.setup(

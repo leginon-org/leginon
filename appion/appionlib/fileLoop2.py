@@ -6,7 +6,7 @@ import sys
 import time
 import math
 import random
-import cPickle
+import pickle
 import glob
 #appion
 from appionlib import apDisplay
@@ -240,7 +240,7 @@ class FileLoop(fileScript.FileScript):
 		need to be inserted.
 		"""
 		if results is not None and len(results) > 0:
-			resulttypes = results.keys()
+			resulttypes = list(results.keys())
 			for resulttype in resulttypes:
 				result = results[resulttype]
 				self._writeDataToDB(result)
@@ -248,15 +248,15 @@ class FileLoop(fileScript.FileScript):
 	#=====================
 	def writeResultsToFiles(self, imgdata,results=None):
 		if results is not None and len(results) > 0:
-			for resulttype in results.keys():
+			for resulttype in list(results.keys()):
 				result = results[resulttype]
 				try:
 					resultkeys = self.resultkeys[resulttype]
 				except:
 					try:
-						resultkeystmp = results[resulttype].keys()
+						resultkeystmp = list(results[resulttype].keys())
 					except:
-						resultkeystmp = results[resulttype][0].keys()
+						resultkeystmp = list(results[resulttype][0].keys())
 					resultkeystmp.sort()
 					resultkeys = [resultkeystmp.pop(resultkeys.index('image'))]
 					resultkeys.extend(resultkeystmp)
@@ -406,7 +406,7 @@ class FileLoop(fileScript.FileScript):
 			### unpickle previously done dictionary
 			apDisplay.printMsg("Reading old done dictionary: "+os.path.basename(self.donedictfile))
 			f = open(self.donedictfile,'r')
-			self.donedict = cPickle.load(f)
+			self.donedict = pickle.load(f)
 			f.close()
 			try:
 				if self.donedict['commit'] == self.params['commit']:
@@ -430,8 +430,8 @@ class FileLoop(fileScript.FileScript):
 		apDisplay.printMsg("Creating new done dictionary: "+os.path.basename(self.donedictfile))
 
 		### write donedict to file
-		f = open(self.donedictfile, 'w', 0666)
-		cPickle.dump(self.donedict, f)
+		f = open(self.donedictfile, 'w', 0o666)
+		pickle.dump(self.donedict, f)
 		f.close()
 
 		#Unlock DoneDict file
@@ -476,7 +476,7 @@ class FileLoop(fileScript.FileScript):
 		self._lockDoneDict()
 
 		f = open(self.donedictfile,'r')
-		self.donedict = cPickle.load(f)
+		self.donedict = pickle.load(f)
 		f.close()
 
 		#Unlock DoneDict file
@@ -492,7 +492,7 @@ class FileLoop(fileScript.FileScript):
 
 		### reload donedict from file just in case two runs are running
 		f = open(self.donedictfile,'r')
-		self.donedict = cPickle.load(f)
+		self.donedict = pickle.load(f)
 		f.close()
 
 		### set new parameters
@@ -501,8 +501,8 @@ class FileLoop(fileScript.FileScript):
 		self.donedict['commit'] = self.params['commit']
 
 		### write donedict to file
-		f = open(self.donedictfile, 'w', 0666)
-		cPickle.dump(self.donedict, f)
+		f = open(self.donedictfile, 'w', 0o666)
+		pickle.dump(self.donedict, f)
 		f.close()
 
 		#Unlock DoneDict file
@@ -723,7 +723,7 @@ class FileLoop(fileScript.FileScript):
 			elif(memleak > 32):
 				self.stats['memleak'] += 1
 				apDisplay.printWarning("substantial memory leak "+str(round(memleak,2))+"MB")
-				print "(",str(n),round(slope,5),round(rho,5),round(gain,2),")"
+				print("(",str(n),round(slope,5),round(rho,5),round(gain,2),")")
 
 	#=====================
 	def skipTestOnImage(self,imgdata):
@@ -866,7 +866,7 @@ class BinLoop(FileLoop):
 
 #=====================
 if __name__ == '__main__':
-	print "__init__"
+	print("__init__")
 	imageiter = BinLoop()
-	print "run"
+	print("run")
 	imageiter.run()

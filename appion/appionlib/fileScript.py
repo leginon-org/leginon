@@ -92,7 +92,7 @@ class FileScript(basicScript.BasicScript):
 		"""
 		if len(self.argdict) == 0:
 			for opt in self.parser.option_list:
-				arg = str(opt.get_opt_string.im_self)
+				arg = str(opt.get_opt_string.__self__)
 				if '/' in arg:
 					args = arg.split('/')
 					arg = args[-1:][0]
@@ -127,7 +127,7 @@ class FileScript(basicScript.BasicScript):
 			storage = 'store_'+str(value).lower()
 			for opt in self.parser.option_list:
 				if opt.dest == dest and opt.action == storage:
-					arg = str(opt.get_opt_string.im_self)
+					arg = str(opt.get_opt_string.__self__)
 					if '/' in arg:
 						args = arg.split('/')
 						arg = args[-1:][0]
@@ -377,11 +377,11 @@ class TestScript(FileScript):
 		raise NotImplementedError
 
 if __name__ == '__main__':
-	print "__init__"
+	print("__init__")
 	testscript = TestScript()
-	print "start"
+	print("start")
 	testscript.start()
-	print "close"
+	print("close")
 	testscript.close()
 
 

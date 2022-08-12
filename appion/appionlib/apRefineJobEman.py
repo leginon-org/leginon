@@ -42,12 +42,12 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		super(EmanRefineJob,self).checkIterationConflicts()
 		# determine padding automatically
 		pad = int(self.params['boxsize']*1.25/2.0)*2
-		self.params['pad'] = map((lambda x: pad),range(self.params['numiter']))
+		self.params['pad'] = list(map((lambda x: pad),list(range(self.params['numiter']))))
 		# copy to eman standard name for easier parameter settings.
 		# EMAN know the mask and imask in pixels, not angstroms
-		self.params['mask'] = map((lambda x: self.convertAngstromToPixel(x)),self.params['outerMaskRadius'])
+		self.params['mask'] = list(map((lambda x: self.convertAngstromToPixel(x)),self.params['outerMaskRadius']))
 		self.params['sym'] = self.params['symmetry']
-		self.params['imask'] = map((lambda x: self.convertAngstromToPixel(x)),self.params['innerMaskRadius'])
+		self.params['imask'] = list(map((lambda x: self.convertAngstromToPixel(x)),self.params['innerMaskRadius']))
 		self.params['ang'] = self.params['angSampRate']
 
 	def convertSymmetryNameForPackage(self,inputname):
@@ -56,9 +56,9 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		'''
 		eman_hedral_symm_names = {'O':'oct','Icos':'icos'}
 		inputname = inputname.lower().split(' ')[0]
-		if inputname[0] in ('c','d') or inputname in eman_hedral_symm_names.values():
+		if inputname[0] in ('c','d') or inputname in list(eman_hedral_symm_names.values()):
 			symm_name = inputname.lower()
-		elif inputname in eman_hedral_symm_names.keys():
+		elif inputname in list(eman_hedral_symm_names.keys()):
 			symm_name = eman_hedral_symm_names[inputname]
 		else:
 			apDisplay.printError("unknown symmetry name conversion to EMAN")
@@ -72,7 +72,7 @@ class EmanRefineJob(apRefineJob.RefineJob):
 	def combineEmanParams(self,iter_index,valid_paramkeys):
 		task_params = []
 		for key in valid_paramkeys:
-			if key in self.params.keys():
+			if key in list(self.params.keys()):
 				if type(self.params[key]) == type([]):
 					paramvalue = self.params[key][iter_index]
 				else:
@@ -95,7 +95,7 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		'''
 		This only covers chiral symmetry of 3d point group
 		'''
-		print "'%s'"%(sym_name)
+		print("'%s'"%(sym_name))
 		proper = sym_name[0]
 		if proper.lower() == 'c':
 			order = eval(sym_name[1:])
@@ -112,15 +112,15 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		return order
 
 	def calcRefineMem(self, ppn, boxsize, sym, ang):
-		print "calcRefineMem"
+		print("calcRefineMem")
 		foldsym = self.getSymmetryOrder(sym)
-		print "foldsym",foldsym
+		print("foldsym",foldsym)
 		endnumproj = 18000.0/(foldsym*ang*ang)
-		print "endnumproj",endnumproj
+		print("endnumproj",endnumproj)
 		#need to open all projections and 1024 particles in memory
 		numpartinmem = endnumproj + 1024
 		memneed = numpartinmem*boxsize*boxsize*16.0*ppn
-		print memneed
+		print(memneed)
 		numgiga = math.ceil(memneed/1073741824.0)
 		return int(numgiga)
 
@@ -128,14 +128,14 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		self.addSimpleCommand('ln -s  %s threed.0a.mrc' % self.params['modelnames'][0])
 
 	def makeRefineTasks(self,iter):
-		print self.params['symmetry']
-		print "eman iter %d"%(iter)
+		print(self.params['symmetry'])
+		print("eman iter %d"%(iter))
 		iter_index = iter - self.params['startiter']
-		print "calc mem"
+		print("calc mem")
 		refine_mem = self.calcRefineMem(self.ppn,self.params['boxsize'],self.params['symmetry'],self.params['ang'][iter_index])
-		print refine_mem
+		print(refine_mem)
 		nproc = self.params['nproc']
-		print "ref params"
+		print("ref params")
 		refineparams,eotestparams = self.setEmanRefineParams(iter)
 		refinetask_list = ['refine','%d'%iter,'proc=%d' % nproc]
 		refinetask_list.extend(self.combineEmanParams(iter_index,refineparams))
@@ -156,13 +156,13 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		tasks = self.addToTasks(tasks,'%s proj.img proj.%d.txt' % (appion_getProjEulers,iter))
 		tasks = self.addToTasks(tasks,' '.join(eotesttask_list)+' > %s' % (eotestlog),refine_mem,nproc)
 		tasks = self.addToTasks(tasks,'/bin/mv -v fsc.eotest fsc.eotest.%d' % (iter))
-		print "get res"
+		print("get res")
 		appion_getres = os.path.join(self.appion_bin_dir,'getRes.pl')
 		tasks = self.addToTasks(tasks,
 			'%s %d %d %.3f >> resolution.txt' % (appion_getres,iter,self.params['boxsize'], self.params['apix']))
 		tasks = self.logTaskStatus(tasks,'eotest','resolution.txt',iter)
 		tasks = self.addToTasks(tasks,'/bin/rm -fv cls*.lst')
-		print "return"
+		print("return")
 		return tasks
 
 if __name__ == '__main__':

@@ -31,7 +31,7 @@ def printWarning(text):
 			f.write(" !!! WARNING: "+text+"\n")
 			f.close()
 		except:
-			print "write error"
+			print("write error")
 	sys.stderr.write(colorString("!!! WARNING: "+text,"yellow")+"\n")
 
 def printMsg(text, colorstr=None):
@@ -44,7 +44,7 @@ def printMsg(text, colorstr=None):
 			f.write(" ... "+text+"\n")
 			f.close()
 		except:
-			print "write error"
+			print("write error")
 	sys.stderr.write(" ... "+colorString(text, colorstr)+"\n")
 	
 def printError(text,raised=True):
@@ -69,9 +69,9 @@ def printError(text,raised=True):
 			f.write(" *** ERROR: "+text+"\n")
 			f.close()
 		except:
-			print "write error"
+			print("write error")
 	if raised:
-		raise Exception, colorString("\n *** FATAL ERROR ***\n"+text+"\n\a","red")
+		raise Exception(colorString("\n *** FATAL ERROR ***\n"+text+"\n\a","red"))
 	else:
 		sys.stderr.write(colorString("\n *** FATAL ERROR ***\n"+text+"\n\a","red"))
 
@@ -87,7 +87,7 @@ def printDebug(text):
 			f.write(" !!! DEBUG: "+text+"\n")
 			f.close()
 		except:
-			print "write error"
+			print("write error")
 	sys.stderr.write(colorString("!!! DEBUG: "+text,"yellow")+"\n")
 
 def printColor(text, colorstr):
@@ -100,7 +100,7 @@ def printColor(text, colorstr):
 			f.write(" ... "+text+"\n")
 			f.close()
 		except:
-			print "write error"
+			print("write error")
 	sys.stderr.write(colorString(text, colorstr)+"\n")
 	
 
@@ -245,7 +245,7 @@ def printDataBox(labellist,numlist,typelist=None):
 	"""
 	if( len(labellist) != len(numlist) 
 	 or ( typelist!=None and len(typelist) != len(numlist) ) ):
-		print len(labellist)," != ",len(numlist)," != ",len(typelist)
+		print(len(labellist)," != ",len(numlist)," != ",len(typelist))
 		printError("printDataBox() list lengths are off")
 	sys.stderr.write(_headerStr(labellist)+"\n")
 	labelstr = " "
@@ -389,7 +389,7 @@ def colorString(text, fg=None, bg=None):
 	}
 	if fg is None:
 		return text
-	if type(fg) in (types.TupleType, types.ListType):
+	if type(fg) in (tuple, list):
 		fg, bg = fg
 	if not fg:
 		return text
@@ -425,13 +425,13 @@ def environmentError():
 	env.append('PYTHONPATH')
 	env.append('LD_LIBRARY_PATH')
 	env.append('LM_LICENSE_FILE')
-	print colorString("Check your environmental variables and the Appion documentation.\nThese are your current environment values:","red")
+	print(colorString("Check your environmental variables and the Appion documentation.\nThese are your current environment values:","red"))
 	for name in env:
 		if name in os.environ:
 			value = os.environ[name]
 		else:
 			value = '*** NOT SET ***'
-		print colorString("%-20s -> %s" % (name, value), "red")
+		print(colorString("%-20s -> %s" % (name, value), "red"))
 
 class LeginonLogger(object):
 	'''

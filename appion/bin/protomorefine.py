@@ -50,7 +50,7 @@ if __name__ == "__main__":
 	
 	
 	for n in range(iters):
-		print "Iteration", n
+		print("Iteration", n)
 		series.align()
 		basename='%s%02d' % (seriesname,(n+start))
 		
@@ -67,4 +67,4 @@ if __name__ == "__main__":
 		geom.write(tiltfile)
 	
 
-	print "Done!"
+	print("Done!")

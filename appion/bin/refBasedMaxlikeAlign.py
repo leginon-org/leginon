@@ -7,7 +7,7 @@ import random
 import math
 import shutil
 import glob
-import cPickle
+import pickle
 import subprocess
 #appion
 from appionlib import appionScript
@@ -142,7 +142,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.params['timestamp'] = self.timestamp
 		paramfile = "maxlike-"+self.timestamp+"-params.pickle"
 		pf = open(paramfile, "w")
-		cPickle.dump(self.params, pf)
+		pickle.dump(self.params, pf)
 		pf.close()
 
 	#=====================
@@ -165,7 +165,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if self.params['commit'] is True:
 			maxjobq.insert()
 		self.params['maxlikejobid'] = maxjobq.dbid
-		print "self.params['maxlikejobid']",self.params['maxlikejobid']
+		print("self.params['maxlikejobid']",self.params['maxlikejobid'])
 		return
 
 	#=====================
@@ -219,7 +219,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		proc = subprocess.Popen(lddcmd, shell=True, stdout=subprocess.PIPE)
 		proc.wait()
 		lines = proc.stdout.readlines()
-		print "lines=", lines
+		print("lines=", lines)
 		if lines and len(lines) > 0:
 			return mpiexe
 

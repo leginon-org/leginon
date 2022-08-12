@@ -38,13 +38,13 @@ class FalconProcessing(apDDprocess.DDFrameProcessing):
 			filenames = os.listdir(framedir)
 			if len(filenames)>=2 and filenames[0].startswith(head) and filenames[1].startswith(head):
 				break
-			print 'Have %d files starts with "Intermediate"' % (len(filenames))
+			print('Have %d files starts with "Intermediate"' % (len(filenames)))
 			time.sleep(5)
 		for i,t0 in enumerate(filenames[0]):
 			if t0 != filenames[1][i]:
 				break
 		self.framename_pattern = filenames[0][:i]
-		print 'framename_pattern set to %s' % (self.framename_pattern)
+		print('framename_pattern set to %s' % (self.framename_pattern))
 
 	def getFrameNameFromNumber(self,frame_number):
 		return '%s%d.raw' % (self.framename_pattern,frame_number)
@@ -81,6 +81,6 @@ if __name__ == '__main__':
 	dd.setImageId(1640790)
 	start_frame = 0
 	nframe = 5
-	framelist = range(start_frame,start_frame+nframe)
+	framelist = list(range(start_frame,start_frame+nframe))
 	corrected = dd.correctFrameImage(framelist)
 	mrc.write(corrected,'corrected_frame%d_%d.mrc' % (start_frame,nframe))

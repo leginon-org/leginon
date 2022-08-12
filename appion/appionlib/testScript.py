@@ -151,7 +151,7 @@ class TestScript(appionScript.AppionScript):
 	#=====================
 	def downloadImagesFromAMI(self):
 		imglist = []
-		from urllib import urlretrieve
+		from urllib.request import urlretrieve
 		imgdict = {
 			110: '06jul12a_00022gr_00037sq_00025hl_00005en.mrc',
 			111: '06jul12a_00035gr_00063sq_00012hl_00004en.mrc',
@@ -161,7 +161,7 @@ class TestScript(appionScript.AppionScript):
 			115: '06jul12a_00022gr_00013sq_00002hl_00004en.mrc',
 			116: '06jul12a_00022gr_00013sq_00003hl_00005en.mrc',
 		}
-		for key in imgdict.keys():
+		for key in list(imgdict.keys()):
 			imgfile = os.path.join(self.params['rundir'], imgdict[key])
 			url = ("http://ami.scripps.edu/redmine/attachments/download/%d/%s"
 				%(key, imgdict[key]))
@@ -199,7 +199,7 @@ class TestScript(appionScript.AppionScript):
 	def getInstrumentIds(self):
 		### get scope
 		scopeq = leginon.leginondata.InstrumentData()
-		print scopeq
+		print(scopeq)
 		scopeq['name'] = 'SimTEM'
 		scopedatas = scopeq.query(results=1)
 		if not scopedatas or len(scopedatas) < 1:
@@ -370,7 +370,7 @@ class TestScript(appionScript.AppionScript):
 			apDisplay.printError("Failed to find stack %s for session %s during maxLikeAlignment test."%(substackname, self.sessionname))
 		
 
-		print (self.params['projectid'], stackid, 10, 2000, 3, 1, 12, 'max like with test suite application')
+		print((self.params['projectid'], stackid, 10, 2000, 3, 1, 12, 'max like with test suite application'))
 		
 
 		script = os.path.join(self.appiondir, "bin", "maxlikeAlignment.py")

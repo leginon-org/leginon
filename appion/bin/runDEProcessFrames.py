@@ -2,7 +2,7 @@
 from appionlib import apDisplay
 try:
 	import deProcessFrames
-except Exception, e:
+except Exception as e:
 	apDisplay.printError(str(e))
 
 deProcessFrames.main()

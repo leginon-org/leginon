@@ -7,7 +7,7 @@ import sys
 import math
 import time
 import shutil
-import cPickle
+import pickle
 import subprocess
 #appion
 from pyami import spider
@@ -133,7 +133,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		### open and write to input parameter file
 		paramfile = apDisplay.short(imgdata['filename'])+"-CTF.prm"
 		f = open(paramfile, "w")
-		print inputstr
+		print(inputstr)
 		f.write(inputstr)
 		f.close()
 
@@ -193,13 +193,13 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			elif sline.startswith("Q0"):
 				amplitude_contrast = abs(float(bits[1].strip()))
 
-		print defocus1, defocus2, angle_astigmatism, amplitude_contrast
+		print(defocus1, defocus2, angle_astigmatism, amplitude_contrast)
 
 		#defocusU=             -18418.6
 		#defocusV=             -24272.1
 		#azimuthal_angle=      79.7936
 		#Q0=                   -0.346951 #negative of ACE amplitude_contrast
-		print "AMP CONTRAST: %.4f -- %.4f"%(amplitude_contrast, ctfvalue['amplitude_contrast'])
+		print("AMP CONTRAST: %.4f -- %.4f"%(amplitude_contrast, ctfvalue['amplitude_contrast']))
 
 		self.ctfvalues = {
 			'defocus1':	defocus1*1e-10,

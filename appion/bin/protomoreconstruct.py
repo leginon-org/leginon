@@ -30,4 +30,4 @@ if __name__=='__main__':
 	series=protomo.series(param)
 	series.mapfile(options.map)
 	
-	print "Done!"
+	print("Done!")

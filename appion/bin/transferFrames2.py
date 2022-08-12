@@ -16,7 +16,7 @@ import sinedon
 def transfer(src, dst, delete=True, method='rsync'):
 	if method == 'mv':
 		cmd = 'mv %s %s' % (src, dst)
-		print cmd
+		print(cmd)
 		p = subprocess.Popen(cmd, shell=True)
 		p.wait()
 		
@@ -31,7 +31,7 @@ def transfer(src, dst, delete=True, method='rsync'):
 		if delete is True:
 			cmdroot+=' --remove-sent-files '
 		cmd='%s %s %s' % (cmdroot, src, dst)
-		print cmd
+		print(cmd)
 		p = subprocess.Popen(cmd, shell=True)
 		p.wait()
 	
@@ -62,13 +62,13 @@ def checkdestpath(imgdata,destination):
 	try:
 		session=imgdata['session']['name']
 	except:
-		print imgdata
+		print(imgdata)
 	destfolder=os.path.join(destination,session,'rawdata')
-	print destfolder
+	print(destfolder)
 	if os.path.exists(destfolder):
 		return destfolder
 	else:
-		print "Making output directory",destfolder
+		print("Making output directory",destfolder)
 		os.makedirs(destfolder)
 		return destfolder
 
@@ -81,7 +81,7 @@ if __name__ == '__main__':
 		imgtree = apDatabase.getImagesFromDB(options.session, options.preset)
 	else:
 		imgtree = apDatabase.getAllImagesFromDB(self.params['sessionname'])
-	print len(imgtree)
+	print(len(imgtree))
 
 	if options.reverse is False:
 		imgtree.reverse()
@@ -90,35 +90,35 @@ if __name__ == '__main__':
 	sessionname=imgtree[0]['session']['name']
 	destfolder=os.path.join(options.destpath,sessionname,'rawdata')
 	if os.path.exists(destfolder):
-		print "Output directory %s already exists" % (destfolder)
+		print("Output directory %s already exists" % (destfolder))
 	else:
-		print "Making output directory",destfolder
+		print("Making output directory",destfolder)
 		os.makedirs(destfolder)
 	
 	### Transfer frames 
 	for imgdata in imgtree:
 		frameroot=imgdata['camera']['frames name']
-		print "looking for pattern %s" % (frameroot)
+		print("looking for pattern %s" % (frameroot))
 		filestotransfer=glob.glob(os.path.join(options.origpath,frameroot)+'*')
 		if len(filestotransfer) < 1:
-			print 'Files with pattern %s not found in %s, so this image will be skipped' % (frameroot,options.origpath)
+			print('Files with pattern %s not found in %s, so this image will be skipped' % (frameroot,options.origpath))
 			continue
 		elif len(filestotransfer) > 1:
-			print 'More than one file with pattern %s found, so they will be skipped'
+			print('More than one file with pattern %s found, so they will be skipped')
 			continue 
 		else:
-			print len(filestotransfer), "files found"
+			print(len(filestotransfer), "files found")
 		destname=imgdata['filename']+'.frames.mrc'
 		destnamepath=os.path.join(destfolder,destname)
 		
-		print 'Transferring %s to %s' % (filestotransfer[0], destnamepath)
+		print('Transferring %s to %s' % (filestotransfer[0], destnamepath))
 		if options.dryrun is False:
 			transfer(filestotransfer[0],destnamepath)
 			if os.path.exists(destnamepath):
-				print "Transfer successful"
+				print("Transfer successful")
 			else:
-				print "%s %s not transferred properly\nExiting" % (filestotransfer[0],destnamepath)
+				print("%s %s not transferred properly\nExiting" % (filestotransfer[0],destnamepath))
 				sys.exit()
-		print "\n\n"
+		print("\n\n")
 		
-	print 'Done!'
+	print('Done!')

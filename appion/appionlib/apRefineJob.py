@@ -104,10 +104,10 @@ class RefineJob(basicScript.BasicScript):
 		self.setIterationParamList()
 		for param in self.iterparams:
 			example = ''
-			if 'default' in param.keys() and param['default']:
+			if 'default' in list(param.keys()) and param['default']:
 				example = ", e.g. --%s=%s" % (param['name'],param['default'])
 
-			if 'action' in param.keys() and param['action']:
+			if 'action' in list(param.keys()) and param['action']:
 				self.parser.add_option('--%s' % param['name'], dest="%s" % param['name'], default= param['default'], action="%s" % param['action'] ,
 				help="iteration parameter: %s%s" % (param['help'],example))
 			else:
@@ -120,7 +120,7 @@ class RefineJob(basicScript.BasicScript):
 			apDisplay.printError("enter at least one 3D initial model volume file, e.g. --modelnames=initial.mrc")
 		if self.params['stackname'] is None:
 			apDisplay.printError("enter a particle stack file, e.g. --stackname=start.hed")
-		if 'symmetry' not in self.params.keys() or self.params['symmetry'] == '':
+		if 'symmetry' not in list(self.params.keys()) or self.params['symmetry'] == '':
 			apDisplay.printError("Symmetry was not defined")
 		self.params['symmetry'] = self.convertSymmetryNameForPackage(self.params['symmetry'])
 
@@ -148,7 +148,7 @@ class RefineJob(basicScript.BasicScript):
 
 	def __convertListParams(self):
 		for paramkey in self.listparams:
-			if paramkey in self.params.keys():
+			if paramkey in list(self.params.keys()):
 				self.params[paramkey] = self.params[paramkey].split(',')
 
 	def checkPackageConflicts(self):
@@ -162,7 +162,7 @@ class RefineJob(basicScript.BasicScript):
 				]
 
 	def __convertIterationParams(self):
-		iterparam_names = map((lambda x: x['name']),self.iterparams)
+		iterparam_names = list(map((lambda x: x['name']),self.iterparams))
 		self.params = apParam.convertIterationParams(iterparam_names,self.params,self.params['numiter'])
 
 	def checkIterationConflicts(self):
@@ -178,7 +178,7 @@ class RefineJob(basicScript.BasicScript):
 					continue
 				if type(number) == type(0):
 					apDisplay.printWarning("%s is converted to next integer above if entered as float" % key)
-					self.params[key] = map((lambda x: int(math.ceil(x))),self.params[key])
+					self.params[key] = list(map((lambda x: int(math.ceil(x))),self.params[key]))
 		# mask size in pixels has to be 2 pixels less than half the box size
 		maxmaskPixels = int(math.floor(self.params['boxsize']/2.0)) - 2
 		# convert to angstroms to find the max outer mask radius
@@ -214,11 +214,11 @@ class RefineJob(basicScript.BasicScript):
 		return mpi_script
 
 	def __makeMPIMasterScript(self,shellscripts,masterfile):
-		lines = map((lambda x:'-np 1 '+x),shellscripts)
+		lines = list(map((lambda x:'-np 1 '+x),shellscripts))
 		f = open(masterfile,'w')
-		f.writelines(map((lambda x: x+'\n'),lines))
+		f.writelines(list(map((lambda x: x+'\n'),lines)))
 		f.close()
-		os.chmod(masterfile, 0755)
+		os.chmod(masterfile, 0o755)
 	def wrapScript(self,scriptname):	
 		if self.params['appionwrapper'] != '':
 			return self.params['appionwrapper']+' '+scriptname
@@ -354,7 +354,7 @@ class RefineJob(basicScript.BasicScript):
 		Record the filenames in files_from_remote_host attribute in a file
 		'''
 		f = open(os.path.join(self.params['remoterundir'],'files_from_remote_host'),'w')
-		f.writelines(map((lambda x: x+'\n'),self.files_from_remote_host))
+		f.writelines(list(map((lambda x: x+'\n'),self.files_from_remote_host)))
 		f.close()
 
 	def __makePackResultsScript(self):
@@ -495,7 +495,7 @@ class RefineJob(basicScript.BasicScript):
 		'''
 		Function to add a series of tasks to the job
 		'''
-		self.command_list.extend(map((lambda x:x[0]),tasks['scripts']))
+		self.command_list.extend(list(map((lambda x:x[0]),tasks['scripts'])))
 		self.min_mem_list.extend(tasks['mem'])
 		self.nproc_list.extend(tasks['nproc'])
 
@@ -526,7 +526,7 @@ class RefineJob(basicScript.BasicScript):
 	
 	def	createIterationCommandAndLog(self,iter):
 		refinetasks = self.makeRefineTasks(iter)
-		if 'scripts' in refinetasks.keys() and len(refinetasks['scripts']) >=1 and refinetasks['scripts'][0][0] !='':
+		if 'scripts' in list(refinetasks.keys()) and len(refinetasks['scripts']) >=1 and refinetasks['scripts'][0][0] !='':
 			self.addToLog('....Starting iteration %d at %s...' % (iter, "`date`"))
 			self.addJobCommands(refinetasks)
 			self.addToLog('Done with iteration %d at %s' % (iter, "`date`"))
@@ -570,7 +570,7 @@ class RefineJob(basicScript.BasicScript):
 		self.addSimpleCommand('cd %s' % self.params['remoterundir'])
 		self.addToLog('....Performing tasks after iterations....')
 		self.makePostIterationScript()
-		print self.params['remoterundir']
+		print(self.params['remoterundir'])
 		self.__makePackResultsScript()
 		self.__writeCommandListToFile()
 
@@ -622,7 +622,7 @@ class RefineJob(basicScript.BasicScript):
 	
 class Tester(RefineJob):
 	def makeRefineScript(self,iter):
-			print 'make refine script in Tester'
+			print('make refine script in Tester')
 			tasks = {
 					'mem':[[2,2,2,2],[47,]],
 					'scripts':[['echo "doing proc000"\n',

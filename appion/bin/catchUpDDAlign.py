@@ -58,7 +58,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 
 	#=======================
 	def onInit(self):
-		if 'sessionname' not in self.params.keys():
+		if 'sessionname' not in list(self.params.keys()):
 			self.params['sessionname'] = leginondata.SessionData().direct_query(self.params['expid'])['name']
 		self.dd = apDDprocess.initializeDDFrameprocess(self.params['sessionname'],self.params['wait'])
 		# Set DDFrameAligner to Purdue version of MotionCorr
@@ -67,7 +67,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 		self.dd.setRunDir(self.params['rundir'])
 		#self.framealigner.setRunDir(self.params['rundir'])
 		# The gain/dark corrected ddstack is unlikely to be on local disk
-		if 'tempdir' not in self.params.keys():
+		if 'tempdir' not in list(self.params.keys()):
 			self.dd.setTempDir()
 		else:
 			self.dd.setTempDir(self.params['tempdir'])
@@ -77,7 +77,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 		# Get the unfinished ddstack run parameters to apply them here
 		jobdata = apDatabase.getJobDataFromPathAndType(self.rundata['path']['path'], 'makeddrawframestack')
 		self.ddstack_script_params = apScriptLog.getScriptParamValuesFromRunname(self.rundata['runname'],self.rundata['path'],jobdata)
-		if 'no-keepstack' in self.ddstack_script_params.keys():
+		if 'no-keepstack' in list(self.ddstack_script_params.keys()):
 			self.dd.setKeepStack(False)
 		self.framealigner.setFrameAlignOptions(self.ddstack_script_params)
 
@@ -130,7 +130,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 		### set processing image
 		try:
 			self.dd.setImageData(imgdata,ignore_raw=True)
-		except Exception, e:
+		except Exception as e:
 			apDisplay.printWarning(e.message)
 			return
 		# use non-temp framestack path as input
@@ -215,7 +215,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			return False
 		else:
 			# successful alignment
-			if 'alignlabel' not in self.ddstack_script_params.keys() or not self.ddstack_script_params['alignlabel']:
+			if 'alignlabel' not in list(self.ddstack_script_params.keys()) or not self.ddstack_script_params['alignlabel']:
 				# appion script params may not have included alignlabel
 				self.ddstack_script_params['alignlabel'] = 'a'
 			self.convertLogFile()
@@ -244,7 +244,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 		if os.path.isfile(self.dd.aligned_sumpath):
 			# Save the alignment result
 			self.aligned_imagedata = self.dd.makeAlignedImageData(alignlabel=self.ddstack_script_params['alignlabel'])
-			if 'no-keepstack' in self.ddstack_script_params.keys():
+			if 'no-keepstack' in list(self.ddstack_script_params.keys()):
 				apDisplay.printMsg('removing %s' % self.temp_aligned_stackpath)
 				if os.path.isfile(self.temp_aligned_stackpath):
 					apFile.removeFile(self.temp_aligned_stackpath)

@@ -46,7 +46,7 @@ class SpiderSession:
 	 nproc=1, spiderprocdir="", term=False, verbose=False, log=True):
 		# spider executable		
 		if spiderexec is None:
-			if os.environ.has_key('SPIDER_LOC'):
+			if 'SPIDER_LOC' in os.environ:
 					self.spiderexec = os.path.join(os.environ['SPIDER_LOC'],'spider')
 			else:
 					try:

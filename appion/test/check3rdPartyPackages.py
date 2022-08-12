@@ -55,7 +55,7 @@ packageDict.update({
 
 outString = "The following third party processing packages could not be found...\n\n"
 
-for nameKey, desc in packageDict.iteritems():
+for nameKey, desc in packageDict.items():
     pathValue = apParam.getExecPath(nameKey, die=False)
     if pathValue is None:
         outString += "|\tFrom %s, (%s) %s\n|\n"%(desc[0], nameKey,  desc[1])

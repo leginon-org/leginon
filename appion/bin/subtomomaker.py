@@ -126,7 +126,7 @@ class tomoMaker(appionScript.AppionScript):
 				particles,stackparticles = apStack.getImageParticles(zprojimagedata, self.params['stackId'])
 				stackdata = apStack.getOnlyStackData(self.params['stackId'])
 			for p, particle in enumerate(particles):
-				print particle['xcoord'],particle['ycoord'],fullbin
+				print(particle['xcoord'],particle['ycoord'],fullbin)
 				center = apTomo.transformParticleCenter(particle,fullbin,gtransform)
 				size = (dimension['x']/fullbin,dimension['y']/fullbin,dimension['z']/fullbin)
 				volumename = 'volume%d'% (volumeindex,)

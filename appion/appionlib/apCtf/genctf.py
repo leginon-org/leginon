@@ -22,7 +22,7 @@ def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07
 	Underfocus is postive (defocused) 
 	"""
 	if debug is True:
-		print "generateCTF1dFromRadii()"
+		print("generateCTF1dFromRadii()")
 
 	if radii is None:
 		radii = generateRadii1d(numpoints=256, pixelsize=1e-10)
@@ -52,7 +52,7 @@ def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07
 	ctf = prectf**2
 
 	if debug is True:
-		print "generate 1D ctf complete in %.9f sec"%(time.time()-t0)
+		print("generate 1D ctf complete in %.9f sec"%(time.time()-t0))
 
 	return ctf
 
@@ -66,7 +66,7 @@ def getDiffResForOverfocus(radii=None, cs=2e-3, volts=120000):
 	"""
 
 	if debug is True:
-		print "getDiffResForOverfocus()"
+		print("getDiffResForOverfocus()")
 
 	if debug is True:
 		apDisplay.printColor("getDiffRes radii: 1/%.2fA --> 1/%.2fA"%(1/radii[1]*1e10, 1/radii[-1]*1e10), "cyan")
@@ -89,7 +89,7 @@ def getDiffResForOverfocus(radii=None, cs=2e-3, volts=120000):
 	apDisplay.printColor("Overfocus/Underfocus difference resolution is: 1/%.2fA"%(diffres), "cyan")
 
 	if debug is True:
-		print "difference resolution complete in %.9f sec"%(time.time()-t0)
+		print("difference resolution complete in %.9f sec"%(time.time()-t0))
 	return diffres
 
 #===================
@@ -101,13 +101,13 @@ def generateCTF1dACE2(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=
 	Underfocus is postive (defocused) 
 	"""
 	if debug is True:
-		print "generateCTF1dFromRadii()"
+		print("generateCTF1dFromRadii()")
 	t0 = time.time()
 	checkParams(focus1=focus, focus2=focus, cs=cs, volts=volts, ampconst=ampconst, extra_phase_shift=0.0, failParams=failParams)
 	minres = 1e10/radii.min()
 	maxres = 1e10/radii.max()
 	if debug is True:
-		print "** CTF limits %.1f A -->> %.1fA"%(minres, maxres)
+		print("** CTF limits %.1f A -->> %.1fA"%(minres, maxres))
 	if maxres < 2.0 or maxres > 50.0:
 		apDisplay.printError("CTF limits are incorrect %.1f A -->> %.1fA"%(minres, maxres))
 
@@ -117,7 +117,7 @@ def generateCTF1dACE2(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=
 	x2 = math.pi * wavelength
 	x0 = 1.0*math.asin(ampconst) #CORRECT
 	if debug is True:
-		print "x0 shift %.1f degrees"%(math.degrees(x0))
+		print("x0 shift %.1f degrees"%(math.degrees(x0)))
 
 	radiisq = radii**2
 
@@ -128,7 +128,7 @@ def generateCTF1dACE2(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=
 	ctf = 1.0*numpy.sin(gamma) #MAYBE CORRECT
 
 	if debug is True:
-		print "generate 1D ctf complete in %.9f sec"%(time.time()-t0)
+		print("generate 1D ctf complete in %.9f sec"%(time.time()-t0))
 
 	return ctf**2
 
@@ -179,11 +179,11 @@ def generateCTF2d(focus1=-1.0e-6, focus2=-1.0e-6, theta=0.0,
 	ctf = prectf**2
 
 	if debug is True:
-		print "\n CTF"
+		print("\n CTF")
 		imagestat.printImageInfo(ctf)
 
 	if debug is True:
-		print "generate ctf 2d complete in %.4f sec"%(time.time()-t0)
+		print("generate ctf 2d complete in %.4f sec"%(time.time()-t0))
 
 	return ctf
 
@@ -198,13 +198,13 @@ def generateLocalFocus2d(focus1=-1.0e-6, focus2=-1.0e-6, theta=0.0, shape=(256,2
 
 	angles = -1*generateAngular2d(shape)
 	if debug is True:
-		print "\n ANGLES"
+		print("\n ANGLES")
 		imagestat.printImageInfo(angles)
 
 	localfocus = meanfocus + focusdiff * numpy.cos(2.0*(angles-theta))
 
 	if debug is True:
-		print "generate local focus 2d complete in %.4f sec"%(time.time()-t0)
+		print("generate local focus 2d complete in %.4f sec"%(time.time()-t0))
 
 	return localfocus
 
@@ -232,7 +232,7 @@ def generateGamma2d(focus1=-1.0e-6, focus2=-1.0e-6, theta=0.0,
 
 	radiisq = generateRadial2d(shape, xfreq, yfreq)
 	if debug is True:
-		print "\n RADII"
+		print("\n RADII")
 		imagestat.printImageInfo(1.0/numpy.sqrt(radiisq))
 	if debug is True:
 		halfshape = shape[0]/2
@@ -241,19 +241,19 @@ def generateGamma2d(focus1=-1.0e-6, focus2=-1.0e-6, theta=0.0,
 
 	angles = -1*generateAngular2d(shape)
 	if debug is True:
-		print "\n ANGLES"
+		print("\n ANGLES")
 		imagestat.printImageInfo(angles)
 
 	localfocus = generateLocalFocus2d(focus1, focus2, theta, shape)
 	if debug is True:
-		print "\n FOCUS"
+		print("\n FOCUS")
 		imagestat.printImageInfo(localfocus*1e6)
 
 	x4 = -math.pi/2.0 * wavelength**3 * cs
 	x2 = math.pi * wavelength
 	x0 = math.asin(ampconst) + extra_phase_shift
 	if debug is True:
-		print "x0 shift %.1f degrees"%(math.degrees(x0))
+		print("x0 shift %.1f degrees"%(math.degrees(x0)))
 
 	gamma1 = (x4 * radiisq**2) + (localfocus * x2 * radiisq) + (x0) 
 
@@ -276,7 +276,7 @@ def generateGamma2d(focus1=-1.0e-6, focus2=-1.0e-6, theta=0.0,
 	"""
 
 	if debug is True:
-		print "generate gamma 2d complete in %.4f sec"%(time.time()-t0)
+		print("generate gamma 2d complete in %.4f sec"%(time.time()-t0))
 
 	return gamma1
 
@@ -295,12 +295,12 @@ def equiPhaseAverage(image, ellipratio,
 	"""
 	#normally this would be in ctftools, but we need the functions from this file
 	if debug is True:
-		print "ring width %.2f pixels"%(ringwidth)
-		print "angle = ", angle
-		print "cs = ", cs
-		print "volts = ", volts
-		print "ampconst = ", ampconst
-		print "extra_phase_shift = ", extra_phase_shift
+		print("ring width %.2f pixels"%(ringwidth))
+		print("angle = ", angle)
+		print("cs = ", cs)
+		print("volts = ", volts)
+		print("ampconst = ", ampconst)
+		print("extra_phase_shift = ", extra_phase_shift)
 
 	theta = math.radians(angle)
 
@@ -337,17 +337,17 @@ def equiPhaseAverage(image, ellipratio,
 	sprime *= (maxval / sprime.max())
 
 	if debug is True:
-		print "sprime"
+		print("sprime")
 		imagestat.printImageInfo(sprime)
 
 		radial = ctftools.getEllipticalDistanceArray(1, 0, image.shape)
-		print "radial"
+		print("radial")
 		imagestat.printImageInfo(radial)
 		
 		from pyami import mrc
 		mrc.write(radial, "radial.mrc")
 		mrc.write(sprime, "sprime.mrc")
-		print "diff = "
+		print("diff = ")
 		diff = sprime - radial
 		mrc.write(diff, "diff.mrc")
 		imagestat.printImageInfo(diff)
@@ -358,11 +358,11 @@ def equiPhaseAverage(image, ellipratio,
 	sprime = numpy.array(sprime, dtype=numpy.int32)
 
 	if debug is True:
-		print "computing equiphase average xdata..."
+		print("computing equiphase average xdata...")
 
 	xdataint = numpy.unique(sprime)
 	if debug is True:
-		print "pre-edit xdataint", xdataint[:5], "..", xdataint[-5:] 
+		print("pre-edit xdataint", xdataint[:5], "..", xdataint[-5:]) 
 		imagestat.printImageInfo(xdataint)
 
 	bigshape = numpy.array(numpy.array(image.shape)*math.sqrt(2)/2., dtype=numpy.int)*2
@@ -384,44 +384,44 @@ def equiPhaseAverage(image, ellipratio,
 		xdataint = xdataint[innercutsize:]
 
 	if debug is True:
-		print "edited xdataint", xdataint[:5], "..", xdataint[-5:] 
+		print("edited xdataint", xdataint[:5], "..", xdataint[-5:]) 
 		imagestat.printImageInfo(xdataint)
 
 	### remove
 	data = image.copy()
 	if debug is True:
-		print "raw data"
+		print("raw data")
 		imagestat.printImageInfo(data)
 	if numpy.any(numpy.isnan(data)):
-		print data
+		print(data)
 		apDisplay.printError("Major Error (NaN) in equiphase average, data")
 
 	if debug is True:
-		print "computing equiphase average ydata..."
+		print("computing equiphase average ydata...")
 	ydata = numpy.array(scipy.ndimage.mean(data, sprime, xdataint))
 	if debug is True:
-		print "ydata"
+		print("ydata")
 		imagestat.printImageInfo(ydata)
 	if len(ydata) == 0:
-		print "ydata", ydata
+		print("ydata", ydata)
 		apDisplay.printWarning("Major Error: nothing returned for equiphase average, ydata")
 		return None, None
 
 	### WHAT ARE YOU DOING WITH THE SQRT ellipratio??? It just works
 	xdata = numpy.array(xdataint, dtype=numpy.float64)*ringwidth/math.sqrt(ellipratio)
 	if debug is True:
-		print "xdata"
+		print("xdata")
 		imagestat.printImageInfo(xdata)
 
 	if numpy.any(numpy.isnan(xdata)):  #note does not work with 'is True'
-		print xdata
+		print(xdata)
 		apDisplay.printError("Major Error (NaN) in equiphase average, xdata")
 	if numpy.any(numpy.isnan(ydata)):  #note does not work with 'is True'
-		print ydata
+		print(ydata)
 		apDisplay.printError("Major Error (NaN) in equiphase average, ydata")
 
 	if debug is True:
-		print "... finish equiphase average"
+		print("... finish equiphase average")
 		apDisplay.printMsg("  expected size of equiphase average: %d"%(bigshape[0]/2))
 		apDisplay.printMsg("actual max size of equiphase average: %d"%(xdata.max())) 
 
@@ -479,7 +479,7 @@ def generateAngular2d(shape):
 	### raw radius from center
 	#print numpy.around(circular*180/math.pi,1)
 	if debug is True:
-		print "angular 2 complete in %.4f sec"%(time.time()-t0)
+		print("angular 2 complete in %.4f sec"%(time.time()-t0))
 	return circular
 
 #===================
@@ -493,7 +493,7 @@ def generateGaussion2d(shape, xfreq, yfreq, sigma=None):
 	circular = generateRadial2d(shape, xfreq, yfreq)
 	circular = numpy.exp(-circular/sigma**2)
 	if debug is True:
-		print "gaussian 2 complete in %.4f sec"%(time.time()-t0)
+		print("gaussian 2 complete in %.4f sec"%(time.time()-t0))
 	return circular
 
 #===================
@@ -542,23 +542,23 @@ def generateRadial2d(shape, xfreq, yfreq):
 	### raw radius from center
 	#print circular
 	if debug is True:
-		print "radial 2 complete in %.4f sec"%(time.time()-t0)
+		print("radial 2 complete in %.4f sec"%(time.time()-t0))
 	return circular
 
 #===================
 def checkParams(focus1=-1.0e-6, focus2=-1.0e-6, pixelsize=1.5e-10, 
 	cs=2e-3, volts=120000, ampconst=0.07, extra_phase_shift=0.0, failParams=False):
 	if debug is True:
-		print "  Defocus1 %.2f microns (underfocus is positive)"%(focus1*1e6)
+		print("  Defocus1 %.2f microns (underfocus is positive)"%(focus1*1e6))
 		if focus1 != focus2:
-			print "  Defocus2 %.2f microns (underfocus is positive)"%(focus2*1e6)
-		print "  Pixelsize %.3f Angstroms"%(pixelsize*1e10)
-		print "  C_s %.1f mm"%(cs*1e3)
-		print "  High tension %.1f kV"%(volts*1e-3)
-		print ("  Amp Contrast %.3f (shift %.1f degrees)"
-			%(ampconst, math.degrees(-math.asin(ampconst))))
-		print ("  Extra Phase Shift  %.1f degrees"
-			% (math.degrees(extra_phase_shift)))
+			print("  Defocus2 %.2f microns (underfocus is positive)"%(focus2*1e6))
+		print("  Pixelsize %.3f Angstroms"%(pixelsize*1e10))
+		print("  C_s %.1f mm"%(cs*1e3))
+		print("  High tension %.1f kV"%(volts*1e-3))
+		print(("  Amp Contrast %.3f (shift %.1f degrees)"
+			%(ampconst, math.degrees(-math.asin(ampconst)))))
+		print(("  Extra Phase Shift  %.1f degrees"
+			% (math.degrees(extra_phase_shift))))
 	if focus1*1e6 > 15.0 or focus1*1e6 < 0.1:
 		msg = "atypical defocus #1 value %.1f microns (underfocus is positve)"%(focus1*1e6)
 		if failParams is False:

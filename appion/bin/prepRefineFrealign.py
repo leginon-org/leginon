@@ -87,7 +87,7 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 	def preprocessStack(self):
 		self.getStackRunParams()
 		# use original stackrun log parameters to create preparation parameters
-		if 'defocpair' in self.stackrunlogparams.keys():
+		if 'defocpair' in list(self.stackrunlogparams.keys()):
 			self.params['defocpair'] = True
 		else:
 			self.params['defocpair'] = False
@@ -139,7 +139,7 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		'''
 		newstackroot = os.path.join(self.params['rundir'],os.path.basename(self.stack['file'])[:-4])
 		if self.params['paramonly'] is True:
-			print 'newstackroot',newstackroot
+			print('newstackroot',newstackroot)
 			self.setFrealignStack(newstackroot)
 			return
 		# copy existing refined stack if possible
@@ -197,11 +197,11 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		
 		#normalization
 		normtext = ''
-		if 'xmipp-norm' in paramdata.keys():
+		if 'xmipp-norm' in list(paramdata.keys()):
 			# myami-3.1 or before
 			normtext = self.setArgText('xmipp-normalize',(paramdata['xmipp-norm'],),True)
 			normtext = '--normalized '+normtext
-		elif 'normalizemethod' in paramdata.keys():
+		elif 'normalizemethod' in list(paramdata.keys()):
 			# myami-3.2 or newer
 			normtext = '--normalize-method=%s' % (paramdata['normalizemethod'],)
 		sessionid = int(self.params['expid'])
@@ -210,11 +210,11 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		projectid = self.params['projectid']
 
 		# The assumption is that the image is from ice grid and digital camera (black particles on white background
-		if 'reverse' in self.stackrunlogparams.keys():
+		if 'reverse' in list(self.stackrunlogparams.keys()):
 			reversetext = '--reverse'
 		else:
 			reversetext = ''
-		if 'defocpair' in self.stackrunlogparams.keys():
+		if 'defocpair' in list(self.stackrunlogparams.keys()):
 			defoctext = '--defocpair'
 		else:
 			defoctext = ''
@@ -252,7 +252,7 @@ makestack2.py --single=%s --fromstackid=%d %s %s %s %s %s --no-invert %s --boxsi
 		self.addStackToSend(mrcfilepath)
 
 	def otherPreparations(self):
-		if 'reconiterid' not in self.params.keys() or self.params['reconiterid'] == 0:
+		if 'reconiterid' not in list(self.params.keys()) or self.params['reconiterid'] == 0:
 			self.params['reconiterid'] = None
 		paramfile = 'params.000.par'
 		# frealign 8 style paramfile

@@ -49,7 +49,7 @@ class EerProcessing(apFalcon3Process.FalconProcessing):
 
 	def getUsedFramesFromImageData(self,imagedata):
 		# all saved frames
-		return range(self.getNumberOfFrameSavedFromImageData(imagedata))
+		return list(range(self.getNumberOfFrameSavedFromImageData(imagedata)))
 
 	def correctFrameImage(self,framelist,use_full_raw_area=False):
 		return self.__correctFrameImage(framelist,use_full_raw_area)	
@@ -60,4 +60,4 @@ class EerProcessing(apFalcon3Process.FalconProcessing):
 if __name__ == '__main__':
 	dd = EerProcessing()
 	dd.setImageId(3859)
-	print dd.getRawFrameDirFromImage(dd.image)
+	print(dd.getRawFrameDirFromImage(dd.image))

@@ -156,7 +156,7 @@ def getStackParticlesInOrder(params):
 		return apStack.getStackParticlesFromId(stackid)
 	partfile = open(partorderfile,'r')
 	lines = partfile.readlines()
-	partorder = map((lambda x:int(x[:-1])),lines)
+	partorder = list(map((lambda x:int(x[:-1])),lines))
 	partsort = list(partorder)
 	partsort.sort()
 	if partsort == partorder:
@@ -215,9 +215,9 @@ def generateParticleParams(params,modeldata,initparfile='params.0.par',extended=
 		sym_name = modeldata['symmetry']['symmetry']
 	
 	if (extended):
-		print "Writing out extended particle parameters"
+		print("Writing out extended particle parameters")
 	else:
-		print "Writing out particle parameters"
+		print("Writing out particle parameters")
 		
 	if 'last' not in params:
 		params['last'] = len(stackpdata)
@@ -408,7 +408,7 @@ def createFrealignJob (params, jobname, nodenum=None, mode=None, inpar=None, inv
 	f.write('EOF\n')
 	f.write('\n')
 	f.close()
-	os.chmod(jobname,0755)
+	os.chmod(jobname,0o755)
 
 #===============
 def convertAppionEmanEulersToFrealign(eman_eulers, full_sym_name='c1'):
@@ -655,7 +655,7 @@ def createMultipleJobs(params):
 		fr.write("-np 1 %s\n" % jobname)
 		createFrealignJob(params,jobname,invol=params['itervol'], inpar=params['iterparam'],nodenum=n, first=firstp, last=lastp,norecon=True)
 	fr.close()
-	os.chmod(cscript,0755)
+	os.chmod(cscript,0o755)
 
 
 #===============
@@ -666,7 +666,7 @@ def submitMultipleJobs(params):
 	"""
 	#cmd = 'pbsdsh -v '+params['mp_script']
 	cmd = 'mpiexec --app '+params['mp_script']
-	print cmd
+	print(cmd)
 	proc = subprocess.Popen(cmd, shell=True)
 	proc.wait()
 
@@ -751,7 +751,7 @@ def scale_parfile_frealign8(infile, outfile, mult, newmag=0):
 	micnum = 0
 	for i,p in enumerate(params):
 		if i % 1000 == 0:
-			print "finished %d particles from parameter file 1" % i
+			print("finished %d particles from parameter file 1" % i)
 		partnum = p['partnum']
 		psi = p['psi']
 		theta = p['theta']
@@ -794,9 +794,9 @@ def scale_parfile_frealign9_03(infile, outfile, mult, newmag=0):
 	olddx = 0
 	micnum = 0
 
-	for i,p in params.iteritems():
+	for i,p in params.items():
 		if i % 1000 == 0:
-			print "finished %d particles from parameter file 1" % i
+			print("finished %d particles from parameter file 1" % i)
 		partnum = p['partnum']
 		psi = p['psi']
 		theta = p['theta']
@@ -844,7 +844,7 @@ def frealign8_to_frealign9(infile, outfile, apix, occ=100, logp=5000, sigma=1, s
 	params = parseFrealignParamFile(infile)
 	for i,p in enumerate(params):
 		if i % 1000 == 0:
-			print "finished %d particles" % i
+			print("finished %d particles" % i)
 		partnum = float(p['partnum'])
 		psi = float(p['psi'])
 		theta = float(p['theta'])
@@ -857,7 +857,7 @@ def frealign8_to_frealign9(infile, outfile, apix, occ=100, logp=5000, sigma=1, s
 		dy = float(p['defoc2'])
 		ast = float(p['astang'])
 		# Transfer stack particle number if exists for appion database
-		if 'stackpartnum' in p.keys():
+		if 'stackpartnum' in list(p.keys()):
 			stackpartnum = int(p['stackpartnum'])
 		else:
 			stackpartnum = None
@@ -878,7 +878,7 @@ def frealign9_to_frealign8(infile, outfile, apix):
 		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST"))
 	### read & write params
 	params = parseFrealign9ParamFile(infile)
-	for i,p in params.iteritems():
+	for i,p in params.items():
 		partnum = p['partnum']
 		psi = p['psi']
 		theta = p['theta']
@@ -904,7 +904,7 @@ def frealign9_03_to_frealign9_06(infile, outfile):
 
 	### read & write params
 	params = parseFrealign9ParamFile(infile)
-	for i,p in params.iteritems():
+	for i,p in params.items():
 		partnum = p['partnum']
 		psi = p['psi']
 		theta = p['theta']
@@ -946,7 +946,7 @@ def frealign9_06_to_frealign9_03(infile, outfile):
 
 	### read & write params
 	params = parseFrealign9ParamFile(infile)
-	for i,p in params.iteritems():
+	for i,p in params.items():
 		partnum = p['partnum']
 		psi = p['psi']
 		theta = p['theta']
@@ -1104,7 +1104,7 @@ def exclude_class_from_frealign9_parfile(inparfile, outlist, minocc=50.0, freali
 	k = 1
 	olddx = 0
 	micnum = 0
-	for i,p in params.iteritems():
+	for i,p in params.items():
 		partnum = p['partnum']
 		psi = p['psi']
 		theta = p['theta']
@@ -1193,7 +1193,7 @@ def exclude_classes_from_frealign9_parfiles(inparfilebase, outlist, minocc, *cla
 	
 	### check for duplicates
 	last = -1
-	for i in reversed(range(0,len(combined))):
+	for i in reversed(list(range(0,len(combined)))):
 		if combined[i] == combined[i-1]:
 			tmp = combined.pop(i)
 	### write to file
@@ -1248,7 +1248,7 @@ def combine_frealign9_parfiles(outparfile, *parfiles):
 	for inparfile in parfiles:
 		params = parseFrealign9ParamFile(inparfile)
 		### read & write params
-		for i, p in params.iteritems():
+		for i, p in params.items():
 			total+=1
 			partnum = float(p['partnum'])
 			psi = float(p['psi'])
@@ -1291,9 +1291,9 @@ def split_frealign9_parfile(inparfile, *outparfiles):
 		ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
 			% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
 		### read & write params
-		for i,p in params.iteritems():	
+		for i,p in params.items():	
 			if i % 1000 == 0:
-				print "finished %d particles" % i
+				print("finished %d particles" % i)
 			partnum = float(p['partnum'])
 			psi = float(p['psi'])
 			theta = float(p['theta'])
@@ -1322,7 +1322,7 @@ def average_value_frealign9(inparfile, *values):
 		vlist = []
 		for i in range(len(params)):
 			vlist.append(params[i+1][v])
-		print "average %s:" % (v), numpy.average(vlist)
+		print("average %s:" % (v), numpy.average(vlist))
 
 
 #=================
@@ -1339,7 +1339,7 @@ def replace_CTFs_Frealign9(inparfile, outparfile, ctffile):
 	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
 		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
 
-	for i,p in params.iteritems(): # note that i starts with 1 for Frealign params
+	for i,p in params.items(): # note that i starts with 1 for Frealign params
 		# i starts with 0 for numbering
 		p['defx']  = float(fstrip[i-1][0])
 		p['defy']  = float(fstrip[i-1][1])
@@ -1366,7 +1366,7 @@ def Relion_to_Frealign8(starfile, parfile, mag=None):
 	micn = 0
 	for i in range(len(loopDict)):
 		if i % 1000 == 0:
-			print "done with %d particles" % i
+			print("done with %d particles" % i)
 
 		rlnrot = float(loopDict[i]['_rlnAngleRot'])
 		rlntilt = float(loopDict[i]['_rlnAngleTilt'])
@@ -1409,7 +1409,7 @@ def Relion_to_Frealign9(starfile, parfile, apix, mag=None, occ=100, logp=5000, s
 	micn = 0
 	for i in range(len(loopDict)):
 		if i % 1000 == 0:
-			print "done with %d particles" % i
+			print("done with %d particles" % i)
 
 		rlnrot = float(loopDict[i]['_rlnAngleRot'])
 		rlntilt = float(loopDict[i]['_rlnAngleTilt'])

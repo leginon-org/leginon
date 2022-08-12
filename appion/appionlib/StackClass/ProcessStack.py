@@ -22,24 +22,24 @@ from appionlib.StackClass import imagicClass
 def createStackClass(filename, msg=False):
 	extension = os.path.splitext(filename)[-1]
 	if extension == '.mrc' or extension == '.mrcs':
-		if msg is True: print "MrcClass"
+		if msg is True: print("MrcClass")
 		return mrcClass.MrcClass(filename)
 	elif extension == '.hed' or extension == '.img':
-		if msg is True: print "ImagicClass"
+		if msg is True: print("ImagicClass")
 		return imagicClass.ImagicClass(filename)
 	elif extension == '.hdf':
 		apDisplay.printError('HdfClass is not imported due to issue #4581')
-		if msg is True: print "HdfClass"
+		if msg is True: print("HdfClass")
 		from appionlib.StackClass import hdfClass
 		return hdfClass.HdfClass(filename)
 	elif extension == '.spi':
-		if msg is True: print "SpiderClass"
+		if msg is True: print("SpiderClass")
 		raise NotImplementedError
 	elif extension == '.png':
-		if msg is True: print "PngClass"
+		if msg is True: print("PngClass")
 		raise NotImplementedError
 	elif extension == '.jpg' or extension == '.jpeg':
-		if msg is True: print "JpegClass"
+		if msg is True: print("JpegClass")
 		raise NotImplementedError
 	raise NotImplementedError("extension does not map to existing stack type %s"%(extension))
 
@@ -162,7 +162,7 @@ class ProcessStack(object):
 
 		### check for off-one reading errors
 		if self.index < self.numpart-1:
-			print "INDEX %d -- NUMPART %d"%(self.index, self.numpart)
+			print("INDEX %d -- NUMPART %d"%(self.index, self.numpart))
 			apDisplay.printError("Did not properly process all particles")
 
 		### custom post-loop command

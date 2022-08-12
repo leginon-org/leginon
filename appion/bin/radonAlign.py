@@ -164,7 +164,7 @@ class RadonAlign(appionScript.AppionScript):
 				reflist.append(numpy.zeros(shape))
 
 			### shuffle particles into group and average them
-			values = range(self.params['numpart'])
+			values = list(range(self.params['numpart']))
 			random.shuffle(values)
 			i = 0
 			partperref = self.params['numpart'] / float(self.params['numrefs'])
@@ -296,12 +296,12 @@ class RadonAlign(appionScript.AppionScript):
 				newreflist[refid] += alignedimage/partperref
 				newrefcount[refid] += 1
 			sys.stderr.write("\n")
-			print "Alignment complete in %s"%(apDisplay.timeString(time.time()-t0))
+			print("Alignment complete in %s"%(apDisplay.timeString(time.time()-t0)))
 
 			### report median cross-correlation, it should get better each iter
 			mediancc = numpy.median(numpy.array(cclist))
 			apDisplay.printMsg("Iter %02d, Median CC: %.8f"%(iternum, mediancc))
-			print newrefcount
+			print(newrefcount)
 
 			### FUTURE: re-calculate Radon transform for particles with large shift
 

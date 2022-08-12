@@ -886,12 +886,12 @@ def run_affinity_propagation(volumedict, simfile, preffile, box, apix):
 			else:
 				classes[classnum].append(partnum)
 	clustf.close()
-	apDisplay.printMsg("Found %d classes"%(len(classes.keys())))
+	apDisplay.printMsg("Found %d classes"%(len(list(classes.keys()))))
 
 	### Create model averages
 	header = {'xorigin' : 0, 'yorigin' : 0, 'zorigin' : 0, 'xlen' : box*apix, 
 		'ylen' : box*apix, 'zlen' : box*apix}
-	classnames = classes.keys()
+	classnames = list(classes.keys())
 	for classnum in classnames:
 		avgclass = numpy.zeros(((box,box,box)))
 		num_members = 0
@@ -1059,7 +1059,7 @@ def refinement_quality_criteria(iteration, box, apix, nproc):
 	reconfile = open("reconstruction.sel", "w")
 	tempdoc.write(" ; Headerinfo columns: rot (1), tilt (2), psi (3), Xoff (4), Yoff (5)\n")
 	projectdoc.write(" ; Headerinfo columns: rot (1), tilt (2), psi (3), Xoff (4), Yoff (5)\n")
-	for k in sorted(docdict.iterkeys()):
+	for k in sorted(docdict.keys()):
 		vals = docdict[k]['values']
 		rot = float(vals[2])
 		tilt = float(vals[3])
@@ -1231,7 +1231,7 @@ def getEulerValuesForModels(alignparams, basedir, num_volumes, numpart, threes=F
 		psi = float(alignparams[i][6])
 		transform_matrix = numpy.matrix(apEulerCalc.EulersToRotationMatrix3DEM(rot, tilt, psi))
 		
-		for key, value in euler_array_mapped[i].items():
+		for key, value in list(euler_array_mapped[i].items()):
 			### old Euler angles and rotation matrix
 			alpha = float(value[0]) 
 			beta = float(value[1])
@@ -1267,8 +1267,8 @@ def calculateMeanEulerJumpForModelClass(classes, euler_array_transformed,
 				for k in range(j+1, len(classes)):
 #					print type(euler_array_transformed[str(classes[j])])
 #					print euler_array_transformed[str(classes[j])], "euler array j"
-					jassess = euler_array_transformed[str(classes[j])].has_key(str(i+1))
-					kassess = euler_array_transformed[str(classes[k])].has_key(str(i+1))
+					jassess = str(i+1) in euler_array_transformed[str(classes[j])]
+					kassess = str(i+1) in euler_array_transformed[str(classes[k])]
 					if jassess is True and kassess is True:
 						rot1 = euler_array_transformed[str(classes[j])][str(i+1)][0]
 						tilt1 = euler_array_transformed[str(classes[j])][str(i+1)][1]
@@ -1346,7 +1346,7 @@ def assess_3Dclass_quality(basedir, voldict, sim_matrix, classes, euler_array_tr
 		os.mkdir(os.path.join(basedir, "ssnr_data"))
 
 	### calculate final model statistics using similarity array
-	classnames = classes.keys()
+	classnames = list(classes.keys())
 	bestavg = 0
 	mf = open(os.path.join(basedir, "final_model_members.dat"), "w")
 	vf = open(os.path.join(basedir, "final_model_stats.dat"), "w")
@@ -1389,7 +1389,7 @@ def assess_3Dclass_quality(basedir, voldict, sim_matrix, classes, euler_array_tr
 		normsims = normList(sims)
 		classccc = numpy.asarray(normsims).mean()
 		classstd = numpy.asarray(normsims).std()
-		print "volumes in model %d_r.mrc: %s \n" % (classnum, classes[classnum])
+		print("volumes in model %d_r.mrc: %s \n" % (classnum, classes[classnum]))
 		mf.write("%d_r.mrc: %s \n" % (classnum, classes[classnum]))
 		p = "model %d_r.mrc, " % classnum
 		p+= "%d members with " % len(classes[classnum])
@@ -1397,7 +1397,7 @@ def assess_3Dclass_quality(basedir, voldict, sim_matrix, classes, euler_array_tr
 		if ejassess is True:
 			p+= "mean Euler jump %f, " % mj
 		p+= "and resolution %f" % res
-		print p
+		print(p)
 		if ejassess is True:
 			vf.write("%5d_r.mrc %5d %8.3f %8.3f %8.3f %8.3f %8.3f\n" \
 				% (classnum, len(classes[classnum]), CCC, mj, classccc, classstd, res))
@@ -1418,7 +1418,7 @@ def assess_3Dclass_quality2(basedir, voldict, sim_matrix, classes, euler_array_t
 	apDisplay.printColor("Parsing through resulting 3D classes to assess the quality of each 3D model", "yellow")
 
 	### calculate final model statistics using similarity array
-	classnames = classes.keys()
+	classnames = list(classes.keys())
 	bestavg = 0
 	mf = open(os.path.join(basedir, "final_model_members.dat"), "w")
 	vf = open(os.path.join(basedir, "final_model_stats.dat"), "w")
@@ -1460,7 +1460,7 @@ def assess_3Dclass_quality2(basedir, voldict, sim_matrix, classes, euler_array_t
 		normsims = normList(sims)
 		classccc = numpy.asarray(normsims).mean()
 		classstd = numpy.asarray(normsims).std()
-		print "volumes in model %d_r.mrc: %s \n" % (classnum, classes[classnum])
+		print("volumes in model %d_r.mrc: %s \n" % (classnum, classes[classnum]))
 		mf.write("%d_r.mrc: %s \n" % (classnum, classes[classnum]))
 		p = "model %d_r.mrc, " % classnum
 		p+= "%d members with " % len(classes[classnum])
@@ -1468,7 +1468,7 @@ def assess_3Dclass_quality2(basedir, voldict, sim_matrix, classes, euler_array_t
 		if ejassess is True:
 			p+= "mean Euler jump %f, " % mj
 		p+= "and resolution %f" % res
-		print p
+		print(p)
 		if ejassess is True:
 			vf.write("%5d_r.mrc %5d %8.3f %8.3f %8.3f %8.3f %8.3f\n" \
 				% (classnum, len(classes[classnum]), CCC, mj, classccc, classstd, res))
@@ -1557,30 +1557,30 @@ def combineMetrics(statfilename, outfile, **kwargs):
 	### set value lists
 	toEvaluate = {}
 	list_names = {}
-	for key, value in kwargs.iteritems():
+	for key, value in kwargs.items():
 		toEvaluate[key] = {"weight": value[0], "sign": value[1], "vals": []}
 		for i, name in enumerate(mnames_split):
 			if name == key:
 				list_names[key] = i
-	for name, index in list_names.iteritems():
+	for name, index in list_names.items():
 		for l in vals_split:
 			toEvaluate[name]['vals'].append(float(l[index]))
 
 	### output should be sorted according to the weights
-	sorted_metrics = sorted(kwargs.iteritems(), key=operator.itemgetter(1), reverse=True)
+	sorted_metrics = sorted(iter(kwargs.items()), key=operator.itemgetter(1), reverse=True)
 #	print "using the following criteria to evaluate Rcrit: ", sorted_metrics 
 
 	### for each model, evaluate Rcrit based on all selected criteria
 	Rcritdict1 = {} # for sorting only
 	Rcritdict2 = {}
 	weightsum = 0
-	for valnames, allvals in toEvaluate.iteritems():
+	for valnames, allvals in toEvaluate.items():
 		weight = allvals['weight']
 		weightsum += abs(weight)
 	for i in range(len(fvals)):
 		Rcrit = 0
 		Rcritdict2[names[i]] = {}
-		for valname, allvals in toEvaluate.iteritems():
+		for valname, allvals in toEvaluate.items():
 			weight = allvals['weight']
 			sign = allvals['sign']
 			vals = allvals['vals']
@@ -1594,7 +1594,7 @@ def combineMetrics(statfilename, outfile, **kwargs):
 		Rcritdict1[names[i]] = Rcrit
 
 	### write out values, sorted by Rcrit
-	sorted_Rcritlist = sorted(Rcritdict1.iteritems(), key=operator.itemgetter(1))
+	sorted_Rcritlist = sorted(iter(Rcritdict1.items()), key=operator.itemgetter(1))
 	sorted_Rcritlist.reverse()
 	f = open(outfile, "w")
 	f.write("%11s %9s " % ("MODEL", "RCRIT"))
@@ -1668,16 +1668,16 @@ def combineMetrics1(N=False, wN=1, CCPR=True, wCCPR=1, EJ=True, wEJ=1, CCC=False
 		SSNRs.append(float(list[6]))	
 			
 	### for each model, evaluate Rcrit based on all selected criteria
-	print "using the following criteria to evaluate Rcrit: ", toEvaluate.keys()
+	print("using the following criteria to evaluate Rcrit: ", list(toEvaluate.keys()))
 	Rcritdict1 = {}
 	Rcritdict2 = {}
 	weightsum = 0
-	for valnames, allvals in toEvaluate.iteritems():
+	for valnames, allvals in toEvaluate.items():
 		weight = allvals['weight']
 		weightsum += weight
 	for i in range(len(names)):
 		Rcrit = 0
-		for valname, allvals in toEvaluate.iteritems():
+		for valname, allvals in toEvaluate.items():
 			weight = allvals['weight']
 			sign = allvals['sign']
 			vals = allvals['vals']
@@ -1692,7 +1692,7 @@ def combineMetrics1(N=False, wN=1, CCPR=True, wCCPR=1, EJ=True, wEJ=1, CCC=False
 	f = open("final_model_stats_sorted_by_Rcrit.dat", "w")
 	f.write("%9s %8s %5s %8s %8s %8s %8s %8s\n" \
 		% ("MODEL", "RCRIT", "NUM", "CCPR", "EJ", "CCC", "STDEV", "SSNR"))
-	sorted_Rcritlist = sorted(Rcritdict1.iteritems(), key=operator.itemgetter(1))
+	sorted_Rcritlist = sorted(iter(Rcritdict1.items()), key=operator.itemgetter(1))
 	sorted_Rcritlist.reverse()
 	for i in range(len(sorted_Rcritlist)):
 		d = Rcritdict2[sorted_Rcritlist[i][0]]
@@ -1761,16 +1761,16 @@ def combineMetrics2(N=False, wN=1, CCPR=True, wCCPR=1, EJ=True, wEJ=1, CCC=False
 		FSCs.append(float(list[6]))	
 			
 	### for each model, evaluate Rcrit based on all selected criteria
-	print "using the following criteria to evaluate Rcrit: ", toEvaluate.keys()
+	print("using the following criteria to evaluate Rcrit: ", list(toEvaluate.keys()))
 	Rcritdict1 = {}
 	Rcritdict2 = {}
 	weightsum = 0
-	for valnames, allvals in toEvaluate.iteritems():
+	for valnames, allvals in toEvaluate.items():
 		weight = allvals['weight']
 		weightsum += weight
 	for i in range(len(names)):
 		Rcrit = 0
-		for valname, allvals in toEvaluate.iteritems():
+		for valname, allvals in toEvaluate.items():
 			weight = allvals['weight']
 			sign = allvals['sign']
 			vals = allvals['vals']
@@ -1785,7 +1785,7 @@ def combineMetrics2(N=False, wN=1, CCPR=True, wCCPR=1, EJ=True, wEJ=1, CCC=False
 	f = open("final_model_stats_sorted_by_Rcrit.dat", "w")
 	f.write("%11s %8s %5s %8s %8s %8s %8s %8s\n" \
 		% ("MODEL", "RCRIT", "NUM", "CCPR", "EJ", "CCC", "STDEV", "FSC"))
-	sorted_Rcritlist = sorted(Rcritdict1.iteritems(), key=operator.itemgetter(1))
+	sorted_Rcritlist = sorted(iter(Rcritdict1.items()), key=operator.itemgetter(1))
 	sorted_Rcritlist.reverse()
 	for i in range(len(sorted_Rcritlist)):
 		d = Rcritdict2[sorted_Rcritlist[i][0]]

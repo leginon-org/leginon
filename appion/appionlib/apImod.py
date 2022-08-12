@@ -127,7 +127,7 @@ def readTransforms(filepath):
 	for line in lines:
 		cleanlines = line.split('\n')
 		items = cleanlines[0].split()
-		transforms.append(map((lambda x: float(x)), items))
+		transforms.append(list(map((lambda x: float(x)), items)))
 	return transforms
 
 def createAlignedStack(stackdir, processdir, seriesname,bin):
@@ -388,7 +388,7 @@ def sampleRecon(stackdir, processdir, aligndir, seriesname, samplesize=10, sampl
 	comfilename = writeTiltCom(processdir,inputparams['alignedstack'],inputparams['recon'],inputparams['tilts'],inputparams['size'],inputparams['thickness'],0.0,0.0,(0,inputparams['scale']),excludelist)
 	# make commandlines
 	commands = []
-	for key in sampleoffsets.keys():
+	for key in list(sampleoffsets.keys()):
 		commands.extend([
 			'$newstack -size ,%d -offset 0,%d -xf %s %s %s' % (total_tilts,sampleoffsets[key],inputparams['xf'],inputparams['tiltstack'],inputparams['alignedstack']),
 			'$sampletilt %d %d %d %s %s.rec tilt.com' % (sampletilt_start,sampletilt_end,sampleoffsets[key]+st_y_center,seriesname,key)
@@ -550,7 +550,7 @@ clip avg -2d -iz 0-199 temp.mrc projection.mrc
 
 def writeCommand(path,comname, commands):		
 		### make standard input for ctftilt
-		commandlines = map((lambda x: x+"\n"), commands)
+		commandlines = list(map((lambda x: x+"\n"), commands))
 		comfilename = comname+".com"
 		comfilepath = os.path.join(path,comfilename)
 		comfile = open(comfilepath, "w")

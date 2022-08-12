@@ -33,7 +33,7 @@ class StackClass(object):
 		read a fixed range of particles into memory
 		particles numbers MUST start at 1
 		"""
-		particleNumbers = range(first, last+1)
+		particleNumbers = list(range(first, last+1))
 		#apDisplay.printWarning("no readParticleChunkFromFile; using backup method for this StackClass")
 		return self._readParticleListFromFile(particleNumbers)
 
@@ -174,7 +174,7 @@ class StackClass(object):
 		"""
 		t0 = time.time()
 		if self.debug is True:
-			print "over-writing %d particles to file"%(len(particleDataTree))
+			print("over-writing %d particles to file"%(len(particleDataTree)))
 		self._writeParticlesToFile(particleDataTree)
 		self.particlesWritten += len(particleDataTree)
 		if self.debug is True:
@@ -190,7 +190,7 @@ class StackClass(object):
 		"""
 		t0 = time.time()
 		if self.debug is True:
-			print "appending %d particles to file"%(len(particleDataTree))
+			print("appending %d particles to file"%(len(particleDataTree)))
 		if len(particleDataTree) == 0:
 			apDisplay.printWarning("cannot append zero particles to a file")
 			return None
@@ -210,6 +210,6 @@ class StackClass(object):
 		if apix is None:
 			raise ValueError("apix not defined")
 		if self.debug is True:
-			print "writing pixel size %.4f Angstroms to file"%(apix)
+			print("writing pixel size %.4f Angstroms to file"%(apix))
 		self._writePixelSizeToFile(apix)
 

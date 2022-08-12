@@ -55,7 +55,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		if self.params['starfile'] is None:
 			apDisplay.printError("Please enter the image names with picked particle files")
 		elif os.path.basename(self.params['starfile']) != "run_data.star":
-			print (os.path.basename(self.params['starfile']))
+			print((os.path.basename(self.params['starfile'])))
 			apDisplay.printError("Please select a run_data.star from the Relion 3D Refine directory")
 		if self.params['sessionname'] is None:
 			apDisplay.printError("Please enter Name of session to upload to, e.g., --session=09dec07a")
@@ -231,7 +231,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 			peaktree[micrograph].append(peakdict)
 				
 		# Run another loop to insert particles. Not able to nest the loop previously because the Relion .star might not have particles sorted by micrograph
-		micrographs = peaktree.keys()
+		micrographs = list(peaktree.keys())
 		preset_used = apDatabase.getImageData(micrographs[0])['preset']['name']
 		micrograph_dimensions = (apDatabase.getImageData(micrographs[0])['preset']['dimension']['x'],apDatabase.getImageData(micrographs[0])['preset']['dimension']['y'])
 		
@@ -391,7 +391,7 @@ class UploadRelion3DRefine(reconUploader.generalReconUploader):
 		counts = image.get_array()
 		ncnts = np.count_nonzero(np.power(10,counts))
 		verts = image.get_offsets()
-		for offc in xrange(verts.shape[0]):
+		for offc in range(verts.shape[0]):
 			binx,biny = verts[offc][0],verts[offc][1]
 			if counts[offc]:
 				plt.plot(binx,biny,'k.',zorder=100)

@@ -592,9 +592,9 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			self.scaleTemplates()
 
 		starttime=time.time()
-		print self.params
-		print "... stack pixel size: "+str(self.params['apix'])
-		print "... stack box size: "+str(self.params['boxsize'])	
+		print(self.params)
+		print("... stack pixel size: "+str(self.params['apix']))
+		print("... stack box size: "+str(self.params['boxsize']))	
 		apDisplay.printColor("Running IMAGIC .batch file: See multiReferenceAlignment.log file for details", "cyan")
 	
 		### create IMAGIC batch file

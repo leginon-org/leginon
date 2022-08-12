@@ -58,7 +58,7 @@ class GpuJob(object):
 				   'queue'	 : self.setQueue,
 				   'jobtype'   : self.setJobType}
 		excludeList = ['jobid', 'walltime', 'cput', 'gpus','nodes', 'jobtype', 'mem', 'queue']
-		optionKeys = options.keys()
+		optionKeys = list(options.keys())
 #		has_nproc = False
 
 		for opt in optList:

@@ -220,7 +220,7 @@ class UploadParticles(appionScript.AppionScript):
 		else:
 			# Assumption is that if only one file is selected, it is a starfile which lists data for all micrographs
 			starfiletree = self.parseSingleStarfile(boxfiles[0])
-			imagelist = starfiletree.keys()
+			imagelist = list(starfiletree.keys())
 			imgtree = apDatabase.getSpecificImagesFromDB(imagelist)
 			if imgtree[0]['session']['name'] != self.sessiondata['name']:
 				apDisplay.printError("Session and Image do not match "+imgtree[0]['filename'])	

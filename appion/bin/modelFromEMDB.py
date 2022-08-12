@@ -8,7 +8,7 @@ import time
 import math
 import gzip
 import shutil
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import xml.dom.minidom
 #appion
 from appionlib import appionScript
@@ -82,7 +82,7 @@ class modelFromEMDB(appionScript.AppionScript):
 			%(emdbid,) )
 
 		apDisplay.printMsg("retrieving emdb XML file: "+xmlurl)
-		tmpfile = urllib.urlretrieve(xmlurl)[0]
+		tmpfile = urllib.request.urlretrieve(xmlurl)[0]
 
 		### parse XML
 		dom = xml.dom.minidom.parse(tmpfile)
@@ -130,7 +130,7 @@ class modelFromEMDB(appionScript.AppionScript):
 			%(emdbid, emdbid) )
 		apDisplay.printMsg("retrieving emdb file: "+mapurl)
 		# uncompress file & save
-		data = urllib.urlretrieve(mapurl)[0]
+		data = urllib.request.urlretrieve(mapurl)[0]
 		g = gzip.open(data,'r').read()
 		f=open(outfile,'w')
 		f.write(g)

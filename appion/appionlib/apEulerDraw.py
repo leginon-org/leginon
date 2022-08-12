@@ -41,7 +41,7 @@ def getEulersForIteration(reconid, iteration=1):
 			+"WHERE rd.`REF|ApRefineRunData|refineRun` = "+str(reconid)+" "
 			+"AND rd.`iteration` = "+str(iteration)+" "
 		)
-	print "querying for euler values at "+time.asctime()
+	print("querying for euler values at "+time.asctime())
 	cursor.execute(query)
 	numrows = int(cursor.rowcount)
 	apDisplay.printColor("Found "+str(numrows)+" euler values", "cyan")
@@ -57,10 +57,10 @@ def getEulersForIteration(reconid, iteration=1):
 #===========
 def freqListStat(freqlist):
 	freqnumpy = numpy.asarray(freqlist, dtype=numpy.int32)
-	print "min=",   ndimage.minimum(freqnumpy)
-	print "max=",   ndimage.maximum(freqnumpy)
-	print "mean=",  ndimage.mean(freqnumpy)
-	print "stdev=", ndimage.standard_deviation(freqnumpy)
+	print("min=",   ndimage.minimum(freqnumpy))
+	print("max=",   ndimage.maximum(freqnumpy))
+	print("mean=",  ndimage.mean(freqnumpy))
+	print("stdev=", ndimage.standard_deviation(freqnumpy))
 	#print "median=",ndimage.median(freqnumpy)
 
 #===========
@@ -246,10 +246,10 @@ def calcFreqEqualArea(points, rstep=9.0):
 			oldcounts = indexmap[index][2]
 			indexmap[index] = [rval, tval, oldcounts+1, rbox, tbox]
 		else:
-			print "newdata=",rval,",",tval
+			print("newdata=",rval,",",tval)
 			indexmap[index] = [rval,tval,1, rbox, tbox]
-	print minrad,maxrad
-	print mintheta,maxtheta
+	print(minrad,maxrad)
+	print(mintheta,maxtheta)
 	#pprint.pprint(indexmap)
 	return indexmap
 
@@ -301,8 +301,8 @@ def makeTriangleImage(eulerdict, imgname="temp.png",
 	radlist   = []
 	anglelist = []
 	freqlist  = []
-	for key,val in eulerdict.items():
-		rad,ang = map(float, key.split(','))
+	for key,val in list(eulerdict.items()):
+		rad,ang = list(map(float, key.split(',')))
 		radlist.append(rad*math.pi/180.0*math.pi/180.0)
 		anglelist.append(ang*math.pi/180.0*math.pi/180.0)
 		freqlist.append(val)
@@ -319,13 +319,13 @@ def makeTriangleImage(eulerdict, imgname="temp.png",
 
 	drawAxes(draw, imgdim, crad, img, d)
 	drawLegend(draw, imgdim, crad, d['minf'], d['maxf'])
-	for key,freq in eulerdict.items():
+	for key,freq in list(eulerdict.items()):
 		#frequency
 		fgray = freqToColor(freq, d['maxf'], d['rangef'])
 		fcolor = grayToColor(fgray)
 
 		#direct polar
-		rad, ang = map(float, key.split(','))
+		rad, ang = list(map(float, key.split(',')))
 		rad *= (math.pi/180.0)**2
 		ang *= (math.pi/180.0)**2
 		#polar -> cartesian
@@ -354,8 +354,8 @@ def makePolarImage(eulerdict, imgname="temp.png",
 	radlist   = []
 	anglelist = []
 	freqlist  = []
-	for key,val in eulerdict.items():
-		rad,ang = map(float, key.split(','))
+	for key,val in list(eulerdict.items()):
+		rad,ang = list(map(float, key.split(',')))
 		radlist.append(rad*math.pi/180.0)
 		anglelist.append(ang*math.pi/180.0)
 		freqlist.append(val)
@@ -392,7 +392,7 @@ def makePolarImage(eulerdict, imgname="temp.png",
 		xs = float(imgdim-2*frame)*xn+frame
 		ys = float(imgdim-3*frame)*yn+2*frame
 		if rad > 10.98:
-			print round(rad,2), round(ang*180.0/math.pi,1), "\t-->", round(x,2), round(y,2), "\t-->", round(xn,2), round(yn,2)
+			print(round(rad,2), round(ang*180.0/math.pi,1), "\t-->", round(x,2), round(y,2), "\t-->", round(xn,2), round(yn,2))
 		#print xs, ys
 		cartcoord = (xs-crad, ys-crad, xs+crad, ys+crad)
 
@@ -441,7 +441,7 @@ def drawAxes(draw, imgdim, crad, img, d):
 	try:
 		txt = str(round(d['minr']*90.0,1))
 	except:
-		print d
+		print(d)
 		sys.exit(1)
 	shifty = draw.textsize(txt)[0]
 	shiftx = draw.textsize(txt)[1]
@@ -653,9 +653,9 @@ def makePlot(radlist,anglelist,freqlist,freqgrid):
 	#pprint.pprint( radlist)
 	#pprint.pprint( anglelist)
 	#pprint.pprint( freqlist)
-	print numpy.around(radlist,3)
-	print numpy.around(anglelist,3)
-	print numpy.around(freqgrid,3)
+	print(numpy.around(radlist,3))
+	print(numpy.around(anglelist,3))
+	print(numpy.around(freqgrid,3))
 	#c = pylab.contourf(anglelist, radlist, freqgrid, cmap=cm.RdYlGn)
 	c = pylab.scatter(anglelist, radlist, c=freqlist, s=100, marker='o', cmap=cm.RdYlGn)
 	#c.set_alpha(0.5)
@@ -731,7 +731,7 @@ def createEulerImages(recon=239, iternum=1, path=".", postrefine=False):
 	### create image of rejected particles
 	rejectfile = os.path.join(path, "eulerPolarReject-"+str(recon)+"_"+str(iternum)+".png")
 	rejectdict = alldict
-	for key,val in eulerdict.items():
+	for key,val in list(eulerdict.items()):
 		rejectdict[key] -= val
 	makePolarImage(rejectdict, imgname=rejectfile)
 
@@ -742,7 +742,7 @@ def createEulerImages(recon=239, iternum=1, path=".", postrefine=False):
 
 		### create image of postrefine difference
 		postrefinediffdict = eulerdict
-		for key,val in postrefinedict.items():
+		for key,val in list(postrefinedict.items()):
 			postrefinediffdict[key] -= val
 		postrefinedifffile = os.path.join(path, "eulerPolarPostRefineDiff-"+str(recon)+"_"+str(iternum)+".png")
 		makePolarImage(postrefinediffdict, imgname=postrefinedifffile)
@@ -768,7 +768,7 @@ if __name__ == "__main__":
 	#createEulerImages(158, 4, ".", True)
 	#createEulerImages(110, 16, ".", True)
 	for i in range(13,21):
-		print i
+		print(i)
 		createEulerImages(110, i, ".", True)
 
 	### postrefine

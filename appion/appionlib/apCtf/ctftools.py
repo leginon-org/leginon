@@ -24,10 +24,10 @@ def getCtfExtrema(focus=1.0e-6, mfreq=1.498e-04, cs=2e-2,
 	mfreq - frequency in inverse meters = 1.0/(mpix * numcols)
 	"""
 	if debug is True:
-		print "defocus %.2f microns (underfocus is positive)"%(focus*1e6)
-		print "Freq %.1e 1/m"%(mfreq)
-		print "C_s %.1f mm"%(cs*1e3)
-		print "High tension %.1f kV"%(volts*1e-3)
+		print("defocus %.2f microns (underfocus is positive)"%(focus*1e6))
+		print("Freq %.1e 1/m"%(mfreq))
+		print("C_s %.1f mm"%(cs*1e3))
+		print("High tension %.1f kV"%(volts*1e-3))
 	if focus*1e6 > 15.0 or focus*1e6 < 0.1:
 		apDisplay.printWarning("atypical defocus value %.1f microns (underfocus is positive)"
 			%(focus*1e6))
@@ -46,7 +46,7 @@ def getCtfExtrema(focus=1.0e-6, mfreq=1.498e-04, cs=2e-2,
 		b = -focus*math.pi*wavelength
 		c = -math.asin(ampconst) - extra_phase_shift
 		if debug is True:
-			print "quadradtic parameters %.3e, %.3e, %.3e"%(a,b,c)
+			print("quadradtic parameters %.3e, %.3e, %.3e"%(a,b,c))
 		#eq: sin^2 (a r^4 + b r^2 + c) = 0
 		#==> a r^4 + b r^2 + c - n*pi/2 = 0
 		#quadradtic: r^2 = [ -b +/- sqrt( b^2 - 4*a*(c + n*pi/2)) ] / 2*a
@@ -77,17 +77,17 @@ def getCtfExtrema(focus=1.0e-6, mfreq=1.498e-04, cs=2e-2,
 				rad2 = math.sqrt(radsq2)
 				pixeldist = rad2/mfreq
 			else:
-				print "ERROR with radsq1 or radsq2, one is negative or they are equal"
-				print "%.8f and %.8f"%(radsq1, radsq2)
+				print("ERROR with radsq1 or radsq2, one is negative or they are equal")
+				print("%.8f and %.8f"%(radsq1, radsq2))
 				continue
 			distances.append(pixeldist)
 			if debug is True:
-				print "radius of zero number %d is %d pixels"%(i+1, pixeldist)
+				print("radius of zero number %d is %d pixels"%(i+1, pixeldist))
 	elif cs == 0:
 		b = focus*math.pi*wavelength
 		c = math.asin(ampconst) + extra_phase_shift
 		if debug is True:
-			print "quadradtic parameters %.3e, %.3e, %.3e"%(0.0,b,c)
+			print("quadradtic parameters %.3e, %.3e, %.3e"%(0.0,b,c))
 		#eq: sin^2 (b r^2 + c) = 0
 		#==> b r^2 + c - n*pi/2 = 0
 		#==> r^2 = (n*pi/2 - c)/b
@@ -103,7 +103,7 @@ def getCtfExtrema(focus=1.0e-6, mfreq=1.498e-04, cs=2e-2,
 			pixeldist = rad/mfreq
 			distances.append(pixeldist)
 			if debug is True:
-				print "radius of zero number %d is %d pixels"%(i+1, pixeldist)
+				print("radius of zero number %d is %d pixels"%(i+1, pixeldist))
 
 	return numpy.array(distances)
 
@@ -111,10 +111,10 @@ def getCtfExtrema(focus=1.0e-6, mfreq=1.498e-04, cs=2e-2,
 def getFirstCTFzeroRadius(focus=-1.0e-6, pixelsize=1.0e-10, cs=2e-2, 
 		volts=120000, ampconst=0.000, extra_phase_shift=0.000, cols=2048):
 	if debug is True:
-		print "defocus %.2f microns"%(focus*1e6)
-		print "pixelsize %.3f Angstroms"%(pixelsize*1e10)
-		print "C_s %.1f mm"%(cs*1e2)
-		print "High tension %.1f kV"%(volts*1e-3)
+		print("defocus %.2f microns"%(focus*1e6))
+		print("pixelsize %.3f Angstroms"%(pixelsize*1e10))
+		print("C_s %.1f mm"%(cs*1e2))
+		print("High tension %.1f kV"%(volts*1e-3))
 
 	xfreq = 1.0/( (cols-1)*2.*pixelsize )
 	#xorigin = cols/2. - 0.5
@@ -125,7 +125,7 @@ def getFirstCTFzeroRadius(focus=-1.0e-6, pixelsize=1.0e-10, cs=2e-2,
 	b = focus*math.pi*wavelength
 	c = -math.asin(ampconst) + extra_phase_shift
 	if debug is True:
-		print "quadradtic parameters %.3e, %.3e, %.3e"%(a,b,c)
+		print("quadradtic parameters %.3e, %.3e, %.3e"%(a,b,c))
 	#eq: sin (a r^4 + b r^2 + c) = 0
 	#==> a r^4 + b r^2 + c = n*pi
 	#quadradtic: r^2 = [ -b +/- sqrt( b^2 - 4*a*(c-n*pi)) ] / 2*a
@@ -133,11 +133,11 @@ def getFirstCTFzeroRadius(focus=-1.0e-6, pixelsize=1.0e-10, cs=2e-2,
 
 	root = math.sqrt(b**2 - 4 * a * (c + math.pi/2.0))
 	radsq = (-b + root)/(2*a)
-	print (-b + root)/(2*a), (-b - root)/(2*a)
+	print((-b + root)/(2*a), (-b - root)/(2*a))
 	rad = math.sqrt(radsq)
 	pixeldist = rad/xfreq
 	if debug is True:
-		print "radius of first zero is %d pixels"%(pixeldist)
+		print("radius of first zero is %d pixels"%(pixeldist))
 	return pixeldist
 
 #===================
@@ -158,22 +158,22 @@ def getTEMLambda(volts):
 	wavelength = t1/math.sqrt(volts + t2 * volts**2);
 	
 	if debug is True:
-		print "wavelength %.4f Angstroms"%(wavelength*1e10)
+		print("wavelength %.4f Angstroms"%(wavelength*1e10))
 
 	return wavelength
 
 #============
 def getPowerSpectraPreBin(outerresolution, apix):
 	if debug is True:
-		print "Resolution request   %.3f"%(outerresolution)
-		print "Init max resolution  %.3f"%(apix*2)
+		print("Resolution request   %.3f"%(outerresolution))
+		print("Init max resolution  %.3f"%(apix*2))
 	powertwo = math.log(outerresolution/apix)/math.log(2.0)-1
 	prebin = int(2**math.floor(powertwo))
 	if prebin < 1:
 		prebin = 1
 	if debug is True:
-		print "Pre-Binning", prebin
-		print "Final max resolution %.3f"%(apix*prebin*2)
+		print("Pre-Binning", prebin)
+		print("Final max resolution %.3f"%(apix*prebin*2))
 	return prebin
 
 #============
@@ -197,7 +197,7 @@ def powerSpectraToOuterResolution(image, outerresolution, apix):
 	apix and outerresolution must have same units (e.g., Anstroms or meters)
 	"""
 	if debug is True:
-		print "Computing power spectra..."
+		print("Computing power spectra...")
 	fieldsize = ctfpower.getFieldSize(image.shape)
 	#binning = max(image.shape)/fieldsize
 	#data = imagefun.power(image)
@@ -218,14 +218,14 @@ def trimPowerSpectraToOuterResolution(powerspec, outerresolution, freq):
 		pixel distance from center = (# columns) * apix / resolution
 	"""
 	if debug is True:
-		print "trimPowerSpectraToOuterResolution()"
+		print("trimPowerSpectraToOuterResolution()")
 	imagewidth = powerspec.shape[0]
 	initmaxres = 2.0/(freq*imagewidth)
 	if debug is True:
-		print "__Image shape   %d x %d"%(powerspec.shape[0], powerspec.shape[1])
-		print "__Frequeny   %.3e"%(freq)
-		print "__Resolution request   %.3f"%(outerresolution)
-		print "__Init max resolution  %.3f"%(initmaxres)
+		print("__Image shape   %d x %d"%(powerspec.shape[0], powerspec.shape[1]))
+		print("__Frequeny   %.3e"%(freq))
+		print("__Resolution request   %.3f"%(outerresolution))
+		print("__Init max resolution  %.3f"%(initmaxres))
 	if initmaxres > outerresolution:
 		apDisplay.printWarning("Requested resolution (%.3f) is not available (%.3f)"
 			%(outerresolution, initmaxres))
@@ -239,17 +239,17 @@ def trimPowerSpectraToOuterResolution(powerspec, outerresolution, freq):
 	while goodpixellimitradius > min(powerspec.shape[0],powerspec.shape[1])/2:
 		pixellimitradius -= 2
 		if debug is True:
-			print "__Recalculate pixel limit dimension with: ", pixellimitradius
+			print("__Recalculate pixel limit dimension with: ", pixellimitradius)
 		goodpixellimitradius = primefactor.getNextEvenPrime(pixellimitradius)
 
 	finalres = 1./(freq * goodpixellimitradius)
 	if debug is True:
-		print "__Pixel limit dimension: ", goodpixellimitradius
-		print "__Final max resolution %.3f"%(finalres)
+		print("__Pixel limit dimension: ", goodpixellimitradius)
+		print("__Final max resolution %.3f"%(finalres))
 	### convert to diameter and trim
 	newshape = (goodpixellimitradius*2, goodpixellimitradius*2)
 	if debug is True:
-		print "__Trimming image"	
+		print("__Trimming image")	
 	trimpowerspec = imagefilter.frame_cut(powerspec, newshape)
 	if newshape != trimpowerspec.shape:
 		apDisplay.printError("shape mismatch for frame_cut (%d,%d) --> (%d,%d) = (%d,%d)"
@@ -257,8 +257,8 @@ def trimPowerSpectraToOuterResolution(powerspec, outerresolution, freq):
 			newshape[0],newshape[1],
 			trimpowerspec.shape[0],trimpowerspec.shape[1]))
 	if debug is True:
-		print "original image size %d x %d"%(powerspec.shape)
-		print "trimmed  image size %d x %d"%(trimpowerspec.shape)
+		print("original image size %d x %d"%(powerspec.shape))
+		print("trimmed  image size %d x %d"%(trimpowerspec.shape))
 	return trimpowerspec
 
 #============
@@ -310,7 +310,7 @@ def rotationalAverage(image, ringwidth=3.0, innercutradius=None, full=False, med
 	"""
 
 	if debug is True:
-		print "ring width %.2f pixels"%(ringwidth)
+		print("ring width %.2f pixels"%(ringwidth))
 
 	shape = image.shape
 	## create a grid of distance from the center
@@ -326,10 +326,10 @@ def rotationalAverage(image, ringwidth=3.0, innercutradius=None, full=False, med
 	radial = radial/ringwidth
 	radial = numpy.array(radial, dtype=numpy.int32)
 	if shape[0] < 32:
-		print "radial =", radial
+		print("radial =", radial)
 
 	if debug is True:
-		print "computing rotational average xdata..."
+		print("computing rotational average xdata...")
 	xdataint = numpy.unique(radial)
 
 	if full is False:
@@ -353,23 +353,23 @@ def rotationalAverage(image, ringwidth=3.0, innercutradius=None, full=False, med
 	data = image.copy()
 
 	if median is True:
-		print "performing very slow median calculation loop on %d values"%(len(xdataint))
+		print("performing very slow median calculation loop on %d values"%(len(xdataint)))
 		for i in xdataint:
 			median = numpy.median(data[radial == i])
 			data[radial == i] = median
 
 	if debug is True:
-		print "computing rotational average ydata..."
+		print("computing rotational average ydata...")
 	ydata = numpy.array(scipy.ndimage.mean(data, radial, xdataint))
 
 	if len(ydata) == 0:
-		print "ydata", ydata
+		print("ydata", ydata)
 		apDisplay.printError("Major Error: nothing returned for rotational average, ydata, dying now")
 	
 	xdata = numpy.array(xdataint, dtype=numpy.float64)*ringwidth
 
 	if debug is True:
-		print "... finish rotational average"
+		print("... finish rotational average")
 		apDisplay.printMsg("  expected size of rotational average: %d"%(image.shape[0]/2))
 		apDisplay.printMsg("actual max size of rotational average: %d"%(xdata.max())) 
 
@@ -445,7 +445,7 @@ def getEllipticalDistanceArray(ellipratio, ellipangle, shape):
 		reshape=False, mode='wrap', order=1)
 	radial = imagefilter.frame_cut(radial, shape)
 	if debug is True:
-		print "minimal radial distance", radial.min()
+		print("minimal radial distance", radial.min())
 	radial = numpy.sqrt(radial)
 
 	return radial
@@ -470,7 +470,7 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=2.0, innercutradi
 	         True  -- calculate the median of each ring (slower)
 	"""
 	if debug is True:
-		print "ring width %.2f pixels"%(ringwidth)
+		print("ring width %.2f pixels"%(ringwidth))
 
 	bigshape = numpy.array(numpy.array(image.shape)*math.sqrt(2)/2., dtype=numpy.int)*2
 	radial = getEllipticalDistanceArray(ellipratio, ellipangle, image.shape)
@@ -479,10 +479,10 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=2.0, innercutradi
 	radial = radial/ringwidth
 	radial = numpy.array(radial, dtype=numpy.int32)
 	if bigshape[0] < 32:
-		print radial
+		print(radial)
 
 	if debug is True:
-		print "computing elliptical average xdata..."
+		print("computing elliptical average xdata...")
 	xdataint = numpy.unique(radial)
 
 	if full is False:
@@ -505,14 +505,14 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=2.0, innercutradi
 	### remove
 	data = image.copy()
 	if numpy.any(numpy.isnan(data)):
-		print data
+		print(data)
 		apDisplay.printError("Major Error (NaN) in elliptical average, data")
 
 	if debug is True:
-		print "computing elliptical average ydata..."
+		print("computing elliptical average ydata...")
 	ydata = numpy.array(scipy.ndimage.mean(data, radial, xdataint))
 	if len(ydata) == 0:
-		print "ydata", ydata
+		print("ydata", ydata)
 		apDisplay.printWarning("Major Error: nothing returned for elliptical average, xdata")
 		return None, None
 
@@ -521,16 +521,16 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=2.0, innercutradi
 	xdata = numpy.array(xdataint, dtype=numpy.float64)*ringwidth/math.sqrt(ellipratio)
 
 	if numpy.any(numpy.isnan(xdata)):  #note does not work with 'is True'
-		print xdata
+		print(xdata)
 		apDisplay.printError("Major Error (NaN) in elliptical average, xdata")
 	if numpy.any(numpy.isnan(ydata)):  #note does not work with 'is True'
-		print ydata
+		print(ydata)
 		apDisplay.printError("Major Error (NaN) in elliptical average, ydata")
 
 	if debug is True:
-		print "... finish elliptical average"
+		print("... finish elliptical average")
 		apDisplay.printMsg("  expected size of elliptical average: %d"%(bigshape[0]/2))
-		print xdata
+		print(xdata)
 		apDisplay.printMsg("actual max size of elliptical average: %d"%(xdata.max())) 
 
 	return xdata, ydata
@@ -557,9 +557,9 @@ def ellipticalArray(image, ellipratio, ellipangle):
 	xdata = numpy.ravel(radial)/math.sqrt(ellipratio)
 	ydata = numpy.ravel(image)
 
-	print "Sorting data..."
+	print("Sorting data...")
 	xargs = numpy.argsort(xdata)
-	print "Applying sort..."
+	print("Applying sort...")
 	xdatasorted = xdata[xargs]
 	ydatasorted = ydata[xargs]
 	
@@ -568,7 +568,7 @@ def ellipticalArray(image, ellipratio, ellipangle):
 	outercutsize = image.shape[0]/2-2
 	outercutindex = numpy.searchsorted(xdatasorted, outercutsize)
 
-	print "returning values..."
+	print("returning values...")
 	return xdatasorted[:outercutindex], ydatasorted[:outercutindex]
 
 

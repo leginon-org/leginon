@@ -70,7 +70,7 @@ def setVolumeMass(volumefile, apix=1.0, mass=1.0, rna=0.0):
 	command = "%s %s %.3f set=%.3f"%(	
 		volumebin, volumefile, apix, mass
 	)
-	print "EMAN: "+command
+	print("EMAN: "+command)
 	t0 = time.time()
 	proc = subprocess.Popen(command, shell=True)
 	proc.wait()
@@ -284,7 +284,7 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None,
 #=========================================
 def runChimeraScript(chimscript, xvfb=False):
 	if not chimscript or not os.path.isfile(chimscript):
-		print chimscript
+		print(chimscript)
 		apDisplay.printError("Could not find file: apChimSnapshot.py")
 	#apDisplay.printColor("Trying to use chimera for model imaging","cyan")
 	if xvfb is True:
@@ -306,7 +306,7 @@ def runChimeraScript(chimscript, xvfb=False):
 	logf = open("chimeraRun.log", "a")
 	apDisplay.printColor("running Chimera:\n "+rendercmd, "cyan")
 	if xvfb is True:
-		print "import -verbose -display :%d -window root screencapture.png"%(port)
+		print("import -verbose -display :%d -window root screencapture.png"%(port))
 	proc = subprocess.Popen(rendercmd, shell=True, stdout=logf, stderr=logf)
 	proc.wait()
 	logf.close()

@@ -122,20 +122,20 @@ class StarFile():
 
     def getDataBlock(self, dataBlockName):
         if self.msg is True:
-            print "Looking for Data Block named %s..." % dataBlockName
+            print("Looking for Data Block named %s..." % dataBlockName)
         for dataBlock in self.dataBlocks:
             if self.msg is True:
-                print "\tFound Data Block: %s " % dataBlock.name
+                print("\tFound Data Block: %s " % dataBlock.name)
             if dataBlock.name == dataBlockName:
                 return dataBlock
         if self.msg is True:
-            print "Failed to find Data Block named %s..." % dataBlockName
+            print("Failed to find Data Block named %s..." % dataBlockName)
 
     def read(self):
         if not os.path.isfile(self.location):
             raise Exception("Trying to read a star format file that does not exist: %s" % (self.location))
         if self.msg is True:
-            print "Reading star format file: %s" % (self.location)
+            print("Reading star format file: %s" % (self.location))
 
         f           = open(self.location, "r")
         indata      = False # are we inside a data block?

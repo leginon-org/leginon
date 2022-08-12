@@ -40,7 +40,7 @@ def findAstigmatism(fftarray, freq, defocus, resolution, ctfvalues, peakNum=1):
 	maxEdgeRadius = int(math.ceil(extrema[peakNum])) #second peak
 	newshape = (maxEdgeRadius*2, maxEdgeRadius*2)
 
-	print "newshape",newshape
+	print("newshape",newshape)
 
 	fftcenter = copy.deepcopy(imagefilter.frame_cut(fftarray, newshape))
 	showImage(fftcenter)
@@ -72,7 +72,7 @@ def findAstigmatism(fftarray, freq, defocus, resolution, ctfvalues, peakNum=1):
 
 	showImage(angleArray)
 
-	dataIntegers = numpy.array(range(numSteps))
+	dataIntegers = numpy.array(list(range(numSteps)))
 
 	xyData = numpy.array(
 		scipy.ndimage.measurements.minimum_position(
@@ -110,7 +110,7 @@ def rotationalAverage(image, ringwidth=3.0, innercutradius=None, full=False, med
 	"""
 
 	if debug is True:
-		print "ring width %.2f pixels"%(ringwidth)
+		print("ring width %.2f pixels"%(ringwidth))
 
 	shape = image.shape
 	## create a grid of distance from the center
@@ -126,11 +126,11 @@ def rotationalAverage(image, ringwidth=3.0, innercutradius=None, full=False, med
 	radial = radial/ringwidth
 	radial = numpy.array(radial, dtype=numpy.int32)
 	if shape[0] < 32:
-		print radial
+		print(radial)
 
 	count = 0
 	if debug is True:
-		print "computing rotational average xdata..."
+		print("computing rotational average xdata...")
 	xdataint = numpy.unique(radial)
 	if full is False:
 		### trims any edge artifacts from rotational average
@@ -153,18 +153,18 @@ def rotationalAverage(image, ringwidth=3.0, innercutradius=None, full=False, med
 	data = image.copy()
 
 	if median is True:
-		print "performing very slow median calculation loop on %d values"%(len(xdataint))
+		print("performing very slow median calculation loop on %d values"%(len(xdataint)))
 		for i in xdataint:
 			median = numpy.median(data[radial == i])
 			data[radial == i] = median
 
 	if debug is True:
-		print "computing rotational average ydata..."
+		print("computing rotational average ydata...")
 	ydata = numpy.array(scipy.ndimage.mean(data, radial, xdataint))
 	xdata = numpy.array(xdataint, dtype=numpy.float64)*ringwidth
 
 	if debug is True:
-		print "... finish rotational average"
+		print("... finish rotational average")
 		apDisplay.printMsg("  expected size of rotational average: %d"%(image.shape[0]/2))
 		apDisplay.printMsg("actual max size of rotational average: %d"%(xdata.max())) 
 

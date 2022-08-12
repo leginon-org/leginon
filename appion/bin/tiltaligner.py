@@ -212,7 +212,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 
 	#=======================================
 	def processAndSaveAllImages(self):
-		print "Pre-processing images before picking\nNow is a good time to go get a candy bar"
+		print("Pre-processing images before picking\nNow is a good time to go get a candy bar")
 		count = 0
 		total = len(self.imgtree)
 		for imgdata in self.imgtree:

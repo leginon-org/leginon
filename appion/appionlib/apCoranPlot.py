@@ -71,7 +71,7 @@ def getAllCoranRecons():
 	reconids = []
 	for row in results:
 		reconids.append(int(row[0]))
-	print "found "+str(len(reconids))+" reconids: ", reconids
+	print("found "+str(len(reconids))+" reconids: ", reconids)
 	return reconids
 
 #==================
@@ -479,16 +479,16 @@ def makeCoranKeepPlot(reconid):
 			else:
 				partdict[partnum] = 1
 
-	print "maxpart=", maxpart
+	print("maxpart=", maxpart)
 	#print str(partdict)[:80]
 	### summarize results
 	counts = numpy.zeros((8), dtype=numpy.int32)
-	for key in partdict.keys():
+	for key in list(partdict.keys()):
 		numtimes = partdict[key]
 		for i in range(numtimes):
 			counts[i] += 1
-	print counts
-	print numpy.around(100.0*numpy.asarray(counts, dtype=numpy.float32)/float(numpart), 4)
+	print(counts)
+	print(numpy.around(100.0*numpy.asarray(counts, dtype=numpy.float32)/float(numpart), 4))
 
 	gracefile = "corankeepplot-"+str(reconid)+".agr"
 	gracedata = writeXmGraceData(counts, numpart)
@@ -519,7 +519,7 @@ def makeCoranKeepPlot(reconid):
 #==================
 #==================
 if __name__ == '__main__':
-	print "Usage: apCoranPlot.py <reconid> <projectid>"
+	print("Usage: apCoranPlot.py <reconid> <projectid>")
 
 	### setup correct database after we have read the project id
 	if len(sys.argv) > 2:
@@ -542,7 +542,7 @@ if __name__ == '__main__':
 		for reconid in reconids:
 			recondata = apRecon.getRefineRunDataFromID(reconid)
 			reconpath = recondata['path']['path']
-			print reconpath
+			print(reconpath)
 			os.chdir(reconpath)
 			try:
 				makeCoranKeepPlot(reconid)

@@ -69,13 +69,13 @@ def rclone_to_s3(indir,numfiles,region,keyid,secretid,rclonename,bucketname,awsp
 	#Write .rclone.conf
 	if os.path.exists('%s/.rclone.conf' %(outdir)):
 		os.remove('%s/.rclone.conf' %(outdir))
-        print ('Region = %s\n'%(region))
+        print(('Region = %s\n'%(region)))
         print ('[rclonename]\n')
         print ('type = s3\n')
         print ('env_auth = false\n')
-        print ('access_key_id = %s\n' %(keyid))
-	print ('secret_access_key = %s\n' %(secretid[:5]+'****************************************'))
-        print ('region = %s\n' %(region))
+        print(('access_key_id = %s\n' %(keyid)))
+	print(('secret_access_key = %s\n' %(secretid[:5]+'****************************************')))
+        print(('region = %s\n' %(region)))
 
 	r1=open('%s/.rclone.conf' %(outdir),'w')
 	r1.write('[rclonename]\n')
@@ -91,7 +91,7 @@ def rclone_to_s3(indir,numfiles,region,keyid,secretid,rclonename,bucketname,awsp
 		print('location_constraint = \n')
 	else:
 		r1.write('location_constraint = %s\n' %(region))
-		print('location_constraint = %s\n' %(region))
+		print(('location_constraint = %s\n' %(region)))
 	r1.write('acl = authenticated-read\n')
 	r1.write('server_side_encryption = \n')
 	r1.write('storage_class = STANDARD\n')
@@ -359,7 +359,7 @@ def relion_refine_mpi(in_cmd,instancetype=''):
 
 	assert type(instancetype) == str
 
-	print("Instance type is: ",instancetype)
+	print(("Instance type is: ",instancetype))
 	#Set entry
 	otherPartDir=''
 	otherPartRclone=''
@@ -478,8 +478,8 @@ def relion_refine_mpi(in_cmd,instancetype=''):
 		numParticles=int(linecache.getline('%s/handler.txt' %(outdir),1).split('=')[1].split('x')[3].split(';')[0])
 		partxdim=int(linecache.getline('%s/handler.txt' %(outdir),1).split('=')[1].split('x')[0].strip())
 		
-		print("numParticles is",numParticles)
-		print("partxdim calculated is",partxdim)
+		print(("numParticles is",numParticles))
+		print(("partxdim calculated is",partxdim))
 		ctf=False
 		angpix=False
 		rlncounter=1
@@ -557,7 +557,7 @@ def relion_refine_mpi(in_cmd,instancetype=''):
 
 	else:
 		instance = instancetype
-	print("Using %s instance type."%instancetype)
+	print(("Using %s instance type."%instancetype))
 
 	#Get AWS region from aws_init.sh environment variable
 	awsregion=subprocess.Popen('echo $AWS_DEFAULT_REGION', shell=True, stdout=subprocess.PIPE).stdout.read().split()[0]
@@ -577,7 +577,7 @@ def relion_refine_mpi(in_cmd,instancetype=''):
 	#Get AWS CLI directory location
 	awsdir=subprocess.Popen('echo $AWS_CLI_DIR', shell=True, stdout=subprocess.PIPE).stdout.read().split()[0]
 	if len(awsdir) == 0:
-		print 'Error: Could not find AWS scripts directory specified as $AWS_CLI_DIR. Please set this environmental variable and try again.'
+		print('Error: Could not find AWS scripts directory specified as $AWS_CLI_DIR. Please set this environmental variable and try again.')
 		sys.exit()
 
 	#.aws_relion will Have: [particledir] [s3 bucket name] [ebs volume]

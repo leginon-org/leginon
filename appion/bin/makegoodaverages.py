@@ -5,14 +5,14 @@ import os
 import math
 import time
 import re
-import cPickle
+import pickle
 #scipy
 import numpy
 #eman
 try:
 	import EMAN
 except ImportError:
-	print "EMAN module did not get imported"
+	print("EMAN module did not get imported")
 #appion
 from appionlib import appionScript
 from appionlib import appiondata
@@ -63,7 +63,7 @@ def determineClasses(particles):
 	for ptcl in range(0,len(particles)):
 		quality[ptcl]=particles[ptcl]['quality_factor']
 		key=str(particles[ptcl]['euler1'])+','+str(particles[ptcl]['euler2'])
-		if key not in classes.keys():
+		if key not in list(classes.keys()):
 			classes[key]={}
 			classes[key]['particles']=[]
 		classes[key]['euler1']=particles[ptcl]['euler1']
@@ -173,7 +173,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		self.params['sym']=symmetry.lower()
 
 		### prepare file
-		f = open('jumps.txt','w', 0666)
+		f = open('jumps.txt','w', 0o666)
 		f.write("#pnum\t")
 		headerlist = ('mean', 'median', 'stdev', 'min', 'max')
 		for key in headerlist:
@@ -307,7 +307,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		if self.params['rejectlst']:
 			rejectlst = removePtclsByLst(rejectlst, self.params)
 
-		classkeys=classes.keys()
+		classkeys=list(classes.keys())
 		classkeys.sort()
 		classnum=0
 		totalptcls=0

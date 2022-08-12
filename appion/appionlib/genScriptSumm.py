@@ -4,7 +4,7 @@ import re
 
 if __name__ == '__main__':
 	if len(sys.argv) != 2:
-		print "Usage: ./genScriptSumm.py function.py"
+		print("Usage: ./genScriptSumm.py function.py")
 		sys.exit(1)
 	file = sys.argv[1];
 	f = open(file, "r")
@@ -14,7 +14,7 @@ if __name__ == '__main__':
 		commentLine = re.match("^\t*[\"']{3}",line)
 		if re.match("^def _?[a-z]",line):
 			function = True
-			print line.strip()
+			print(line.strip())
 		elif(comment and commentLine):
 			#print "comment off"
 			comment = False
@@ -25,4 +25,4 @@ if __name__ == '__main__':
 			comment = True 
 			#print line.strip()
 		elif(comment):
-			print "\t## ",line.strip()
+			print("\t## ",line.strip())

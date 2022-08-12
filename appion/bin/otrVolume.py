@@ -914,11 +914,11 @@ class otrVolumeScript(appionScript.AppionScript):
 
 		for cnum in self.classlist:
 
-			print "\n"
+			print("\n")
 			apDisplay.printMsg("###########################")
 			apDisplay.printMsg("Processing stack of class "+str(cnum)+"")
 			apDisplay.printMsg("###########################")
-			print "\n"
+			print("\n")
 
 			### get good particle numbers
 			includeParticle, tiltParticlesData = self.getGoodAlignParticles(cnum)
@@ -991,11 +991,11 @@ class otrVolumeScript(appionScript.AppionScript):
 			# Andres's refinement steps	#
 			#										#
 			###############################
-			print "\n"
+			print("\n")
 			apDisplay.printMsg("##################################")
 			apDisplay.printMsg("Starting Andres' refinement steps")
 			apDisplay.printMsg("##################################")
-			print "\n"
+			print("\n")
 
 
 			for j in range(self.params['refineiters']):
@@ -1043,11 +1043,11 @@ class otrVolumeScript(appionScript.AppionScript):
 				eulerfile = apsheuler
 				mrcvolfile = self.processVolume(volfile, cnum, iternum)
 
-				print "\n"
+				print("\n")
 				apDisplay.printMsg("###########################")
 				apDisplay.printMsg("Done with iteration "+str(j+1)+"")
 				apDisplay.printMsg("###########################")
-				print "\n"
+				print("\n")
 
 		#if len(self.classlist) > 1:
 			#get a list of all unique combinations of volumes

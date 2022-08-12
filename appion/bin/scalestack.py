@@ -10,7 +10,7 @@ def scaleStack(stackdata,params):
 	newstackpath=os.path.join(params['newstackpath'],params['newstackname'])
 
 	if os.path.exists(newstackpath):
-		print "Error: A file with the name", params['newstackname']," already exists in this location."
+		print("Error: A file with the name", params['newstackname']," already exists in this location.")
 		sys.exit()
 
 	bin=params['bin']
@@ -23,7 +23,7 @@ def commitScaledStack(stackdata,params):
 
 	#make new params query
 	newstackparamsq=appiondata.ApStackParamsData()
-	for key in newstackparamsq.keys():
+	for key in list(newstackparamsq.keys()):
 		if key != 'bin':
 			newstackparamsq[key]=stackdata[0]['stackRun']['stackParams'][key]
 	newstackparamsq['bin']=params['bin']
@@ -36,7 +36,7 @@ def commitScaledStack(stackdata,params):
 	newstackdata=newstackq.query()
 
 	if newstackdata:
-		print "A stack with these parameters already exists"
+		print("A stack with these parameters already exists")
 		return
 
 	#make new run query
@@ -46,7 +46,7 @@ def commitScaledStack(stackdata,params):
 	newstackrunq['stackRunName'] = os.path.basename(os.getcwd()) #use cwd for run name
 	newstackrundata=newstackrunq.query()
 	if newstackrundata:
-		print "A stack run with this name (the current directory name) already exists. Exiting"
+		print("A stack run with this name (the current directory name) already exists. Exiting")
 		sys.exit()
 
 	newstackrunq=appiondata.ApStackRunData()
@@ -79,13 +79,13 @@ def commitScaledStack(stackdata,params):
 if __name__=='__main__':
 
 	if len(sys.argv) != 4:
-		print """Check your arguments
+		print("""Check your arguments
 Usage: scalestack.py <stackid> <newstackname> <binning_factor>
 ---------------------------------------------------------------
 scalestack.py will take a stack that has been uploaded to the
 appion database and output a new binned stack to the current
 directory. The new stack will be commited to the database
-"""
+""")
 		sys.exit()
 
 	#parse params
@@ -99,20 +99,20 @@ directory. The new stack will be commited to the database
 	#check for multiple runs in stack
 	runs_in_stack=apStack.getRunsInStack(params['stackid'])
 	if len(runs_in_stack) > 1:
-		print "scalestack.py can't scale this stack because it is a combination of multiple makestack runs."
-		print "Instead, use makestack to create a new single scaled stack"
+		print("scalestack.py can't scale this stack because it is a combination of multiple makestack runs.")
+		print("Instead, use makestack to create a new single scaled stack")
 		sys.exit()
 
 	#get stackdata
 	stackdata=apStack.getStackParticlesFromId(params['stackid'])
 
 	#do operations on stack
-	print "Scaling stack"
+	print("Scaling stack")
 	scaleStack(stackdata,params)
 
 	#commit new stack to db
-	print "Commiting new stack to db"
+	print("Commiting new stack to db")
 	commitScaledStack(stackdata,params)
 
-	print "Done!"
+	print("Done!")
 

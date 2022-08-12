@@ -8,7 +8,7 @@ import time
 import glob
 import pprint
 import random
-import cPickle
+import pickle
 import subprocess
 #appion
 from appionlib import appionScript
@@ -134,12 +134,12 @@ class satEulerScript(appionScript.AppionScript):
 			apDisplay.printMsg("Found "+str(numrows)+" rows in "+apDisplay.timeString(time.time()-t0))
 			apDisplay.printMsg("Fetching data at "+time.asctime())
 			results = self.cursor.fetchall()
-			cachef = open(cachefile, 'w', 0666)
-			cPickle.dump(results, cachef)
+			cachef = open(cachefile, 'w', 0o666)
+			pickle.dump(results, cachef)
 		else:
 			apDisplay.printColor("Using cached MySQL query data at "+time.asctime(), "cyan")
 			cachef = open(cachefile, 'r')
-			results = cPickle.load(cachef)
+			results = pickle.load(cachef)
 		cachef.close()
 		apDisplay.printMsg("Fetched "+str(len(results))+" rows in "+apDisplay.timeString(time.time()-t0))
 
@@ -147,7 +147,7 @@ class satEulerScript(appionScript.AppionScript):
 		eulertree = self.convertSQLtoEulerTree(results)
 
 		if len(eulertree) < 10:
-			print query
+			print(query)
 			apDisplay.printError("Failed to get euler angles")
 
 		return eulertree
@@ -180,7 +180,7 @@ class satEulerScript(appionScript.AppionScript):
 				eulerpair['part2']['tilt']   = apStack.getStackParticleTilt(eulerpair['part2']['dbid'])
 				eulertree.append(eulerpair)
 			except:
-				print row
+				print(row)
 				apDisplay.printError("bad row entry")
 
 		apDisplay.printMsg("Converted "+str(len(eulertree))+" eulers in "+apDisplay.timeString(time.time()-t0))
@@ -198,7 +198,7 @@ class satEulerScript(appionScript.AppionScript):
 		if os.path.isfile(cachefile):
 			apDisplay.printColor("Using cached MySQL query data at "+time.asctime(), "cyan")
 			cachef = open(cachefile, 'r')
-			eulertree = cPickle.load(cachef)
+			eulertree = pickle.load(cachef)
 			cachef.close()
 			apDisplay.printMsg("\nFetched "+str(len(eulertree))+" rows in "+apDisplay.timeString(time.time()-t0))
 			return eulertree
@@ -230,7 +230,7 @@ class satEulerScript(appionScript.AppionScript):
 		apDisplay.printMsg("Fetched "+str(len(results))+" rows in "+apDisplay.timeString(time.time()-t0))
 
 		if len(results) < 3:
-			print query
+			print(query)
 			apDisplay.printError("No tilt pairs found in this stackid="+str(stackid))
 
 		t0 = time.time()
@@ -310,8 +310,8 @@ class satEulerScript(appionScript.AppionScript):
 			eulerpair['part2']['tilt']   = apStack.getStackParticleTilt(eulerpair['part2']['dbid'])
 			eulertree.append(eulerpair)
 			#end loop
-		cachef = open(cachefile, 'w', 0666)
-		cPickle.dump(eulertree, cachef)
+		cachef = open(cachefile, 'w', 0o666)
+		pickle.dump(eulertree, cachef)
 		cachef.close()
 		apDisplay.printMsg("\nFetched "+str(len(eulertree))+" rows in "+apDisplay.timeString(time.time()-t0))
 		return eulertree
@@ -375,14 +375,14 @@ class satEulerScript(appionScript.AppionScript):
 		self.writeKeepFiles(eulertree)
 		#self.writeScatterFile(eulertree)
 
-		print "ANGLE EULER DATA:"
+		print("ANGLE EULER DATA:")
 		#D-symmetry goes to 90, all other 180
 		#self.analyzeList(angdistlist, tuple((0,None,self.params['stepsize'])), "angdata"+self.datastr+".dat")
 
-		print "PLANE ROTATION DATA:"
+		print("PLANE ROTATION DATA:")
 		self.analyzeList(rotdistlist, tuple((None,None,self.params['stepsize'])), "rotdata"+self.datastr+".dat")
 
-		print "TOTAL EULER DATA:"
+		print("TOTAL EULER DATA:")
 		#D-symmetry goes to 90, all other 180
 		self.analyzeList(totdistlist, tuple((0,None,self.params['stepsize'])), "totaldata"+self.datastr+".dat")
 
@@ -555,8 +555,8 @@ class satEulerScript(appionScript.AppionScript):
 		mystep = float(myrange[2])
 
 		mynumpy = numpy.asarray(mylist, dtype=numpy.float32)
-		print "range=",round(ndimage.minimum(mynumpy),2)," <> ",round(ndimage.maximum(mynumpy),2)
-		print " mean=",round(ndimage.mean(mynumpy),2)," +- ",round(ndimage.standard_deviation(mynumpy),2)
+		print("range=",round(ndimage.minimum(mynumpy),2)," <> ",round(ndimage.maximum(mynumpy),2))
+		print(" mean=",round(ndimage.mean(mynumpy),2)," +- ",round(ndimage.standard_deviation(mynumpy),2))
 
 		#histogram
 		bins = []
@@ -592,7 +592,7 @@ class satEulerScript(appionScript.AppionScript):
 			+" with angle "+str(self.params['angle'])
 			+" +/- "+str(self.params['cutrange'])
 			+"' \n" )
-		print "New subStack.py Command:"
+		print("New subStack.py Command:")
 		apDisplay.printColor(cmd, "purple")
 
 	#=====================
@@ -606,7 +606,7 @@ class satEulerScript(appionScript.AppionScript):
 			+" \\\n --stackname="+newname
 			+" \\\n --keep-list="+keepfile
 			+" \n" )
-		print "New satAverage.py Command:"
+		print("New satAverage.py Command:")
 		apDisplay.printColor(cmd, "purple")
 
 	#=====================
@@ -625,7 +625,7 @@ class satEulerScript(appionScript.AppionScript):
 			+" \\\n --stackname="+newname
 			+" \\\n --keep-list="+keepfile
 			+" \n" )
-		print "New satAverage.py Command:"
+		print("New satAverage.py Command:")
 		apDisplay.printColor(cmd, "purple")
 		if self.params['sataverage'] is True:
 			proc = subprocess.Popen(cmd, shell=True)
@@ -640,7 +640,7 @@ class satEulerScript(appionScript.AppionScript):
 		for filename in mrcfiles:
 			if os.path.isfile(filename):
 				vol = mrc.read(filename)
-				print filename, vol.shape
+				print(filename, vol.shape)
 				volumes.append(vol)
 		volarray = numpy.asarray(volumes, dtype=numpy.float32)
 		try:
@@ -648,7 +648,7 @@ class satEulerScript(appionScript.AppionScript):
 		except:
 			medarray = numpy.median(volarray)
 		medfile = os.path.join(self.params['rundir'], "volumes/medianVolume.mrc")
-		print medfile, medarray.shape
+		print(medfile, medarray.shape)
 		mrc.write(medarray, medfile)
 
 		apix = apStack.getStackPixelSizeFromStackId(self.params['stackid'])

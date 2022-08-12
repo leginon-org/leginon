@@ -105,7 +105,7 @@ class DDFrameAligner(object):
 		output = stdoutdata
 		self.writeLogFile(output)
 		# stream stderrdata even though it is likely empty due to piping to stdout
-		print stderrdata
+		print(stderrdata)
 
 	def getValidAlignOptionMappings(self):
 		'''
@@ -116,8 +116,8 @@ class DDFrameAligner(object):
 
 	def setFrameAlignOptions(self,params):
 		parammaps = self.getValidAlignOptionMappings()
-		for goodkey in parammaps.keys():
-			if goodkey in params.keys():
+		for goodkey in list(parammaps.keys()):
+			if goodkey in list(params.keys()):
 				self.alignparams[parammaps[goodkey]] = params[goodkey]
 
 	def getFrameAlignOption(self,key):
@@ -125,7 +125,7 @@ class DDFrameAligner(object):
 
 	def joinFrameAlignOptions(self,glue='-'):
 		cmd = ''
-		for key in self.alignparams.keys():
+		for key in list(self.alignparams.keys()):
 			cmd += ' %s%s %s' % (glue,key,str(self.alignparams[key]))
 		return cmd
 
@@ -179,7 +179,7 @@ class MotionCorr1(DDFrameAligner):
 		'''
 		MotionCorr1 has its own log file. This just stream to appionlog
 		'''
-		print outbuffer
+		print(outbuffer)
 		apDisplay.printMsg('Real alignment log written to %s' % self.logpath)
 
 	def setGPUid(self,gpuid):
@@ -197,7 +197,7 @@ class MotionCorr_Purdue(MotionCorr1):
 		'''
 		modification to make Purdue motioncorr compatible with the motioncorr 1
 		'''
-		if 'nrw' in self.alignparams.keys():
+		if 'nrw' in list(self.alignparams.keys()):
 			if self.alignparams['nrw'] <= 1:
 				del self.alignparams['nrw']
 		
@@ -205,7 +205,7 @@ class MotionCorr_Purdue(MotionCorr1):
 		'''
 		modification to make Purdue motioncorr compatible with the motioncorr 1
 		'''
-		if 'flp' in self.alignparams.keys():
+		if 'flp' in list(self.alignparams.keys()):
 			if self.getNewFlipAlongYAxis() == 0:
 				del self.alignparams['nrw']
 			
@@ -250,7 +250,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 		'''
 		nraw = self.alignparams['total_raw_frames']
 		size = self.alignparams['rendered_frame_size']
-		if 'totaldose' in self.alignparams.keys() and self.alignparams['totaldose']> 0:
+		if 'totaldose' in list(self.alignparams.keys()) and self.alignparams['totaldose']> 0:
 			raw_dose = self.alignparams['totaldose'] / nraw
 		else:
 			apDisplay.printWarning('Use fake dose about 0.03 e/p per raw frame')
@@ -296,7 +296,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 		apDisplay.printMsg('DefectMap Command Option: %s' % cmd)
 
 	def getInputCommand(self):
-		if self.framestackpath.endswith('.tif'):
+		if self.framestackpath.endswith('.tif') or self.alignparams['forceTiff']:
 			cmd = '-InTiff %s' % self.framestackpath
 		elif self.framestackpath.endswith('.eer'):
 			cmd = '-InEer %s' % self.framestackpath
@@ -326,8 +326,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 			cmd += ' -FtBin %s ' % (real_FtBin,)
 
 		if (self.alignparams['Bft_global'] > 0) and (self.alignparams['Bft_local'] > 0):
-			cmd += ' -Bft %d %d' % (self.alignparams['Bft_global'], self.alignparams['Bft_local'])		
-		
+			cmd += ' -Bft %d %d' % (self.alignparams['Bft_global'], self.alignparams['Bft_local'])
 		else:
 			apDisplay.printError("Invalid Bft arguments ! (global: %s, local: %s)" %(self.alignparams['Bft_global'], self.alignparams['Bft_local']))
 
@@ -401,7 +400,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 			cmd += ' -kV %d ' % (self.alignparams['kV'])
 		
 		# serial 1, defaulted
-#		cmd += ' Serial 1'
+		#cmd += ' Serial 1'
 		
 		# gain dark references
 		cmd += self.gain_dark_cmd
@@ -419,6 +418,9 @@ class MotionCor2_UCSF(DDFrameAligner):
 		# EER upsampling
 		if self.alignparams['is_eer']:
 			cmd += ' -EerSampling %d ' % self.alignparams['EerSampling']
+
+		if self.alignparams['gainfile']:
+			cmd += ' -Gain %s ' % self.alignparams['gainfile']
 
 		return cmd
 
@@ -451,24 +453,26 @@ class MotionCor2_UCSF(DDFrameAligner):
 			"is_eer":"is_eer",
 			"total_raw_frames":"total_raw_frames",
 			"rendered_frame_size":"rendered_frame_size",
+			"gainfile":"gainfile",
+			"forceTiff":"forceTiff"
 			}
 
 #	def modifyFlipAlongYAxis(self):
-#		'''
-#		modification to make Purdue motioncorr compatible with the motioncorr 1
-#		'''
+#   '''
+#   modification to make Purdue motioncorr compatible with the motioncorr 1
+#   '''
 #		if 'flp' in self.alignparams.keys():
 #			if self.getNewFlipAlongYAxis() == 0:
 #				del self.alignparams['nrw']
-			
+
 	def setAlignedSumFrameList(self,framelist):
 		self.sumframelist = framelist
 		total_frames = self.getInputNumberOfFrames()
 		self.alignparams['Trunc'] = total_frames - self.sumframelist[-1] - 1
-		
+
 	def getAlignedSumFrameList(self):
 		return self.sumframelist
-	
+
 	def writeLogFile(self, outbuffer):
 		''' 
 		takes output log buffer from running frame aligner 
@@ -478,7 +482,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 		### motioncor2 format
 		log2 = self.framestackpath[:-4]+'_Log.motioncor2.txt'
 		f = open(log2, "w")
-		f.write(outbuffer)
+		f.write(outbuffer.decode())
 		f.close()
 
 		### this is unnecessary, need to figure out how to convert outbuffer from subprocess PIPE to readable format
@@ -497,7 +501,7 @@ class MotionCor2_UCSF(DDFrameAligner):
 		shifts = []
 
 		if not found:
-			apDisplay.printError('%s did not run successfully.  Please check %s for error'	% (self.executable, log2))
+			apDisplay.printError('%s did not run successfully.  Please check %s for error'  % (self.executable, log2))
 		for l in temp: 
 			m = re.match("...... Frame", l)
 			if m:
@@ -507,10 +511,10 @@ class MotionCor2_UCSF(DDFrameAligner):
 
 		### convert motioncorr2 output to motioncorr1 format
 		binning = 1.0
-		if 'FtBin' in self.alignparams.keys():
+		if 'FtBin' in list(self.alignparams.keys()):
 			binning = self.alignparams['FtBin']
 		shifts_adjusted = []
-		midval = len(shifts)/2
+		midval = int(len(shifts)/2)
 		midshx = shifts[midval][0]
 		midshy = shifts[midval][1]
 		for l in shifts:
@@ -522,16 +526,14 @@ class MotionCor2_UCSF(DDFrameAligner):
 
 		### motioncorr1 format, needs conversion from motioncorr2 format
 		log = self.framestackpath[:-4]+'_Log.txt'
-                f = open(log,"w")
+		f = open(log,"w")
 		f.write("Sum Frame #%.3d - #%.3d (Reference Frame #%.3d):\n" % (0, self.alignparams['total_rendered_frames'], self.alignparams['total_rendered_frames']/2))
 		# Eer nframe is not predictable.
 		for i in range(len(shifts_adjusted)):
-	                f.write("......Add Frame #%.3d with xy shift: %.5f %.5f\n" % (i+self.alignparams['Throw'], shifts_adjusted[i][0], shifts_adjusted[i][1]))
-                f.close()
-		
+			f.write("......Add Frame #%.3d with xy shift: %.5f %.5f\n" % (i+self.alignparams['Throw'], shifts_adjusted[i][0], shifts_adjusted[i][1]))
+		f.close()
 
 
-		
 if __name__ == '__main__':
 	filepath = '/Users/acheng/testdata/frames/22jan14a/rawdata/22jan14a_00019en.frames.mrc'
 	params = {'bin':2,'any':1}

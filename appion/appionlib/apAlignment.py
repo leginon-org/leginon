@@ -53,7 +53,7 @@ def getAlignPackage(alignrundata):
 		'maxlikerun':'Xmipp',
 		'imagicMRA':'Imagic'
 	}
-	for type in aligntypedict.keys():
+	for type in list(aligntypedict.keys()):
 		if alignrundata[type]:
 			alignpackage = aligntypedict[type]
 			break
@@ -129,7 +129,7 @@ def getAlignRunIdFromName(alignrunname):
 		alignrunid = alignrundatas[0].dbid
 	else:
 		for alignrundata in alignrundatas:
-			print alignrundata
+			print(alignrundata)
 		apDisplay.printError("Found too many align runs for specified criteria")
 
 	apDisplay.printMsg("Found align run id %d"%(alignrunid))

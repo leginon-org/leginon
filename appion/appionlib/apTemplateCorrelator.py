@@ -52,10 +52,10 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 			if ( templatedata['range_start'] != self.params["startang"+str(i+1)] or
 				 templatedata['range_end']   != self.params["endang"+str(i+1)] or
 				 templatedata['range_incr']  != self.params["incrang"+str(i+1)] ):
-				print i+1, templateid
-				print templatedata['range_start'], self.params["startang"+str(i+1)]
-				print templatedata['range_end'], self.params["endang"+str(i+1)]
-				print templatedata['range_incr'], self.params["incrang"+str(i+1)]
+				print(i+1, templateid)
+				print(templatedata['range_start'], self.params["startang"+str(i+1)])
+				print(templatedata['range_end'], self.params["endang"+str(i+1)])
+				print(templatedata['range_incr'], self.params["incrang"+str(i+1)])
 				apDisplay.printWarning("different template search ranges from last run")
 		return True
 
@@ -175,7 +175,7 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 				while max(primefactor.prime_factors(newdim)) > 30:
 					newdim -= 2
 				if dim == newdim:
-					print primefactor.prime_factors(newdim)
+					print(primefactor.prime_factors(newdim))
 					apDisplay.printMsg("trimming image from %d to %d in one dimension for findem"%(dim, newdim))
 				newshape.append(newdim)
 			if filtarray.shape != tuple(newshape):

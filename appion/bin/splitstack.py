@@ -13,7 +13,7 @@ from appionlib import appionScript
 
 class SplitStack(appionScript.AppionScript):
 	def setupParserOptions(self):
-		print "splitstack.py stackid=<DEF_id> [nptcls=<n> logsplit=<start>,<divisions>] stackname=<stackfile> [commit] rundir=<path>"
+		print("splitstack.py stackid=<DEF_id> [nptcls=<n> logsplit=<start>,<divisions>] stackname=<stackfile> [commit] rundir=<path>")
 		self.params={}
 		self.params['nptcls']=None
 		self.params['logsplit']=False
@@ -52,15 +52,15 @@ class SplitStack(appionScript.AppionScript):
 
 	def checkConflicts(self):
 		if self.params['nptcls'] and self.params['logsplit']:
-			print "Error: nptcls and logsplit can not be specified at the same time"
+			print("Error: nptcls and logsplit can not be specified at the same time")
 			sys.exit()
 		if self.self.params['logsplit']:
 			if self.self.params['logdivisions'] < 3:
-				print "Error: divisions for logsplit must be greater than two"
+				print("Error: divisions for logsplit must be greater than two")
 				sys.exit()
 
 	def printHelp():
-		print "Usage:"
+		print("Usage:")
 
 		sys.exit()
 
@@ -74,7 +74,7 @@ class SplitStack(appionScript.AppionScript):
 		#make random stack
 		f=open('temporarylist.lst','w')
 		f.write('#LST\n')
-		allparticles=range(0,len(stackdata))
+		allparticles=list(range(0,len(stackdata)))
 		random.shuffle(allparticles)
 		particles=allparticles[0:nptcls]
 		particles.sort()

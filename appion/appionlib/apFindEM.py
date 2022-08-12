@@ -171,7 +171,8 @@ class findemrunner(object):
 		logf = open("findem.log", "a")
 		p = subprocess.Popen( self.findemexe, stdin=subprocess.PIPE, stdout=logf, stderr=logf)
 		fin = p.stdin
-		fin.write(feed)
+		fin.write(feed.encode())
+		fin.close()
 		output,error = p.communicate()
 
 #===========

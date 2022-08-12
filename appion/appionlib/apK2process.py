@@ -32,7 +32,7 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		return 'frame_%03d.mrc' % (frame_number+1)
 
 	def getUsedFramesFromImageData(self,imagedata):
-		return range(self.getNumberOfFrameSavedFromImageData(imagedata))
+		return list(range(self.getNumberOfFrameSavedFromImageData(imagedata)))
 
 	def getRawFrameDirFromImage(self,imagedata):
 		'''
@@ -180,6 +180,6 @@ if __name__ == '__main__':
         dd.setImageId(1640790)
         start_frame = 0
         nframe = 5
-        framelist = range(start_frame,start_frame+nframe)
+        framelist = list(range(start_frame,start_frame+nframe))
         corrected = dd.correctFrameImage(framelist)
         mrc.write(corrected,'corrected_frame%d_%d.mrc' % (start_frame,nframe))

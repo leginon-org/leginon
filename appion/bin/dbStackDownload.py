@@ -44,7 +44,7 @@ class dbStackDownload(appionScript.AppionScript):
 		stackid = int(self.params['stackid'])
 		#stackdata = apStack.getOnlyStackData(stackid, msg=False)
 		stackdata = apStack.getOnlyStackData(stackid)
-		print "stackdata: ", stackdata
+		print("stackdata: ", stackdata)
 		path = stackdata['path']['path']
 		#substitude the stacks with dbstacks folder
 		uppath = os.path.dirname(os.path.abspath(path))[:-6]+"dbstacks"

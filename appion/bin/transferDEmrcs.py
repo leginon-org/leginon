@@ -33,7 +33,7 @@ def transfer(src, dst, delete=True):
 	if delete is True:
 		cmdroot+=' --remove-sent-files '
 	cmd='%s %s %s' % (cmdroot, src, dst)
-	print cmd
+	print(cmd)
 	p = subprocess.Popen(cmd, shell=True)
 	p.wait()
 	
@@ -82,13 +82,13 @@ def checkdestpath(imgdata,destination):
 	try:
 		session=imgdata['session']['name']
 	except:
-		print imgdata
+		print(imgdata)
 	destfolder=os.path.join(destination,session,'rawdata')
-	print destfolder
+	print(destfolder)
 	if os.path.exists(destfolder):
 		return destfolder
 	else:
-		print "Making output directory",destfolder
+		print("Making output directory",destfolder)
 		os.makedirs(destfolder)
 		return destfolder
 	
@@ -102,36 +102,36 @@ if __name__ == '__main__':
 	for n,origframestackpath in enumerate(rawframes):
 	
 		origframestack=os.path.split(origframestackpath)[-1]
-		print "Searching for", origframestack
+		print("Searching for", origframestack)
 		frameprefix= origframestack[0:14]
 		imgdata=queryFramesName(frameprefix)
 		if (imgdata is None) and (options.nopause is False):
-			print "No leginon image found for ", origframestack
+			print("No leginon image found for ", origframestack)
 			yorn=None
 			while (yorn!='y' and yorn!='n'):
-				yorn=raw_input('Continue? y or n : ')
+				yorn=input('Continue? y or n : ')
 				yorn=yorn.lower()
 				if yorn[0]=='n':
-					print "Exiting"
+					print("Exiting")
 					sys.exit()
 			if yorn=='y':
 				continue
 		elif (imgdata is None) and (options.nopause is True):
-			print "Skipping frame stack", origframestack
+			print("Skipping frame stack", origframestack)
 			continue
 	
 		destfolder=checkdestpath(imgdata,options.destination)
 		newname=imgdata['filename']+'.frames.mrc'
 		#print newname
 		destpath=os.path.join(destfolder,newname)
-		print "Transferring\n",origframestackpath,'to\n',destpath
+		print("Transferring\n",origframestackpath,'to\n',destpath)
 		if options.dryrun is False:
 			transfer(origframestackpath,destpath)
 		else:
-			print "Skipping transfer in dryrun mode"
-		print "Image complete"
-		print len(rawframes)-(n+1),'frame stacks remaining\n'
+			print("Skipping transfer in dryrun mode")
+		print("Image complete")
+		print(len(rawframes)-(n+1),'frame stacks remaining\n')
 
-	print "Done!"
+	print("Done!")
 	
 	

@@ -4,7 +4,7 @@
 import sys
 import time
 import threading
-import Queue
+import queue
 import subprocess
 import os
 ## appion
@@ -45,7 +45,7 @@ class LauncherThread(threading.Thread):
 		while True:
 			try:
 				proc_info = self.queue.get(block=True, timeout=10)
-			except Queue.Empty:
+			except queue.Empty:
 				break
 			self.log('got from queue')
 			self.log(str(proc_info))
@@ -59,7 +59,7 @@ class LauncherThread(threading.Thread):
 
 class ProcessLauncher(object):
 	def __init__(self, nproc=1, rundir=None):
-		self.queue = Queue.Queue()
+		self.queue = queue.Queue()
 		self.nproc = nproc
 		if rundir is None:
 			self.rundir = os.getcwd()
@@ -140,7 +140,7 @@ def testThreadCommands():
 	for i in range(20):
 		cmd = "sleep %d"%(random.random()*10)
 		cmdlist.append(cmd)
-	print cmdlist
+	print(cmdlist)
 	threadCommands(cmdlist)
 
 if __name__ == "__main__":

@@ -38,7 +38,7 @@ class AppionCamFrameProcessing(apDDprocess.DDFrameProcessing):
 		return 'frame_%03d.mrc' % (frame_number+1)
 
 	def getUsedFramesFromImageData(self,imagedata):
-		return range(self.getNumberOfFrameSavedFromImageData(imagedata))
+		return list(range(self.getNumberOfFrameSavedFromImageData(imagedata)))
 
 	def getSessionFramePathFromImage(self, imagedata):
 		# Forcing a particular path
@@ -72,7 +72,7 @@ class AppionCamFrameProcessing(apDDprocess.DDFrameProcessing):
 			bin = {'x':1,'y':1}
 			offset = {'x':0,'y':0}
 			dimension = self.getDefaultDimension()
-		print dimension
+		print(dimension)
 		crop_end = {'x': offset['x']+dimension['x']*bin['x'], 'y':offset['y']+dimension['y']*bin['y']}
 		apDisplay.printMsg('Frame path: %s' %  rawframe_path)
 		waitmin = 0
@@ -132,6 +132,6 @@ if __name__ == '__main__':
 	dd.setImageId(1640790)
 	start_frame = 0
 	nframe = 5
-	framelist = range(start_frame,start_frame+nframe)
+	framelist = list(range(start_frame,start_frame+nframe))
 	corrected = dd.correctFrameImage(framelist)
 	mrc.write(corrected,'corrected_frame%d_%d.mrc' % (start_frame,nframe))

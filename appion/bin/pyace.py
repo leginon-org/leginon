@@ -7,7 +7,7 @@ import sys
 import math
 import time
 import shutil
-import cPickle
+import pickle
 #appion
 from appionlib import apImage
 from appionlib import apParam
@@ -22,7 +22,7 @@ from appionlib.apCtf import ctfinsert
 try:
 	import mlabraw as pymat
 except:
-	print "Matlab module did not get imported"
+	print("Matlab module did not get imported")
 
 class aceLoop(appionLoop2.AppionLoop):
 	#=====================
@@ -49,7 +49,7 @@ class aceLoop(appionLoop2.AppionLoop):
 		#if not os.path.isfile(acepath):
 		#	apDisplay.printWarning("'"+self.functionname+".py' usually needs to be run in the "+\
 		#		"same directory as all of its matlab files")
-		print "Connecting to matlab ... "
+		print("Connecting to matlab ... ")
 		if self.params['xvfb'] is True:
 			apParam.resetVirtualFrameBuffer()
 		try:
@@ -160,7 +160,7 @@ class aceLoop(appionLoop2.AppionLoop):
 	def insertACErunParams(self):
 		# first create an aceparam object
 		aceparamq = appiondata.ApAceParamsData()
-		for key in aceparamq.keys():
+		for key in list(aceparamq.keys()):
 			if key in self.params:
 				aceparamq[key] = self.params[key]
 

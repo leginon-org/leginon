@@ -87,7 +87,7 @@ class TopazDenoiser(appionLoop2.AppionLoop):
 			shutil.move(out_file, dst)
 			result = imgdata.copy()
 			result['preset'] = preset
-			image = imgdata.items()[1][1]
+			image = list(imgdata.items())[1][1]
 			image.filename = dest_file
 			result['image'] = image
 			result['filename'] = parts[0]+pr_postfix

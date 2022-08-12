@@ -15,12 +15,12 @@ from leginon import configcheck
 configcheck.checkSinedonConfig()
 configcheck.checkLeginonConfig()
 
-print '----------------------------------------'
-print 'appion bin is from %s' % (getThisFileDir())
+print('----------------------------------------')
+print('appion bin is from %s' % (getThisFileDir()))
 
 from appionlib import appiondata
-print 'appionlib python package is from %s' % (os.path.dirname(os.path.abspath(appiondata.__file__)))
+print('appionlib python package is from %s' % (os.path.dirname(os.path.abspath(appiondata.__file__))))
 
 from pyami import mrc
-print 'pyami python package is from %s' % (os.path.dirname(os.path.abspath(mrc.__file__)))
+print('pyami python package is from %s' % (os.path.dirname(os.path.abspath(mrc.__file__))))
 

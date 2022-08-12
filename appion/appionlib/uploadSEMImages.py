@@ -99,7 +99,7 @@ class UploadSEMImages(appionScript.AppionScript):
             return self.params['runname']
 
         apDisplay.printColor("Found session name with runname %s, creating new name"%(self.params['runname']), "blue")
-        print sessiondatas[0]
+        print(sessiondatas[0])
 
         for char in string.lowercase:
             sessionname = self.timestamp+char
@@ -273,7 +273,7 @@ class UploadSEMImages(appionScript.AppionScript):
         SEMData['beam_current'] = float(self.SEM_Data['BeamCurrent'])
         SEMData['dynamic_focus_is_on'] = self.SEM_Data['DynamicFocusIsOn']
         SEMData['stage_ta'] = float(self.SEM_Data['StageTa'])
-        if self.SEM_Data.has_key('TiltCorrectionAngle'):
+        if 'TiltCorrectionAngle' in self.SEM_Data:
             SEMData['tilt_correction_angle'] = float(self.SEM_Data['TiltCorrectionAngle'])
         SEMData['dwell_time'] = float(self.SEM_Data['Dwelltime'])
         SEMData['pixel_width'] = float(self.SEM_Data['PixelWidth'])

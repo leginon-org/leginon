@@ -122,7 +122,7 @@ class subStackScript(appionScript.AppionScript):
 				# create a file
 				f=open(self.params['keepfile'],'w')
 				# generate a random sequence by giving size
-				randomList = random.sample(xrange(self.params['last']), self.params['random'])
+				randomList = random.sample(range(self.params['last']), self.params['random'])
 				randomList.sort()
 				for partnum in randomList:
 					f.write('%d\n' % partnum)

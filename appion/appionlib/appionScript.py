@@ -115,7 +115,7 @@ class AppionScript(basicScript.BasicScript):
 		"""
 		if len(self.argdict) == 0:
 			for opt in self.parser.option_list:
-				arg = str(opt.get_opt_string.im_self)
+				arg = str(opt.get_opt_string.__self__)
 				if '/' in arg:
 					args = arg.split('/')
 					arg = args[-1:][0]
@@ -150,7 +150,7 @@ class AppionScript(basicScript.BasicScript):
 			storage = 'store_'+str(value).lower()
 			for opt in self.parser.option_list:
 				if opt.dest == dest and opt.action == storage:
-					arg = str(opt.get_opt_string.im_self)
+					arg = str(opt.get_opt_string.__self__)
 					if '/' in arg:
 						args = arg.split('/')
 						arg = args[-1:][0]
@@ -279,7 +279,7 @@ class AppionScript(basicScript.BasicScript):
 		apDisplay.printMsg("Running Appion version '%s'"%(progrunq['revision']))
 		progrunq['appion_path'] = appiondata.ApPathData(path=os.path.abspath(appiondir))
 
-		for paramname in self.params.keys():
+		for paramname in list(self.params.keys()):
 			paramnameq = appiondata.ScriptParamName()
 			paramnameq['name'] = paramname
 			paramnameq['progname'] = prognameq
@@ -573,11 +573,11 @@ class TestScript(AppionScript):
 		raise NotImplementedError
 
 if __name__ == '__main__':
-	print "__init__"
+	print("__init__")
 	testscript = TestScript()
-	print "start"
+	print("start")
 	testscript.start()
-	print "close"
+	print("close")
 	testscript.close()
 
 

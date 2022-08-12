@@ -22,7 +22,7 @@ import os
 try:
 	import sinedon
 	import MySQLdb
-except ImportError, e:
+except ImportError as e:
 	sys.stderr.write("Warning: %s, status updates will be disabled\n" % (e))
 	statusUpdatesEnabled = False
 else:
@@ -48,7 +48,7 @@ class Agent (basicAgent.BasicAgent):
 				 
 		try:   
 			self.currentJob = self.createJobInst(jobType, command)
-		except Exception, e:
+		except Exception as e:
 			sys.stderr.write("Error: Could not create job inst %s : %s\n" %(command, e))
 			sys.exit(1)
 			
@@ -102,7 +102,7 @@ class Agent (basicAgent.BasicAgent):
 	#
 	def createJobInst(self, jobType, command):
 		jobInstance = None
-		print "Job type: %s"%(jobType)	
+		print("Job type: %s"%(jobType))	
 
 
 		if "emanrecon" == jobType:
@@ -124,7 +124,7 @@ class Agent (basicAgent.BasicAgent):
 
 		else:
 			jobInstance = apGenericJob.genericJob(command)
-		print jobType, command
+		print(jobType, command)
 		return jobInstance
 
 	# This is used to execute commands on the head node, rather than through the resource manager with a job file.
@@ -163,7 +163,7 @@ class Agent (basicAgent.BasicAgent):
 							
 							self.__updateStatusInDB(jobid, currentStatus)
 				   
-			except OSError, e:
+			except OSError as e:
 				sys.stderr.write("Warning: Unable to monitor status: %s\n" % (e))
 		else:
 			sys.stderr.write("Warning: Unable to monitor job status.\n")					   
@@ -229,7 +229,7 @@ class Agent (basicAgent.BasicAgent):
 				
 			cursor.close()
 			dbConnection.close()
-		except MySQLdb.DatabaseError, e:
+		except MySQLdb.DatabaseError as e:
 			sys.stderr.write("Warning: Failure determining project database: %s \n" % (e))
 		
 		#if jobId is not set, assume there is no entry in ApAppionJobData for this run

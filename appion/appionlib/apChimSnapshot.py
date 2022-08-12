@@ -38,7 +38,7 @@ try:
 	from MeasureVolume import enclosed_volume
 	import ScaleBar.session
 except ImportError:
-	print "Failed to import chimera modules"
+	print("Failed to import chimera modules")
 	pass
 
 #from chimera-1.2.5/share/chimera/replyobj.py
@@ -821,7 +821,7 @@ class ChimSnapShots(object):
 	def __init__(self):
 		### Volume name
 		self.volumepath = os.environ.get('CHIMVOL')
-		print self.volumepath
+		print(self.volumepath)
 		if self.volumepath is None:
 			sys.exit(1)
 		self.rundir = os.path.dirname(self.volumepath)
@@ -908,7 +908,7 @@ class ChimSnapShots(object):
 		### write to log
 		self.writeMessageToLog("Chimera version: %s"%(chimera.version.version))
 		self.writeMessageToLog("Environmental data: ")
-		for var in os.environ.keys():
+		for var in list(os.environ.keys()):
 			if var[:4] == "CHIM":
 				if os.environ.get(var) is not None:
 					self.writeMessageToLog("export %s=%s"%(var, os.environ.get(var)))		

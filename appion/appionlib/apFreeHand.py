@@ -72,7 +72,7 @@ class FastFreeHandTestScript(appionScript.AppionScript):
 		return True
 
 	def prepareFrealignInitialParamFile(self):
-		if 'reconiterid' not in self.params.keys() or self.params['reconiterid'] == 0:
+		if 'reconiterid' not in list(self.params.keys()) or self.params['reconiterid'] == 0:
 			self.params['reconiterid'] = None
 		paramfile = 'params.000.par'
 		apFrealign.generateParticleParams(self.params,self.model['data'],paramfile)
@@ -114,8 +114,8 @@ class FastFreeHandTestScript(appionScript.AppionScript):
 
 	def createTiltedCtfLines(self,start_particle,end_particle):
 		part_tree = apFrealign.parseFrealignParamFile(self.frealign_paramfile)
-		print len(part_tree)
-		print start_particle
+		print(len(part_tree))
+		print(start_particle)
 		p = part_tree[start_particle-1]
 		total_particles = end_particle - start_particle + 1
 		# TO DO: the original script requires a count of particles at a given
@@ -158,9 +158,9 @@ class FastFreeHandTestScript(appionScript.AppionScript):
 			alllines = lines_before_input+proc_inputlines+lines_after_input
 			procfile = 'freehand.proc%03d.csh' % (proc)
 			f = open(procfile,'w')
-			f.writelines(map((lambda x: x+'\n'),alllines))
+			f.writelines(list(map((lambda x: x+'\n'),alllines)))
 			f.close()
-			os.chmod(procfile, 0755)
+			os.chmod(procfile, 0o755)
 			scripts.append(procfile)
 		return scripts
 
@@ -210,7 +210,7 @@ class FastFreeHandTestScript(appionScript.AppionScript):
 		self.getModel()
 		inputlines = self.createFastFreeHandInputLineTemplate()
 		free_hand_scripts = self.writeMultipleFreeHandTestShells(inputlines,self.params['nproc'])
-		print free_hand_scripts
+		print(free_hand_scripts)
 		#self.runMultipleFreeHandTest(free_hand_scripts)
 		merged_outfile = self.mergeResults()
 		plot = plotFreeHandTestResult(merged_outfile,self.params['angSearch'],self.params['scoringtype'])
@@ -232,7 +232,7 @@ class plotFreeHandTestResult(object):
 			ccp4path = ccp4path.replace("CCP4=","")
 		if os.path.exists(ccp4path):
 			return ccp4path
-		print "ccp4 is not loaded, make sure it is in your path"
+		print("ccp4 is not loaded, make sure it is in your path")
 		sys.exit()
 
 	def averageStack(self,stackfile):
@@ -271,7 +271,7 @@ class plotFreeHandTestResult(object):
 
 		#Calculate distance of peaks from expected angle
 		dist = []
-		for i in xrange(len(loadData[:,1])):
+		for i in range(len(loadData[:,1])):
 			rx = centx[i]
 			ry = centy[i]
 			
@@ -283,7 +283,7 @@ class plotFreeHandTestResult(object):
 		numReadLines = round((float(include)/100)*len(loadData[:,1]))
 
 		includeRadius = []
-		for j in xrange(numReadLines):
+		for j in range(numReadLines):
 			includeRadius = newDist[j]
 		#Create function for plotting circle
 		theta = np.linspace(0,2*math.pi)

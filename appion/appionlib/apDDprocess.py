@@ -40,6 +40,9 @@ def initializeDDFrameprocess(sessionname,wait_flag=False):
 	elif 'GatanK3' in dcamdata['name']:
 		from appionlib import apK2process
 		return apK2process.GatanK3Processing(wait_flag)
+	elif 'DEApollo' in dcamdata['name']:
+		from appionlib import apDEApolloCamProcess
+		return apDEApolloCamProcess.DEApolloCamProcessing(wait_flag)
 	elif 'DE' in dcamdata['name']:
 		from appionlib import apDEprocess
 		return apDEprocess.DEProcessing(wait_flag)
@@ -124,17 +127,19 @@ class DirectDetectorProcessing(object):
 
 	def getRawFrameStackExtension(self,imagedata):
 		self.extname = 'mrc'
-		if imagedata['camera']['tiff frames']:
-			self.extname = 'tif'
-		if imagedata['camera']['eer frames']:
-			self.extname = 'eer'
+		if 'tiff frames' in imagedata['camera'].keys():
+			if imagedata['camera']['tiff frames']:
+				self.extname = 'tif'
+		if 'eer frames' in imagedata['camera'].keys():
+			if imagedata['camera']['eer frames']:
+				self.extname = 'eer'
 		return self.extname
 		
 	def getFrameStackPath(self,temp=False):
 		if not temp:
 			return self.tempframestackpath
 		else:
-			return self.framestackpath	
+			return self.framestackpath      
 		
 	def getForcedFrameSessionPath(self):
 		return self.forced_frame_session_path
@@ -161,7 +166,7 @@ class DirectDetectorProcessing(object):
 		return self.rundir
 
 	def getNumberOfFrameSaved(self):
-#		return 2
+#               return 2
 		return self.getNumberOfFrameSavedFromImageData(self.image)
 
 	def getNumberOfFrameSavedFromImageData(self,imagedata):
@@ -187,7 +192,7 @@ class DirectDetectorProcessing(object):
 			# With fast rolling shutter frame rate such as Falcon eer format,
 			# the use frames field becomes very long.  Since frame removing is not done
 			# in most modern approach, we will assume all frames used if not specified.
-			return range(imagedata['camera']['nframes'])
+			return list(range(imagedata['camera']['nframes']))
 
 	def checkFrameListRange(self,framelist):
 		# check parameter
@@ -197,7 +202,7 @@ class DirectDetectorProcessing(object):
 			# handle default all frames used
 			framelist = range(self.totalframe)
 			return framelist
-		if min(framelist) not in range(self.totalframe):
+		if min(framelist) not in list(range(self.totalframe)):
 			apDisplay.printError("Starting Frame not in saved raw frame range, can not be processed")
 		framelength_original = len(framelist)
 		framelist_original = list(framelist)
@@ -265,14 +270,14 @@ class DirectDetectorProcessing(object):
 		Get list of frames
 		'''
 		# frame list according to start frame and number of frames
-		if 'nframe' not in params.keys() or not params['nframe']:
-			if 'startframe' not in params.keys() or params['startframe'] is None:
-				framelist = range(self.getNumberOfFrameSavedFromImageData(self.image))
+		if 'nframe' not in list(params.keys()) or not params['nframe']:
+			if 'startframe' not in list(params.keys()) or params['startframe'] is None:
+				framelist = list(range(self.getNumberOfFrameSavedFromImageData(self.image)))
 			else:
-				framelist = range(params['startframe'],self.getNumberOfFrameSavedFromImageData(self.image))
+				framelist = list(range(params['startframe'],self.getNumberOfFrameSavedFromImageData(self.image)))
 		else:
-			framelist = range(params['startframe'],params['startframe']+params['nframe'])
-		if 'driftlimit' not in params.keys() or not params['driftlimit']:
+			framelist = list(range(params['startframe'],params['startframe']+params['nframe']))
+		if 'driftlimit' not in list(params.keys()) or not params['driftlimit']:
 			return framelist
 		else:
 			# drift limit considered
@@ -447,7 +452,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		apDisplay.printMsg('frame flip debug: buffer session_frame_path: %s' % (session_frame_path,))
 		if session_frame_path is False:
 			if imagedata['session']['frame path']:
-				 session_frame_path = imagedata['session']['frame path']
+				session_frame_path = imagedata['session']['frame path']
 			else:
 				# raw frames are saved in a subdirctory of image path pre-3.0
 				imagepath = imagedata['session']['image path']
@@ -623,7 +628,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		Checking changed camerainfo since last used so that cached 
 		references can be used if not changed.
 		'''
-		if len(self.camerainfo.keys()) == 0:
+		if len(list(self.camerainfo.keys())) == 0:
 			if debug:
 				self.log.write( 'first frame image to be processed\n ')
 			return True
@@ -645,7 +650,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			return True
 		else:
 			newcamerainfo = self.__getCameraInfoFromImage(new_nframe,new_use_full_raw_area)
-			for key in self.camerainfo.keys():
+			for key in list(self.camerainfo.keys()):
 				# data instance would be different
 				# norm is checked already above
 				datakeys = ('ccdcamera','norm')
@@ -813,7 +818,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if self.cycle_ref_channels:
 			# alternate channels
 			get_new_refs = True
-			self.setUseAlternativeChannelReference(self.altchannel_cycler.next())
+			self.setUseAlternativeChannelReference(next(self.altchannel_cycler))
 		if debug:
 			self.log.write('%s %s\n' % (self.image['filename'],get_new_refs))
 		if not get_new_refs and start_frame != 0:
@@ -862,8 +867,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 				else:
 					mask = mrc.read("variance.mrc")
 				# experimental.  Need to create variance.map to run
-#				apDisplay.printMsg('Making variance threshold mask')
-#				mask = self.makeVarianceMaskArray()
+#                               apDisplay.printMsg('Making variance threshold mask')
+#                               mask = self.makeVarianceMaskArray()
 				self.mask = mask
 				if save_jpg and mask.max() > mask.min():
 					numpil.write(mask.astype(numpy.int)*255,'%s_mask.jpg' % ddtype,'jpeg')
@@ -954,7 +959,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		apDisplay.printMsg('  using %s' % self.image['filename'])
 		apDisplay.printMsg('  frame index %d' % start_frame_index)
 		# load raw frames
-		framelist = range(start_frame_index,start_frame_index+nframe)
+		framelist = list(range(start_frame_index,start_frame_index+nframe))
 		oneframe = self.sumupFrames(self.rawframe_dir,framelist)
 		oneframe, dark_scale = self.darkCorrection(oneframe,self.unscaled_darkarray,nframe)
 		# Filter and then threshold the result to show only debris
@@ -1165,7 +1170,6 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def getDarkRefMrcPath(self):
 		return self.dark_path
 
-
 	def makeCorrectedFrameStack_cpu(self, use_full_raw_area=False):
 		'''
 		Creates a file of gain/dark corrected stack of frames
@@ -1215,11 +1219,11 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if self.override_db is True:
 			badcols=self.badcols
 			badrows=self.badrows
-			print type(badcols), badcols
-			print type(badrows), badrows
-			print self.flipgain
+			print(type(badcols), badcols)
+			print(type(badrows), badrows)
+			print(self.flipgain)
 			if self.flipgain is True:
-				print "flipping gains"
+				print("flipping gains")
 				darkarray=imagefun.flipImageTopBottom(darkarray)
 				brightarray=imagefun.flipImageTopBottom(brightarray)
 		else:
@@ -1227,13 +1231,13 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			badcols=[]
 			
 		start_time = timeit.default_timer()
-		print "correcting"
+		print("correcting")
 		imagelist=Parallel(n_jobs=5)(delayed(imagefun.normalizeFromDarkAndBright)(frame,darkarray,brightarray,scale=nframes,badrowlist=badrows,badcolumnlist=badcols) for frame in framearray)
 		elapsed = timeit.default_timer() - start_time
-		print elapsed, "for parallel"
+		print(elapsed, "for parallel")
 		
 		start_time = timeit.default_timer()
-		print "writing"
+		print("writing")
 		outstackname=imgrootname+'_st.mrc'
 		mrc.write(imagelist[0],outstackname)
 		sum=numpy.zeros(brightarray.shape)
@@ -1242,7 +1246,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			mrc.append(i,outstackname)
 		mrc.write(sum,'corrected.mrc')
 		elapsed = timeit.default_timer() - start_time
-		print elapsed, "for writing"
+		print(elapsed, "for writing")
 		self.tempframestackpath=outstackname
 		return self.tempframestackpath
 
@@ -1266,11 +1270,11 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if self.override_db is True:
 			badcols=self.badcols
 			badrows=self.badrows
-			print type(badcols), badcols
-			print type(badrows), badrows
-			print self.flipgain
+			print(type(badcols), badcols)
+			print(type(badrows), badrows)
+			print(self.flipgain)
 			if self.flipgain is True:
-				print "flipping gains"
+				print("flipping gains")
 				darkarray=imagefun.flipImageTopBottom(darkarray)
 				brightarray=imagefun.flipImageTopBottom(brightarray)
 		else:
@@ -1278,19 +1282,19 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			badcols=[]
 		clip=self.clip
 		start_time = timeit.default_timer()
-		print "correcting and writing"
+		print("correcting and writing")
 		outstackname=imgrootname+'_st.mrc'
 		###correct first frame
 		frame=imagefun.normalizeFromDarkAndBright(framearray[0],darkarray,brightarray,scale=nframes,badrowlist=badrows,badcolumnlist=badcols,clip=clip)
 		mrc.write(frame,outstackname)
 		###correct the rest
 		for n, frame in enumerate(framearray[1:]):
-			print "frame", n
+			print("frame", n)
 			frame=imagefun.normalizeFromDarkAndBright(frame,darkarray,brightarray,scale=nframes,badrowlist=badrows,badcolumnlist=badcols,clip=clip)
 			mrc.append(frame,outstackname)
 		
 		elapsed = timeit.default_timer() - start_time
-		print elapsed, "for correcting and writing frame stack"
+		print(elapsed, "for correcting and writing frame stack")
 		
 		self.tempframestackpath=outstackname
 		return self.tempframestackpath
@@ -1347,7 +1351,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		framelist = self.getAlignedSumFrameList()
 		nframes = self.getNumberOfFrameSaved()
 		# see Issue 12298
-		if framelist and framelist != range(nframes):
+		if framelist and framelist != list(range(nframes)):
 			camdata['use frames'] = framelist
 		else:
 			# assume all frames that are saved are used by not defining the list
@@ -1392,7 +1396,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		'''
 		framelist = self.getAlignedSumFrameList()
 		# To save time, only proceed if necessary
-		if framelist and framelist == range(min(framelist),min(framelist)+len(framelist)):
+		if framelist and framelist == list(range(min(framelist),min(framelist)+len(framelist))):
 			self.save_aligned_stack = self.keep_stack
 			return True
 		# aligned_stack has to be saved to use Numpy to sum substack
@@ -1437,13 +1441,13 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if not self.waitForPathExist(logpath,60):
 			apDisplay.printWarning('Stack making not finished, Skipping')
 			return False
-		return True	
+		return True     
 
 	def sumSubStackWithNumpy(self,stackpath,sumpath):
 		stackproc = DDStackProcessing()
 		framelist = self.getAlignedSumFrameList()
 		# To save time, only proceed if necessary
-		if framelist and framelist != range(self.totalframe):
+		if framelist and framelist != list(range(self.totalframe)):
 			# set attribute without other complications
 			stackproc.framestackpath = stackpath
 			mrc.write(stackproc.getDDStackFrameSumImage(framelist),sumpath)

@@ -1,6 +1,7 @@
 
 ## pythonlib
 ## numpy
+from unittest.mock import NonCallableMagicMock
 import numpy
 import pyami.quietscipy
 from scipy import ndimage
@@ -33,6 +34,7 @@ def binImg(imgarray, bin=1, warn=True):
 		newshape = numpy.asarray(cutshape)/bin
 	else:
 		newshape = numpy.asarray(oldshape)/bin
+	newshape = newshape.astype(int) # abonham edit 
 	tmpshape = (newshape[0], bin, newshape[1], bin)
 	f = bin * bin
 	binned = numpy.sum(numpy.sum(numpy.reshape(imgarray, tmpshape), 1), 2) / f
@@ -52,6 +54,8 @@ def filterImg(imgarray,apix=1.0,rad=0.0,bin=1):
 
 #=========================
 def pixelLimitFilter(imgarray, pixlimit=0, const=False, msg=True):
+	if pixlimit is None:
+		return imgarray
 	if pixlimit < 0.1:
 		return imgarray
 	mean1 = imgarray.mean()
@@ -59,7 +63,7 @@ def pixelLimitFilter(imgarray, pixlimit=0, const=False, msg=True):
 	upperbound = mean1 + pixlimit * std1
 	lowerbound = mean1 - pixlimit * std1
 	if msg is True:
-		print ".. Pixel Limits %.3f <> %.3f"%(lowerbound, upperbound)
+		print(".. Pixel Limits %.3f <> %.3f"%(lowerbound, upperbound))
 	imgarray2 = numpy.asarray(imgarray).copy()
 	if const is True:
 		## replace noisy peak with new normally distributed values		
@@ -161,7 +165,7 @@ def maskHighPassFilter(imgarray, apix=1.0, bin=1, zero_res=0.0, one_res=0.0, msg
 	shape = imgarray.shape
 	zero_radius = apix*min(shape)/zero_res/bin
 	one_radius = apix*min(shape)/one_res/bin
-	print zero_radius, one_radius
+	print(zero_radius, one_radius)
 	try:
 		filtimg = _maskHighPassFilter(imgarray,zero_radius, one_radius)
 	except:

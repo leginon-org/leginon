@@ -324,8 +324,8 @@ class ApProTomo2:
 		return geomParamFile;
 		
 		geomParamFile = "/home/amber/maxTEST.tlt"
-		print "geomParamFile:"
-		print geomParamFile
+		print("geomParamFile:")
+		print(geomParamFile)
 
 		# TODO: numextension is not being found
 		#geomParamFile = os.path.join(self.processingDir,'protomo2.tlt') #"/home/amber/max.tlt"
@@ -347,7 +347,7 @@ class ApProTomo2:
 			tiltText = self.buildTiltGeomFile(tltParams[0], tltParams[1])
 
 			# using print instead of .write so that message is converted to a string if needed 
-			print >> tiltGeometry, tiltText
+			print(tiltText, file=tiltGeometry)
 
 		# Close the tilt geometry file
 		tiltGeometry.close()
@@ -381,7 +381,7 @@ class ApProTomo2:
 
 		# Loop through the images to format the tilt geometry for each one
 		# TODO: check this...not sure if it is getting the right filenames
-		keys = imagedict.keys()
+		keys = list(imagedict.keys())
 		keys.sort()
 		for n in keys:
 			tiltText += "   IMAGE %-5d     FILE %s       ORIGIN [ %8.3f %8.3f ]    TILT ANGLE    %8.3f    ROTATION     %8.3f\n" % (n, imagedict[n]['filename'], imagedict[n]['x'], imagedict[n]['y'], imagedict[n]['tilt'], imagedict[n]['rotation'])
@@ -414,7 +414,7 @@ class ApProTomo2:
 				raise
 			paramtext = self.buildParamFile()
 			# using print instead of .write so that message is converted to a string if needed 
-			print >> protomo2params, paramtext
+			print(paramtext, file=protomo2params)
 
 		# Close the parameter file
 		protomo2params.close()

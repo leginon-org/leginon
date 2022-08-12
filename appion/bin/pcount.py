@@ -11,7 +11,7 @@ import sys
 
 if __name__ == "__main__":
 	if len(sys.argv) < 3:
-		print "usage: ./pcount.py <session name> <particle selection run name>\n\n"
+		print("usage: ./pcount.py <session name> <particle selection run name>\n\n")
 		sys.exit(1)
 
 	ses_name = sys.argv[1]
@@ -50,7 +50,7 @@ if __name__ == "__main__":
 		else:
 			areject.append(particle)
 
-	print ' Total Particles:', len(particles)
-	print '         Rejected', len(areject)
-	print '  Keep or Unknown', len(akeep) + len(anone)
+	print(' Total Particles:', len(particles))
+	print('         Rejected', len(areject))
+	print('  Keep or Unknown', len(akeep) + len(anone))
 

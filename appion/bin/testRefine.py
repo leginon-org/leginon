@@ -24,11 +24,11 @@ class RefineTester(basicScript.BasicScriptInstanceRun):
 			return apRefineJobXmippML3d.XmippML3dRefineJob(optargs)
 
 	def printCommands(self):
-		print ''
-		print '============JOB COMMANDS============'
-		print ''
+		print('')
+		print('============JOB COMMANDS============')
+		print('')
 		for command in self.app.command_list:
-			print command
+			print(command)
 
 	def run(self):
 		self.printCommands()

@@ -24,7 +24,7 @@ def readDictAndConvertFromXml(filename):
 
 def convertDictData(xmldict):
 	newlist = []
-	for k,v in xmldict.items():
+	for k,v in list(xmldict.items()):
 		#convert data
 		xmldict[k] = convertValue(v)
 
@@ -198,7 +198,7 @@ def updateXmlDict(xmldict):
 	"""
 	if xmldict is None:
 		return None
-	for param in xmldict.keys():
+	for param in list(xmldict.keys()):
 		if('default' in xmldict[param] and xmldict[param]['default'] != None):
 			xmldict[param]['default'] = _convertParamToType(xmldict[param]['default'], xmldict[param]['type'], xmldict[param]['nargs'])
 	return xmldict
@@ -218,7 +218,7 @@ def printHelp(xmldict, exit=True):
 	"""
 	print out help info for a function with XML file
 	"""
-	paramlist = xmldict.keys()
+	paramlist = list(xmldict.keys())
 	paramlist.sort()
 	maxlen = 0
 	maxlentype = 0
@@ -253,7 +253,7 @@ def printHelp(xmldict, exit=True):
 					outstr += apDisplay.color(" (default: "+str(xmldict[param]['default'])+")","cyan")
 			if 'example' in xmldict[param] and xmldict[param]['example'] != None:
 				outstr += " (example: "+str(xmldict[param]['example'])+")"
-			print outstr
+			print(outstr)
 	if exit is True:
 		sys.exit(1)
 
@@ -262,14 +262,14 @@ def fancyPrintDict(pdict):
 	"""
 	prints out two levels of a dictionary
 	"""
-	pkeys = pdict.keys()
+	pkeys = list(pdict.keys())
 	pkeys.sort()
 	maxlen = 0
-	print "----------"
+	print("----------")
 	for p in pkeys:
 		if len(p) > maxlen: maxlen = len(p)
 	for p in pkeys:
-		print " ",apDisplay.rightPadString(p+":",maxlen+2),\
-			apDisplay.colorType(pdict[p])
-	print "----------"
+		print(" ",apDisplay.rightPadString(p+":",maxlen+2),\
+			apDisplay.colorType(pdict[p]))
+	print("----------")
 

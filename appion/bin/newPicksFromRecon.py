@@ -55,7 +55,7 @@ class NewPicksFromRecon(appionScript.AppionScript):
 		
 		### create a selection run
 		runq = appiondata.ApSelectionRunData()
-		for key in firstpart['selectionrun'].keys():
+		for key in list(firstpart['selectionrun'].keys()):
 			runq[key] = firstpart['selectionrun'][key]
 		runq['name'] = self.params['runname']
 		runq['session'] = sessiondata
@@ -72,7 +72,7 @@ class NewPicksFromRecon(appionScript.AppionScript):
 				sys.stderr.write(".")
 			partdata = refpartdata['particle']['particle']
 			newpartq = appiondata.ApParticleData()
-			for key in partdata.keys():
+			for key in list(partdata.keys()):
 				newpartq[key] = partdata[key]
 			newpartq['xcoord'] = partdata['xcoord'] + refpartdata['shiftx']
 			newpartq['ycoord'] = partdata['ycoord'] + refpartdata['shifty']

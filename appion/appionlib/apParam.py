@@ -11,10 +11,12 @@ import socket
 import string
 import inspect
 import subprocess
-import cPickle
+import pickle
 
 ## appion
 from appionlib import apDisplay
+
+from contextlib import redirect_stdout
 
 ####
 # This is a low-level file with NO database connections
@@ -54,12 +56,12 @@ def getAppionDirectory():
 #=====================
 def makeTimestamp():
 	datestamp = time.strftime("%y%b%d").lower()
-	hourstamp = string.lowercase[(time.localtime()[3])%26]
+	hourstamp = string.ascii_lowercase[(time.localtime()[3])%26]
 	if hourstamp == "x":
 		### SPIDER does not like x's
 		hourstamp = "z"
 	#mins = time.localtime()[3]*12 + time.localtime()[4]
-	#minstamp = string.lowercase[mins%26]
+	#minstamp = string.ascii_lowercase[mins%26]
 	minstamp = "%02d"%(time.localtime()[4])
 	timestamp = datestamp+hourstamp+minstamp
 	return timestamp
@@ -153,12 +155,14 @@ def getGPUVendor():
 	if not pciexe: pciexe = getExecPath("/sbin/lspci")
 	if pciexe is None:
 		return None
+	
 	proc = subprocess.Popen(pciexe, shell=True, stdout=subprocess.PIPE)
 	proc.wait()
 	lines = proc.stdout.readlines()
+	lines = list(map(str, lines)) # abonham edit 19-04-2022 convert to list[str] to avoid type error 
 	vendor = None
 	for line in lines:
-		if 'VGA compatible controller:' in line:
+		if 'VGA compatible controller:' in line: 
 			sline = line.strip()
 			bits = sline.split(':')
 			if len(bits) < 3:
@@ -237,7 +241,7 @@ def getLogHeader():
 def dumpParameters(parameters, paramfile):
 	''' uses cPickle to dump parameters (as a dictionary) to file '''
 	pf = open(paramfile, "w")
-	cPickle.dump(parameters, pf)
+	pickle.dump(parameters, pf)
 	pf.close()
 	return 
 
@@ -246,7 +250,7 @@ def readRunParameters(paramfile):
 	if not os.path.isfile(paramfile):
 		apDisplay.printError("Could not find run parameters file: "+paramfile)
 	pf = open(paramfile, "r")
-	runparams = cPickle.load(pf)
+	runparams = pickle.load(pf)
 	pf.close()
 	return runparams
 
@@ -337,7 +341,7 @@ def closeFunctionLog(functionname=None, logfile=None, msg=True, stats=None):
 	f.close()
 
 #=====================
-def createDirectory(path, mode=0775, warning=True):
+def createDirectory(path, mode=0o775, warning=True):
 	"""
 	Used by appionLoop
 	"""
@@ -397,10 +401,10 @@ def splitMultipleSets(param_str,numiter):
 		else:
 			try:
 				repeat = int(set[:m_index])
-				fullparam.extend(map((lambda x:tc(param_str[position+m_index+1:position+len(set)])),range(repeat)))	
+				fullparam.extend(list(map((lambda x:tc(param_str[position+m_index+1:position+len(set)])),list(range(repeat)))))	
 			except:
 				raise
-				fullparam = map((lambda x: tc(param_str)),range(numiter))
+				fullparam = list(map((lambda x: tc(param_str)),list(range(numiter))))
 		position += len(set)+1
 	return fullparam
 
@@ -416,11 +420,11 @@ def convertIterationParams(iterparams,params,numiter):
 		multiple_bits = param_upper.split('X')
 		set_bits = param_upper.split(':')
 		if len(multiple_bits) <= 1 and len(set_bits) <= 1:
-			params[name] = map((lambda x: tc(param_str)),range(numiter))
+			params[name] = list(map((lambda x: tc(param_str)),list(range(numiter))))
 		else:
 			params[name] = splitMultipleSets(param_str,numiter)
 		if len(params[name]) < numiter:
-			addons = map((lambda x: params[name][len(params[name])-1]),range(numiter - len(params[name])+1))
+			addons = list(map((lambda x: params[name][len(params[name])-1]),list(range(numiter - len(params[name])+1))))
 			params[name].extend(addons)
 		elif len(params[name]) > numiter:
 			params[name] = params[name][:numiter]
@@ -563,7 +567,7 @@ def getRgbFile(msg=True):
 		"/usr/X11R6/lib/X11/rgb",
 	]
 	xversion = getXversion()
-	print "X version", xversion
+	print("X version", xversion)
 	if xversion is None or xversion > 1.0109:
 		return " "
 	for rgbfile in filelist:
@@ -575,8 +579,8 @@ def getRgbFile(msg=True):
 #=====================
 def getNumProcessors(msg=True):
 	# First see if on a PBS cluster:
-	if os.environ.has_key('PBS_NODEFILE'):
-		cmd = "wc -l $PBS_NODEFILE | awk '{print $1}'"
+	if 'PBS_NODEFILE' in os.environ:
+		cmd = "wc -l $PBS_NODEFILE"# | awk '{print $1}'"
 		nproc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.read().strip()
 		nproc = int(nproc)
 
@@ -595,7 +599,7 @@ def getNumProcessors(msg=True):
 
 #=====================
 def setUmask(msg=False):
-	newUmask = 002
+	newUmask = 0o02
 	prev = os.umask(newUmask)
 	if msg is True:
 		apDisplay.printMsg("Umask changed from "+str(prev)+" to "+str(newUmask))
@@ -636,7 +640,7 @@ def runCmd(cmd, package="", verbose=False, showcmd=True, logfile=None, fail=Fals
 		if verbose is True:
 			out, err = proc.communicate()
 			if out is not None and err is not None:
-				print "error", out, err
+				print("error", out, err)
 		else:
 			out, err = proc.communicate()
 			### continuous check
@@ -654,7 +658,7 @@ def runCmd(cmd, package="", verbose=False, showcmd=True, logfile=None, fail=Fals
 	if tdiff > 20:
 		apDisplay.printMsg("completed in "+apDisplay.timeString(tdiff))
 	elif waited is True:
-		print ""
+		print("")
 
 
 #================

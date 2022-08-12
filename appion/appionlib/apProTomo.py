@@ -129,7 +129,7 @@ def getImageFiles2(imgtree, rawdir, link, copy):
 		destpath = os.path.join(rawdir,imgname)
 		newimgtree.append(destpath)
 	procs=min(mp.cpu_count(),2)
-	for imagedata, j in zip(imgtree, range(1,len(imgtree)+1)):
+	for imagedata, j in zip(imgtree, list(range(1,len(imgtree)+1))):
 		p = mp.Process(target=getImage, args=(imagedata, rawdir, link, copy,))
 		p.start()
 		if (j % procs == 0) and (j != 0):
@@ -195,7 +195,7 @@ def writeTiltFile(outfilename, seriesname, imagedict, parameterdict=False):
 		f.write('\n\n   PARAMETER\n\n')
 		f.write('     TILT AZIMUTH %8.3f\n' % 90.0)
 	f.write('\n\n')
-	keys=imagedict.keys()
+	keys=list(imagedict.keys())
 	keys.sort()
 	for n in keys:
 		f.write('   IMAGE %-5d FILE %s\n' % (n, imagedict[n]['filename']))
@@ -313,7 +313,7 @@ def updateRefineParams(refinedict,imgshape,sample,region,refimg):
 	return refinedict
 
 def setProtomoDir(rootdir,cycle=0):
-	print "Setting up directories"
+	print("Setting up directories")
 	rawdir=os.path.join(rootdir, 'raw')
 	aligndir=os.path.join(rootdir,'align')
 	outdir=os.path.join(rootdir,'out')
@@ -327,7 +327,7 @@ def setProtomoDir(rootdir,cycle=0):
 
 def writeRefineParamFile(refinedict,paramfile):
 	f=open(paramfile,'w')
-	keys=refinedict.keys()
+	keys=list(refinedict.keys())
 	keys.sort()
 	for key in keys:
 		val=str(refinedict[key])

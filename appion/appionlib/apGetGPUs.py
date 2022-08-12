@@ -10,5 +10,5 @@ import GPUtil
 deviceIDs = GPUtil.getAvailable(limit=MAX)
 #print "Available GPUs:"
 for ID in deviceIDs:
-	print ID
+	print(ID)
 

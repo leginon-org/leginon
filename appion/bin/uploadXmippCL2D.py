@@ -9,7 +9,7 @@ import shutil
 import re
 import glob
 import numpy
-import cPickle
+import pickle
 #appion
 from appionlib import appionScript
 from appionlib import apDisplay
@@ -67,7 +67,7 @@ class UploadCL2DScript(appionScript.AppionScript):
 		if not os.path.isfile(paramfile):
 			apDisplay.printError("Could not find run parameters file: "+paramfile)
 		f = open(paramfile, "r")
-		runparams = cPickle.load(f)
+		runparams = pickle.load(f)
 		return runparams
 
 	#=====================

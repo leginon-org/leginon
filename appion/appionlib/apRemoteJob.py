@@ -82,14 +82,14 @@ class RemoteJob(basicScript.BasicScript):
 
 	def __convertListParams(self):
 		for paramkey in self.listparams:
-			if paramkey in self.params.keys():
+			if paramkey in list(self.params.keys()):
 				self.params[paramkey] = self.params[paramkey].split(',')
 
 	def checkPackageConflicts(self):
 		pass
 
 	def __convertIterationParams(self):
-		iterparam_names = map((lambda x: x['name']),self.iterparams)
+		iterparam_names = list(map((lambda x: x['name']),self.iterparams))
 		self.params = apParam.convertIterationParams(iterparam_names,self.params,self.params['numiter'])
 
 	def __gotoRemoteRunDir(self):
@@ -112,11 +112,11 @@ class RemoteJob(basicScript.BasicScript):
 		return mpi_script
 
 	def __makeMPIMasterScript(self,shellscripts,masterfile):
-		lines = map((lambda x:'-np 1 '+x),shellscripts)
+		lines = list(map((lambda x:'-np 1 '+x),shellscripts))
 		f = open(masterfile,'w')
-		f.writelines(map((lambda x: x+'\n'),lines))
+		f.writelines(list(map((lambda x: x+'\n'),lines)))
 		f.close()
-		os.chmod(masterfile, 0755)
+		os.chmod(masterfile, 0o755)
 	def wrapScript(self,scriptname):	
 		if self.params['appionwrapper'] != '':
 			return self.params['appionwrapper']+' '+scriptname
@@ -252,7 +252,7 @@ class RemoteJob(basicScript.BasicScript):
 		Record the filenames in files_from_remote_host attribute in a file
 		'''
 		f = open(os.path.join(self.params['remoterundir'],'files_from_remote_host'),'w')
-		f.writelines(map((lambda x: x+'\n'),self.files_from_remote_host))
+		f.writelines(list(map((lambda x: x+'\n'),self.files_from_remote_host)))
 		f.close()
 
 	def __makePackResultsScript(self):
@@ -393,7 +393,7 @@ class RemoteJob(basicScript.BasicScript):
 		'''
 		Function to add a series of tasks to the job
 		'''
-		self.command_list.extend(map((lambda x:x[0]),tasks['scripts']))
+		self.command_list.extend(list(map((lambda x:x[0]),tasks['scripts'])))
 		self.min_mem_list.extend(tasks['mem'])
 		self.nproc_list.extend(tasks['nproc'])
 
@@ -424,7 +424,7 @@ class RemoteJob(basicScript.BasicScript):
 	
 	def	createIterationCommandAndLog(self,iter):
 		refinetasks = self.makeRemoteTasks(iter)
-		if 'scripts' in refinetasks.keys() and len(refinetasks['scripts']) >=1 and refinetasks['scripts'][0][0] !='':
+		if 'scripts' in list(refinetasks.keys()) and len(refinetasks['scripts']) >=1 and refinetasks['scripts'][0][0] !='':
 			self.addToLog('....Starting iteration %d at %s...' % (iter, "`date`"))
 			self.addJobCommands(refinetasks)
 			self.addToLog('Done with iteration %d at %s' % (iter, "`date`"))
@@ -468,7 +468,7 @@ class RemoteJob(basicScript.BasicScript):
 		self.addSimpleCommand('cd %s' % self.params['remoterundir'])
 		self.addToLog('....Performing tasks after iterations....')
 		self.makePostIterationScript()
-		print self.params['remoterundir']
+		print(self.params['remoterundir'])
 		self.__makePackResultsScript()
 		self.writeCommandListToFile()
 
@@ -520,7 +520,7 @@ class RemoteJob(basicScript.BasicScript):
 	
 class Tester(RemoteJob):
 	def makeRemoteScript(self,iter):
-			print 'make refine script in Tester'
+			print('make refine script in Tester')
 			tasks = {
 					'mem':[[2,2,2,2],[47,]],
 					'scripts':[['echo "doing proc000"\n',

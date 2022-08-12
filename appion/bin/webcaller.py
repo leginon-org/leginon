@@ -10,7 +10,7 @@ import subprocess
 ## stdout & sterr will be saved to a file
 if __name__ == '__main__':
 	if len(sys.argv) < 3:
-		print "Usage: webcaller.py '<command>' <outfile> (<mode>)"
+		print("Usage: webcaller.py '<command>' <outfile> (<mode>)")
 		sys.exit(1)
 	cmd = sys.argv[1]
 	outf = sys.argv[2]

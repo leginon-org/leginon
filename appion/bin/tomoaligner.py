@@ -269,7 +269,7 @@ class protomoAligner(appionScript.AppionScript):
 			cmd = ( tomorefineexe
 				+" "+paramfile
 			)
-			print cmd
+			print(cmd)
 			proc = subprocess.Popen(cmd, shell=True)
 			proc.wait()
 			### results got to runname-iter-numimgs.tlt
@@ -278,7 +278,7 @@ class protomoAligner(appionScript.AppionScript):
 			cmd = ( tomofitexe
 				+" "+paramfile
 			)
-			print cmd
+			print(cmd)
 			proc = subprocess.Popen(cmd, shell=True)
 			proc.wait()
 			## refines geometric parameters: inplane rotation and tilt axis angle

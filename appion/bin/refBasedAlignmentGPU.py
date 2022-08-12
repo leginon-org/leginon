@@ -7,7 +7,7 @@ import numpy
 import random
 import math
 import shutil
-import cPickle
+import pickle
 #appion
 from appionlib import appionScript
 from appionlib import apDisplay
@@ -281,7 +281,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		templateparams['lowpass'] = self.params['lowpass']
 		templateparams['median'] = None
 		templateparams['pixlimit'] = None
-		print templateparams
+		print(templateparams)
 		apParam.createDirectory(os.path.join(self.params['rundir'], "templates"))
 		filelist = apTemplate.getTemplates(templateparams)
 
@@ -404,7 +404,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		self.resdict = {}
 		boxsizetuple = apFile.getBoxSize(stackfile)
 		boxsize = boxsizetuple[0]
-		for refnum in reflistsdict.keys():
+		for refnum in list(reflistsdict.keys()):
 			partlist = reflistsdict[refnum]
 			esttime = 3e-6 * len(partlist) * boxsize**2
 			apDisplay.printMsg("Ref num %d; %d parts; est time %s"
@@ -455,7 +455,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		apDisplay.printMsg("Angles = %.3f +/- %.3f"%(angs.mean(), angs.std()))
 		apDisplay.printMsg("Shifts = %.3f +/- %.3f"%(shifts.mean(), shifts.std()))
 		picklef = open(picklefile, "w")
-		cPickle.dump(partlist, picklef)
+		pickle.dump(partlist, picklef)
 		picklef.close()
 		return partlist
 

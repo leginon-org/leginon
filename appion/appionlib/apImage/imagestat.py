@@ -74,13 +74,13 @@ def printImageInfo(im):
 	avg1,stdev1,min1,max1 = getImageInfo(im)
 
 	if len(im.shape) == 2:
-		print "Image: %d x %d - type %s"%(im.shape[0], im.shape[1], im.dtype)
+		print("Image: %d x %d - type %s"%(im.shape[0], im.shape[1], im.dtype))
 	elif len(im.shape) == 1:
-		print "Image: %d - type %s"%(im.shape[0], im.dtype)
+		print("Image: %d - type %s"%(im.shape[0], im.dtype))
 	#print " ... avg:  %.2e +- %.2e"%(avg1, stdev1)
 	#print " ... range: %.2e <> %.2e"%(min1, max1)
-	print " ... avg:  %.4f +- %.4f"%(avg1, stdev1)
-	print " ... range: %.4f <> %.4f"%(min1, max1)
+	print(" ... avg:  %.4f +- %.4f"%(avg1, stdev1))
+	print(" ... range: %.4f <> %.4f"%(min1, max1))
 
 	return avg1,stdev1,min1,max1
 

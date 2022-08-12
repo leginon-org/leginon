@@ -1,5 +1,6 @@
 # stack functions
 
+from functools import cmp_to_key
 import os
 import re
 import sys
@@ -143,7 +144,7 @@ def getStackParticlesFromId(stackid, msg=True):
 		apDisplay.printWarning("failed to get particles of stackid="+str(stackid))
 	if msg is True:
 		apDisplay.printMsg("sorting particles")
-	stackpartdata.sort(sortStackParts)
+	stackpartdata.sort(key=cmp_to_key(sortStackParts))
 	if msg is True:
 		apDisplay.printMsg("received "+str(len(stackpartdata))
 			+" stack particles in "+apDisplay.timeString(time.time()-t0))
@@ -359,8 +360,8 @@ def getParticleContrastFromMrc(mrcfile):
 	#print innerMean, outerMean, mrcfile
 
 	if debug is True:
-		print "%d:%d and %d:%d"%(innerNoiseIndex, partRadIndex, outerLimitIndex, densityData.shape[0])
-		print "inner density %.1f <> outer density %.1f"%(innerVal, outerVal)
+		print("%d:%d and %d:%d"%(innerNoiseIndex, partRadIndex, outerLimitIndex, densityData.shape[0]))
+		print("inner density %.1f <> outer density %.1f"%(innerVal, outerVal))
 		from matplotlib import pyplot
 		pyplot.plot(radialData, densityData, 'ko-')
 		pyplot.xlabel('Pixel Radius')
@@ -380,7 +381,7 @@ def getParticleContrastFromMrc(mrcfile):
 		return "whiteOnBlack"
 	else:
 		apDisplay.printMsg("Contrast determined as BLACK particles on white background")
-		print "BLACK on white", mrcfile	
+		print("BLACK on white", mrcfile)	
 		return "blackOnWhite"
 
 
@@ -450,7 +451,7 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 	stackq['description'] = params['description']
 	stackq['pixelsize'] = oldstackdata['pixelsize']
 	stackq['boxsize'] = oldstackdata['boxsize']
-	if 'correctbeamtilt' in params.keys():
+	if 'correctbeamtilt' in list(params.keys()):
 		stackq['beamtilt_corrected'] = params['correctbeamtilt']
 	if sorted is True:
 		stackq['junksorted'] = True
@@ -520,7 +521,7 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 		oldstackpartdata = part_by_number[origpartnum]
 		sqlParams = ['particleNumber','REF|ApStackData|stack']
 		vals = [newpartnum,newstackid]
-		for k,v in oldstackpartdata.iteritems():
+		for k,v in oldstackpartdata.items():
 			# First need to convert the keys to column names
 			k = sinedon.directq.datakeyToSqlColumnName(oldstackpartdata,k)
 			if k in ['DEF_id', 
@@ -647,7 +648,7 @@ def commitMaskedStack(params, oldstackparts, newname=False):
 	stackq['pixelsize'] = oldstackdata['pixelsize']
 	stackq['boxsize'] = oldstackdata['boxsize']
 	stackq['mask'] = params['mask']
-	if 'correctbeamtilt' in params.keys():
+	if 'correctbeamtilt' in list(params.keys()):
 		stackq['beamtilt_corrected'] = params['correctbeamtilt']
 
 	## insert now before datamanager cleans up referenced data
@@ -805,7 +806,7 @@ def getStackIdFromRunName(runname, sessionname, msg=True):
 		stackid = runsindatas[0]['stack'].dbid
 	else:
 		for runsindata in runsindatas:
-			print runsindata
+			print(runsindata)
 		apDisplay.printError("Found too many stacks for specified criteria")
 
 	apDisplay.printMsg("Found stack id %d with runname %s from session %s"%(stackid, runname, sessionname))
@@ -835,7 +836,7 @@ def getStackIdFromSubStackName(substackname, sessionname, msg=True):
 		stackid = runsindatas[0]['stack'].dbid
 	else:
 		for runsindata in runsindatas:
-			print runsindata
+			print(runsindata)
 		apDisplay.printError("Found too many sub-stacks for specified criteria")
 
 	apDisplay.printMsg("Found stack id %d with substackname %s from session %s"%(stackid, substackname, sessionname))
@@ -908,7 +909,7 @@ def findSubStackConditionData(stackdata):
 		'clustersub':appiondata.ApClusteringStackData(),
 	}
 	substacktype = None
-	for type in typedict.keys():
+	for type in list(typedict.keys()):
 		if substackname.find(type) >= 0:
 			substacktype = type
 			break
@@ -936,7 +937,7 @@ def getStackParticleDiameter(stackdata):
 
 def getStackRunsFromStack(stackdata):
 	runsinstack = getRunsInStack(stackdata.dbid)
-	return map((lambda x: x['stackRun']),runsinstack)
+	return list(map((lambda x: x['stackRun']),runsinstack))
 
 #===============
 def getExistingRefineStack(stackrefdata,format,phaseflipped,last_part=None,bin=1,lowpass=0,highpass=0):
@@ -1075,7 +1076,7 @@ class Stack(object):
         # You basically need to know what you are looking for to see if a param name is in there for a particular 
         # program run.
         self._stackrunlogparams = apScriptLog.getScriptParamValuesFromRunname( self.stackRunName, self.originalStack['path'], jobdata=None )
-        self.reverse = 'reverse' in self._stackrunlogparams.keys()
+        self.reverse = 'reverse' in list(self._stackrunlogparams.keys())
 
     ### Property Getters
     def get_stackid(self):

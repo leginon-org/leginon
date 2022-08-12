@@ -121,13 +121,13 @@ if __name__ == '__main__':
 	t = eightTransforms(a)
 	s = sigmoidImage(box)
 	for i,b in enumerate(t):
-		print b
-		print ""
+		print(b)
+		print("")
 		mrc.write(b, "file%d.mrc"%(i))
 		c = correlator.cross_correlate(a,b)
 		c = numpy.fft.fftshift(c)
 		#print numpy.round(c, 1)
 		d = c*s
-		print numpy.round(d, 1)
+		print(numpy.round(d, 1))
 		
 		

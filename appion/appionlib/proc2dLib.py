@@ -75,7 +75,7 @@ class RunProc2d(object):
 		self.approc2d.params[name] = value
 
 	def run(self):
-		apDisplay.printWarning("Using old apProc2dlib which is known to have out of memory issues")
+		#apDisplay.printWarning("Using old apProc2dlib which is known to have out of memory issues")
 		self.approc2d.checkConflicts()
 		self.approc2d.start()
 		#self.approc2d.close()
@@ -257,7 +257,7 @@ class ApProc2d(basicScript.BasicScript):
 				os.remove(filename)
 
 		#Determine extension
-		if filename.endswith('.mrc'):
+		if filename.endswith('.mrc') or filename.endswith('.mrcs'):
 			if os.path.exists(filename):
 				partarray = numpy.array(partlist)
 				mrc.append(partarray, filename)
@@ -297,7 +297,7 @@ class ApProc2d(basicScript.BasicScript):
 		if not os.path.exists(self.params['outfile']):
 			self.params['append'] = False
 			return 0
-
+		# print(self.params['outfile'])
 		### out file exists
 		try:
 			existheader = self.readFileHeader(self.params['outfile'])
@@ -382,7 +382,7 @@ class ApProc2d(basicScript.BasicScript):
 			try:
 				sint = int(sline)
 			except ValueError:
-				print "unknown int: ", sline
+				print("unknown int: ", sline)
 				continue
 			partlist.append(sint)
 		f.close()
@@ -419,14 +419,14 @@ class ApProc2d(basicScript.BasicScript):
 		if self.params['list']:
 			partlist = self.readKeepList()
 		else:
-			partlist = range(self.params['first'], self.params['first']+addNumParticles)
+			partlist = list(range(self.params['first'], self.params['first']+addNumParticles))
 		count = 0
 		for partnum in partlist:
 			count += 1
 			particle = indata[partnum]
 			if self.params['debug'] is True:
-				print "---------"
-				print "Particle Number: %d of %d"%(partnum, addNumParticles)
+				print("---------")
+				print("Particle Number: %d of %d"%(partnum, addNumParticles))
 			if self.params['pixlimit']:
 				self.message("pixlimit: %s"%(self.params['pixlimit']))
 				particle = imagefilter.pixelLimitFilter(particle, self.params['pixlimit'])
@@ -484,7 +484,7 @@ class ApProc2d(basicScript.BasicScript):
 		if self.params['average'] is True:
 			avgParticle = summedPartice/count
 			self.appendParticleListToStackFile([avgParticle,], self.params['outfile'])
-		print "Wrote %d particles to file "%(self.particlesWritten)
+		print("Wrote %d particles to file "%(self.particlesWritten))
 
 #================================
 #================================

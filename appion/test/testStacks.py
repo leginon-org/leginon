@@ -16,7 +16,7 @@ def getCCValue(imgarray1, imgarray2):
 
 def isSameStack(partlist1, partlist2):
 	if len(partlist1) != len(partlist2):
-		print "failed length %d vs. %d"%(len(partlist1),len(partlist2))
+		print("failed length %d vs. %d"%(len(partlist1),len(partlist2)))
 		return False
 	mincc = 1.1
 	for i in range(len(partlist1)):
@@ -34,7 +34,7 @@ def isSameStack(partlist1, partlist2):
 			#print "failed CC %.6f"%(cc)
 			#return False
 			pass
-	print "minimum CC %.10f"%(mincc)
+	print("minimum CC %.10f"%(mincc))
 	if mincc < 0.999:
 		return False
 	return True
@@ -65,7 +65,7 @@ def stackToEmanMrc(stackfile):
 		emancmd = "proc2d %s %s first=%d last=%d"%(stackfile, mrcfile, i, i)
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
 		if not os.path.isfile(mrcfile):
-			print "Failed to create MRC"
+			print("Failed to create MRC")
 			sys.exit(1)
 		part = mrc.read(mrcfile)
 		apFile.removeFile(mrcfile)
@@ -88,7 +88,7 @@ def stackToEmanSpi(stackfile, swap=False):
 			emancmd += " spider-single"
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
 		if not os.path.isfile(spifile):
-			print "Failed to create SPIDER file"
+			print("Failed to create SPIDER file")
 			sys.exit(1)
 		part = spider.read(spifile)
 		apFile.removeFile(spifile)
@@ -113,43 +113,43 @@ if __name__ == "__main__":
 	imagic = apImagicFile.readImagic("original.hed", msg=False)
 	partlist2 = imagic['images']
 	apImagicFile.writeImagic(partlist2, "resave.hed", msg=False)
-	print "============\nCompare APPION IMAGIC"
+	print("============\nCompare APPION IMAGIC")
 	if not isSameStack(partlist, partlist2):
-		print "Stacks are different"
+		print("Stacks are different")
 		#sys.exit(1)
 	
 	### read and write with EMAN mrc
 	emanMrcToStack(partlist)
 	imagic = apImagicFile.readImagic("emanmrc.hed", msg=False)
 	partlist3 = imagic['images']
-	print "============\nCompare EMAN MRC"
+	print("============\nCompare EMAN MRC")
 	if not isSameStack(partlist, partlist3):
-		print "Stacks are different"
+		print("Stacks are different")
 		#sys.exit(1)
 
 	### read and write with EMAN spider
 	emanSpiderToStack(partlist)
 	imagic = apImagicFile.readImagic("emanspi.hed", msg=False)
 	partlist4 = imagic['images']
-	print "============\nCompare EMAN SPIDER"
+	print("============\nCompare EMAN SPIDER")
 	if not isSameStack(partlist, partlist4):
-		print "Stacks are different"
+		print("Stacks are different")
 
 	### convert imagic to MRC with EMAN and read
 	partlist5 = stackToEmanMrc("original.hed")
-	print "============\nCompare IMAGIC to EMAN MRC"
+	print("============\nCompare IMAGIC to EMAN MRC")
 	if not isSameStack(partlist, partlist5):
-		print "Stacks are different"
+		print("Stacks are different")
 
 	### convert imagic to SPIDER with EMAN and read
 	partlist6 = stackToEmanSpi("original.hed")
-	print "============\nCompare IMAGIC to EMAN SPIDER"
+	print("============\nCompare IMAGIC to EMAN SPIDER")
 	if not isSameStack(partlist, partlist6):
-		print "Stacks are different"
+		print("Stacks are different")
 
 	### convert imagic to SPIDER SWAP with EMAN and read
 	partlist7 = stackToEmanSpi("original.hed")
-	print "============\nCompare IMAGIC to EMAN SPIDER SWAP"
+	print("============\nCompare IMAGIC to EMAN SPIDER SWAP")
 	if not isSameStack(partlist, partlist7):
-		print "Stacks are different"
+		print("Stacks are different")
 

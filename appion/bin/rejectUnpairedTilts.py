@@ -74,7 +74,7 @@ class rejectUnpairedTilts(appionLoop2.AppionLoop):
 			apDatabase.insertImgAssessmentStatus(tiltdata, self.params['runid'], False, msg=msg)
 			self.reject+=2
 		if self.params['background'] is False:
-			print "Assessment:", imgassess, tiltassess
+			print("Assessment:", imgassess, tiltassess)
 		return
 
 	##########################################

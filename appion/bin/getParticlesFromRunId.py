@@ -24,9 +24,9 @@ if __name__ == "__main__":
 	q=appiondata.ApParticleData()
 	rundata=appiondata.ApSelectionRunData.direct_query(options.runid)
 	q['selectionrun']=rundata
-	print "Querying for particles"
+	print("Querying for particles")
 	ptcls=q.query()
-	print len(ptcls),'returned'
+	print(len(ptcls),'returned')
 	f=open(options.outlist,'w')
 	f.write('particle#\tx_coord\ty_coord\timage_name\n')
 	for ptcl in ptcls:
@@ -36,5 +36,5 @@ if __name__ == "__main__":
 		name=ptcl['image']['filename']
 		f.write('%d\t%d\t%d\t%s\n' % (n, x, y,name))
 	f.close()
-	print 'Done!'
+	print('Done!')
 	

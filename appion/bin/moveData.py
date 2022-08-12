@@ -108,7 +108,7 @@ class MoveData(appionScript.AppionScript):
 			path = item[0]
 			if not path in pathlist:
 				pathlist.append(path)
-		print pathlist
+		print(pathlist)
 		return pathlist
 
 	#=====================

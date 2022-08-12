@@ -8,12 +8,12 @@ import sys
 try:
 	import EMAN
 except ImportError:
-	print "EMAN module did not get imported"
+	print("EMAN module did not get imported")
 
 if __name__ == "__main__":
 
 	if len(sys.argv) < 2:
-		print "usage: renumber.py [filename]"
+		print("usage: renumber.py [filename]")
 		sys.exit()
 
 	filename=sys.argv[1]
@@ -24,4 +24,4 @@ if __name__ == "__main__":
 		im.readImage(filename,i)
 		im.setNImg(i)
 		im.writeImage(filename,i)
-		print i
+		print(i)

@@ -23,8 +23,10 @@ from scipy import ndimage
 # Please keep it this way
 ####
 
-# allow to use half of the free memory
-bytelimit = mem.free()*1024 / 2
+# # allow to use half of the free memory
+# bytelimit = mem.free()*1024 / 2
+# allow to use 0.7 of the free memory, temporarily
+bytelimit = mem.free()*1024*0.7
 
 #===============
 def compareHeader(hfile1, hfile2, numround=1):
@@ -34,8 +36,8 @@ def compareHeader(hfile1, hfile2, numround=1):
 	f1 = open(hfile1, 'rb')
 	f2 = open(hfile2, 'rb')
 	for n in range(numround):
-		print ""
-		print "round", n+1
+		print("")
+		print("round", n+1)
 		data1 = f1.read(1024)
 		data2 = f2.read(1024)
 		ints1 = numpy.fromstring(data1, dtype=numpy.int32)
@@ -45,11 +47,11 @@ def compareHeader(hfile1, hfile2, numround=1):
 			int2 = ints2[i]
 			if int1 != int2:
 				if -10 < int1 < 100 and -10 < int2 < 100:
-					print "%02d\t%04d ==> %04d" % (i, int1, int2)
+					print("%02d\t%04d ==> %04d" % (i, int1, int2))
 				else:
 					float1 = fourByteToFloat(intToFourByte(int1))
 					float2 = fourByteToFloat(intToFourByte(int2))
-					print "%02d\t%03.3e ==> %03.3e" % (i, float1, float2)
+					print("%02d\t%03.3e ==> %03.3e" % (i, float1, float2))
 
 #===============
 def numberStackFile(oldheadfile, startnum=0, msg=True):
@@ -75,7 +77,7 @@ def numberStackFile(oldheadfile, startnum=0, msg=True):
 		imgnum_fbyte = intToFourByte(i)
 		data = of.read(1024)
 		### start new string
-		headerstr = ""
+		headerstr = b""
 		### first image number
 		headerstr += intToFourByte(i)
 		### number of images, less one
@@ -259,7 +261,7 @@ def readImagicData(datafilename, headerdict, firstpart=1, numpart=1):
 		images = numpy.fliplr(images)  #FIXME: should we continue to flip the array
 	except:
 		mult = numpart*headerdict['rows']*headerdict['lines']
-		print mult, shape, rawarray.shape, numpart, headerdict['nimg'], headerdict['rows'], headerdict['lines']
+		print(mult, shape, rawarray.shape, numpart, headerdict['nimg'], headerdict['rows'], headerdict['lines'])
 		apDisplay.printError("could not read image stack")
 	return images
 
@@ -292,10 +294,10 @@ def writeImagic(array, filename, msg=True):
 
 	#this is required, IMAGIC only support 32bit
 	array = numpy.asarray(array, dtype=numpy.float32)
-	print 'before flip', array[-1,0,0],array[-1,-1,0]
+	print('before flip', array[-1,0,0],array[-1,-1,0])
 	array = numpy.fliplr(array) #FIXME: should we continue to flip the array
 	# 3D array fliplr is equal to up-down flip at each image in the image stack
-	print 'after flip', array[-1,0,0],array[-1,-1,0]
+	print('after flip', array[-1,0,0],array[-1,-1,0])
 
 	t0 = time.time()
 	if msg is True:
@@ -356,7 +358,7 @@ def makeHeaderStr(partnum, shape, avg, stdev, maxval, minval):
 	based on
 		http://www.imagescience.de/formats/formats.htm
 	"""
-	headerstr = ""
+	headerstr = b""
 	### image number (1)
 	headerstr += intToFourByte(partnum)
 	### number of images, less one (2)
@@ -379,7 +381,7 @@ def makeHeaderStr(partnum, shape, avg, stdev, maxval, minval):
 	### number of rows (14)
 	headerstr += intToFourByte(shape[1])
 	### data type (15)
-	headerstr += "REAL"
+	headerstr += b"REAL"
 	### zero coordinates (16,17)
 	headerstr += intToFourByte(0)
 	headerstr += intToFourByte(0)
@@ -527,8 +529,8 @@ def readSingleParticleFromStack(filename, partnum=1, boxsize=None, msg=True):
 		partimg = partimg.reshape(boxsize, boxsize)
 		partimg = numpy.fliplr(partimg)  #FIXME: should we continue to flip the array
 	except:
-		print partimg
-		print boxsize, boxsize*boxsize, partimg.shape
+		print(partimg)
+		print(boxsize, boxsize*boxsize, partimg.shape)
 		apDisplay.printError("could not read particle from stack")
 
 	### FIXME: flip data to be consistent with write function
@@ -560,7 +562,7 @@ def appendParticleListToStackFile(partlist, mergestackfile, msg=True):
 	### merge data files
 	premergesize = apFile.fileSize(mergedatafile)
 
-	mergedata = file(mergedatafile, 'ab')
+	mergedata = open(mergedatafile, 'ab')
 	for partarray in partlist:
 		part32bit = numpy.asarray(partarray, dtype=numpy.float32)
 		part32bit = numpy.flipud(part32bit) #FIXME: should we continue to flip the array
@@ -621,8 +623,8 @@ def appendStackFileToStackFile(stackfile, mergestackfile, msg=True):
 	premergenumpart = apFile.numImagesInStack(mergeheaderfile)
 	premergesize = apFile.fileSize(mergedatafile)
 
-	fout = file(mergedatafile, 'ab')
-	fin = file(stackdatafile, 'rb')
+	fout = open(mergedatafile, 'ab')
+	fin = open(stackdatafile, 'rb')
 	shutil.copyfileobj(fin, fout, 65536)
 	fin.close()
 	fout.close()
@@ -634,8 +636,8 @@ def appendStackFileToStackFile(stackfile, mergestackfile, msg=True):
 			apDisplay.bytes(premergesize), apDisplay.bytes(premergesize+addsize)))
 
 	### merge header files
-	fout = file(mergeheaderfile, 'ab')
-	fin = file(stackheaderfile, 'rb')
+	fout = open(mergeheaderfile, 'ab')
+	fin = open(stackheaderfile, 'rb')
 	shutil.copyfileobj(fin, fout, 65536)
 	fin.close()
 	fout.close()
@@ -657,7 +659,7 @@ def mergeStacks(stacklist, mergestack, msg=True):
 	mergedata   = root+".img"
 
 	### merge data files
-	fout = file(mergedata, 'wb')
+	fout = open(mergedata, 'wb')
 	numpart = 0
 	totalsize = 0
 	for stackfile in stacklist:
@@ -670,7 +672,7 @@ def mergeStacks(stacklist, mergestack, msg=True):
 		totalsize += size
 		numpart += npart
 
-		fin = file(stackdatafile, 'rb')
+		fin = open(stackdatafile, 'rb')
 		shutil.copyfileobj(fin, fout, 65536)
 		fin.close()
 	fout.close()
@@ -865,10 +867,10 @@ def readParticleListFromStack(filename, partlist, boxsize=None, msg=True):
 		else:
 			seekpos = int(seekpos)%2**32
 			f.seek(0)
-			if seekpos > sys.maxint:
-				while seekpos > sys.maxint:
-					f.seek(sys.maxint,1)
-					seekpos-=sys.maxint
+			if seekpos > sys.maxsize:
+				while seekpos > sys.maxsize:
+					f.seek(sys.maxsize,1)
+					seekpos-=sys.maxsize
 			f.seek(seekpos,1)
 
 		### read particle image
@@ -880,8 +882,8 @@ def readParticleListFromStack(filename, partlist, boxsize=None, msg=True):
 			partimg = partimg.reshape(boxsize, boxsize)
 			partimg = numpy.fliplr(partimg)  #FIXME: should we continue to flip the array
 		except:
-			print partimg
-			print boxsize, boxsize*boxsize, partimg.shape
+			print(partimg)
+			print(boxsize, boxsize*boxsize, partimg.shape)
 			apDisplay.printError("could not read particle from stack")
 		partdatalist.append(partimg)
 	f.close()
@@ -997,7 +999,7 @@ class processStack(object):
 
 		### check for off-one reading errors
 		if self.index < self.numpart-1:
-			print "INDEX %d -- NUMPART %d"%(self.index, self.numpart)
+			print("INDEX %d -- NUMPART %d"%(self.index, self.numpart))
 			apDisplay.printError("Did not properly process all particles")
 
 		### custom post-loop command
@@ -1111,6 +1113,6 @@ if __name__ == '__main__':
 	apImagicFile.writeImagic(a, filename) #flip and write images to file
 	partdata = []
 	for partnum in numpart:
-		 a = apImagicFile.readSingleParticleFromStack(filename, partnum=partnum)
-		 partdata.append(a)
+		a = apImagicFile.readSingleParticleFromStack(filename, partnum=partnum)
+		partdata.append(a)
 	b = numpy.array(partdata)

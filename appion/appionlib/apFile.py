@@ -22,10 +22,12 @@ def md5sumfile(fname):
 	"""
 	if not os.path.isfile(fname):
 		apDisplay.printError("MD5SUM, file not found: "+fname)
-	f = file(fname, 'rb')
+	# f = file(fname, 'rb')
+	f = open(fname, 'rb')
 	#this next library is deprecated in python 2.6+, need to use hashlib
-	import md5
-	m = md5.new()
+	# import md5
+	import hashlib
+	m = hashlib.md5()
 	while True:
 		d = f.read(8096)
 		if not d:
@@ -149,8 +151,8 @@ def getBoxSize(filename, msg=True):
 		headerdict = apImagicFile.readImagicHeader(headerfilename)
 		shape = (headerdict['rows'], headerdict['lines'], headerdict['nimg'])
 		return shape
-	if filename[-4:] == '.mrc':
-		headerdict = mrc.parseHeader(filename)
+	if '.mrc' in filename[-5:]: 
+		headerdict = mrc.readHeaderFromFile(filename)
 		shape = headerdict['shape']
 		if len(shape) == 2:
 			return (shape[0], shape[1], 1)
@@ -205,9 +207,11 @@ def numImagesInStack(imgfile, boxsize=None):
 		imgmem = boxsize*(boxsize+2)*4
 		numimg = int('%d' % (os.stat(imgfile)[6]/imgmem))
 	elif imgfile.endswith(".star"):
-		return len(apRelion.getPartsFromStar(imgfile))
+		return len(apRelion.starParticleArray(imgfile))
+	elif 'mrc' in imgfile[-4:]:
+		numimg = mrc.readHeaderFromFile(imgfile)['nz']
 	else:
-		apDisplay.printError("numImagesInStack() requires an IMAGIC, SPIDER, or RELION stack")
+		apDisplay.printError("numImagesInStack() requires an IMAGIC, SPIDER, or RELION stack (or .mrc[s]...)")
 	return numimg
 
 def safeSymLink(source, destination):
@@ -266,7 +270,7 @@ def rsync(from_path, to_dir, remove_sent=False, delay=0):
 		return
 	fileutil.mkdirs(to_dir)
 	cmd = makeRsyncCommand(from_path, to_dir, remove_sent)
-	print cmd
+	print(cmd)
 	time.sleep(delay)
 	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 	(output, error) = proc.communicate()
@@ -302,7 +306,7 @@ def compress_and_rsync(from_path, to_dir, remove_sent=False, delay=0):
 	if to_dir:
 		rsync_cmd = makeRsyncCommand(rsync_from_path, to_dir, remove_sent)
 		cmd += '; '+rsync_cmd	
-	print cmd
+	print(cmd)
 	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 	(output, error) = proc.communicate()
 

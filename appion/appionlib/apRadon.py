@@ -54,7 +54,7 @@ def classicradonlist(imagelist, stepsize=2, maskrad=None, msg=None):
 		radonimagelist.append(radonimage)
 	if msg is True:
 		sys.stderr.write("\n")
-		print "Classic Radon images complete in %s"%(apDisplay.timeString(time.time()-t0))
+		print("Classic Radon images complete in %s"%(apDisplay.timeString(time.time()-t0)))
 
 	return radonimagelist
 
@@ -110,7 +110,7 @@ def radon(image, stepsize=2, maskrad=None):
 	#radonlr = numpy.fliplr(radonimage)
 	#radonimage = numpy.vstack((radonimage, radonlr))
 	imagefile.arrayToJpeg(radonimage, "radonimage.jpg", msg=False)
-	print "Multi radon completed in %s"%(apDisplay.timeString(time.time() - t0))
+	print("Multi radon completed in %s"%(apDisplay.timeString(time.time() - t0)))
 	return radonimage
 
 #=========================
@@ -179,13 +179,13 @@ def radonlist(imagelist, stepsize=2, maskrad=None, msg=None):
 	proc.join()
 
 	### assemble radon image list
-	radonimagelist = range(len(imagelist))
+	radonimagelist = list(range(len(imagelist)))
 	for queue in queuelist:
 		imageid, radonimage = queue.get()
 		radonimagelist[imageid] = radonimage
 	if msg is True:
 		sys.stderr.write("\n")
-		print "Multi Radon images complete in %s"%(apDisplay.timeString(time.time()-t0))
+		print("Multi Radon images complete in %s"%(apDisplay.timeString(time.time()-t0)))
 
 	return radonimagelist
 
@@ -198,4 +198,4 @@ if __name__ == "__main__":
 	a += numpy.random.random((512,512))
 	radon(a, 0.5)
 	radon2(a, 0.5)
-	print "Completed in %s"%(apDisplay.timeString(time.time() - t0))
+	print("Completed in %s"%(apDisplay.timeString(time.time() - t0)))

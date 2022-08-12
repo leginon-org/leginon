@@ -162,7 +162,7 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		### get bad particles
 		try:
 			badpartlist = self.getBadParticlesForIteration(iteration)
-		except IOError, e:
+		except IOError as e:
 			apDisplay.printWarning("bad particle list not found, talk to Dmitry about using a modified version of Xmipp")
 			badpartlist = []
 		
@@ -415,7 +415,7 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 			apFile.removeFile(file)
 		
 		### cleanup files (.vol only now ... I'm leaving the .fsc, .sel, and .doc files *** Dmitry)
-		for reference_number, iters in complete_refinements.iteritems():
+		for reference_number, iters in complete_refinements.items():
 			for iteration in iters:
 				for file in glob.glob(os.path.join("Iter_%d" % iteration, "*.vol")): 
 					apFile.removeFile(file)

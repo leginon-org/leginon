@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import division
+
 import math
 import os
 import re
@@ -215,7 +215,7 @@ def writeTiltFile(tiltfile, seriesname, imagedict, azimuth, refimg ):
 	f.write ("     TILT AZIMUTH    %g\n" % azimuth)
 	f.write ("\n")
 
-	keys = imagedict.keys()
+	keys = list(imagedict.keys())
 	keys.sort()
 	for n in keys:
 		f.write ("   IMAGE %-5d     FILE %s       ORIGIN [ %8.3f %8.3f ]    TILT ANGLE    %8.3f    ROTATION     %8.3f\n" % (n, imagedict[n]['filename'], imagedict[n]['x'], imagedict[n]['y'], imagedict[n]['tilt'], imagedict[n]['rotation']))
@@ -642,7 +642,7 @@ def imodCtfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber,
 				estimated_defocus.append(999999999)
 		
 		#Find mean and stdev to prune out confident defocus values that are way off
-		defocus_stats_list=filter(lambda a: a != 999999999, estimated_defocus)
+		defocus_stats_list=[a for a in estimated_defocus if a != 999999999]
 		avg=np.array(defocus_stats_list).mean()
 		stdev=np.array(defocus_stats_list).std()
 		
@@ -710,19 +710,19 @@ def imodCtfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber,
 		#Make stack for correction,phase flip, extract images, replace images
 		cmd1="newstack -fileinlist %s -output %s > %s" % (image_list_full, uncorrected_stack, log_file_full)
 		f.write("%s\n\n" % cmd1)
-		print cmd1
+		print(cmd1)
 		subprocess.check_call([cmd1], shell=True)
 		
 		determineTomoctfDirection(ctfdir, uncorrected_stack, tilt_file_full, (new_avg*10000), cs, voltage, amp_contrast, pixelsize)
 		
 		cmd2="ctfphaseflip -input %s -output %s -AngleFile %s -defFn %s -pixelSize %s -volt %s -DefocusTol %s -iWidth %s -SphericalAberration %s -AmplitudeContrast %s 2>&1 | tee %s" % (uncorrected_stack, corrected_stack, tilt_file_full, defocus_file_full, pixelsize/10, voltage, DefocusTol, iWidth, cs, amp_contrast, log_file_full)
 		f.write("\n\n%s\n\n" % cmd2)
-		print cmd2
+		print(cmd2)
 		subprocess.check_call([cmd2], shell=True)
 		
 		cmd3="newstack -split 1 -append mrc %s %s >> %s" % (corrected_stack, out_full, log_file_full)
 		f.write("\n\n%s\n\n" % cmd3)
-		print cmd3
+		print(cmd3)
 		subprocess.check_call([cmd3], shell=True)
 		f.write("\n\n")
 		
@@ -867,7 +867,7 @@ def tomoCtfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber,
 	#Make stack for correction,phase flip, extract images, replace images
 	cmd1="newstack -fileinlist %s -output %s > %s" % (image_list_full, uncorrected_stack, log_file_full)
 	f.write("%s\n\n" % cmd1)
-	print cmd1
+	print(cmd1)
 	subprocess.check_call([cmd1], shell=True)
 	
 	determineTomoctfDirection(ctfdir, uncorrected_stack, tilt_file_full, defocus, cs, voltage, amp_contrast_ctf, pixelsize)
@@ -922,7 +922,7 @@ def tomoCtfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber,
 	os.system('%s %s %s %s %d' % (CTFcorrect_stack_file, uncorrected_stack, corrected_stack, tilt_file_full, procs))
 	
 	cmd3="newstack -split 1 -append mrc %s %s >> %s" % (corrected_stack, out_full, log_file_full)
-	print cmd3
+	print(cmd3)
 	subprocess.check_call([cmd3], shell=True)
 	
 	apDisplay.printMsg("Overwriting uncorrected raw images with CTF corrected images")
@@ -936,12 +936,12 @@ def tomoCtfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber,
 		image=np.rot90(image, k=1)
 		big_dimx=len(image[0])
 		big_dimy=len(image)
-		print big_dimx,big_dimy,dimx,dimy
+		print(big_dimx,big_dimy,dimx,dimy)
 		cropx1=int((big_dimx-dimx)/2)
 		cropx2=int(dimx+(big_dimx-dimx)/2)
 		cropy1=int((big_dimy-dimy)/2)
 		cropy2=int(dimy+(big_dimy-dimy)/2)
-		print cropy2-cropy1, cropx2-cropx1
+		print(cropy2-cropy1, cropx2-cropx1)
 		image=image[cropy1:cropy2,cropx1:cropx2]
 		mrc.write(image, filename)
 	
@@ -1001,7 +1001,7 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_alig
 		os.system('mkdir %s 2>/dev/null' % stack_path)
 		
 		new_stack = []
-		for image, j in zip(ordered_imagelist, range(len(ordered_imagelist))):
+		for image, j in zip(ordered_imagelist, list(range(len(ordered_imagelist)))):
 			lowpass = float(np.real(complex(dose_a/(accumulated_dose_list[j] - dose_c))**(1/dose_b)))  #equation (3) from Grant & Grigorieff, 2015
 			if lowpass < 0.0:
 				lowpass = 0.0
@@ -1052,7 +1052,7 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_alig
 				os.system('mkdir %s 2>/dev/null' % stack_path)
 				dose_lp_file = open(os.path.join(stack_path,'full_dose_lp_list.txt'), 'w')
 			
-			for image, j in zip(new_ordered_imagelist, range(len(new_ordered_imagelist))):
+			for image, j in zip(new_ordered_imagelist, list(range(len(new_ordered_imagelist)))):
 				if accumulated_dose_list[j] == dose_c: #No divide by zero
 					lowpass = float(np.real(complex(dose_a/(accumulated_dose_list[j] - dose_c + 0.01))**(1/dose_b)))  #equation (3) from Grant & Grigorieff, 2015 with an extra term to avoid divide by zero
 				else:
@@ -1088,7 +1088,7 @@ def modifyParamFile(filein, fileout, paramdict):
 	filestring = f.read()
 	f.close()
 	
-	for key, value in paramdict.iteritems():
+	for key, value in paramdict.items():
 		filestring = re.sub(key, str(value), filestring)
 	
 	f = open(fileout, 'w')
@@ -1206,7 +1206,7 @@ def buildTiltGeomFile(self, imagedict, parameterdict=False):
 
 	# Loop through the images to format the tilt geometry for each one
 	# TODO: check this...not sure if it is getting the right filenames
-	keys = imagedict.keys()
+	keys = list(imagedict.keys())
 	keys.sort()
 	for n in keys:
 		tiltText += "   IMAGE %-5d     FILE %s       ORIGIN [ %8.3f %8.3f ]    TILT ANGLE    %8.3f    ROTATION     %8.3f\n" % (n, imagedict[n]['filename'], imagedict[n]['x'], imagedict[n]['y'], imagedict[n]['tilt'], imagedict[n]['rotation'])
@@ -1239,7 +1239,7 @@ def writeDefaultParamFile(self):
 			raise
 		paramtext = self.buildParamFile()
 		# using print instead of .write so that message is converted to a string if needed 
-		print >> protomo2params, paramtext
+		print(paramtext, file=protomo2params)
 
 	# Close the parameter file
 	protomo2params.close()
@@ -1325,4 +1325,4 @@ def serialEM2Appion(stack, mdoc, voltage):
 	apDisplay.printMsg("Number of tilt-images: %d" % image_number)
 	apDisplay.printMsg("Tilt info path: %s" % info_file)
 	apDisplay.printMsg("Input these parameters into the Appion upload tilt-series interface.")
-	print ""
+	print("")

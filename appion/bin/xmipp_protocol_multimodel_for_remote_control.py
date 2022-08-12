@@ -818,7 +818,7 @@ class projection_matching_class:
        self._WorkingDir=os.getcwd()+'/'+_WorkingDir
        self._SelFileName=_SelFileName
        self._ModelNumbers=_ModelNumbers
-       print self._SelFileName
+       print(self._SelFileName)
        selfile_without_ext=(os.path.splitext(str(os.path.basename(self._SelFileName))))[0]
        
        self._ReferenceFileName=os.path.abspath(_ReferenceFileName)
@@ -895,16 +895,16 @@ class projection_matching_class:
                                       
        _NumberofIterations +=1;
        if _ContinueAtIteration!=1 and DoDeleteWorkingDir==True:
-          print "You can not delete the working directory"
-          print " and start at iteration", _ContinueAtIteration
+          print("You can not delete the working directory")
+          print(" and start at iteration", _ContinueAtIteration)
           exit(1)
        if (DoDeleteWorkingDir): 
           delete_working_directory(self._mylog,self._WorkingDir)
        else:
           self._mylog.info("Skipped DoDeleteWorkingDir") 
        if ReconstructionMethod!='fourier' and not _DoSplitReferenceImages:
-          print "DoSplitReferenceImages must be set to True if"
-          print " reconstruction method is not fourier"
+          print("DoSplitReferenceImages must be set to True if")
+          print(" reconstruction method is not fourier")
           exit(1)
        create_working_directory(self._mylog,self._WorkingDir)
        log.make_backup_of_script_file(sys.argv[0],self._WorkingDir)
@@ -930,7 +930,7 @@ class projection_matching_class:
           xdim,ydim=newsel.imgSize()
           self._OuterRadius = (xdim/2) - 1 
           comment = " Outer radius set to: " + str(self._OuterRadius)
-          print '* ' + comment
+          print('* ' + comment)
           self._mylog.info(comment)
        else:   
           self._OuterRadius=_OuterRadius
@@ -1005,7 +1005,7 @@ class projection_matching_class:
 
        for _iteration_number in range(_ContinueAtIteration, _NumberofIterations):
           debug_string =  "ITERATION: " +  str(_iteration_number)
-          print "*", debug_string
+          print("*", debug_string)
           self._mylog.info(debug_string)
 
           # Never allow DoAlign2D and DoCtfCorrection together
@@ -1013,7 +1013,7 @@ class projection_matching_class:
               self._DoCtfCorrection):
              error_message="You cannot realign classes AND perform CTF-correction. Switch either of them off!"
              self._mylog.error(error_message)
-             print error_message
+             print(error_message)
              exit(1)
 
           # Create working dir for this iteration and go there
@@ -1205,8 +1205,8 @@ class projection_matching_class:
 def delete_working_directory(_mylog,_WorkingDir):
     import os
     import shutil
-    print '*********************************************************************'
-    print '* Delete working directory tree'
+    print('*********************************************************************')
+    print('* Delete working directory tree')
     _mylog.info("Delete working directory tree")
 
     if os.path.exists(_WorkingDir):
@@ -1217,8 +1217,8 @@ def delete_working_directory(_mylog,_WorkingDir):
 #------------------------------------------------------------------------
 def create_working_directory(_mylog,_WorkingDir):
     import os
-    print '*********************************************************************'
-    print '* Create directory ' + _WorkingDir 
+    print('*********************************************************************')
+    print('* Create directory ' + _WorkingDir) 
     _mylog.info("Create working directory " + _WorkingDir )
 
     if not os.path.exists(_WorkingDir):
@@ -1250,8 +1250,8 @@ def execute_ctf_groups (_mylog,
    if not os.path.exists(CtfGroupDirectory):
       os.makedirs(CtfGroupDirectory)
 
-   print '*********************************************************************'
-   print '* Make CTF groups'
+   print('*********************************************************************')
+   print('* Make CTF groups')
    command=' -i '    + _InPutSelfile + \
            ' -ctfdat ' + _CtfDatFile + \
            ' -o ' + CtfGroupDirectory + '/' + CtfGroupRootName + \
@@ -1267,7 +1267,7 @@ def execute_ctf_groups (_mylog,
          command += ' -split ' + _SplitDefocusDocFile
       else:
          message = "Error: for non-automated ctf grouping, please provide a docfile!"
-         print '* ',message
+         print('* ',message)
          _mylog.info(message)
          sys.exit()
 
@@ -1303,8 +1303,8 @@ def execute_mask(_DoMask,
           InPutVolume=_ReferenceFileName +"_" + str(j)+ ".vol"       
        if (_DoMask):
            MaskedVolume= InPutVolume
-           print '*********************************************************************'
-           print '* Mask the reference volume'
+           print('*********************************************************************')
+           print('* Mask the reference volume')
            if (_DoSphericalMask):
               command=' -i '    + InPutVolume + \
                       ' -o '    + _ReferenceVolume [:-4] + str(j) +".vol" \
@@ -1325,8 +1325,8 @@ def execute_mask(_DoMask,
                         " "  + _ReferenceVolume [:-4]+ str(j) + ".vol")
             
         
-            print '*********************************************************************'
-            print '* Skipped Mask'
+            print('*********************************************************************')
+            print('* Skipped Mask')
 
 #------------------------------------------------------------------------
 #execute_projection_matching
@@ -1383,7 +1383,7 @@ def execute_projection_matching(_mylog,
    if (_DoCtfCorrection):
       # To use -add_to in angular_class_average correctly, 
       # make sure there are no proj_match_class* files from previous runs. 
-      print ' * CleanUp: deleting directory '+ ProjMatchDir
+      print(' * CleanUp: deleting directory '+ ProjMatchDir)
       os.system(' rm -r ' + ProjMatchDir)
       os.makedirs(ProjMatchDir)
       # Create docfiles for each defocus group and corresponding selfile containing all of them      
@@ -1392,8 +1392,8 @@ def execute_projection_matching(_mylog,
                            _NumberOfCtfGroups)
    # Project all references
    
-   print '*********************************************************************'
-   print '* Create projection library'
+   print('*********************************************************************')
+   print('* Create projection library')
    
 #   sel=open(str(ProjectLibraryRootName) + ".sel","w")
    angles=open(str(ProjectLibraryRootName)+ "_angles.doc","w")
@@ -1552,8 +1552,8 @@ def execute_projection_matching(_mylog,
 
    
 
-   print '*********************************************************************'
-   print '* Perform projection matching'
+   print('*********************************************************************')
+   print('* Perform projection matching')
    
    
    parameters= ' -i '              + inputdocfile + \
@@ -1659,8 +1659,8 @@ def execute_projection_matching(_mylog,
       if (_DoAlign2D == '1'):
          command += ' -showall '
 
-      print '*********************************************************************'
-      print '* ',command
+      print('*********************************************************************')
+      print('* ',command)
       _mylog.info(command) 
       os.system(command)
       
@@ -1685,7 +1685,7 @@ def make_subset_docfiles(_mylog,
       command=' -i   ' + _InputDocFileName + \
               ' -sel ' + inselfile + \
               ' -o   ' + inputdocfile
-      print '*********************************************************************'
+      print('*********************************************************************')
       launch_job.launch_job("xmipp_docfile_select_subset",
                             command,
                             _mylog,
@@ -1778,8 +1778,8 @@ def execute_reconstruction(_mylog,
    #============================================================================
   
    
-   print '*********************************************************************'
-   print '* Reconstruct volume using '
+   print('*********************************************************************')
+   print('* Reconstruct volume using ')
 
    for j in range (ModelNumbers):
        j=j+1
@@ -1855,8 +1855,8 @@ def execute_reconstruction(_mylog,
         #_mylog.info(command+ ' ' + parameters)
        if _DisplayReconstruction==True:
            command='xmipp_show -vol '+ Outputvolume + '&'
-           print '*********************************************************************'
-           print '* ',command
+           print('*********************************************************************')
+           print('* ',command)
            _mylog.info(command)
            os.system(command)
 
@@ -1904,11 +1904,11 @@ def  execute_resolution(_mylog,
                                 False,1,1,'')
         
         
-        print ""
-        print "modelselfilesparams"
-        print modelselfilesparams
-        print "modelselfilesparams"
-        print ""
+        print("")
+        print("modelselfilesparams")
+        print(modelselfilesparams)
+        print("modelselfilesparams")
+        print("")
         
         
         
@@ -1927,18 +1927,18 @@ def  execute_resolution(_mylog,
         Docfiles.append(split_sel_root_name+'_1.doc')
         Docfiles.append(split_sel_root_name+'_2.doc')
         
-        print ""
-        print ""
-        print j
-        print split_sel_root_name
-        print ""
-        print ""
+        print("")
+        print("")
+        print(j)
+        print(split_sel_root_name)
+        print("")
+        print("")
         
                 
         
         for i in range(len(Outputvolumes)):
-           print '*********************************************************************'
-           print '* Reconstruct volume'
+           print('*********************************************************************')
+           print('* Reconstruct volume')
            
            program = 'xmipp_reconstruct_fourier'
            reconparameters=' -i '    +  Selfiles[i] + \
@@ -1999,8 +1999,8 @@ def  execute_resolution(_mylog,
         innerrad = _OuterRadius - 2
         for i in range(len(Outputvolumes)):
            Outputvolumes[i]+=".vol"
-           print '*********************************************************************'
-           print '* Applying a soft mask'
+           print('*********************************************************************')
+           print('* Applying a soft mask')
            command = " -i " + Outputvolumes[i] + \
                      " -mask  raised_cosine -" + str(innerrad) + \
                      " -" + str(_OuterRadius)
@@ -2010,8 +2010,8 @@ def  execute_resolution(_mylog,
                                  False,1,1,_MySystemFlavour)
         
               
-        print '**************************************************************'
-        print '* Compute resolution ' 
+        print('**************************************************************')
+        print('* Compute resolution ') 
         command = " -ref " + Outputvolumes[0] +\
                   " -i " +Outputvolumes[1]  + ' -sam ' + str(_ResolSam)
         if ReconstructionMethod=='fourier':
@@ -2036,8 +2036,8 @@ def  execute_resolution(_mylog,
                               Y_Label="y",
                               X_col=1,
                               Y_col=2)
-          print '*********************************************************************'
-          print '* plot resolution'
+          print('*********************************************************************')
+          print('* plot resolution')
           _mylog.info(" plot resolution")
     
         # Copy FSC to standard name file
@@ -2062,9 +2062,9 @@ def  execute_resolution(_mylog,
     
     
         f.close()
-        print '* maximum resolution (A^-1): ', filter_frequence
+        print('* maximum resolution (A^-1): ', filter_frequence)
         filter_frequence *= _ResolSam
-        print '* maximum resolution (px^-1): ', filter_frequence
+        print('* maximum resolution (px^-1): ', filter_frequence)
     return filter_frequence
     
         
@@ -2099,8 +2099,8 @@ def filter_at_given_resolution(_DoLowPassFilter,
             command ="shutilcopy" + Inputvolume + ' ' + Outputvolume
             _mylog.info(command)
         else:   
-            print '**************************************************************'
-            print '* Filter reconstruction ' 
+            print('**************************************************************')
+            print('* Filter reconstruction ') 
             if (_UseFscForFilter):
                filter_in_pixels_at = float(_filter_frequence) +\
                                      float(_ConstantToAddToFiltration)
@@ -2135,13 +2135,13 @@ def execute_cleanup(_mylog,
    
    if (_DeleteClassAverages):
       message=' CleanUp: deleting directory '+ ProjMatchDir
-      print '* ',message
+      print('* ',message)
       _mylog.info(message)
       os.system(' rm -r ' + ProjMatchDir + ' &')
 
    if (_DeleteReferenceProjections):
       message=' CleanUp: deleting directory '+ LibraryDir
-      print '* ',message
+      print('* ',message)
       _mylog.info(message)
       os.system(' rm -r ' + LibraryDir + ' &')
 
@@ -2162,7 +2162,7 @@ def check_file_exists(name,log):
     import os,sys
     if not os.path.exists(name):
         message='Error: File '+name+' does not exist, exiting...'
-        print '*',message
+        print('*',message)
         log.error(message)
         sys.exit()
 

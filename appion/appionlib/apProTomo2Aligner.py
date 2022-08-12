@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import division
+
 import matplotlib
 matplotlib.use('Agg')  #Removes the X11 requirement for pylab
 import os
@@ -105,7 +105,7 @@ def printTips(tip_type):
 	tips = random.sample(choices, 2) #Randomly choose 2 tips to print
 	printTip(tips[0])
 	printTip(tips[1])
-	print ""
+	print("")
 	
 	return
 
@@ -114,55 +114,55 @@ def printCitations():
 	"""
 	Prints all citations grouped by type.
 	"""
-	print '\n________________________________\n'
+	print('\n________________________________\n')
 	apDisplay.printMsg("\033[1mIf you use Appion-Protomo for any purpose, you must cite the following:\33[0m")
-	print ''
+	print('')
 	apDisplay.printMsg("Accurate marker-free alignment with simultaneous geometry determination and reconstruction of tilt series in electron tomography")
 	apDisplay.printMsg("Winkler H, Taylor KA")
 	apDisplay.printMsg("doi:10.1016/j.ultramic.2005.07.007")
-	print ''
+	print('')
 	apDisplay.printMsg("Automated batch fiducial-less tilt-series alignment in Appion using Protomo")
 	apDisplay.printMsg("Alex J. Noble, Scott M. Stagg")
 	apDisplay.printMsg("doi:10.1016/j.jsb.2015.10.003")
-	print ''
+	print('')
 	apDisplay.printMsg("Appion: an integrated, database-driven pipeline to facilitate EM image processing")
 	apDisplay.printMsg("Lander GC, Stagg SM, Voss NR, et al.")
 	apDisplay.printMsg("doi:10.1016/j.jsb.2009.01.002")
-	print ''
+	print('')
 	apDisplay.printMsg("\033[1mIf you dose compensated your images in Appion-Protomo, you must cite the following:\33[0m")
-	print ''
+	print('')
 	apDisplay.printMsg("Measuring the optimal exposure for single particle cryo-EM using a 2.6 angstrom reconstruction of rotavirus VP6")
 	apDisplay.printMsg("Timothy Grant, Nikolaus Grigorieff")
 	apDisplay.printMsg("doi:10.7554/eLife.06980")
-	print ''
+	print('')
 	apDisplay.printMsg("\033[1mIf you used TomoCTF to estimate defocus and/or to correct for CTF, you must cite the following:\33[0m")
-	print ''
+	print('')
 	apDisplay.printMsg("CTF Determination and Correction in Electron Cryotomography")
 	apDisplay.printMsg("J.J. Fernandez, S. Li, R.A. Crowther")
 	apDisplay.printMsg("doi:10.1016/j.ultramic.2006.02.004")
-	print ''
+	print('')
 	apDisplay.printMsg("\033[1mIf you used IMOD's ctfphaseflip to correct for CTF, you must cite the following:\33[0m")
-	print ''
+	print('')
 	apDisplay.printMsg("CTF determination and correction for low dose tomographic tilt series")
 	apDisplay.printMsg("Quanren Xiong, Mary K. Morphew, Cindi L. Schwartz, Andreas H. Hoenger, David N. Mastronarde")
 	apDisplay.printMsg("doi:10.1016/j.jsb.2009.08.016")
-	print ''
+	print('')
 	apDisplay.printMsg("\033[1mIf you used Tomo3D to generate a reconstruction, you must cite the following:\33[0m")
-	print ''
+	print('')
 	apDisplay.printMsg("Fast tomographic reconstruction on multicore computers")
 	apDisplay.printMsg("J.I. Agulleiro, J.J. Fernandez")
 	apDisplay.printMsg("doi:10.1093/bioinformatics/btq692")
-	print ''
+	print('')
 	apDisplay.printMsg("Tomo3D 2.0 - Exploitation of Advanced Vector eXtensions (AVX) for 3D reconstruction")
 	apDisplay.printMsg("J.I. Agulleiro, J.J. Fernandez")
 	apDisplay.printMsg("doi:10.1016/j.jsb.2014.11.009")
-	print ''
+	print('')
 	apDisplay.printMsg("\033[1mIf you used Appion-Protomo to investigate single particle grids, you may wish to cite the following:\33[0m")
-	print ''
+	print('')
 	apDisplay.printMsg("Routine Single Particle CryoEM Sample and Grid Characterization by Tomography")
 	apDisplay.printMsg("Noble, A. J., Dandey, V. P., Wei, H., Brasch, J., Chase, J., Acharya, P., Tan Y. Z., Zhang Z., Kim L. Y., Scapin G., Rapp M., Eng E. T., Rice M. J., Cheng A., Negro C. J., Shapiro L., Kwong P. D., Jeruzalmi D., des Georges A., Potter C. S., Carragher, B.")
 	apDisplay.printMsg("doi:10.1101/230276")
-	print '\n________________________________\n'
+	print('\n________________________________\n')
 	
 	return
 
@@ -1285,7 +1285,7 @@ def makeCorrPeakVideos(seriesname, iteration, rundir, outdir, video_type, align_
 		png_full=vid_path+'/'+png
 		pngff_full=vid_path+'/'+pngff
 		# Convert the corr peak *.img file to mrc for further processing
-		print "\033[92m(Ignore the error: 'i3cut: could not load libi3tiffio.so, TiffioModule disabled')\033[0m"
+		print("\033[92m(Ignore the error: 'i3cut: could not load libi3tiffio.so, TiffioModule disabled')\033[0m")
 		os.system("i3cut -fmt mrc %s %s" % (img_full, mrc_full))
 		volume = mrc.read(mrc_full)
 		slices = len(volume) - 1
@@ -1554,7 +1554,7 @@ def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir
 			binlist.append(r8_sampling)
 		
 		best_bin1or2=999999
-		for i,j in zip(ccms_sum, range(len(ccms_sum))):
+		for i,j in zip(ccms_sum, list(range(len(ccms_sum)))):
 			if (binlist[j] == 1 or binlist[j] == 2):
 				best_bin1or2 = min(best_bin1or2, i)
 		
@@ -2057,7 +2057,7 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			for i in range(start, start+rawimagecount+100):
 				processTiltImages(i,i,tiltfilename,raw_path,image_file_type,map_sampling,rundir,pixelsize,rawimagecount,tilt_clip)
 		else: #Parallel process the images
-			for i,j in zip(range(start-1, start+rawimagecount+100),range(rawimagecount+100)):
+			for i,j in zip(list(range(start-1, start+rawimagecount+100)),list(range(rawimagecount+100))):
 				p2 = mp.Process(target=processTiltImages, args=(i,j,tiltfilename,raw_path,image_file_type,map_sampling,rundir,pixelsize,rawimagecount,tilt_clip,))
 				p2.start()
 				
@@ -2227,7 +2227,7 @@ def makeReconstructionVideos(seriesname, iteration, rundir, rx, ry, show_window_
 		ry=int(ry/map_sampling)
 		
 		# Convert the reconstruction *.img file to mrc for further processing
-		print "\033[92m(Ignore the error: 'i3cut: could not load libi3tiffio.so, TiffioModule disabled')\033[0m"
+		print("\033[92m(Ignore the error: 'i3cut: could not load libi3tiffio.so, TiffioModule disabled')\033[0m")
 		os.system("i3cut -fmt mrc %s %s" % (img_full, mrc_full))
 		#Normalizing here doesn't change video normalization.
 		

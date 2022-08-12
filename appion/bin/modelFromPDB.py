@@ -9,7 +9,7 @@ import gzip
 import math
 import numpy
 import shutil
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import subprocess
 
 #pyami
@@ -167,7 +167,7 @@ class modelFromPDB(appionScript.AppionScript):
 
 		### download data to memory
 		try:
-			data = urllib.urlretrieve(url)[0]
+			data = urllib.request.urlretrieve(url)[0]
 			### uncompress data
 			g = gzip.open(data, 'r').read()
 		except:
@@ -189,7 +189,7 @@ class modelFromPDB(appionScript.AppionScript):
 
 		# uncompress file & save
 		xmlfile = self.params['name']+".xml"
-		data = urllib.urlretrieve(url)[0]
+		data = urllib.request.urlretrieve(url)[0]
 		g = gzip.open(data,'r').read()
 		f = open(xmlfile,'w')
 		f.write(g)

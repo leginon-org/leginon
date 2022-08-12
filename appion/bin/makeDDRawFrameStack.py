@@ -60,7 +60,7 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 
 	#		gpuexe = "/emg/sw/script/motioncorr-master/bin/"+exename
 
-			print 'gpuexe path is '+gpuexe
+			print('gpuexe path is '+gpuexe)
 			if not os.path.isfile(gpuexe):
 				apDisplay.printError('Correction program "%s" not available' % exename)
 			# We don't have gpu locking
@@ -141,7 +141,7 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 		### set processing image
 		try:
 			self.dd.setImageData(imgdata)
-		except Exception, e:
+		except Exception as e:
 			apDisplay.printWarning(e.args[0])
 			return
 

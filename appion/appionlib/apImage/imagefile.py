@@ -85,7 +85,7 @@ def imageToArray(im, convertType='uint8', dtype=None, msg=True):
 		a = numpy.fromstring(getattr(grey,tostring_funcname)(), numpy.uint8)
 		a = numpy.reshape(a, (grey.size[1], grey.size[0]))
 	else:
-		raise ValueError, im.mode+" mode not considered"
+		raise ValueError(im.mode+" mode not considered")
 
 	if convertType == 'float32':
 		a = a.astype(numpy.float32)
@@ -125,7 +125,7 @@ def _arrayToImage(a):
 	elif len(a.shape)==2:  # a.shape == (y, x)
 		return fromstring_func("L", (w, h), a.tostring())
 	else:
-		raise ValueError, "unsupported image mode"
+		raise ValueError("unsupported image mode")
 
 #=========================
 def arrayToImage(numer, normalize=True, stdevLimit=3.0):
@@ -250,7 +250,7 @@ def arrayMaskToPngAlpha(numer,filename, msg=True):
 #=========================
 def PngAlphaToBinarryArray(filename):
 	RGBAarray = readPNG(filename)
-	print RGBAarray.shape
+	print(RGBAarray.shape)
 	alphaarray = RGBAarray[:,:,3]
 	masked_alphaarray = ma.masked_greater_equal(alphaarray,50)
 	bmask = masked_alphaarray.mask
@@ -287,7 +287,7 @@ def arrayToJpegPlusPeak(numer, outfile, peak=None, normalize=True):
 				peak2[i] = peak[i] - (numer.shape)[i]
 		drawPeak(peak2, draw, numer.shape)
 
-	print " ... writing JPEG: ",outfile
+	print(" ... writing JPEG: ",outfile)
 	image.save(outfile, "JPEG", quality=85)
 
 	return

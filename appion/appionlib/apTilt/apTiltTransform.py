@@ -24,11 +24,11 @@ def repairPicks(a1, a2, rmsd):
 	maxdev = ndimage.mean(rmsd[:5])
 	avgdev = 3*ndimage.mean(rmsd)
 	x0 = [ maxdev, avgdev, 0.25*len(rmsd), 0.75*len(rmsd) ]
-	print x0
+	print(x0)
 	solved = optimize.fmin(_rsmdStep, x0, args=([rmsd]), 
 		xtol=1e-4, ftol=1e-4, maxiter=500, maxfun=500, disp=0, full_output=1)
 	upstep = int(math.floor(solved[0][2]))
-	print solved
+	print(solved)
 
 	a1b = numpyPop2d(a1, upstep)
 	a2b = numpyPop2d(a2, upstep)
@@ -152,8 +152,8 @@ def setPointsFromArrays(a1, a2, data):
 		data['point2b'] = ( numpy.asarray(a2[0,:], dtype=numpy.float32) 
 			- numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32) )
 	else:
-		print a1, a2
-		print "FAILED"
+		print(a1, a2)
+		print("FAILED")
 	return
 
 #================================

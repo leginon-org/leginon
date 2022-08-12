@@ -5,7 +5,7 @@
 # 
 # *To be used after protomo2aligner.py
 
-from __future__ import division
+
 import os
 import sys
 import glob
@@ -25,7 +25,7 @@ from appionlib.apImage import imagefilter
 
 try:
 	import protomo
-	print "\033[92m(Ignore the error: 'protomo: could not load libi3tiffio.so, TiffioModule disabled')\033[0m"
+	print("\033[92m(Ignore the error: 'protomo: could not load libi3tiffio.so, TiffioModule disabled')\033[0m")
 except:
 	apDisplay.printWarning("Protomo did not get imported. Protomo reconstruction will break if used.")
 
@@ -570,7 +570,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			os.system(command)
 			
 			# Convert to mrc
-			print "\033[92m(Ignore the error: 'i3cut: could not load libi3tiffio.so, TiffioModule disabled')\033[0m"
+			print("\033[92m(Ignore the error: 'i3cut: could not load libi3tiffio.so, TiffioModule disabled')\033[0m")
 			os.system("i3cut -fmt mrc %s %s" % (img_full, mrc_full))
 			os.system("rm %s" % img_full)
 			
@@ -675,7 +675,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 				except: #image doesn't exist
 					pass
 				newshape=(newshape_x, newshape_y)
-				for i, j in zip(range(tiltstart,numimages+tiltstart+202), range(numimages+201)):
+				for i, j in zip(list(range(tiltstart,numimages+tiltstart+202)), list(range(numimages+201))):
 					p = mp.Process(target=self.rotateAndTranslateAndMaybeScaleImage2, args=(i, recon_tilt_out_full, self.params['rundir'], recon_dir, tilt_list, azimuth, newshape))
 					p.start()
 					
@@ -816,13 +816,13 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			cmd = 'tomo3d -a %s -i %s -t %s -v 2 -z %s -S -l %s %s -o %s' % (tiltlist, stack_path, procs, z, self.params['tomo3d_sirt_iters'], self.params['tomo3d_options'], mrc_full)
 		
 		if self.params['reconstruction_method'] == 2 or self.params['reconstruction_method'] == 3:
-			print cmd
+			print(cmd)
 			
 			#os.system(cmd)
 			proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 			(out, err) = proc.communicate()
-			print out, err
-			print "Rotating reconstruction..."
+			print(out, err)
+			print("Rotating reconstruction...")
 			try:
 				os.system('trimvol -rx %s %s' % (mrc_full, mrc_full))
 				os.system('rm %s~' % mrc_full)
@@ -1023,32 +1023,32 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			
 			if ((self.params['link_recon'] == None) or (self.params['link_recon'] == "") or (len(self.params['link_recon']) < 1) and (self.params['reconstruction_method'] == 1)):
 				apDisplay.printMsg("Reconstruction can be found in this directory:")
-				print "\n%s\n" % (recon_out_dir)
+				print("\n%s\n" % (recon_out_dir))
 			elif ((self.params['link_recon'] == None) or (self.params['link_recon'] == "") or (len(self.params['link_recon']) < 1) and (self.params['reconstruction_method'] == 2 or self.params['reconstruction_method'] == 3)):
 				apDisplay.printMsg("Reconstruction can be found in this directory:")
-				print "\n%s\n" % (recon_dir)
+				print("\n%s\n" % (recon_dir))
 			else:
 				apDisplay.printMsg("Stack(s) can be found in this directory:")
-				print "\n%s\n" % (self.params['link_recon'])
+				print("\n%s\n" % (self.params['link_recon']))
 		except:
 			apDisplay.printMsg("Reconstruction can be found in this directory:")
 			if self.params['reconstruction_method'] == 1:
-				print "\n%s\n" % (recon_out_dir)
+				print("\n%s\n" % (recon_out_dir))
 				if proc.returncode != 0:
 					apDisplay.printMsg("The reconstruction in the above directory is not normalized because EMAN1 and EMAN2 were either not found or failed to process the reconstruction.")
 			if self.params['reconstruction_method'] == 2 or self.params['reconstruction_method'] == 3:
-				print "\n%s\n" % (recon_dir)
+				print("\n%s\n" % (recon_dir))
 			else:
-				print "\n%s\n" % (stack_dir_full)
+				print("\n%s\n" % (stack_dir_full))
 				os.system('rm -r %s 2>/dev/null' % recon_dir)
 		
 		apDisplay.printMsg("Two scripts for creating per-particle or per-tomogram custom fourier wedges for single particle tomography can be found in:")
-		print "\n%s\n" % (os.path.join(self.params['rundir'],'SPT'))
+		print("\n%s\n" % (os.path.join(self.params['rundir'],'SPT')))
 		
 		apDisplay.printMsg('Did everything blow up and now you\'re yelling at your computer screen?')
 		apDisplay.printMsg('If so, kindly email Alex at anoble@nysbc.org explaining the issue and include this log file.')
 		apDisplay.printMsg('If everything worked beautifully and you publish, please use the appropriate citations listed on the Appion webpage! You can also print out all citations by typing: protomo2aligner.py --citations')
-		print "\n"
+		print("\n")
 		
 		apProTomo2Aligner.printTips("Reconstruction")
 		

@@ -6,7 +6,7 @@ import time
 import numpy
 import shutil
 import random
-import cPickle
+import pickle
 ## appion
 from appionlib import appionScript
 from appionlib import apStack
@@ -92,7 +92,7 @@ class fakeStackScript(appionScript.AppionScript):
 		t0 = time.time()
 
 		datafile = "parttree_data-"+str(self.timestamp)+".txt"
-		dataf = open(datafile, 'w', 0666)
+		dataf = open(datafile, 'w', 0o666)
 		count = 0.0
 		tilts = 0
 		nots = 0
@@ -132,7 +132,7 @@ class fakeStackScript(appionScript.AppionScript):
 				tilts += 1
 		f.close()
 		dataf.close()
-		print "tilts=",tilts,"nots=",nots
+		print("tilts=",tilts,"nots=",nots)
 		apDisplay.printMsg("Projected "+str(len(parttree))
 			+" particles in "+apDisplay.timeString(time.time()-t0))
 
@@ -227,19 +227,19 @@ class fakeStackScript(appionScript.AppionScript):
 					parttree.append(partpair2)
 					count += 1
 			except:
-				print count, row
+				print(count, row)
 				apDisplay.printError("bad row entry")
-		print count, minpartnum1, minpartnum2
+		print(count, minpartnum1, minpartnum2)
 		apDisplay.printMsg("Converted "+str(len(parttree))
 			+" particles in "+apDisplay.timeString(time.time()-t0))
 		tiltarray = numpy.array(tiltangles, dtype=numpy.float32)
 		self.tiltangle = tiltarray.mean()
 		apDisplay.printColor("  Tilted angle: %.3f +/- %.3f"%(self.tiltangle, tiltarray.std()), "cyan")
-		print tiltarray
+		print(tiltarray)
 		notarray = numpy.array(notangles, dtype=numpy.float32)
 		self.notangle = notarray.mean()
 		apDisplay.printColor("Untilted angle: %.3f +/- %.3f"%(self.notangle, notarray.std()), "green")
-		print notarray
+		print(notarray)
 		return parttree
 
 	#=====================
@@ -247,7 +247,7 @@ class fakeStackScript(appionScript.AppionScript):
 		cachefile = "parttree-"+str(notstackid)+"_"+str(tiltstackid)+".cache"
 		if os.path.isfile(cachefile):
 			cachef = open(cachefile, "r")
-			parttree = cPickle.load(cachef)
+			parttree = pickle.load(cachef)
 			cachef.close()
 			return parttree
 
@@ -305,7 +305,7 @@ class fakeStackScript(appionScript.AppionScript):
 
 		### save to file
 		cachef = open(cachefile, "w")
-		cPickle.dump(parttree, cachef)
+		pickle.dump(parttree, cachef)
 		cachef.close()
 
 		#for part in parttree:

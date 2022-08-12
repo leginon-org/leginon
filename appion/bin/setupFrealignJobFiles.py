@@ -297,7 +297,7 @@ class SetupFrealignJobs(basicScript.BasicScript):
 		f.write('echo "END FREALIGN"\n')
 		
 		f.close()
-		os.chmod(jobFile, 0755)
+		os.chmod(jobFile, 0o755)
 
 
 	#===============
@@ -364,7 +364,7 @@ class SetupFrealignJobs(basicScript.BasicScript):
 				%(fscfile, self.boxsize, self.params['apix']))
 			f.write('fi\n\n')
 		f.close()
-		os.chmod(jobfile, 0755)
+		os.chmod(jobfile, 0o755)
 
 	#===============
 	def createReconstructionJobs(self, prefix, stackFile):

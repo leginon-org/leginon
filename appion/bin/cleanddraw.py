@@ -11,16 +11,16 @@ def getSessionData(sessionname):
 	q = leginon.leginondata.SessionData(name=sessionname)
 	r = q.query()
 	if not r:
-		print 'ERROR: Session does not exist.'
+		print('ERROR: Session does not exist.')
 		sys.exit(1)
 	sessiondata = r[0]
-	print '---------------'
-	print 'Session %s belongs to %s %s' % (sessiondata['name'],sessiondata['user']['firstname'],sessiondata['user']['lastname'])
-	print 'with comment "%s"' % (sessiondata['comment'])
-	print '---------------'
-	session_verified = raw_input('Is this the session you want to work on? (Y/N)')
+	print('---------------')
+	print('Session %s belongs to %s %s' % (sessiondata['name'],sessiondata['user']['firstname'],sessiondata['user']['lastname']))
+	print('with comment "%s"' % (sessiondata['comment']))
+	print('---------------')
+	session_verified = input('Is this the session you want to work on? (Y/N)')
 	if session_verified.upper() != 'Y':
-		print 'aborted'
+		print('aborted')
 		sys.exit()
 	return sessiondata
 
@@ -41,8 +41,8 @@ def getAllImagesWithRawFrames(sessiondata):
 		if len(results) == 0 or sourcedata.dbid == imagedata.dbid:
 			all_source.append(imagedata)
 		
-	print '---------------'
-	print "Total of %d images should have frames saved" % (len(all_source))
+	print('---------------')
+	print("Total of %d images should have frames saved" % (len(all_source)))
 	return all_source
 
 def getAlignedImageIds(imagedata):
@@ -50,7 +50,7 @@ def getAlignedImageIds(imagedata):
 		alignimagepairdata = appiondata.ApDDAlignImagePairData(result=imagedata).query()[0]
 		imagedata = alignimagepairdata['source']
 	pairs = appiondata.ApDDAlignImagePairData(source=imagedata).query()
-	aligned = map((lambda x: x['result'].dbid), pairs)
+	aligned = list(map((lambda x: x['result'].dbid), pairs))
 	return imagedata,aligned
 
 def limitImagesToRemoveByStatus(all,status,sessiondata):
@@ -58,14 +58,14 @@ def limitImagesToRemoveByStatus(all,status,sessiondata):
 	to_remove_ids = []
 	q = leginon.leginondata.ViewerImageStatus(session=sessiondata)
 	statusmap = {'hidden':['hidden'],'trash':['trash'],'rejected':['hidden','trash']}
-	if status in statusmap.keys():
+	if status in list(statusmap.keys()):
 		hiddenids = []
 		# pick hidden images
 		for vstatus in statusmap[status]:
 			q = leginon.leginondata.ViewerImageStatus(session=sessiondata)
 			q['status'] = vstatus
 			hiddens = q.query()
-			hiddenids.extend(map((lambda x: x['image'].dbid), hiddens))
+			hiddenids.extend(list(map((lambda x: x['image'].dbid), hiddens)))
 		hiddenids = list(set(hiddenids))
 		hiddenids.sort()
 		
@@ -88,7 +88,7 @@ def limitImagesToRemoveByStatus(all,status,sessiondata):
 		# remove exemplar from images to be removed
 		q['status'] = 'exemplar'
 		bests = q.query()
-		bestids = map((lambda x: x['image'].dbid), bests)
+		bestids = list(map((lambda x: x['image'].dbid), bests))
 		for imagedata in all:
 			source_imagedata, alignedimageids = getAlignedImageIds(imagedata)
 			# only when none of the versions is exemplar would it be o.k. to remove
@@ -99,7 +99,7 @@ def limitImagesToRemoveByStatus(all,status,sessiondata):
 	elif status == 'all':
 		to_remove = all
 	else:
-		print 'ERROR: Unknown status option'
+		print('ERROR: Unknown status option')
 		sys.exit(1)
 	return to_remove
 
@@ -114,7 +114,7 @@ def	removeFrames(to_remove):
 		if not os.path.isdir(framedir):
 			framepath = os.path.join(session_frames_path,imagedata['filename']+'.frames.mrc')
 			if os.path.isfile(framepath):
-				print framepath,' will be removed'
+				print(framepath,' will be removed')
 				remove_list.append((framepath,''))
 			else:
 				# aligned images do not have raw frames in its name
@@ -122,16 +122,16 @@ def	removeFrames(to_remove):
 		else:
 			files = os.listdir(framedir)
 			# removing files and then directory
-			print framedir,' will be removed'
+			print(framedir,' will be removed')
 			remove_list.append((framedir,files))
-	print 'total  %d movies to be removed' % len(remove_list)
+	print('total  %d movies to be removed' % len(remove_list))
 
 	if len(remove_list) > 0:
 		# Last chance to back out
-		want_to_remove = raw_input('Are you sure? (Y/N)')
+		want_to_remove = input('Are you sure? (Y/N)')
 		if want_to_remove.upper() == 'Y':
 			for framedir,files in remove_list:
-				print '...removing %s' % (framedir)
+				print('...removing %s' % (framedir))
 				for file in files:
 					framepath = os.path.join(framedir,file)
 					os.remove(framepath)
@@ -143,34 +143,34 @@ def	removeFrames(to_remove):
 				if not os.path.exists(framedir):
 					remove_count += 1
 				else:
-					print framedir,' is still there. Something is wrong'
+					print(framedir,' is still there. Something is wrong')
 					sys.exit(1)
 	return remove_count,not_exist_count
 
 if __name__ == '__main__':
 	valid_status = ('hidden','trash','rejected','not-best','all')
 	if len(sys.argv) != 3:
-		print 'Usage: cleanddraw.py sessionname status'
-		print '  sessionname (str): Leginon session name'
-		print '  status (choice): "hidden", "trash", "rejected", "not-best", or "all"'
-		print '  "rejected" includes both "hidden" and "trash".'
+		print('Usage: cleanddraw.py sessionname status')
+		print('  sessionname (str): Leginon session name')
+		print('  status (choice): "hidden", "trash", "rejected", "not-best", or "all"')
+		print('  "rejected" includes both "hidden" and "trash".')
 		sys.exit()
 	# check input
 	sessionname = sys.argv[1]
 	status = sys.argv[2]
 	if status not in valid_status:
-		print 'ERROR: Unknown status option'
+		print('ERROR: Unknown status option')
 		sys.exit(1)
 
 	sessiondata = getSessionData(sessionname)
 	setAppiondb(sessionname)
 	all = getAllImagesWithRawFrames(sessiondata)
 	if len(all) == 0:
-		print 'No raw frame saved for this session'
+		print('No raw frame saved for this session')
 		sys.exit()
 
-	print '---------------'
+	print('---------------')
 	to_remove = limitImagesToRemoveByStatus(all,status,sessiondata)
 	remove_count,not_exist_count = removeFrames(to_remove)
-	print '---------------'
-	print "Total of %d frame directories removed." % (remove_count)
+	print('---------------')
+	print("Total of %d frame directories removed." % (remove_count))

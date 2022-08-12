@@ -8,17 +8,18 @@ import math
 import time
 import glob
 import shutil
+import string
 import subprocess
 from appionlib import apEMAN
 
 try:
 	import EMAN
 except:
-	print "EMAN module did not get imported"
+	print("EMAN module did not get imported")
 
 #===============================
 def runSymRelax(params,cls):
-	print "processing class",cls
+	print("processing class",cls)
 
 	#set up cls dir
 	clsdir=cls.split('.')[0]+'.dir'
@@ -55,7 +56,7 @@ def runSymRelax(params,cls):
 	# if no particles, continue
 	params['nptcls']=apEMAN.getNPtcls(cls,onlycoran=True)
 	if params['nptcls'] == 0:
-		print "WARNING!! no particles in class"
+		print("WARNING!! no particles in class")
 		return
 
 	emancmd = ("cd %s\n" % clsdir)	
@@ -94,7 +95,7 @@ def parseInput(args,params):
 		elif arg=='eotest':
 			params['eotest']=True
 		else:
-			print "\nERROR: undefined parameter \'"+arg+"\'\n"
+			print("\nERROR: undefined parameter \'"+arg+"\'\n")
 			sys.exit(1)
 
 #===============================
@@ -116,7 +117,7 @@ def createDefaults():
 if __name__== '__main__':
 	# write command & time to emanlog if exists:
 	if os.path.exists('refine.log'):
-		cmd = ' '.(sys.argv)
+		cmd = string.join(sys.argv,' ')
 		apEMAN.writeEMANTime('refine.log',cmd)
 	#Parse inputs
 	args=sys.argv[1:]
@@ -139,7 +140,7 @@ if __name__== '__main__':
 	#Set up for symmetry relax
 	params['relaxdir']=params['relaxdir']+str(params['iter'])
 	if os.path.exists(params['relaxdir']):
-		print "WARNING!!! %s exists and is being overwritten" % params['relaxdir']
+		print("WARNING!!! %s exists and is being overwritten" % params['relaxdir'])
 		shutil.rmtree(params['relaxdir'])
 		os.mkdir(params['relaxdir'])
 	else:
@@ -164,7 +165,7 @@ if __name__== '__main__':
 	
 	projections=EMAN.readImages('proj.hed',-1,-1,0)
 	if len(projections)!=len(clslist):
-		print "Error: Number of projections (%d) not equal to number of classes (%d)" % (len(projections),len(clslist))
+		print("Error: Number of projections (%d) not equal to number of classes (%d)" % (len(projections),len(clslist)))
 		sys.exit()
 	### if multiprocessor, create the jobs to run
 	if params['proc'] > 1:
@@ -182,7 +183,7 @@ if __name__== '__main__':
 				
 				cls = clslist[spnum]
 				clsdir=cls.split('.')[0]+'.dir'
-				print "creating mpi jobfile for "+cls 
+				print("creating mpi jobfile for "+cls) 
 				relaxcmd = runSymRelax(params,cls)
 				## if enough particles, run symmetry relaxation
 				if relaxcmd is not None:
@@ -194,12 +195,12 @@ if __name__== '__main__':
 					f.write(relaxcmd)
 					f.write("exit\n")
 					f.close()
-					os.chmod(procfile,0755)
+					os.chmod(procfile,0o755)
 					cscript.write("-np 1 %s\n" % procfile)
 				spnum+=1
 			cscript.close()
-			print "executing relaxscript: ",relaxscript
-			os.chmod("relaxscript.csh",0755)
+			print("executing relaxscript: ",relaxscript)
+			os.chmod("relaxscript.csh",0o755)
 			proc = subprocess.Popen('mpiexec --hostfile $PBS_NODEFILE --app '+relaxscript, shell=True)
 			proc.wait()
 			time.sleep(2)
@@ -208,16 +209,16 @@ if __name__== '__main__':
 
 		### make sure class averages were created for all classes if aligned.spi exists,
 		### sometimes for some reason the spider job doesn't run
-                print "Checking that all csh jobs completed"
+                print("Checking that all csh jobs completed")
                 for cls in clslist:
                         clsdir=cls.split('.')[0]+'.dir'
                         alignedfile = os.path.join(clsdir,'aligned.hed')
                         clsavgfile = os.path.join(clsdir,'classes.hed')
 			clscsh=glob.glob(os.path.join(clsdir,'relax.*.csh'))
 			if not clscsh :
-				print "ERROR!!! no csh file was created in "+clsdir
+				print("ERROR!!! no csh file was created in "+clsdir)
 			if not os.path.exists(alignedfile) and clscsh: 
-				print "WARNING!!! re-executing" + clscsh[0]
+				print("WARNING!!! re-executing" + clscsh[0])
 				proc = subprocess.Popen(clscsh[0])
 				proc.wait()
 	else:
@@ -225,8 +226,8 @@ if __name__== '__main__':
 			## run symmetry relaxation	
 			runSymRelax(params,cls)
 
-	print "symmetry relaxation complete"
-	print "Combining class averages"
+	print("symmetry relaxation complete")
+	print("Combining class averages")
 	for cls in range(0,len(clslist)):
 		clsdir=clslist[cls].split('.')[0]+'.dir'
 		# if no particles in class, create empty class averages
@@ -303,13 +304,13 @@ if __name__== '__main__':
 	# create 3d model:
 	make3dcommand='make3d newavgs.hed out=threed.%d.asym.mrc mask=%d sym=c1 pad=%d mode=2 hard=%d' % (params['iter'], params['mask'], pad, params['hard'])
 	apEMAN.writeEMANTime('../refine.log', make3dcommand)
-	print make3dcommand
+	print(make3dcommand)
 	proc = subprocess.Popen(make3dcommand, shell=True)
 	proc.wait()
 
 	proc3dcommand='proc3d threed.%d.asym.mrc ../threed.%da.asym.mrc mask=%d norm' % (params['iter'],params['iter'],params['mask'])
 	apEMAN.writeEMANTime('../refine.log', proc3dcommand)
-	print proc3dcommand
+	print(proc3dcommand)
 	proc = subprocess.Popen(proc3dcommand, shell=True)
 	proc.wait()
 
@@ -317,21 +318,21 @@ if __name__== '__main__':
 		# create even 3d model:
 		make3dcommand='make3d newavgs.even.hed out=threed.te.mrc mask=%d sym=c1 pad=%d mode=2 hard=%d' % (params['mask'], pad, params['hard'])
 		apEMAN.writeEMANTime('../refine.log', make3dcommand)
-		print make3dcommand
+		print(make3dcommand)
 		proc = subprocess.Popen(make3dcommand, shell=True)
 		proc.wait()
 
 		# create odd 3d model:
 		make3dcommand='make3d newavgs.odd.hed out=threed.to.mrc mask=%d sym=c1 pad=%d mode=2 hard=%d' % (params['mask'], pad, params['hard'])
 		apEMAN.writeEMANTime('../refine.log', make3dcommand)
-		print make3dcommand
+		print(make3dcommand)
 		proc = subprocess.Popen(make3dcommand, shell=True)
 		proc.wait()
 	
 		# calculate fsc for even/odd models:
 		fsccommand='proc3d threed.te.mrc threed.to.mrc fsc=fsc.eotest.%d' % params['iter']
 		apEMAN.writeEMANTime('../refine.log', fsccommand)
-		print fsccommand
+		print(fsccommand)
 		proc = subprocess.Popen(fsccommand, shell=True)
 		proc.wait()
 	
@@ -342,11 +343,11 @@ if __name__== '__main__':
 	proc = subprocess.Popen(mvcommand, shell=True)
 	proc.wait()
 
-	print "updating %s" % classfile
+	print("updating %s" % classfile)
 	proc = subprocess.Popen(('tar -cvf %s cls*.lst' % classfile), shell=True)
 	proc.wait()
 #	mvcommand='/bin/mv %s ../%s' % (classfile,classfile)
 #	proc = subprocess.Popen(mvcommand, shell=True)
 #	proc.wait()
 	
-	print "Done!"
+	print("Done!")

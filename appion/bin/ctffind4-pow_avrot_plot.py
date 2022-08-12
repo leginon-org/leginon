@@ -7,7 +7,7 @@ from appionlib.apCtf import ctffind4AvgRotPlot
 #====================
 #====================
 def printUsage():
-	print "Usage: %s xxxx_pow_avgrot.txt"%(os.path.basename(__file__))
+	print("Usage: %s xxxx_pow_avgrot.txt"%(os.path.basename(__file__)))
 	sys.exit(0)
 
 #====================

@@ -13,6 +13,7 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		super(MotionCor2UCSFAlignStackLoop,self).setupParserOptions()
 
 		self.parser.add_option("--gpuids", dest="gpuids", default='0')
+		
 		self.parser.add_option("--nrw", dest="nrw", type="int", default=1,
 			help="Number (1, 3, 5, ...) of frames in running average window. 0 = disabled", metavar="INT")
 
@@ -23,7 +24,7 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 			help="Maximum iterations for iterative alignment, default is 7.")
 
 		self.parser.add_option("--Tol", dest="Tol",type="float",default=0.5,
-                        help="Tolerance for iterative alignment, in pixels", metavar="#")
+			help="Tolerance for iterative alignment, in pixels", metavar="#")
 
 		self.parser.add_option("--Patchrows",dest="Patchrows",metavar="#",type=int,default="0",
 			help="Number of patches divides the y-axis to be used for patch based alignment. Default 0 corresponds to full frame alignment in the direction.")
@@ -44,10 +45,10 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 
 		# instead of single align bfactor, bft, this has two entries
 		self.parser.add_option("--Bft_global",dest="Bft_global",metavar="#",type=float,default=500.0,
-                        help=" Global B-Factor for alignment, default 500.0.")
+			help=" Global B-Factor for alignment, default 500.0.")
 
 		self.parser.add_option("--Bft_local",dest="Bft_local",metavar="#",type=float,default=150.0,
-                        help=" Global B-Factor for alignment, default 150.0.")
+			help=" Global B-Factor for alignment, default 150.0.")
 
 		self.parser.add_option("--force_cpu_flat", dest="force_cpu_flat", default=False,
 			action="store_true", help="Use cpu to make frame flat field corrrection")
@@ -56,6 +57,11 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 			help="Sum this number of saved frames as a rendered frame in alignment", metavar="INT")
 		self.parser.add_option("--eer_sampling", dest="eer_sampling", type="int", default=1,
 			help="Upsampling eer frames. Fourier binning will be added to returnthe results back", metavar="INT")
+
+		self.parser.add_option("--gainfile", dest="gainfile", default="", help="Gain file name", metavar="")
+
+		self.parser.add_option("--forceTiff", dest="forceTiff", default=False,
+			action="store_true", help="ForceTiff will be used to specify motioncor2 input of TIFF file")
 
 	def addBinOption(self):
 		self.parser.add_option("--bin",dest="bin",metavar="#",type=float,default="1.0",
@@ -104,7 +110,9 @@ class MotionCor2UCSFAlignStackLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop)
 		# NOTE: self.params in self.framealigner alignparam mapping are directly transferred.
 		self.framealigner.setKV(self.dd.getKVFromImage(self.dd.image))
 		self.framealigner.setTotalRawFrames(self.dd.getNumberOfFrameSaved())
-		is_eer = self.dd.image['camera']['eer frames']
+		is_eer = False
+		if 'eer frames' in self.dd.image['camera'].keys():
+			is_eer = self.dd.image['camera']['eer frames']
 		self.framealigner.setIsEer(is_eer)
 		if self.params['totaldose'] is not None:
 			totaldose = self.params['totaldose']

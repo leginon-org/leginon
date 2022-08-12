@@ -20,7 +20,7 @@ def forceMrcHeader(array=None):
 def fixMrcHeaderHack(involname, outvolname):
 	a=mrc.read(involname)
 	#force machine stamp integer
-	print "forcing machine stamp"
+	print("forcing machine stamp")
 	h=forceMrcHeader(array=a)
 	mrc.write(a,outvolname,header=h)
 
@@ -81,7 +81,7 @@ def imagicToMrc(params, msg=True):
 		apDisplay.printMsg('saving MRC stack file:')
 		apDisplay.printMsg(os.path.join(params['rundir'],outstack))
 	catcmd = "cat %s %s > %s" % (tmpheadername, stackimg, outstack)
-	print catcmd
+	print(catcmd)
 	proc = subprocess.Popen(catcmd, shell=True)
 	proc.wait()
 	os.remove(tmpheadername)

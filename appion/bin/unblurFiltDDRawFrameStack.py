@@ -108,7 +108,7 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 		### set processing image
 		try:
 			self.dd.setImageData(imgdata)
-		except Exception, e:
+		except Exception as e:
 			apDisplay.printWarning(e.args[0])
 			return
 

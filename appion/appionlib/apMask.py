@@ -118,7 +118,7 @@ def getAssessedMasks(assessrun,maskrun):
 				imagefiles.index(imagefile)
 			except ValueError:
 				imagefiles.append(imagefile)
-	return map((lambda x: x + '_mask.png'),imagefiles)
+	return list(map((lambda x: x + '_mask.png'),imagefiles))
 
 def insertMaskAssessmentRun(sessiondata,maskrundata,name):
 	assessRdata=appiondata.ApMaskAssessmentRunData()
@@ -181,16 +181,16 @@ def getMaskArray(maskrundata,imgdata):
 	#mask = apImage.PngAlphaToBinarryArray(os.path.join(maskpath,maskfile))
 	maskfileandpath = os.path.join(maskpath,maskfile)
 	if os.path.exists(maskfileandpath):
-		print "Trying to open " + maskfileandpath
+		print("Trying to open " + maskfileandpath)
 		fileExtension = os.path.splitext(maskfile)[1][1:].strip().lower()
 		
 		if fileExtension == "jpg":
-			print "Opening JPG file."
+			print("Opening JPG file.")
 			maskArray = apImage.readJPG(maskfileandpath)
 		else:
 			maskArray = apImage.PngToBinarryArray(maskfileandpath)
 	else:
-		print "File does not exist: " + maskfileandpath
+		print("File does not exist: " + maskfileandpath)
 
 	return maskArray
 
@@ -208,7 +208,7 @@ def getMaskMakerRunNamesFromSession(sessiondata):
 
 	if not results:
 		return []
-	masknames = map((lambda x:x['name']),results)
+	masknames = list(map((lambda x:x['name']),results))
 	return masknames
 
 def getMaskMakerRunDataById(id):
@@ -357,23 +357,23 @@ def overlayMask(image,mask):
 def reshapeMask( image, mask ):
 		# make sure the images have the same shape
 		imgshape = numpy.asarray(image.shape)
-		print "MRC Image Shape:"
-		print imgshape
+		print("MRC Image Shape:")
+		print(imgshape)
 		imgsize = imgshape[0]*imgshape[1]
-		print "MRC Image Size:"
-		print imgsize
+		print("MRC Image Size:")
+		print(imgsize)
 
 		maskshape = numpy.shape(mask)
-		print "Mask Image Shape:"
-		print maskshape
+		print("Mask Image Shape:")
+		print(maskshape)
 		
-		print "resizing mask image."
+		print("resizing mask image.")
 		scaleFactor = float(imgshape[0])/float(maskshape[0])
-		print scaleFactor
+		print(scaleFactor)
 		outimg = imagefun.scale( mask, scaleFactor )
 		maskshape = numpy.shape(outimg)
-		print "Mask Image Shape:"
-		print maskshape
+		print("Mask Image Shape:")
+		print(maskshape)
 		
 		return outimg
 		#img3 = numpy.resize(img2, imgshape) # not working

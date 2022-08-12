@@ -15,18 +15,18 @@ if __name__ == "__main__":
 	rjobs = appiondata.ApAppionJobData(status='R', jobtype='recon')
 	rjobs = rjobs.query()
 
-	print 'Recon jobs listed as "Running" in the database:'
+	print('Recon jobs listed as "Running" in the database:')
 	for i,job in enumerate(rjobs):
-		print '   %d:  %s' % (i,job['name'])
-	print ''
-	response = raw_input('Choose a number from the list (or just hit enter to cancel): ')
+		print('   %d:  %s' % (i,job['name']))
+	print('')
+	response = input('Choose a number from the list (or just hit enter to cancel): ')
 	try:
 		i = int(response)
 		myjob = rjobs[i]
 	except:
 		sys.exit()
 
-	print 'Checking if job is actually running on cluster...'
+	print('Checking if job is actually running on cluster...')
 
 	cluster = myjob['cluster']
 	clusterjobid = myjob['clusterjobid']
@@ -37,26 +37,26 @@ if __name__ == "__main__":
 	qs = s.stdout.read()
 	qserr = s.stderr.read()
 	if len(qs) == 0 or len(qserr) > 0:
-		print 'qstat error, please run this on the cluster head node'
+		print('qstat error, please run this on the cluster head node')
 		sys.exit()
 	if jobid in qs:
-		print 'qstat says job is still running, use qdel to kill it first.'
+		print('qstat says job is still running, use qdel to kill it first.')
 		sys.exit()
 
 	path = myjob['path']['path']
 	reconsubdir = os.path.join(path,'recon')
 	if os.path.exists(reconsubdir):
-		print '* recon subdir is still present, moving contents to parent dir...'
+		print('* recon subdir is still present, moving contents to parent dir...')
 		cmd = '/bin/mv %s/* %s/.* %s' % (reconsubdir, reconsubdir, path)
 		proc = subprocess.Popen(cmd, shell=True)
 		proc.wait()
-		print '* removing recon subdir...'
+		print('* removing recon subdir...')
 		cmd = 'rmdir %s' % (reconsubdir,)
 		proc = subprocess.Popen(cmd, shell=True)
 		proc.wait()
 
-	print '* changing status to "Done" in database'
+	print('* changing status to "Done" in database')
 	cmd = 'updateAppionDB.py %s D' % (myjob.dbid,)
 	subprocess.Popen(cmd, shell=True)
-	print 'Recon should now be ready for upload.'
+	print('Recon should now be ready for upload.')
 

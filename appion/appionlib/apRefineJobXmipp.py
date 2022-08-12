@@ -3,7 +3,7 @@ import os
 import sys
 import math
 import time
-import cPickle
+import pickle
 #appion
 from appionlib import apDisplay
 from appionlib import apRefineJob
@@ -63,7 +63,7 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 	def checkIterationConflicts(self):
 		super(XmippSingleModelRefineJob,self).checkIterationConflicts()
 		pad = int(self.params['boxsize']*1.25/2.0)*2
-		self.params['pad'] = map((lambda x: pad),range(self.params['numiter']))
+		self.params['pad'] = list(map((lambda x: pad),list(range(self.params['numiter']))))
 		if self.params['usefscforfilter'] is True and self.params['filterResolution'] is not None:
 			apDisplay.printWarning("cannot use FSC for filter AND specify a resolution to filter model, either set \
 				--DontUseFscForFilter to True or remove --filterResolution ... setting --DontUseFscForFilter to True")
@@ -103,8 +103,8 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 	def convertToXmippStyleIterParams(self):
 		for iterparamdict in self.iterparams:
 			name = iterparamdict['name']
-			if self.params.keys():
-				strings = map((lambda x: str(x)),self.params[name])
+			if list(self.params.keys()):
+				strings = list(map((lambda x: str(x)),self.params[name]))
 				self.params[name] = ' '.join(strings)
 
 	def setupXmippProtocol(self):
@@ -197,7 +197,7 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 			protocolPrm["ConstantToAddToFiltration"] = str(self.params['apix'] / self.params['filterResolution'])
 		else:
 			protocolPrm["ConstantToAddToFiltration"]    =   str(self.params['filterConstant'])
-		print protocolPrm["ConstantToAddToFiltration"]
+		print(protocolPrm["ConstantToAddToFiltration"])
 		protocolPrm["NumberOfThreads"]              =   self.params['alwaysone']
 		protocolPrm["DoParallel"]                   =   self.params['nproc']>1
 		protocolPrm["NumberOfMpiProcesses"]         =   self.params['nproc']
@@ -214,7 +214,7 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 			os.remove(tempprotocolfile)
 		else:
 			apXmipp.particularizeProtocol(protocol_projmatch, protocolPrm, protocolfile)
-		os.chmod(os.path.join(self.params['rundir'], protocolfile), 0775)
+		os.chmod(os.path.join(self.params['rundir'], protocolfile), 0o775)
 				
 		### Write the parameters for posterior uploading, both generic and specific
 		self.runparams = {} ### these are generic params that includes a dictionary entry for package-specific params
@@ -249,7 +249,7 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		'''
 		This starts and ends at recondir
 		'''
-		print self.params['modelnames'][0]
+		print(self.params['modelnames'][0])
 		self.addSimpleCommand('ln -s %s %s' % ( 
 			os.path.join(self.params['remoterundir'], self.params['modelnames'][0]),self.params['modelnames'][0]))
 		partar = os.path.join(self.params['remoterundir'],'partfiles.tar.gz')

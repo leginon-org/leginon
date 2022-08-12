@@ -232,7 +232,7 @@ class UploadStack(appionScript.AppionScript):
 
 		if self.params['commit'] is True:
 			runsinstackq.insert()
-			if 'syncstackid' in self.params.keys() and self.params['syncstackid']:
+			if 'syncstackid' in list(self.params.keys()) and self.params['syncstackid']:
 				stackdata = runsinstackq['stack']
 				stack2data = apStack.getOnlyStackData(self.params['syncstackid'])
 				syncq = appiondata.ApSyncStackData(stack1=stackdata,stack2=stack2data,synctype=self.params['synctype'])

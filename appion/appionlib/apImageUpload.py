@@ -426,9 +426,9 @@ class ImageLoader(appionLoop2.AppionLoop):
 		return imagearray
 
 	def correctImage(self,rawarray,nframes):
-		if 'norm' in self.refdata.keys() and self.refdata['norm']:
+		if 'norm' in list(self.refdata.keys()) and self.refdata['norm']:
 			normarray = self.refdata['norm']['image']
-			if 'dark' in self.refdata.keys() and self.refdata['dark']:
+			if 'dark' in list(self.refdata.keys()) and self.refdata['dark']:
 				darkarray = self.refdata['dark']['image']*nframes/self.refdata['dark']['camera']['nframes']
 			else:
 				darkarray = numpy.zeros(rawarray.shape)
@@ -697,7 +697,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 					if end_index > len(self.batchinfo):
 						apDisplay.printError('Not enough images to determine tilt series parameter')
 					this_tilt_group_info = self.batchinfo[this_index:end_index]
-					tilts = map((lambda x:float(x[7])),this_tilt_group_info)
+					tilts = list(map((lambda x:float(x[7])),this_tilt_group_info))
 					tiltq['tilt min'] = min(tilts)
 					tiltq['tilt max'] = max(tilts)
 					tiltq['tilt start'] = tilts[0]
@@ -751,7 +751,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		scopedata['defocus'] = info['defocus']
 		scopedata['magnification'] = info['magnification']
 		scopedata['high tension'] = info['high tension']
-		if 'stage a' in info.keys():
+		if 'stage a' in list(info.keys()):
 			tiltseriesdata = leginon.leginondata.TiltSeriesData(session=self.session)
 			scopedata['stage position'] = {'x':0.0,'y':0.0,'z':0.0,'a':info['stage a']}
 		else:
@@ -797,7 +797,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		# single image should not overload memory
 		imgdata['image'] = imagearray
 		# references
-		for key in self.refdata.keys():
+		for key in list(self.refdata.keys()):
 			imgdata[key] = self.refdata[key]
 		self.publish(imgdata)
 		return imgdata
@@ -820,7 +820,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		# If this pixel size is not what last entered in this upload,
 		# force db insert even if the same values exists because someone might 
 		# have changed the calibration earlier and now you need to change it back
-		if mag in self.pixelsizes.keys() and pixelsize == self.pixelsizes[mag]:
+		if mag in list(self.pixelsizes.keys()) and pixelsize == self.pixelsizes[mag]:
 			return
 		else:
 			self.publish(caldata, dbforce=True)

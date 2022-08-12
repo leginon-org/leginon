@@ -15,7 +15,7 @@ def hideImage(imgid):
 if __name__ == '__main__':
 	# 898749
 	if len(sys.argv) < 2:
-		print "Usage: hideSquare.py <square id>"
+		print("Usage: hideSquare.py <square id>")
 	squareid = int(sys.argv[1])
 
 	dbconf = sinedon.getConfig('leginon.leginondata')
@@ -29,15 +29,15 @@ if __name__ == '__main__':
 		+"   ON image.`REF|AcquisitionImageTargetData|target` = target.`DEF_id` "
 		+" WHERE target.`REF|AcquisitionImageData|image` = '"+str(squareid)+"' "
 	)
-	print query
+	print(query)
 	cursor.execute(query)
 	results = cursor.fetchall()
-	print "results: ", len(results)
+	print("results: ", len(results))
 	if len(results) == 0:
 		apDisplay.printError("No images found")
 
 	for r in results:
-		print r[0], apDisplay.short(r[1])
+		print(r[0], apDisplay.short(r[1]))
 		time.sleep(0.2)
 		hideImage(int(r[0]))
 		

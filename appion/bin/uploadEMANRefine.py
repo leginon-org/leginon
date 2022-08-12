@@ -290,7 +290,7 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 			clstar = tarfile.open(clsf)
 			clsnames = clstar.getnames()
 			clslist = clstar.getmembers()
-		except tarfile.ReadError, e:
+		except tarfile.ReadError as e:
 			apDisplay.printError("cannot open tarfile %s" % clsf)
 		for clsfile in clslist:
 			clstar.extract(clsfile, tmpdir)
@@ -382,7 +382,7 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 
 		try: 
 			f = open(fscfile, "r")
-		except IOError, e:
+		except IOError as e:
 			apDisplay.printWarning("%s file could not be opened, data will NOT be inserted into the database" % fscfile)
 			return False
 		
@@ -587,8 +587,8 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 				try:
 #					shutil.move(oldvol, newvol)
 					os.symlink(oldvol, newvol)
-				except IOError, e:
-					print e
+				except IOError as e:
+					print(e)
 
 			### make chimera snapshot of volume
 			self.createChimeraVolumeSnapshot(newvol, iteration)

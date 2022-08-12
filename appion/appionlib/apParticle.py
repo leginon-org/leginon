@@ -179,11 +179,11 @@ def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2
 		remaining_peaks = len(peaktree1)-count
 		if count and remaining_peaks and remaining_peaks % 50 == 0:
 			#sys.stderr.write("<"+str(len(peaktree1)-count))
-			print ("%d particles remain, %s time remains, %s per particle, %s last 50 particles"
+			print(("%d particles remain, %s time remains, %s per particle, %s last 50 particles"
 				%(len(peaktree1)-count, 
 				apDisplay.timeString((time.time() - t0)/count*(remaining_peaks)),
 				apDisplay.timeString((time.time() - t0)/count),
-				apDisplay.timeString(time.time()-last50),))
+				apDisplay.timeString(time.time()-last50),)))
 			last50 = time.time()
 		peakdict1 = peaktree1[i]
 		peakdict2 = peaktree2[i]
@@ -378,5 +378,5 @@ if __name__ == '__main__':
 	name = 'test2'
 	sessionname = '07jan05b'
 	params = 'test'
-	print params
+	print(params)
 

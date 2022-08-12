@@ -83,13 +83,13 @@ class DeleteHidden(appionLoop2.AppionLoop):
 
 			for filename in removefiles:
 				if self.params['dryrun'] is False:
-					print "deleting: %s"%filename
+					print("deleting: %s"%filename)
 					if os.path.isdir(filename):
 						shutil.rmtree(filename)
 					elif os.path.isfile(filename):
 						os.remove(filename)
 				else:
-					print "dryrun - won't delete: %s"%filename			
+					print("dryrun - won't delete: %s"%filename)			
 
 		else:
 			apDisplay.printMsg('%s will be kept' % (imgdata['filename']))

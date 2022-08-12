@@ -28,7 +28,7 @@ data.holdImages(False)
 #================
 def getSpecificImagesFromDB(imglist, sessiondata=None, msg=True):
 	if msg is True:
-		print "Querying database for "+str(len(imglist))+" specific images ... "
+		print("Querying database for "+str(len(imglist))+" specific images ... ")
 	imgtree=[]
 	for imgname in imglist:
 		if os.path.splitext(imgname)[-1] in [".mrc",".box",".pos",".star"]:
@@ -44,7 +44,7 @@ def getSpecificImagesFromDB(imglist, sessiondata=None, msg=True):
 		if len(imgres) >= 1:
 			imgtree.append(imgres[0])
 		else:
-			print imgres
+			print(imgres)
 			apDisplay.printWarning("Could not find image: "+imgname)
 	return imgtree
 
@@ -471,10 +471,10 @@ def getDarkNorm(sessionname, cameraconfig):
 	#print 'CAMQUERY', camquery
 	key = camkey(camquery)
 	if key in cache:
-		print 'using cache'
+		print('using cache')
 		return cache[key]
 
-	print 'querying dark,norm'
+	print('querying dark,norm')
 	sessionquery = leginon.leginondata.SessionData(name=sessionname)
 	darkquery = leginon.leginondata.DarkImageData(session=sessionquery, camstate=camquery)
 	#print 'DARKQUERY', darkquery
@@ -708,7 +708,7 @@ def getJobDataFromID(jobid):
 if __name__ == '__main__':
 	stackid = 442
 	stackdata = appiondata.ApStackData.direct_query(stackid)
-	print stackdata
+	print(stackdata)
 
 
 

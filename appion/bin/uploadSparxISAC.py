@@ -8,7 +8,7 @@ import sparx
 import numpy
 import pprint
 import random
-import cPickle
+import pickle
 import re
 from appionlib import apFile
 from appionlib import apEMAN2
@@ -200,7 +200,7 @@ class parseISAC(object):
 		temp.write_image(outputStack,0)
 	
 		#setup list of classes
-		unusedClasses = range(0, len(imageList))
+		unusedClasses = list(range(0, len(imageList)))
 		unusedClasses.remove(init)
 
 		#print unusedClasses
@@ -281,7 +281,7 @@ class parseISAC(object):
 			partEMDataList = sparx.EMData.read_images(partStack, particleList, not self.headerOnly)
 			classEMData = sparx.get_im(alignedClassStack, newClassNum)
 			totalPart += len(particleList)
-			print newClassNum, particleList
+			print(newClassNum, particleList)
 			for i in range(len(particleList)):
 				partEMData = partEMDataList[i]
 				partId = particleList[i]
@@ -328,14 +328,14 @@ class parseISAC(object):
 	#========================
 	def createPartList(self):
 		partList = []
-		partIdList = self.alignPartToOrigPartDict.keys()
+		partIdList = list(self.alignPartToOrigPartDict.keys())
 		partIdList.sort()
 		for newPartId in partIdList:
 			origPartId = self.alignPartToOrigPartDict[newPartId]
 			alignData = self.particleAlignData[origPartId]
 			newClassNum = self.particleClass[origPartId]
 			alpha, x, y, mirror, peak = alignData
-			print newClassNum,origPartId,"-->",newPartId
+			print(newClassNum,origPartId,"-->",newPartId)
 			genId, genClassNum = self.newClassToGenClass[newClassNum]
 			partDict = {
 				'refnum': newClassNum+1,
@@ -559,7 +559,7 @@ class UploadISAC(appionScript.AppionScript):
 		self.resdict = {}
 		boxsizetuple = apFile.getBoxSize(alignimagicfile)
 		boxsize = boxsizetuple[0]
-		for refnum in reflistsdict.keys():
+		for refnum in list(reflistsdict.keys()):
 			partlist = reflistsdict[refnum]
 			esttime = 3e-6 * len(partlist) * boxsize**2
 			if esttime > 2:
@@ -605,7 +605,7 @@ class UploadISAC(appionScript.AppionScript):
 		if not os.path.isfile(paramfile):
 			apDisplay.printError("Could not find run parameters file: "+paramfile)
 		f = open(paramfile, "r")
-		runparams = cPickle.load(f)
+		runparams = pickle.load(f)
 		if not 'localstack' in runparams:
 			runparams['localstack'] = self.params['timestamp']+".hed"
 		if not 'student' in runparams:

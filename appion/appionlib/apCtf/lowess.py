@@ -29,10 +29,10 @@ def distance(x, smoothing, h):
 	d = abs(dx-dy)
 	d = d/h
 	d = numpy.clip(d,0.0,1.0)
-	print "x=", numpy.around(x,2)
-	print "h=", numpy.around(h,2)
-	print "d=", numpy.around(d,2)
-	print "dsum=", numpy.around(d.sum(1),2)
+	print("x=", numpy.around(x,2))
+	print("h=", numpy.around(h,2))
+	print("d=", numpy.around(d,2))
+	print("dsum=", numpy.around(d.sum(1),2))
 
 #==================
 def getSmoothingSorted(x, smoothing):
@@ -128,7 +128,7 @@ def lowess(x, y, smoothing=0.667, iter=3):
 	fit = numpy.zeros(n)
 	delta = numpy.ones(n)
 	for iteration in range(iter):
-		for i in xrange(n):
+		for i in range(n):
 			weights = delta * w[:,i]
 			weights_mul_x = weights * x
 			b = numpy.array([(weights*y).sum(), (weights*y*x).sum()])
@@ -147,10 +147,10 @@ def lowess(x, y, smoothing=0.667, iter=3):
 
 def _test():
 	"""Run the Bio.Statistics.lowess module's doctests."""
-	print "Running doctests..."
+	print("Running doctests...")
 	import doctest
 	doctest.testmod()
-	print "Done"
+	print("Done")
 
 if __name__ == "__main__":
 	_test()

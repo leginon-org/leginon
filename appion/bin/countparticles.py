@@ -34,16 +34,16 @@ if __name__ == "__main__":
 
 	totals = {}
 	for runname in run_order:
-		print '%s:' % (runname)
+		print('%s:' % (runname))
 		labelcounts = counts[runname]
 		for label in label_order:
 			if label in labelcounts:
 				count = labelcounts[label]
-				print '  %s:  %s' % (label, count)
+				print('  %s:  %s' % (label, count))
 				if label in totals:
 					totals[label] += count
 				else:
 					totals[label] = count
-	print 'Total:'
-	for label,count in totals.items():
-		print '  %s:  %s' % (label, count)
+	print('Total:')
+	for label,count in list(totals.items()):
+		print('  %s:  %s' % (label, count))
