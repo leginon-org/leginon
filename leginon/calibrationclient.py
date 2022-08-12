@@ -2016,7 +2016,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		self.node.logger.info('correlating images for tilt %s' % (tilt1deg))
 		self.correlator.setImage(0, im0)
 		self.correlator.setImage(1, im1)
-		if correlation_type is 'phase':
+		if correlation_type == 'phase':
 			pc = self.correlator.phaseCorrelate()
 			if medfilt is True:
 				pc = scipy.ndimage.median_filter(pc, size=3)

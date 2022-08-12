@@ -52,7 +52,7 @@ class TomographySimu(leginon.acquisition.Acquisition):
 		self.tilts = tilts.Tilts()
 		self.exposure = exposure.Exposure()
 		self.prediction = prediction.Prediction()
-		if self.settings['simu tilt series'] is '':
+		if self.settings['simu tilt series'] == '':
 			self.settings['simu tilt series'] = '1'
 			self.setSettings(self.settings)
 		self.simuseries = int(self.settings['simu tilt series'])

@@ -279,7 +279,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 	def scaleMatrix(self):
 		par = self.parameter
-		if par is 'defocus':
+		if par == 'defocus':
 			self.logger.error('Not applicable to %s matrix' % (par))
 			return
 		calclient = self.parameters[par]
