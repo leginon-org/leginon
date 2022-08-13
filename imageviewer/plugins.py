@@ -76,6 +76,9 @@ class NumpyPlugin(Plugin):
         if self.fitclient:
             self.scale = min(float(crect.width)/self.array.shape[1],
                              float(crect.height)/self.array.shape[0])
+            if self.scale == 0.0:
+                # TODO figuring out why crect width and height are zero.
+                self.scale = 1.0
             self.divide_factor = int(math.ceil(1.0/self.scale))
             if self.divide_factor == 0:
                 # Zoom
@@ -153,11 +156,11 @@ class NumpyPlugin(Plugin):
         if self.array is None:
             return False
 
-        size = wx.Size(*self.rect.size)
+        size = wx.Size(*self.rect.Size)
         self.rect = self.getRect(clientregion)
         self.region = wx.Region(*self.rect)
 
-        return size == self.rect.size
+        return size == self.rect.Size
 
     def getXY(self, x, y):
         ix, iy, ih, iw = self.region.GetBox()
@@ -275,7 +278,7 @@ class ToolTipPlugin(Plugin):
         self.imagewindow.onUpdatePluginRegion(self)
 
     def _setXY(self, xy):
-        self.rect.position = xy + self.imagewindow.rect.position
+        self.rect.Position = xy + self.imagewindow.rect.Position
 
     def setXY(self, xy):
         self._setXY(xy)
@@ -299,7 +302,7 @@ class ToolTipPlugin(Plugin):
             regioniterator.Next()
 
     def updateBitmap(self):
-        bitmap = wx.EmptyBitmap(*self.rect.size)
+        bitmap = wx.EmptyBitmap(*self.rect.Size)
         dc = wx.MemoryDC()
         dc.SelectObject(bitmap)
         dc.SetPen(self.pen)
@@ -313,7 +316,7 @@ class ToolTipPlugin(Plugin):
         if not image.HasAlpha():
             image.InitAlpha()
         size = self.rect.width*self.rect.height
-        image.SetAlphaData(chr(127)*size)
+        image.SetAlpha(chr(127)*size)
         self.bitmap = image.ConvertToBitmap()
 
     def onUpdateClientRegion(self, clientregion):
@@ -337,7 +340,7 @@ class MagnifierPlugin(Plugin):
         self.border = 1
 
         self.rect = wx.Rect(0, 0, 196, 196)
-        self.scale = min(*self.rect.size)/32
+        self.scale = min(*self.rect.Size)/32
         self.region = self.getRegion()
 
     def getRegion(self):
@@ -353,7 +356,7 @@ class MagnifierPlugin(Plugin):
         return region
 
     def _setXY(self, xy):
-        self.rect.position = xy
+        self.rect.Position = xy
 
     def setXY(self, xy):
         self._setXY(xy)
@@ -374,7 +377,7 @@ class MagnifierPlugin(Plugin):
 
     def updateBitmap(self):
         scale = self.scale*self.imageplugin.scale
-        x, y = self.imageplugin.getXY(*self.rect.position)
+        x, y = self.imageplugin.getXY(*self.rect.Position)
         try:
             b = numpyimage.numpy2wxBitmap(self.imageplugin.array,
                   int(round(x*scale - self.rect.width/2.0)) + self.border,
@@ -390,7 +393,7 @@ class MagnifierPlugin(Plugin):
         except (AttributeError, ValueError):
             self.bitmap = None
             return
-        bitmap = wx.EmptyBitmap(*self.rect.size)
+        bitmap = wx.EmptyBitmap(*self.rect.Size)
         dc = wx.MemoryDC()
         dc.SelectObject(bitmap)
         dc.SetPen(self.pen)
@@ -409,7 +412,7 @@ class MagnifierPlugin(Plugin):
         if not image.HasAlpha():
             image.InitAlpha()
         size = self.rect.width*self.rect.height
-        image.SetAlphaData(chr(self.alpha)*size)
+        image.SetAlpha(chr(self.alpha)*size)
         self.bitmap = image.ConvertToBitmap()
 
     def onUpdateClientRegion(self, clientregion):

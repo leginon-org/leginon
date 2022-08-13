@@ -150,8 +150,8 @@ class Tools(wx.Panel):
         self.sizescaler = tools.SizeScaler(self, -1)
         self.valuescalebitmap = tools.ValueScaleBitmap(self, -1)
 
-        self.infobitmap.SetToolTipString('Info')
-        self.displaybitmap.SetToolTipString('Display')
+        self.infobitmap.SetToolTip('Info')
+        self.displaybitmap.SetToolTip('Display')
 
         self.infotool = tools.Information(self, -1)
         self.displaytool = tools.Display(self, -1)

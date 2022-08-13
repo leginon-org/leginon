@@ -112,7 +112,7 @@ def numpy2RGBImage(array, x=0, y=0, width=None, height=None,
 
 def numpy2wxImageZoom(*args, **kwargs):
     rgbimage = numpy2RGBImage(*args, **kwargs)
-    wximage = wx.EmptyImage(*rgbimage.size)
+    wximage = wx.Image(*rgbimage.size)
     wximage.SetData(numpil.pil_image_tostring(rgbimage))
     return wximage
 
@@ -177,7 +177,7 @@ def numpy2wxBitmap(array, x=0, y=0, width=None, height=None,
     if divide_factor > 1:
         return wx.BitmapFromImage(numpy2wxImageBin(array, x, y, width, height, imagewidth, imageheight, array_offset_x, array_offset_y, divide_factor, fromrange, filter))
     else:
-        return wx.BitmapFromImage(numpy2wxImageZoom(array, x, y, width, height, imagewidth, imageheight, fromrange, filter))
+        return wx.Bitmap(numpy2wxImageZoom(array, x, y, width, height, imagewidth, imageheight, fromrange, filter))
 
 if __name__ == '__main__':
     import Mrc

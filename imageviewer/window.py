@@ -11,7 +11,7 @@ class Window(wx.ScrolledWindow):
 
         self.rect = wx.Rect()
         self.rect.size = self.GetClientSize()
-        self.buffer = wx.EmptyBitmap(*self.rect.size)
+        self.buffer = wx.Bitmap(*self.rect.size)
 
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
         self.Bind(wx.EVT_PAINT, self.onPaint)
@@ -40,16 +40,19 @@ class Window(wx.ScrolledWindow):
                 updates.append(plugin.onUpdateClientRegion(clientregion))
                 if plugin.background:
                     plugin.region = wx.Region()
-                    plugin.region.UnionRegion(clientregion)
+                    plugin.region.Union(clientregion)
                 elif not plugin.ignoresize:
-                    self.pluginsregion.UnionRegion(plugin.region)
+                   if not plugin.region.IsEmpty():
+                       self.pluginsregion.Union(plugin.region)
             plugin.buffered = wx.Region()
-            plugin.buffered.UnionRegion(plugin.region)
-            plugin.buffered.IntersectRegion(clientregion)
+            if not plugin.region.IsEmpty():
+                plugin.buffered.Union(plugin.region)
+            plugin.buffered.Intersect(clientregion)
 
             if not plugin.hasalpha:
                 for p in self.plugins[:i]:
-                    p.buffered.SubtractRegion(plugin.region)
+                    if not plugin.region.IsEmpty():
+                        p.buffered.Subtract(plugin.region)
 
         return updates
 
@@ -141,9 +144,10 @@ class Window(wx.ScrolledWindow):
     def sourceBuffer(self, dc, sourceregion=None):
         for plugin in self.plugins:
             region = wx.Region()
-            region.UnionRegion(plugin.buffered)
-            if sourceregion is not None:
-                region.IntersectRegion(sourceregion)
+            if not plugin.buffered.IsEmpty():
+                region.Union(plugin.buffered)
+            if sourceregion is not None and not sourceregion.IsEmpty():
+                region.Intersect(sourceregion)
 
             if not region.IsEmpty():
                 plugin.draw(dc, region)
@@ -260,42 +264,53 @@ class Window(wx.ScrolledWindow):
         copyregions = {}
         sourceregion = wx.Region()
         for i, plugin in enumerate(self.plugins):
-            offset  = (plugin.region.GetBox().position
-                        - regions[i].GetBox().position)
+            offset  = tuple(plugin.region.GetBox().Position
+                        - regions[i].GetBox().Position)
             if updates[i]:
                 copyregion = wx.Region()
-                copyregion.UnionRegion(bufferedregions[i])
+                if not bufferedregions[i].IsEmpty():
+                    copyregion.Union(bufferedregions[i])
 
                 for j, p in enumerate(self.plugins[i+1:]):
                     if p.hasalpha:
-                        copyregion.SubtractRegion(regions[j + i + 1])
+                        if not regions[j + i + 1].IsEmpty():
+                            copyregion.Subtract(regions[j + i + 1])
                 if plugin.hasalpha:
                     for j in range(len(self.plugins[:i])):
-                        copyregion.SubtractRegion(regions[j])
+                        if not regions[j].IsEmpty():
+                            copyregion.Subtract(regions[j])
 
-                copyregion.Offset(offset.x, offset.y)
+                if not copyregion.IsEmpty():
+                    copyregion.Offset(offset.x, offset.y)
 
                 for p in self.plugins[i+1:]:
                     if p.hasalpha:
-                        copyregion.SubtractRegion(p.buffered)
+                        if not p.buffered.IsEmpty():
+                            copyregion.Subtract(p.buffered)
                 if plugin.hasalpha:
                     for p in self.plugins[:i]:
-                        copyregion.SubtractRegion(p.buffered)
+                        if not p.buffered.IsEmpty():
+                            copyregion.Subtract(p.buffered)
 
-                copyregion.IntersectRegion(plugin.buffered)
+                if not plugin.buffered.IsEmpty():
+                    copyregion.Intersect(plugin.buffered)
                 if offset not in copyregions:
                     copyregions[offset] = wx.Region()
-                sourceregion.UnionRegion(plugin.buffered)
-                sourceregion.SubtractRegion(copyregion)
-                copyregion.Offset(-offset.x, -offset.y)
-                copyregions[offset].UnionRegion(copyregion)
+                if not plugin.buffered.IsEmpty():
+                    sourceregion.Union(plugin.buffered)
+                if not copyregion.IsEmpty():
+                    sourceregion.Subtract(copyregion)
+                    copyregion.Offset(-offset.x, -offset.y)
+                if not copyregion.IsEmpty():
+                    copyregions[offset].Union(copyregion)
             else:
-                sourceregion.UnionRegion(plugin.buffered)
+                if not plugin.buffered.IsEmpty():
+                    sourceregion.Union(plugin.buffered)
 
         return sourceregion, copyregions
 
     def updateBuffer(self, sourceregion, copyregions, rect):
-        buffer = wx.EmptyBitmap(*rect.size)
+        buffer = wx.Bitmap(*rect.size)
         dc = wx.MemoryDC()
         dc.SelectObject(buffer)
         dc.SetDeviceOrigin(-rect.x, -rect.y)

@@ -16,11 +16,11 @@ class Display(wx.Panel):
 
         crosshairsbitmap = icons.icon('crosshairs')
         self.crosshairsbitmap = wx.StaticBitmap(self, -1, crosshairsbitmap)
-        self.crosshairsbitmap.SetToolTipString('Crosshairs')
+        self.crosshairsbitmap.SetToolTip('Crosshairs')
 
         magnifierbitmap = icons.icon('zoom')
         self.magnifierbitmap = wx.StaticBitmap(self, -1, magnifierbitmap)
-        self.magnifierbitmap.SetToolTipString('Magnifier')
+        self.magnifierbitmap.SetToolTip('Magnifier')
 
         self.sizer.Add(self.crosshairsbitmap, (0, 0), (1, 1), wx.ALIGN_CENTER)
         self.sizer.Add(self.magnifierbitmap, (0, 1), (1, 1), wx.ALIGN_CENTER)
@@ -158,7 +158,7 @@ class SizeScaler(wx.Choice):
         wx.Choice.__init__(self, parent, id, choices=choices)
         self.SetSelection(self.percentages.index(100))
         self.Bind(wx.EVT_CHOICE, self.onChoice)
-        self.SetToolTipString('Scale size')
+        self.SetToolTip('Scale size')
 
     def getScale(self):
         i = self.GetSelection()
@@ -180,7 +180,7 @@ class ValueScaleBitmap(wx.StaticBitmap):
     def __init__(self, parent, id,
                   extrema=(0, 255), fromrange=(0, 255), size=(192, 16)):
         wx.StaticBitmap.__init__(self, parent, id, size=size)
-        self.SetToolTipString('Scale values')
+        self.SetToolTip('Scale values')
         self.updateParameters(extrema, fromrange)
 
     def updateParameters(self, extrema=None, fromrange=None):
