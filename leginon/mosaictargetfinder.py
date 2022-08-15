@@ -129,6 +129,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.sq_prefs = None
 		self.mosaiccreated = threading.Event()
 		self.autofinderlock = threading.Lock()
+		self.userpause = threading.Event()
 		self.presetsclient = presets.PresetsClient(self)
 
 		self.mosaic.setCalibrationClient(self.calclients[parameter])
@@ -138,11 +139,14 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 
 		self.existing_targets = {}
 		self.last_xys = [] # last acquisition targets found in autofinder
+		self.mask_xys = []
 		self.clearTiles()
+		self.autotask_type = None
 
 		self.reference_target = None
 		self.setRefreshTool(self.settings['check method']=='remote')
 
+		self.addEventInput(event.NotifyTaskTypeEvent, self.handleNotifyTaskType)
 		self.addEventInput(event.SubmitMosaicTargetsEvent, self.handleSubmitMosaicTargets)
 
 		if self.__class__ == MosaicClickTargetFinder:
@@ -158,6 +162,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.notifyTargetReceiver()
 		self.autoSubmitTargets()
 
+	def handleNotifyTaskType(self, evt):
+		self.autotask_type = evt['task']
+
 	def notifyTargetReceiver(self):
 			'''
 			Notify Manager where the targets are sent to.
@@ -169,9 +176,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
 		if targetlistdoneevent:
-			self.logger.warning('Got real targetlistdone event')
+			self.logger.debug('Got real targetlistdone event')
 		else:
-			self.logger.warning('Handle fake targetlistdone event')
+			self.logger.debug('Handle fake targetlistdone event')
 		# wait until addTile thread is finished.
 		while self.autofinderlock.locked():
 			time.sleep(0.5)
@@ -184,10 +191,33 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			if count == 0 and self.settings['autofinder']:
 				self.logger.debug('auto target finder')
 				self.autoTargetFinder()
+		# Pause here from gui
+		if not self.userpause.is_set():
+			msg = 'autosubmit paused by user'
+			self.logger.info(msg)
+			if self.settings['autofinder']:
+				# Send this message to slack
+				msg += ' in session %s' % self.session['name']
+				msg = '%s %s' % (self.name, msg)
+				self.outputEvent(event.NodeLogErrorEvent(message=msg))
+			self.setStatus('user input')
+		self.userpause.wait()
+		self.setStatus('processing')
+		#
 		# trigger activation of submit button in the gui.
 		self.panel.doneTargetList()
-		# TODO: auto submit targets if from auto run.
+		# auto submit targets if from auto full run.
 		self.notifyAutoDone('atlas')
+		self.setStatus('idle')
+
+	def guiPauseBeforeSubmit(self):
+		self.userpause.clear()
+
+	def guiTargetMask(self, xys):
+		'''
+		get mask fitted shape vertices in a list of (x,y) at mosaic
+		'''
+		self.mask_xys = xys
 
 	def autoTargetFinder(self):
 		"""
@@ -223,6 +253,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		xytargets['acquisition']=[]
 		###################################
 		#
+		blobs = self.filterBlobsByMask(blobs)
 		xys = self.runBlobRankFilter(blobs, xytargets)
 		message = 'found %s squares' % (len(xys),)
 		self.last_xys = xys
@@ -306,6 +337,20 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		"""
 		self.terminated_remote = False
 		self.userpause.set()
+		# clear targets and not really submit if not full autoscreen
+		# because submitTargets call
+		# and self.userpause.set are both activated with gui submit tool.
+		if self.autotask_type == 'atlas':
+			self.displayDatabaseTargets()
+			# reset autotask_type to None so submit on the last autorun  grid is possible.
+			self.autotask_type = None
+			# trigger onTargetsSubmitted in the gui.
+			self.panel.targetsSubmitted()
+			return
+
+		if self.mosaicimage is None:
+			self.setStatus('idle')
+			return
 
 		if self.targetlist is None:
 			self.targetlist = self.newTargetList()
@@ -372,6 +417,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.targetmap = {}
 		self.mosaic.clear()
 		self.finder_mosaic.clear()
+		self.userpause.set()
 		self.targetlist = None
 		if self.settings['create on tile change'] in ('all', 'final'):
 			self.clearMosaicImage()
@@ -1125,6 +1171,17 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			self.settings['blobs']['max filter size'] = size_max
 			self.setSettings(self.settings, False)
 			return
+
+	def filterBlobsByMask(self, blobs):
+		if len(self.mask_xys) < 3:
+			return blobs
+		s = self.finder_scale_factor
+		finder_vertices = map((lambda x: (x[1]//s,x[0]//s)),self.mask_xys)
+		new_blobs = []
+		def blob_in_polygon(x):
+			return polygon.point_inside_polygon(x['center'][0], x['center'][1], finder_vertices)
+		blobs = filter((lambda x: blob_in_polygon(x.stats)), blobs)
+		return blobs
 
 	def runBlobRankFilter(self, finder_blobs, xytargets):
 		'''

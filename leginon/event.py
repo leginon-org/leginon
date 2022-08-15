@@ -467,6 +467,13 @@ class SubmitMosaicTargetsEvent(ControlEvent):
 	'Event that signals mosaic target finder to submit target'
 	pass
 
+class NotifyTaskTypeEvent(ControlEvent):
+	'Event telling a node to what autotask is being performed'
+	def typemap(cls):
+		return ControlEvent.typemap() + (
+			('task', str),
+		)
+	typemap = classmethod(typemap)
 
 class EmailEvent(Event):
 	'Event to send email'

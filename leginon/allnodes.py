@@ -260,6 +260,9 @@ noderegistry.registerNodeClass(BufferCycler,classtype)
 from leginon.conditioner import AutoNitrogenFiller
 noderegistry.registerNodeClass(AutoNitrogenFiller,classtype)
 
+from leginon.cfegconditioner import ColdFegFlasher
+noderegistry.registerNodeClass(ColdFegFlasher,classtype)
+
 from leginon.phaseplatealigner import PhasePlateAligner
 noderegistry.registerNodeClass(PhasePlateAligner,classtype)
 

@@ -32,6 +32,8 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 			help="method to transfer, e.g. --method=mv", type="choice", choices=['mv','rsync'], default='rsync' if sys.platform != 'win32' else "mv")
 		parser.add_option("--source_path", dest="source_path",
 			help="Mounted parent path to transfer, e.g. --source_path=/mnt/ddframes", metavar="PATH")
+		parser.add_option("--hidden_path", dest="hidden_path",
+			help="move bad files to this path on source instead of deleting them, e.g. --hidden_path=/mnt/ddframes", metavar="PATH")
 		parser.add_option("--camera_host", dest="camera_host",
 			help="Camera computer hostname in leginondb, e.g. --camera_host=gatank2")
 		parser.add_option("--destination_head", dest="dest_path_head",
@@ -56,6 +58,10 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 	def get_dst_head(self):
 		return self.getAndValidatePath('dest_path_head')
 
+	def get_hidden_path(self):
+		if 'hidden_path' in self.params:
+			return self.getAndValidatePath('hidden_path')
+
 	def removeEmptyFolders(self,path):
 		if not os.path.isdir(path):
 			return
@@ -75,6 +81,18 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 			print("Removing empty folder:", path)
 			######filedir operation########
 			os.rmdir(path)
+
+	def handleBadFile(self, src, method):
+		if self.hidden_path and os.path.abspath(self.hidden_path) == os.path.abspath(src):
+			# do nothing to itself
+			return
+		if not self.hidden_path or not os.path.isdir(self.hidden_path):
+			return self.cleanUp(src, method)
+		src_basename = os.path.basename(src)
+		newpath = os.path.join(self.hidden_path, src_basename)
+		shutil.move(src, newpath)
+		msg = 'moved rejected %s to %s' % (src, newpath)
+		print(msg)
 
 	def cleanUp(self,src, method):
 		if method == 'rsync' and not self.is_win32:
@@ -229,21 +247,18 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 
 	def _getUidGid(self, imdata):
 		# Get user id and group id of the image path to be used for frames_path
-		if sys.platform == 'win32':
-			uid, gid = 100, 100
-		else:
-			# use session record if available
-			if 'uid' in imdata['session'].keys() and imdata['session']['uid'] and imdata['session']['gid']:
-				return imdata['session']['uid'], imdata['session']['gid']
-			image_path = imdata['session']['image path']
-			try:
-				stat = os.stat(image_path)
-			except Exception as e:
-				print("    %s not accessible, either, for retrieving uid, gid, Use current path" % image_path)
-				stat = os.stat('./')
-			finally:
-				uid = stat.st_uid
-				gid = stat.st_gid
+		# use session record if available
+		if 'uid' in imdata['session'].keys() and imdata['session']['uid'] and imdata['session']['gid']:
+			return imdata['session']['uid'], imdata['session']['gid']
+		image_path = imdata['session']['image path']
+		try:
+			stat = os.stat(image_path)
+		except Exception as e:
+			print("    %s not accessible, either, for retrieving uid, gid, Use current path" % image_path)
+			stat = os.stat('./')
+		finally:
+			uid = stat.st_uid
+			gid = stat.st_gid
 		return uid, gid
 
 	def run(self):
@@ -251,6 +266,7 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 		mode_str = self.params['mode_str']
 		src_path = self.get_source_path()
 		print('Source path:  %s' % (src_path,))
+		self.hidden_path = self.get_hidden_path()
 		file_map = self.getFrameFileMap(src_path)
 		dst_head = self.get_dst_head()
 		if dst_head:

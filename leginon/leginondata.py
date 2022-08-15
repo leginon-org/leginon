@@ -3061,6 +3061,11 @@ class BufferCyclerSettingsData(ConditionerSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class ColdFegFlasherSettingsData(ConditionerSettingsData):
+	def typemap(cls):
+		return ConditionerSettingsData.typemap()
+	typemap = classmethod(typemap)
+
 class AutoFillerSettingsData(ConditionerSettingsData):
 	def typemap(cls):
 		return ConditionerSettingsData.typemap() + (

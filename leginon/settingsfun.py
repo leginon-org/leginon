@@ -53,6 +53,7 @@ def getDBAdminSettings(settingsclass, inst_alias, extra=None):
 		alias_fieldname = 'node name'
 	qdata = settingsclass()
 	qdata[alias_fieldname] = inst_alias
+	qdata['isdefault'] = True
 	if extra:
 		k,v = extra
 		qdata[k] = v

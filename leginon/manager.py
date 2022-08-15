@@ -1242,9 +1242,17 @@ class Manager(node.Node):
 			ievent['grid'] = None
 			ievent['stagez'] = self.autostagez
 			self.outputEvent(ievent, node_name, wait=False, timeout=None)
+		# let square finder node knows what the task is.
+		for class_name in self.square_finder_class_names:
+			node_name = self.auto_class_aliases[class_name]
+			if node_name is not None:
+				ievent = event.NotifyTaskTypeEvent()
+				ievent['task'] = task
+				self.outputEvent(ievent, node_name, wait=False, timeout=None)
 		self.auto_atlas_done.clear()
-		# TODO: Listen to atlas finished
+		# Listen to atlas finished
 		self.auto_atlas_done.wait()
+		#
 		if task == 'full':
 			#submit auto square target and move on.
 			class_names = filter((lambda x: self.auto_class_aliases[x] is not None), self.square_finder_class_names)

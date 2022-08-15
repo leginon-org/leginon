@@ -262,8 +262,8 @@ class MotionCor2_UCSF(DDFrameAligner):
 		total_rendered_frames = int_div
 		if modulo != 0:
 			total_rendered_frames += 1
-			lines.append('%d\t%d\t%.3f\n' % (1, modulo, raw_dose*modulo))
-		lines.append('%d\t%d\t%.3f\n' % (int_div*size, size, raw_dose*size))
+			lines.append('%d\t%d\t%.3f\n' % (modulo, modulo, raw_dose))
+		lines.append('%d\t%d\t%.3f\n' % (int_div*size+modulo, size, raw_dose))
 		filepath = os.path.abspath('./intfile.txt')
 		f = open(filepath,'w')
 		f.write(''.join(lines))
