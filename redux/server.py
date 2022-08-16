@@ -27,6 +27,7 @@ class RequestHandler(socketserver.StreamRequestHandler):
 
 	def run_process(self, request):
 		try:
+			request = request.decode()
 			kwargs = redux.utility.request_to_kwargs(request)
 			if 'pipeline' in kwargs:
 				pipeline = redux.pipeline.pipeline_by_preset(kwargs['pipeline'])
@@ -35,6 +36,9 @@ class RequestHandler(socketserver.StreamRequestHandler):
 			else:
 				pipeline = redux.pipeline.pipeline_by_preset('standard')
 			result = pipeline.process(**kwargs)
+			# most pipelines return str objects
+			if isinstance(result, str):
+				result = result.encode()
 			self.wfile.write(result)
 		except Exception as e:
 			error = 'REDUX ERROR %d %s'%(time.time(), e)
