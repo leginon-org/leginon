@@ -84,10 +84,12 @@ class UpdateLib:
 		rather than git clone.
 		'''
 		has_appiondbs = self.checkProcessingDB()
+		default_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470, 20369, 20840]
+		default_appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
 		### this seems so clunky, can we do this better
 		if branch_name == 'trunk' or branch_name == 'myami-beta' or branch_name == 'myami-pymysql':
-			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470, 20369, 20840]
-			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
+			schema_revisions = default_revisions
+			appion_only_revisions = default_appion_only_revisions
 		elif branch_name == 'myami-3.5':
 			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034,19470, 20369, 20840]
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
@@ -116,7 +118,9 @@ class UpdateLib:
 			schema_revisions = [12857,13713,14077,14380]
 			appion_only_revisions = [15293]
 		else:
-			raise ValueError("Unknown branch name %s"%(branch_name))
+			# Unknown branch name, use default like trunk and beta
+			schema_revisions = default_revisions
+			appion_only_revisions = default_appion_only_revisions
 		if has_appiondbs:
 			schema_revisions.extend(appion_only_revisions)
 			schema_revisions.sort()
