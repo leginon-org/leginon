@@ -33,6 +33,9 @@ def icon(name):
 	return bitmap
 
 def _icon(name):
+	# workaround for wx 4.1.1 bug showing bitmap alpha as black instead of transparency.
+	if name == 'null' and wx.__version__=='4.1.1':
+		name = 'null_white'
 	filename = '%s.png' % name
 	path = leginon.icons.getPath(filename)
 	image = wx.Image(path)

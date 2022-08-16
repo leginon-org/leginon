@@ -279,7 +279,7 @@ class SQLDict(object):
 		query = str(sqlexpr.Delete(tablename, where))
 		print('QUERY', query)
 		self.db.ping()
-		cur = self.db.cursor(cursor=MySQLdb.cursors.DictCursor)
+		cur = self.db.cursor(cursor=pymysql.cursors.DictCursor)
 		cur.execute(query)
 		cur.close()
 

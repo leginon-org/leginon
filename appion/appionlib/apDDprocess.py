@@ -1154,8 +1154,11 @@ class DDFrameProcessing(DirectDetectorProcessing):
 				normarray = normdata['image']
 				self.norm_path = os.path.join(frameprocess_dir,'norm-%s-%d.mrc' % (self.hostname,self.gpuid))
 				apDisplay.printWarning('Save Norm Reference %s to %s' % (normdata['filename'],self.norm_path))
-				mrc.write(normarray,self.norm_path)
-	
+				try:
+					mrc.write(normarray,self.norm_path)
+				except Exception as e:
+					apDisplay.printError('Norm array not saved. Possible problem of reading from %s' % normdata.getpath())
+
 	def getNormRefMrcPath(self):
 		return self.norm_path
 

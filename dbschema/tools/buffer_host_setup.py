@@ -17,6 +17,10 @@ class BufferHostSetter(scriptrun.ScriptRun):
 			help="Camera hostname to setup, e.g. --camera_host=scope1cam1")
 		parser.add_option("--change_status", dest="change_status", default=False,
 			action="store_true", help="Change status of the existing record")
+		parser.add_option("--prepend_to_full_path", dest="prepend_to_full_path", default=False,
+			action="store_true", help="Prepand base_path to the full path instead of before 'leginon'")
+		parser.add_option("--prepend_to_leginon", dest="prepend_to_full_path", default=False,
+			action="store_false", help="Prepand base_path to the full path instead of before 'leginon'")
 
 	def checkOptionConflicts(self,params):
 		camera_hostname = params['camera_host']
@@ -30,6 +34,7 @@ class BufferHostSetter(scriptrun.ScriptRun):
 	def run(self):
 		buffer_hostname = self.params['buffer_host']
 		buffer_base_path = self.params['base_path']
+		prepend_to_full_path = self.params['prepend_to_full_path']
 		for c in self.cameras:
 			q = leginondata.BufferHostData(ccdcamera=c)
 			q['buffer hostname']=self.params['buffer_host']
@@ -41,11 +46,20 @@ class BufferHostSetter(scriptrun.ScriptRun):
 				q['buffer hostname']=buffer_hostname
 				q['buffer base path']=buffer_base_path
 				q['disabled']= not last_status
+				q['append full head']=prepend_to_full_path
 				q.insert(force=True)
 				print('Camera %s is paired to Bufer host %s to be saved under %s' % (c['name'],buffer_hostname, buffer_base_path))
 				continue
 			else:
 				r = results[0]
+			if r['append full head'] != prepend_to_full_path:
+				# update and set to active.
+				q = "update BufferHostData set `append full head`='%s' where `DEF_id`=%d;" % (int(prepend_to_full_path), r.dbid)
+				directq.complexMysqlQuery('leginondata',q)
+				if prepend_to_full_path:
+					print('Set to prepend buffer base path to the full absolute frame path')
+				else:
+					print('Set to prepend buffer base path in front of the last instance of leginon string')
 			if r['buffer base path'] != buffer_base_path:
 				# update and set to active.
 				q = "update BufferHostData set `buffer base path`='%s', `disabled`='0' where `DEF_id`=%d;" % (buffer_base_path, r.dbid)

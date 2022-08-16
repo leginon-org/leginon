@@ -183,16 +183,6 @@ class RawTransfer(filetransfer.FileTransfer):
 			}
 		return frame_files
 
-	def _getUidGid(self, image_path):
-		# Get user id and group id of the image path to be used for frames_path
-		if sys.platform == 'win32':
-			uid, gid = 100, 100
-		else:
-			stat = os.stat(image_path)
-			uid = stat.st_uid
-			gid = stat.st_gid
-		return uid, gid
-
 	def getIntersectionImages(self, image_map, file_map):
 		imkeys = set(image_map.keys())
 		filekeys = file_map.keys()
@@ -229,7 +219,7 @@ class RawTransfer(filetransfer.FileTransfer):
 		dst_suffix = first['file']['suffix']
 		imdata = first['image']
 		image_path = imdata['session']['image path']
-		uid, gid = self._getUidGid(image_path)
+		uid, gid = self._getUidGid(imdata)
 		# move to a session temp directory on the same disk and then
 		# transfer since rsync is faster when doing the whole directory.
 		print('name changing and moved to the src_tmp_dir')
@@ -273,7 +263,7 @@ class RawTransfer(filetransfer.FileTransfer):
 		if first is False:
 			# no frames files to process.  May have other junks
 			return
-		uid, gid = self._getUidGid(image_path)
+		uid, gid = self._getUidGid(first)
 		# move the whole session together.
 		print('move dir to the dst_tmp_dir', dst_tmp_dir)
 		# make temp dst_path

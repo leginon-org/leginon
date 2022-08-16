@@ -60,6 +60,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		'target grouping': {
 			'total targets': 10,
 			'classes': 1,
+			'group method': 'value delta',
 		},
 		'target multiple':1,
 	}
@@ -75,13 +76,13 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			'on': True,
 			'border': 0,
 			'max': 100,
-			'min size': 10,
+			'min size': 10,  # used in blob-finding threshold
 			'max size': 10000,
-			'min mean': 1000,
+			'min mean': 1000, # used in filtering
 			'max mean': 20000,
 			'min stdev': 10,
 			'max stdev': 500,
-			'min filter size': 10,
+			'min filter size': 10, # used in filtering and sampling
 			'max filter size': 10000,
 		},
 	}
@@ -90,6 +91,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	eventoutputs = targetfinder.ClickTargetFinder.eventoutputs + [
 			event.MosaicDoneEvent]
 	targetnames = ['acquisition','focus','preview','reference','done','Blobs', 'example']
+	target_group_methods = ['value delta','target count']
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.mosaicselections = {}
@@ -1276,43 +1278,42 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 				self.publish(stats, database=True)
 		return good_blobs
 
+	def getGroupMethodChoices(self):
+		return self.target_group_methods
+
+	def _getBlobStatsKeyForGrouping(self):
+		return 'n'
+
+	def _getGrouperValueMinMax(self):
+		value_min = self.settings['blobs']['min filter size']
+		value_max = self.settings['blobs']['max filter size']
+		return value_min, value_max
+
+	def _setSampler(self, grouper, total_target_need):
+		return groupfun.BlobRandomSizeSampler(grouper, total_target_need, self.logger)
+
 	def sampleBlobs(self, blobs, total_targets_need):
-		'''
-		filter based on blob stats
-		'''
 		total_blobs = len(blobs)
 		if total_blobs <= total_targets_need:
 			# Nothing to do
+			self.logger.info('Number of filtered blobs (%d) < number of requested targets (%d). Use all.' % (total_blobs, total_targets_need))
 			return blobs
 		n_class = self.settings['target grouping']['classes']
-		index_groups = self.groupBlobsByKey(blobs, n_class, 'size')
-		# get a list at least as long as total_targets_need
-		sampling_order = range(n_class)*int(math.ceil(total_targets_need/float(n_class)))
-		# truncate the list
-		sampling_order = sampling_order[:total_targets_need]
-		samples = []
-		sample_indices =[]
-		for s in sampling_order:
-			# random sample without replacement
-			pick = random.sample(range(len(index_groups[s])),1)[0]
-			index = index_groups[s].pop(pick)
-			samples.append(blobs[index])
-			sample_indices.append(index)
-		return samples
-
-	def groupBlobsByKey(self, blobs, n_class, group_key='size'):
-		codes = list(map((lambda x: '%08d@%05d' % (blobs[x].stats[group_key],x)), range(len(blobs))))
-		codes.sort()
-		sorted_indices = list(map((lambda x: int(x.split('@')[-1])), codes))
-		if n_class == 1:
-			return [sorted_indices,]
-		total_blobs = len(blobs)
-		range_list = groupfun.calculateIndexRangesInClassEvenDistribution(total_blobs, n_class)
-		blob_index_in_bins = []
-		for c in range(n_class):
-			start, end = range_list[c]
-			blob_index_in_bins.append(sorted_indices[start:end])
-		return blob_index_in_bins
+		group_method = self.settings['target grouping']['group method']
+		stats_key = self._getBlobStatsKeyForGrouping()
+		try:
+			if group_method == 'value delta':
+				grouper = groupfun.EqualValueDeltaIndexGrouper(blobs, n_class, stats_key)
+				value_min, value_max = self._getGrouperValueMinMax()
+				grouper.setValueMinMax(value_min, value_max)
+			else:
+				grouper = groupfun.EqualCountBlobIndexGrouper(blobs, n_class, stats_key)
+			grouper.groupBlobIndex()
+			sampler = self._setSampler(grouper, total_targets_need)
+			return sampler.sampleBlobs()
+		except Exception as e:
+			self.logger.error('sampling error: %s' % e)
+			return []
 
 	def checkSettings(self,settings):
 		# always queuing. No need to check "wait for process" conflict

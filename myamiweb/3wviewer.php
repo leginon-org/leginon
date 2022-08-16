@@ -113,8 +113,9 @@ $view2->setParam('aceruns',$aceruns);
 $view2->setDataTypes($datatypes);
 $view2->setSize(512);
 $view2->setSpan(2,2);
-$view2->displayDeqIcon(true);
 $view2->displayDDIcon(true);
+$view2->displayDeqIcon(true);
+$view2->displaySortIcon(true);
 $view2->displayComment(true); 
 $viewer->add($view2);
 

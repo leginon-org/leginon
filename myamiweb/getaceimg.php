@@ -43,15 +43,46 @@ $basename = $ctfdata[$graph];
 if ($_GET['g'] == 3 && !$basename) $basename = $ctfdata["graph1"];
 
 if (!$basename) {
-	header('Content-type: '.$imagemime);
+	header('Content-type: image/png');
 	$blkimg = blankimage(256, 64, "CTF $graph not created");
 	imagepng($blkimg);
 	imagedestroy($blkimg);
 	exit(1);
 }
+
+function is_redux_error($img) {
+    return strpos($img, 'REDUX ERROR') === 0;
+}
+
+function echo_image($img) {
+	header("Content-Type: image/jpeg");
+	header("Content-Length: " . strlen($img));
+	echo($img);
+}
+
 $opfile = $ctfdata['path'].'/opimages/'.$basename;
 $rtfile = $ctfdata['path'].'/'.$basename;
-$key = "opimages/";
+
+$img_requester = new imageRequester();
+foreach (array($rtfile, $opfile) as &$path) {
+    $img = $img_requester->requestImage($path, 'JPEG');
+    if (!is_redux_error($img)) {
+		echo_image($img);
+		exit;
+    }
+}
+
+error_log($img);
+
+header('Content-type: image/png');
+$blkimg = blankimage(256, 64, "CTF $graph file not found");
+imagepng($blkimg);
+imagedestroy($blkimg);
+
+exit(1);
+
+// .......................... not reached ..............................
+
 if (file_exists($rtfile))
 	$filename=$rtfile;
 elseif (file_exists($opfile))

@@ -85,10 +85,13 @@ class CorrectorClient(cameraclient.CameraClient):
 		this will not try to access a file on an unmounted disk which freezes the program.
 		'''
 		if ref_path and ref_path not in ref['session']['image path']:
-			self.logger.warning('Searching only reference in %s' % ref_path)
+			self.logger.info('Searching only reference in %s' % ref_path)
 			ref = self.researchReferenceOnlyInPath(refimageq, ref_path)
+			if not hasattr(ref,'dbid'):
+				return None
 		if not hasattr(ref,'imagereadable') or not ref.imagereadable():
-			self.logger.error('%s data id=%d found but its image array not readable' % (type, ref.dbid))
+			if hasattr(ref,'dbid'):
+				self.logger.error('%s data id=%d image array not readable' % (type, ref.dbid))
 			return None
 
 		shape = ref.imageshape() # read shape without loading the array
@@ -641,41 +644,7 @@ class CorrectorClient(cameraclient.CameraClient):
 						image[:,bad] = image[:,good]
 
 	def createReferenceSession(self):
-		session_name = None
-		for suffix in 'abcdefghijklmnopqrstuvwxyz':
-			maybe_name = time.strftime('%y%b%d_ref_'+suffix).lower()
-			try:
-				leginon.session.makeReservation(maybe_name)
-			except leginon.session.ReservationFailed:
-				continue
-			else:
-				session_name = maybe_name
-				break
-		if session_name is None:
-			raise RuntimeError('no reference session name determined')
-
-		ref_directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.REF_PATH)
-		if ref_directory is None:
-			# equivalent of leginonconfig.IMAGE_PATH but based on the possibly
-			# modified session image path.
-			this_session_directory = os.path.dirname(self.session['image path'].split(self.session['name'])[0])
-			directory = this_session_directory
-		else:
-			directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.REF_PATH)
-
-		imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), session_name, 'rawdata').replace('\\', '/')
-
-		initializer = {
-			'name': session_name,
-			'comment': 'reference images',
-			'user': self.session['user'],
-			'image path': imagedirectory,
-			'hidden' : True,
-		}
-		session = leginondata.SessionData(initializer=initializer)
-		session.insert()
-		refsession = leginondata.ReferenceSessionData(session=session)
-		refsession.insert()
+		session = leginon.session.createReferenceSession(self.session['user'], self.session)
 		return session
 
 	def getReferenceSession(self):

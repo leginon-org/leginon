@@ -1100,7 +1100,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def park(self):
 		# also go to highest mag.
-		self.parkAtHighMag()
+		try:
+			self.parkAtHighMag()
+		except Exception as e:
+			self.logger.warning('preset setting error during parking, not fatal')
 		super(Acquisition,self).park()
 		
 	def notifyNodeBusy(self):

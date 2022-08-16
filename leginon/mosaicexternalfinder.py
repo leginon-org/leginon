@@ -109,6 +109,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		'target grouping': {
 			'total targets': 10,
 			'classes': 1,
+			'group method': 'value delta',
 		},
 		'target multiple':1,
 	}
@@ -270,67 +271,21 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		self.logger.info('Filtering number of blobs down number to %d' % len(good_blobs))
 		return good_blobs
 
-	def sampleBlobs(self, blobs, total_targets_need):
-		'''
-		first sort into three classes by size, and then take the top scorers
-		to return.
-		'''
-		total_blobs = len(blobs)
-		if total_blobs <= total_targets_need:
-			# Nothing to do. Take all.
-			return blobs
-		n_class = self.settings['target grouping']['classes']
-		key = self._mapBlobStatsKey(self.settings['filter-key'])
-		index_groups = self.groupBlobsByKey(blobs, n_class, key)
-		range_list = groupfun.calculateIndexRangesInClassEvenDistribution(total_targets_need, n_class)
-		# number_of_samples_in_classes
-		nsample_in_classes = list(map((lambda x: x[1]-x[0]), range_list))
-		# final blobs sampled
-		samples = []
-		for c in range(n_class):
-			# n of blobs to sample in the class
-			nsample = nsample_in_classes[c]
-			# sampled blobs
-			sample_blobs_in_class = []
-			# sampled blob indices
-			sample_indices = []
-			nblobs = len(index_groups[c])
-			if nsample >= nblobs:
-				blobs_in_class = map((lambda x: blobs[x]), index_groups[c])
-				sample_indices = index_groups[c]
-				if nsample > nblobs:
-					self.logger.error('group should have more or equal nsample by area: (%d vs %d)' % (len(sample_blobs_in_class), nsample))
-					nsample_in_classes[c+1] += nsample - nblobs
-			else:
-				sample_blobs_in_class, sample_indices = self._sampleByTopScorer(blobs, nsample, index_groups[c], c)
-			samples.extend(sample_blobs_in_class)
-		return samples
+	def _getGrouperValueMinMax(self):
+		value_min = self.settings['filter-min']
+		value_max = self.settings['filter-max']
+		return value_min, value_max
 
-	def _sampleByTopScorer(self, blobs, nsample, indices, class_index):
-		# use dictionary key sorting to get top scored blobs
-		blob_indices_at_score_in_class = {}
-		for i in indices:
-			score = blobs[i].stats['score']
-			if score not in blob_indices_at_score_in_class.keys():
-				blob_indices_at_score_in_class[score] = []
-			blob_indices_at_score_in_class[score].append(i)
-		# sort the blobs by score in float
-		keys = list(blob_indices_at_score_in_class.keys())
-		keys.sort()
-		keys.reverse()
-		sample_blobs_in_class = []
-		sample_indices = []
-		for j, score in enumerate(keys):
-			if len(sample_indices) >= nsample:
-					break
-			# there may be multiple blobs at the same score
-			for i in blob_indices_at_score_in_class[score]:
-				sample_blobs_in_class.append(blobs[i])
-				sample_indices.append(i)
-				if len(sample_indices) == nsample:
-					break
-		self.logger.info('score range sampled for blob area group %d: %.3f to %.3f' % (class_index+1, keys[0], keys[j]))
-		return sample_blobs_in_class, sample_indices
+	def _setSampler(self, grouper, total_target_need):
+		return groupfun.BlobTopScoreSampler(grouper, total_target_need, self.logger)
+
+	def _getBlobStatsKeyForGrouping(self):
+		return self.settings['filter-key'].lower()
+
+	def _getIndexRangeByValueClass(self, codes, n_class,s):
+		value_min = self.settings['filter-min']*s
+		value_max = self.settings['filter-max']*s
+		return groupfun.calculateIndexRangesInClassValue(codes, n_class, value_min, value_max)
 
 class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 	"""

@@ -8,7 +8,7 @@ from leginon import leginonconfig
 import sinedon.newdict
 import sinedon.data
 import os
-from pyami import weakattr
+from pyami import weakattr, fileutil
 from leginon import projectdata
 
 Data = sinedon.data.Data
@@ -89,7 +89,8 @@ class SessionData(Data):
 			('comment', str),
 			('holder', GridHolderData),
 			('hidden', bool),
-			('remote passcode', str),
+			('uid', int),
+			('gid', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -696,11 +697,19 @@ class ImageData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
-	def getpath(self):
-		'''return image path for this image'''
+	def getpath(self, read=True):
+		'''return image path for this image. Local cache is first checked if read is True.
+			Define environment variable LEGINON_READONLY_IMAGE_PATH and rsync
+			the global image path under it.
+		'''
 		try:
 			impath = self['session']['image path']
 			impath = leginonconfig.mapPath(impath)
+			if read:
+				# access cache
+				fullname = fileutil.getExistingCacheFile(impath, self.filename())
+				if fullname:
+					impath = os.path.dirname(fullname)
 		except:
 			raise
 			impath = os.path.abspath(os.path.curdir)
@@ -711,7 +720,7 @@ class ImageData(InSessionData):
 		create a directory for this image file if it does not exist.
 		return the full path of this directory.
 		'''
-		impath = self.getpath()
+		impath = self.getpath(read=False)
 		leginonconfig.mkdirs(impath)
 		return impath
 
@@ -1924,7 +1933,7 @@ class RegionFinderSettingsData(TargetFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class BlobFinderSettingsData(Data):
+class BlobFinderSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
 			('on', bool),
@@ -1941,11 +1950,12 @@ class BlobFinderSettingsData(Data):
 		)
 	typemap = classmethod(typemap)
 
-class TargetGroupingSettingsData(Data):
+class TargetGroupingSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
 			('total targets', int),
 			('classes', int),
+			('group method', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -3134,6 +3144,7 @@ class BufferHostData(DigitalCameraData):
 			('buffer hostname', str),
 			('buffer base path', str),
 			('disabled', bool),
+			('append full head', bool),
 		)
 	typemap = classmethod(typemap)
 

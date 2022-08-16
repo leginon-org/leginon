@@ -65,7 +65,6 @@ class MosaicTargetMaker(TargetMaker):
 	}
 	eventinputs = TargetMaker.eventinputs + [event.MakeTargetListEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
-		print('subclass targetmaker.__init__ started')
 		TargetMaker.__init__(self, id, session, managerlocation, **kwargs)
 		self.pixelsizecalclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.addEventInput(event.MakeTargetListEvent, self.handleMakeTargetList)
