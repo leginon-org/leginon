@@ -30,6 +30,8 @@ if cache_on.strip().lower() in ('yes','on','true'):
 	config['cache disk size'] = configparser.getint('cache','disksize')
 	config['cache mem size'] = configparser.getint('cache','memsize')
 config['log file'] = configparser.get('log', 'file')
+if configparser.has_section('webimg'):
+	config['webimg.path'] = configparser.get('webimg', 'path')
 
 def printConfig():
 	'''
