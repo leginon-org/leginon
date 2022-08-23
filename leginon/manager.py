@@ -1255,7 +1255,7 @@ class Manager(node.Node):
 		#
 		if task == 'full':
 			#submit auto square target and move on.
-			class_names = filter((lambda x: self.auto_class_aliases[x] is not None), self.square_finder_class_names)
+			class_names = list(filter((lambda x: self.auto_class_aliases[x] is not None), self.square_finder_class_names))
 			if class_names:
 				node_name = self.auto_class_aliases[class_names[0]]
 				self.auto_done.clear()

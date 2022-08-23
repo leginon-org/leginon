@@ -33,7 +33,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		self.imagepanel.selectiontool.setEnableSettings('focus', False)
 
 		self.toolbar.InsertTool(3, leginon.gui.wx.ToolBar.ID_PAUSE,
-			'pause',shortHelpString='Pause before Autosubmit')
+			'pause',shortHelp='Pause before Autosubmit')
 		self.toolbar.InsertSeparator(4)
 
 		self.toolbar.InsertTool(5, leginon.gui.wx.ToolBar.ID_TILES,

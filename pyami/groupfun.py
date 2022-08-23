@@ -34,7 +34,7 @@ def calculateIndexRangesInClassValue(all_codes, n_class, min_val, max_val):
 	'''
 	Return an index ranage list of (start, end) to create equal value group.
 	'''
-	values = map((lambda x: int(x.split('@')[0])), all_codes)
+	values = list(map((lambda x: int(x.split('@')[0])), all_codes))
 	total = len(all_codes)
 	range_list = list(n_class*[False])
 	# divide into n_class value ranges
