@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import scipy.fftpack
+import pyfftw
 import numpy
 
 from . import calc_base
