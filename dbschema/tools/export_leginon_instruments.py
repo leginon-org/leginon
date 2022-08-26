@@ -32,7 +32,11 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 		if len(params) > 2:
 			self.hostnames = params[2].split(',')
 
-		self.instruments = self.getSourceInstrumentData(exclude_sim=False)
+		if len(params) > 3:
+			include_sim = params[3] # boolean
+		else:
+			include_sim = False
+		self.instruments = self.getSourceInstrumentData(exclude_sim=not include_sim)
 
 	def getSourceInstrumentData(self, exclude_sim=False):
 		kwargs = {}
