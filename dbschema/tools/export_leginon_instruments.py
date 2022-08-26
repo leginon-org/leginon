@@ -44,6 +44,8 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 		results = q.query()
 		real_instruments = []
 		for r in results:
+			if r['hidden']:
+				continue
 			if (not exclude_sim or not r['name'].startswith('Sim')) and not r['hostname'] in ('fake','appion'):
 				if not self.hostnames or r['hostname'] in self.hostnames:
 					# specific name if have specification
