@@ -291,7 +291,8 @@ class CentosInstallation(object):
 		self.runCommand("pip install joblib==0.10.3")		
 		self.runCommand("pip install slackclient==1.0.0")
 		self.runCommand("pip install PyMySQL==0.10.1") #https://emg.nysbc.org/redmine/issues/11689
-
+		self.runCommand("pip install future") #this is for pyami/mrc.py
+		
 	def setupWebServer(self):
 		self.writeToLog("--- Start install Web Server")
 		#myamiweb yum packages
