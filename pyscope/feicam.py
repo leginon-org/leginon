@@ -407,21 +407,21 @@ class FeiCam(ccdcamera.CCDCamera):
 		try:
 			self.finalizeSetup()
 			self.custom_setup()
-		except Exception, e:
+		except Exception as e:
 			if self.getDebugCamera():
-				print 'Camera setup',e
+				print('Camera setup',e)
 			raise RuntimeError('Error setting camera parameters: %s' % (e,))
 		normpath = self.getNormImagePath()
 		if not normpath:
 			raise RuntimeError('Error finding saved norm image')
 		if self.getDebugCamera():
-			print 'loading', normpath
+			print('loading', normpath)
 		from pyami import tifffile
 		tif = tifffile.TIFFfile(normpath)
 		arr = tif.asarray()
 		self.image_metadata = {}
 		if self.getDebugCamera():
-			print 'got arr and to modify'
+			print('got arr and to modify')
 		arr = self.modifyImage(arr)
 		return arr
 
@@ -432,16 +432,16 @@ class FeiCam(ccdcamera.CCDCamera):
 		try:
 			self.finalizeSetup()
 			self.custom_setup()
-		except Exception, e:
+		except Exception as e:
 			if self.getDebugCamera():
-				print 'Camera setup',e
+				print('Camera setup',e)
 			raise RuntimeError('Error setting camera parameters: %s' % (e,))
 		rk = self._getConfig('readout')
 		limit_dim = self.limit_dim[rk]
 		arr = numpy.zeros((limit_dim['y'],limit_dim['x']))
 		self.image_metadata = {}
 		if self.getDebugCamera():
-			print 'got arr and to modify'
+			print('got arr and to modify')
 		arr = self.modifyImage(arr)
 		return arr
 	def _getImage(self):
@@ -862,7 +862,7 @@ class Falcon3(FeiCam):
 				# Use all available frames
 				max_nframes = self.camera_settings.CalculateNumberOfFrames()
 				if self.getDebugCamera():
-					print 'n base frames', max_nframes
+					print('n base frames', max_nframes)
 				rangelist = self.frameconfig.makeRangeListFromNumberOfBaseFramesAndFrameTime(max_nframes,frame_time_second)
 				if self.getDebugCamera():
 					print('rangelist', rangelist, len(rangelist))

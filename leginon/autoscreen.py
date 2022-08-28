@@ -56,7 +56,7 @@ class SessionSetCreator(object):
 		q = projectdata.projectexperiments(session=old_session)
 		r = q.query()
 		if len(r) != 1:
-			print 'Project link of the old session is not unique'
+			print('Project link of the old session is not unique')
 			sys.exit(1)
 		return r[0]['project']
 
