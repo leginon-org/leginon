@@ -19,10 +19,10 @@ class CentosInstallation(object):
 		# redhat release related values
 		self.torqueLibPath = '/var/lib/torque/'
 
- 		self.redhatMajorRelease = '7'
+		self.redhatMajorRelease = '7'
 		# SHA-1 digest of a registration key provided by AMI. When we change the key that we give to
 		# registered users, we need to update this value.
-		self.regKeyHash = '4\xa3T\xf2KB\x0e\xd7\x1fk1\xfdb\xcd\x04\xdcH>\xcc\x8e'
+		self.regKeyHash = b'4\xa3T\xf2KB\x0e\xd7\x1fk1\xfdb\xcd\x04\xdcH>\xcc\x8e'
 
 	def checkDistro(self):
 
@@ -175,7 +175,7 @@ class CentosInstallation(object):
 		stdoutResult = proc.stdout.read()
 		stderrResult = proc.stderr.read()
 		print(stdoutResult)
-		sys.stderr.write(stderrResult)
+		sys.stderr.write(stderrResult.decode())
 		returncode = proc.wait()
 		if (stderrResult != ""):
 			self.writeToLog("--- Run Command Error ---")
@@ -193,11 +193,11 @@ class CentosInstallation(object):
 		stdoutResult = proc.stdout.read()
 		stderrResult = proc.stderr.read()
 		print((stdoutResult, stderrResult))
-		sys.stderr.write(stderrResult)
+		sys.stderr.write(stderrResult.decode())
 		returncode = proc.wait()
 		found=False
 		if pattern:
-			if pattern in stderrResult or pattern in stdoutResult:
+			if pattern in stderrResult.decode() or pattern in stdoutResult.decode():
 				found = True
 		else:
 			if not (stdoutResult or stderrResult):
@@ -252,7 +252,7 @@ class CentosInstallation(object):
 		# mpirun is not automatically available for use
 		filename = 'mpirun'
 		command = 'which %s' % (filename)
-		resultstring = self.runCommand(command)
+		resultstring = self.runCommand(command).decode()
 		if filename in resultstring:
 			self.writeToLog("mpirun already in path, nothing to do")
 			return True
@@ -287,10 +287,10 @@ class CentosInstallation(object):
 		self.linkMpiRun()
 
 	def processServerExtraPythonPackageInstall(self):
-		self.runCommand("yum install -y python2-pip")
-		self.runCommand("pip install joblib==0.10.3")		
-		self.runCommand("pip install slackclient==1.0.0")
-		self.runCommand("pip install PyMySQL==0.10.1") #https://emg.nysbc.org/redmine/issues/11689
+		self.runCommand("yum install -y python3-pip")
+		command = "wget -c https://emg.nysbc.org/redmine/projects/leginon/repository/revisions/myami-python3/raw/requirements.txt" 
+		self.runCommand(command)
+		self.runCommand("pip3 install -r ./requirements.txt")		
 
 	def setupWebServer(self):
 		self.writeToLog("--- Start install Web Server")
@@ -379,6 +379,7 @@ class CentosInstallation(object):
 				print("You need to run these command manually")
 				print(("mysqladmin -u root -p password %s" % 'your_host_root_passwd'))
 				print("mysqladmin -u root -p flush-privileges")
+				print("See https://www.digitalocean.com/community/tutorials/how-to-reset-your-mysql-or-mariadb-root-password")
 				return False
 		else:
 			self.writeToLog("mysql root password is %s" % self.dbPass)
@@ -420,7 +421,7 @@ class CentosInstallation(object):
 		# own place, rather than cluttering up /usr/bin or whatever.
 		pyprefix = self.runCommand('python -c "import sys;print sys.prefix"')
 		pyprefix = pyprefix.strip()
-		apbin = os.path.join(pyprefix, 'bin', 'appion')
+		apbin = os.path.join(pyprefix.decode(), 'bin', 'appion')
 		os.chdir(self.gitMyamiDir + 'appion')
 		self.runCommand('python setup.py install --install-scripts=%s' % (apbin,))
 		
@@ -449,7 +450,7 @@ class CentosInstallation(object):
 		# setup instruments configuration
 		pyscopeDir = self.runCommand('python -c "import pyscope; print pyscope.__path__[0]"')
 		pyscopeDir = pyscopeDir.strip()
-		self.setupPyscopeCfg(pyscopeDir)
+		self.setupPyscopeCfg(pyscopeDir.decode())
 
 		os.chdir(self.currentDir)		
 		if self.doInstallJobServerPackages:	
@@ -1198,16 +1199,15 @@ endif
 
 	def writeToLog(self, message):
 		logfile = open(self.currentDir + "/" + self.logFilename, 'a')
+		if type(message) == bytes: 
+			message = message.decode()
 		logfile.write(message + '\n')
 		logfile.close()
 			
 	def getMyami(self):
 		#TODO: handle "git: is already a working copy for a different URL" case
-
-
-                if os.path.exists(self.gitMyamiDir):
-
-                        shutil.rmtree(self.gitMyamiDir)
+		if os.path.exists(self.gitMyamiDir):
+			shutil.rmtree(self.gitMyamiDir)
 
 		self.runCommand(self.gitCmd)
 
@@ -1221,7 +1221,7 @@ endif
 		print("====================================")
 		print("")
 		
-		value = eval(input("Please enter the registration key. You must be registered at https://emg.nysbc.org/redmine to recieve a registration key: "))
+		value = input("Please enter the registration key. You must be registered at https://emg.nysbc.org/redmine to recieve a registration key: ")
 		value = value.strip()
 
 		self.regKey = value
@@ -1235,7 +1235,7 @@ endif
 			return False
 
 		# Set the admin email address
-		value             = eval(input("Please enter an email address: "))
+		value             = input("Please enter an email address: ")
 		value             = value.strip()
 		self.adminEmail   = value
 		
@@ -1245,7 +1245,7 @@ endif
 		self.serverRootPass   = password
 		
 		# Set the local timezone for use in the php.ini file
-		timezone      = eval(input("Please enter your timezone based on the available options listed at http://www.php.net/manual/en/timezones.php : "))
+		timezone      = input("Please enter your timezone based on the available options listed at http://www.php.net/manual/en/timezones.php : ")
 		timezone      = timezone.strip()
 		if ( timezone == "" ):
 			# provide a default timezone if it is empty
@@ -1274,7 +1274,7 @@ endif
 		'''
 		value = ""
 		while (value != "Y" and value != "y" and value != "N" and value != "n"): 
-			value = eval(input("%s(Y/N): " % questionText))
+			value = input("%s(Y/N): " % questionText)
 			value = value.strip()
 
 		if (value == "Y" or value == "y"):
@@ -1294,7 +1294,7 @@ endif
 	def checkRegistrationKey(self):
 		# used sha-1. This has been deprecated as of python 2.5.
 		# we now use the hashlib instead: http://docs.python.org/library/hashlib.html#module-hashlib
-		if (hashlib.sha1(self.regKey).digest() != self.regKeyHash):
+		if (hashlib.sha1(self.regKey.encode()).digest() != self.regKeyHash):
 			print("The registration key provided is incorrect. Exiting installation...")
 			self.writeToLog("ERROR: registration key (%s) is incorrect ---" % (self.regKey,))
 			return False
