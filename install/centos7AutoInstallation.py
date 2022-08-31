@@ -258,7 +258,7 @@ class CentosInstallation(object):
 			return True
 		# find the source in some bin directory and link it	
 		command = 'locate '+filename
-		resultstring = self.runCommand(command)
+		resultstring = self.runCommand(command).decode()
 		if ( filename not in resultstring ):
 			self.writeToLog("Failed to enable mpirun: link source not found")
 			return False
@@ -266,7 +266,7 @@ class CentosInstallation(object):
 			lines = resultstring.split('\n')
 			binMpiPath = None
 			for source in lines:
-				if source.split(filename) <2:
+				if len(source.split(filename)) <2:
 					continue
 				binMpiPath = source.split(filename)[0]
 				if len(binMpiPath.split('bin')) > 1:
