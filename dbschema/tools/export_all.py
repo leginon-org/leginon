@@ -49,7 +49,8 @@ class InstrumentExporter(Exporter):
 	json_dir = 'instrument'
 	def runAll(self):
 		from dbschema.tools import export_leginon_instruments
-		app = export_leginon_instruments.InstrumentJsonMaker(['',self.db_host])
+		include_sim = False
+		app = export_leginon_instruments.InstrumentJsonMaker(['',self.db_host, None, include_sim])
 		app.run()
 		self.instruments = app.instruments
 
