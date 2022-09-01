@@ -116,14 +116,14 @@ class SettingsJsonMaker(DataJsonMaker):
 			sessionq = leginondata.SessionData(user=sessiondata['user'])
 			q = self.makequery(classname,kwargs)
 			q['session'] = sessionq
-			r2 = q.query(results=1,timelimit='19000000000000\t%s' % (sessiontime,))
+			r2 = q.query(results=1,timelimit='19800101000000\t%s' % (sessiontime,))
 			if r2:
 				return r2
 		# search by isdefault
 		if found_by_user == False:
 			q = self.makequery(classname,kwargs)
 			q['isdefault'] = True
-			r2 = q.query(results=1,timelimit='19000000000000\t%s' % (sessiontime,))
+			r2 = q.query(results=1,timelimit='19800101000000\t%s' % (sessiontime,))
 			if r2:
 				return r2
 

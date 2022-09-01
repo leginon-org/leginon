@@ -29,7 +29,7 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:
 			raise ValueError('leginondata in sinedon.cfg not set to %s' % params[1])
-		if len(params) > 2:
+		if len(params) > 2 and params[2]:
 			self.hostnames = params[2].split(',')
 
 		if len(params) > 3:
