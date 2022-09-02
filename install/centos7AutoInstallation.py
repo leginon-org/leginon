@@ -244,7 +244,7 @@ class CentosInstallation(object):
 		
 		# install with python installer
 		os.chdir(unpackDirName)
-		command = "python setup.py install"
+		command = "python3 setup.py install"
 		self.runCommand(command)
 		os.chdir(self.currentDir)
 
@@ -419,11 +419,11 @@ class CentosInstallation(object):
 		# For the bin scripts, we add an extra directory level below
 		# the default location to keep all appion scripts in their
 		# own place, rather than cluttering up /usr/bin or whatever.
-		pyprefix = self.runCommand('python -c "import sys;print sys.prefix"')
+		pyprefix = self.runCommand('python3 -c "import sys;print sys.prefix"')
 		pyprefix = pyprefix.strip()
 		apbin = os.path.join(pyprefix.decode(), 'bin', 'appion')
 		os.chdir(self.gitMyamiDir + 'appion')
-		self.runCommand('python setup.py install --install-scripts=%s' % (apbin,))
+		self.runCommand('python3 setup.py install --install-scripts=%s' % (apbin,))
 		
 		# add a custom search path to appion.sh and appion.csh in profile.d
 		for ext,cmd,eq in (('sh','export','='),('csh','setenv',' ')):
@@ -448,7 +448,7 @@ class CentosInstallation(object):
 		self.setupAppionCfg("/usr/bin")
 
 		# setup instruments configuration
-		pyscopeDir = self.runCommand('python -c "import pyscope; print pyscope.__path__[0]"')
+		pyscopeDir = self.runCommand('python3 -c "import pyscope; print pyscope.__path__[0]"')
 		pyscopeDir = pyscopeDir.strip()
 		self.setupPyscopeCfg(pyscopeDir.decode())
 
