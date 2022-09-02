@@ -89,7 +89,7 @@ def setImageFilename(imagedata):
 def isSkipGrTileId():
 	is_skip = False
 	try:
-		is_skip = moduleconfig.getConfigured('leginon_session.cfg', 'leginon')['filename']['skip_gr_tile_id']
+		is_skip = moduleconfig.getConfigured('leginon_session.cfg', 'leginon', True)['filename']['skip_gr_tile_id']
 	except IOError as e:
 		pass
 	except KeyError:
