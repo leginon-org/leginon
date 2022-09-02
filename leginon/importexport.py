@@ -179,7 +179,9 @@ class XMLApplicationImport:
 	"""XMLApplicationImport: An object class which import an application.xml file
 	and convert into SQL queries"""
 
-	def __init__(self, filename):
+	def __init__(self, filename, db_name, db_engine='MyISAM'):
+		self.db_engine = db_engine
+		self.db_name = db_name
 		self.importXML(filename)
 
 	def getSQLApplicationQuery(self):
@@ -191,6 +193,9 @@ class XMLApplicationImport:
 	def getSQLDefinitionQueries(self):
 		return self.tablequeries
 
+	def getSQLHasTableQueries(self):
+		return self.hastablequeries
+
 	def getFieldValues(self):
 		return self.fieldvalues
 
@@ -198,6 +203,7 @@ class XMLApplicationImport:
 		self.fieldvalues={}
 		self.insertqueries=[]
 		self.tablequeries=[]
+		self.hastablequeries=[]
 		try:
 			xmlapp = dom.parse(filename)
 		except ExpatError:
@@ -205,6 +211,8 @@ class XMLApplicationImport:
 		definition = xmlapp.getElementsByTagName('definition')[0]
 		sdefinition = definition.getElementsByTagName('sqltable')
 		for d in sdefinition:
+			self.xmlHasTable(d)
+			self.hastablequeries.append(self.curhastable)
 			self.xmldefinition2sql(d)
 			self.tablequeries.append(self.cursqldef)
 
@@ -252,6 +260,10 @@ class XMLApplicationImport:
 		self.curinsert = sqlinsert
 		self.curfieldvalues = fieldvalues
 
+	def xmlHasTable(self, node):
+		tablename = node.attributes['name'].value
+		self.curhastable = "SELECT * FROM information_schema.tables WHERE table_schema = '%s' and table_name= '%s'" % (self.db_name, tablename)
+
 	def xmldefinition2sql(self, node):
 
 		tablename = node.attributes['name'].value
@@ -270,7 +282,8 @@ class XMLApplicationImport:
 			if n.nodeName == 'key':
 				sqlfields.append(n.firstChild.data)
 
-		sqldef = "CREATE TABLE IF NOT EXISTS `%s` ( %s )" % (tablename, ', '.join(sqlfields))
+		sqldef = "CREATE TABLE `%s` ( %s )" % (tablename, ', '.join(sqlfields))
+		sqldef += " ENGINE=%s" % self.db_engine
 		self.cursqldef = sqldef
 
 	def getAttribute(self, attributes, key):
@@ -286,6 +299,11 @@ class ImportExport:
 
 	def __init__(self, **dbparams):
 		self.db = sqldb.sqlDB(**dbparams)
+		self.db_name = dbparams['db']
+		if 'engine' in dbparams.keys() and dbparams['engine']:
+			self.db_engine = dbparams['engine']
+		else:
+			self.db_engine = 'MyISAM'
 		self.warning = ""
 		self.information = ""
 
@@ -299,13 +317,19 @@ class ImportExport:
 
 	def importApplication(self, filename):
 		try:
-			xmlapp = XMLApplicationImport(filename)
+			xmlapp = XMLApplicationImport(filename, self.db_name, self.db_engine)
 		except IOError,e:
 			raise ApplicationImportError(e)
 			return
 		# Create SQL tables
+		sqlhastable = xmlapp.getSQLHasTableQueries()
 		sqldef = xmlapp.getSQLDefinitionQueries()
-		for q in sqldef:
+		for i in range(len(sqldef)):
+			result = self.db.selectone(sqlhastable[i])
+			if result:
+				# do not create
+				continue
+			q = sqldef[i]
 			self.db.execute(q)
 
 		# Check if application exists
