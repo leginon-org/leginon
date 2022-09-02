@@ -79,8 +79,8 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			if r:
 				print "  Try rename the json file to %s+%s.json instead to match camera host" % (r[0]['hostname'], camname)
 			else:
-				print "  No %s camera found" % camname
-			sys.exit()
+				msg = "  No %s camera found" % camname
+				raise KeyError(msg)
 
 		cam = results[0]
 		return cam
@@ -104,8 +104,8 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		if len(r)==1:
 			t = r[0]
 			return t
-		print "  %d tem found matching host %s named %s" % (len(r),tem_host, tem_name) 
-		sys.exit()
+		msg = "  %d tem found matching host %s named %s" % (len(r),tem_host, tem_name) 
+		raise KeyError(msg)
 
 	def setSessionData(self):
 		# find administrator user
@@ -167,6 +167,10 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			sys.exit(1)
 
 if __name__=='__main__':
-	app = CalibrationJsonLoader(sys.argv)
+	try:
+		app = CalibrationJsonLoader(sys.argv)
+	except Exception as e:
+		print('ERROR: %s' % e)
+		sys.exit(1)
 	app.run()
 	 
