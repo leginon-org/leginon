@@ -77,7 +77,7 @@ class Reservation(object):
 def getSessionPrefix():
 	session_name = '<cannot suggest a name>'
 	try:
-		prefix = moduleconfig.getConfigured('leginon_session.cfg', 'leginon')['name']['prefix']
+		prefix = moduleconfig.getConfigured('leginon_session.cfg', 'leginon', True)['name']['prefix']
 	except IOError as e:
 		prefix = ''
 	except KeyError:
