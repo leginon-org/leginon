@@ -14,18 +14,18 @@ from . import icefinderback
 from pyami import imagefun, ordereddict
 import threading
 from . import ice
-import instrument
+from . import instrument
 import os.path
 import math
 import numpy
-import gui.wx.IceTargetFinder
-import version
+from .gui.wx import IceTargetFinder
+from . import version
 import itertools
 
 invsqrt2 = math.sqrt(2.0)/2.0
 
 class IceTargetFinder(targetfinder.TargetFinder):
-	panelclass = gui.wx.IceTargetFinder.Panel
+	panelclass = IceTargetFinder.Panel
 	settingsclass = leginondata.IceTargetFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({
