@@ -9,11 +9,11 @@
 #
 
 from leginon import leginondata
-import targetfinder
-import icefinderback
+from .  import targetfinder
+from . import icefinderback
 from pyami import imagefun, ordereddict
 import threading
-import ice
+from . import ice
 import instrument
 import os.path
 import math

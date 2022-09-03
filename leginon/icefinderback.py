@@ -13,9 +13,9 @@ import math
 import random
 from pyami import imagefun, mrc, arraystats, groupfun
 import pyami.circle
-import ice
+from . import ice
 import os
-import statshole
+from . import statshole
 
 ### Note:  we should create a base class ImageProcess
 ### which defines the basic idea of a series of operations on 
