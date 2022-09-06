@@ -80,6 +80,10 @@ def get_feiadv():
 		connection.instr = comtypes.client.CreateObject(type_name)
 		connection.acq = connection.instr.Acquisitions
 		connection.csa = connection.acq.CameraSingleAcquisition
+		try:
+			connection.cca = connection.acq.CameraContinuousAcquisition
+		except:
+			connection.cca = None
 		connection.cameras = connection.csa.SupportedCameras
 	return connection
 
@@ -87,6 +91,7 @@ def get_feiadv_sim():
 	connection.instr = connection.Instrument
 	connection.acq = connection.instr.Acquisitions
 	connection.csa = connection.acq.CameraSingleAcquisition
+	connection.cca = connection.acq.CameraContinuousAcquisition
 	connection.cameras = connection.csa.SupportedCameras
 	return connection
 
@@ -133,6 +138,10 @@ class FeiCam(ccdcamera.CCDCamera):
 			if self.camera_name is not None:
 				self._ccd = self.getCamera()
 			return self._ccd
+		elif name == 'c_camera':
+			if self.camera_name is not None:
+				self._c_ccd = self.getContinuousCamera()
+			return self._c_ccd
 		else:
 			return ccdcamera.CCDCamera.__getattribute__(self, name)
 
@@ -280,7 +289,6 @@ class FeiCam(ccdcamera.CCDCamera):
 		readout is an index 0:Full,1:Half, 2:Quarter.
 		Binning is calculated from that.
 		exposure is the exposure time in seconds
-
 		'''
 		try:
 			if 'readout' in kwargs:
@@ -374,7 +382,6 @@ class FeiCam(ccdcamera.CCDCamera):
 				result=self._getFakeDark()
 			elif self.getExposureType() != 'norm':
 				result=self._getImage()
-				self.csa.Wait()
 			else:
 				result= self._getSavedNorm()
 			return result
@@ -452,6 +459,14 @@ class FeiCam(ccdcamera.CCDCamera):
 		'''
 		Acquire an image using the setup for this client.
 		'''
+		arr = self._getImageWithSingleAcquisition()
+		self.csa.Wait()
+		return arr
+
+	def _getImageWithSingleAcquisition(self):
+		'''
+		Acquire an image using CameraSingleAcquisition interface
+		'''
 		try:
 			self.finalizeSetup()
 			self.custom_setup()
@@ -462,7 +477,7 @@ class FeiCam(ccdcamera.CCDCamera):
 
 		t0 = time.time()
 
-		#TODO: Check if this is going to be an issue
+		# Wait for it to be ready
 		self.csa.Wait()
 		if self.getDebugCamera():
 			print 'done waiting before acquire'
@@ -712,19 +727,17 @@ class Ceta(FeiCam):
 	binning_limits = [1,2,4]
 	intensity_averaged = False
 
-class Falcon3(FeiCam):
-	name = 'Falcon3'
-	camera_name = 'BM-Falcon'
+class FrameCam(FeiCam):
+	name = 'FrameCam'
+	camera_name = 'To-be-overwritten'
 	binning_limits = [1,2,4]
 	electron_counting = False
 	base_frame_time = 0.025 # seconds
 	physical_frame_rate = 40 # frames per second
-	# non-counting Falcon3 is the only camera that returns array aleady averaged by frame
-	# to keep values in more reasonable range.
-	intensity_averaged = True
+	intensity_averaged = False
 
 	def __init__(self):
-		super(Falcon3,self).__init__()
+		super(FrameCam,self).__init__()
 		self.dfd = self.camera_settings.DoseFractionsDefinition
 		self.save_frames = False
 		self.frames_name = None
@@ -756,7 +769,7 @@ class Falcon3(FeiCam):
 		self.extra_protector_sleep_time = self.getFeiConfig('camera','extra_protector_sleep_time')
 
 	def setInserted(self, value):
-		super(Falcon3,self).setInserted(value)
+		super(FrameCame,self).setInserted(value)
 		if value == False:
 			# extra pause for Orius insert since Orius might think
 			# it is already inserted
@@ -766,6 +779,7 @@ class Falcon3(FeiCam):
 	def getSaveRawFrames(self):
 		'''Save or Discard'''
 		return self.save_frames
+
 	def setSaveRawFrames(self, value):
 		'''True: save frames, False: discard frames'''
 		self.save_frames = bool(value)
@@ -921,6 +935,17 @@ class Falcon3(FeiCam):
 	def getAlignFrames(self):
 		return self.align_frames
 
+class Falcon3(FrameCam):
+	name = 'Falcon3'
+	camera_name = 'BM-Falcon'
+	binning_limits = [1,2,4]
+	electron_counting = False
+	base_frame_time = 0.025 # seconds
+	physical_frame_rate = 40 # frames per second
+	# non-counting Falcon3 is the only camera that returns array aleady averaged by frame
+	# to keep values in more reasonable range.
+	intensity_averaged = True
+
 class Falcon3EC(Falcon3):
 	name = 'Falcon3EC'
 	camera_name = 'BM-Falcon'
@@ -978,4 +1003,192 @@ class Falcon4ECef(Falcon4EC):
 	intensity_averaged = False
 	base_frame_time = 0.02907 # seconds
 	physical_frame_rate = 250 # rolling shutter frames per second
+
+class Ceta2(FeiCam):
+	name = 'Ceta2'
+	camera_name = 'BM-Ceta2'
+	binning_limits = [1,2,4]
+	electron_counting = True
+	intensity_averaged = False
+	base_frame_time = 0.025 # seconds
+	physical_frame_rate = 40 # rolling shutter frames per second
+
+	def __init__(self):
+		self.unsupported = []
+		ccdcamera.CCDCamera.__init__(self)
+		self.save_frames = False
+		super(Ceta2, self)._connectToFEIAdvScripting()
+		self._connectToContinousFEIAdvScripting()
+		# set binning first so we can use it
+		self.setCameraBinnings()
+		self.setReadoutLimits()
+		self.initSettings()
+		self.setFrameFormatFromConfig()
+		self.save8x8 = True
+		if not SIMULATION:
+			self.tia_display = tia_display.TIA()
+
+	def __getattr__(self, name):
+		# When asked for self.camera, instead return self._camera, but only
+		# after setting the current camera id
+		if name == 'camera':
+			if self.camera_name is not None:
+				self._ccd = self.getCamera()
+			return self._ccd
+		elif name == 'c_camera':
+			if self.camera_name is not None:
+				self._c_ccd = self.getContinuousCamera()
+			return self._c_ccd
+		else:
+			return FrameCam.__getattribute__(self, name)
+
+	def getContinuousCamera(self):
+		for c in self.cca.SupportedCameras:
+			if c.Name == self.camera_name:
+				return c
+		return None
+
+	def _connectToContinousFEIAdvScripting(self):
+		'''
+		Connects to the ESVision COM server
+		'''
+		self.cca = connection.cca
+		# TODO: setCamera
+		this_c_camera = self.getContinuousCamera()
+		if this_c_camera is None:
+			raise ValueError('%s not found' % self.camera_name)
+		# set to this camera
+		self.cca.Camera = this_c_camera
+		# set attributes
+		self.c_camera = this_c_camera
+		self.c_camera_settings = self.cca.CameraSettings
+		self.c_camera_capabilities = self.c_camera_settings.Capabilities
+
+	def setContinuousConfig(self, **kwargs):
+		'''
+		Set commera settings.
+		readout is an index 0:Full,1:Half, 2:Quarter.
+		Binning is calculated from that.
+		exposure is the exposure time in seconds
+		'''
+		try:
+			if 'readout' in kwargs:
+				readout = kwargs['readout']
+				self.c_camera_settings.ReadoutArea = readout
+			if 'exposure' in kwargs:
+				exposure = kwargs['exposure']
+				self.c_camera_settings.RecordingDuration = exposure
+			if 'binning' in kwargs:
+				binning = kwargs['binning']
+				# binning can only be set by supported binning objects
+				b_index = self.binning_limits.index(binning['x'])
+				self.c_camera_settings.Binning = self.binning_limit_objs[b_index]
+		except:
+			raise
+
+	def finalizeContinuousSetup(self):
+		# final bin
+		binning = self.binning
+
+		# final range
+		unbindim = {'x':self.dimension['x']*binning['x'], 'y':self.dimension['y']*binning['y']}
+		unbinoff = {'x':self.offset['x']*binning['x'], 'y':self.offset['y']*binning['y']}
+		readout_key = self._getReadoutAreaKey(unbindim, unbinoff)
+		exposure = self.exposure/1000.0
+
+		# send it to camera
+		self.setContinuousConfig(binning= binning, readout=readout_key, exposure=exposure)
+
+	def _getImage(self):
+		'''
+		Acquire an image using the setup for this client.
+		'''
+		if self.getSaveRawFrames():
+			print('continous')
+			return self._getImageWithContinuousAcquisition()
+		else:
+			print('single')
+			arr = self._getImageWithSingleAcquisition()
+			self.csa.Wait()
+			return arr
+
+	def custom_setup(self):
+		self.frames_name = None
+
+	def getNumberOfFrames(self):
+		'''
+		This is number of the output frames. Only meaningful after getImage.
+		'''
+		#TODO
+		return int(math.ceil(self.exposure/1000/self.base_frame_time))
+
+	def getSaveRawFrames(self):
+		'''Save or Discard'''
+		print('get from Ceta2')
+		return self.save_frames
+
+	def setSaveRawFrames(self, value):
+		'''True: save frames, False: discard frames'''
+		self.save_frames = bool(value)
+
+	def getPreviousRawFramesName(self):
+		'''
+		TODO: Get frames name instead of self.frames_name
+		'''
+		return self.frames_name
+
+	def _getArrayFromFile(self):
+		'''
+		TODO: Get array to return.
+		'''
+		arr = numpy.array(range(18))
+		return self.base_fake_image*arr.std() + arr.mean()*numpy.ones((8,8))
+
+	def _getImageWithContinuousAcquisition(self):
+		'''
+		Acquire an image using CameraSingleAcquisition interface
+		'''
+		try:
+			self.finalizeContinuousSetup()
+			self.custom_setup()
+		except Exception, e:
+			if self.getDebugCamera():
+				print 'Camera setup',e
+			raise RuntimeError('Error setting camera parameters: %s' % (e,))
+
+		t0 = time.time()
+
+		if self.getDebugCamera():
+			print 'continuous camera can not wait before acquire'
+		try:
+			self.cca.Store()
+			t1 = time.time()
+			self.exposure_timestamp = (t1 + t0) / 2.0
+		except Exception, e:
+			if self.getDebugCamera():
+				print 'Camera acquire:',e
+		try:
+			arr = self._getArrayFromFile()
+		except Exception, e:
+			if self.getDebugCamera():
+				print 'Camera array:',e
+			raise RuntimeError('Camera Error in getting array: %s' % (e,))
+		try:
+			self.cca.Wait()
+		except Exception as e:
+			if self.getDebugCamera():
+				print('Camera wait failure',e)
+			raise RuntimeError('Camera Error in getting array: %s' % (e,))
+		if not SIMULATION:
+			# TODO: Does continuous mode output metadata ?
+			self.image_metadata = self.getMetaDataDict(self.im.MetaData)
+		else:
+			self.image_metadata = {}
+		if self.save_frames and self.save8x8:
+			arr = self.base_fake_image*arr.std() + arr.mean()*numpy.ones((8,8))
+			return arr
+		if self.getDebugCamera():
+			print('got arr and to modify')
+		arr = self.modifyImage(arr)
+		return arr
 

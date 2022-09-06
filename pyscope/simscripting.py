@@ -30,7 +30,7 @@ class CameraSingleAcquisition(object):
 	def __init__(self):
 		self.Camera = Camera()
 		self.CameraSettings = CameraSettings()
-		self.SupportedCameras = [SupportedCamera('BM-Falcon'),SupportedCamera('FEI_CAM')]
+		self.SupportedCameras = [SupportedCamera('BM-Falcon'),SupportedCamera('FEI_CAM'), SupportedCamera('BM-Ceta2')]
 		self.IsActive = False
 
 	def Acquire(self):
@@ -51,8 +51,6 @@ class CameraSingleAcquisition(object):
 		image_obj.MetaData.ImageSize.Height = image_shape[0]
 		image_obj.AsSafeArray = ar1
 		self.IsActive = False
-		nframes = len(self.CameraSettings.DoseFractionsDefinition.frame_range_list)
-		print 'movie nframes', nframes
 		if nframes > 0:
 			if not os.path.isdir(self.CameraSettings.PathToImageStorage):
 				raise RuntimeError('Intermediate File Path Not exists.')
@@ -68,6 +66,11 @@ class CameraSingleAcquisition(object):
 					ar = self.getSyntheticImage(image_shape)
 					mrc.append(ar,file_path)
 		return image_obj
+
+	def _getNFrames(self):
+		nframes = len(self.CameraSettings.DoseFractionsDefinition.frame_range_list)
+		print('movie nframes', nframes)
+		return nframes
 
 	def getSyntheticImage(self,shape):
 		mean = self.CameraSettings.ExposureTime * 1000.0
@@ -89,6 +92,31 @@ class CameraSingleAcquisition(object):
 				print 'waiting too long'
 				break
 		return
+
+class CameraContinuousAcquisition(CameraSingleAcquisition):
+	def __init__(self):
+		self.Camera = Camera()
+		self.CameraSettings = CameraSettings()
+		self.SupportedCameras = [SupportedCamera('BM-Ceta2')]
+		self.IsActive = False
+
+	def _getNFrames(self):
+		nframes = self.CameraSettings.calculateNumberOfFrames()
+		print('Continuous nframes', nframes)
+		return nframes
+
+	def Store(self):
+		while self.IsActive:
+			print 'waiting for other acquisition to finish'
+			time.sleep(0.2)
+		self.IsActive = True
+		time.sleep(0.5)
+		scale=float(2**(self.CameraSettings.ReadoutArea))
+		unbinned_image_shape = (int(camsize[0]/scale),int(camsize[1]/scale))
+		binning = self.CameraSettings.Binning.Width
+		image_shape = (int(unbinned_image_shape[0]/binning),int(unbinned_image_shape[1]/binning))
+		ar = self.getSyntheticImage(image_shape)
+		self.IsActive = False
 
 class Image(object):
 	def __init__(self):
@@ -139,6 +167,19 @@ class CameraSettings(object):
 		# rounding error. int(0.6/0.025) = 23. Multiply by 1000 resolves that.
 		return int(self.ExposureTime*1000 / (self.base_time*1000))
 
+class ContinouseCameraSettings(CameraSettings):
+	def __init__(self):
+		self.ExposureTime = 1.0
+		self.Binning = Binning()		
+		self.PathToImageStorage = '/Users/acheng/testdata'
+		self.SubPathPattern = 'frames'
+		self.ReadoutArea = 0
+		self.ElectronCounting = False
+		self.base_time = 0.025
+		self.Capabilities = Capabilities()
+		self.EER = False
+		self.RecordingDuration = 1.0
+
 class Camera(object):
 	def __init__(self):
 		self.Name = None
@@ -146,6 +187,7 @@ class Camera(object):
 class Acquisitions(object):
 	def __init__(self):
 		self.CameraSingleAcquisition = CameraSingleAcquisition()
+		self.CameraContinuousAcquisition = CameraContinuousAcquisition()
 
 class Instrument(object):
 	def __init__(self):
