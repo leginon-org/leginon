@@ -99,6 +99,21 @@ class ReferenceExporter(Exporter):
 			app = export_leginon_ref.ReferenceJsonMaker(['',self.db_host, cam_host, cam_name])
 			app.run()
 
+class BufferHostExporter(ReferenceExporter):
+	'''
+	Import bufferhost settings to a clean database.
+	'''
+	json_dir = 'bufferhost'
+
+	def runAll(self):
+		cams = self.getCCDCameras()
+		from dbschema.tools import export_leginon_bufferhost
+		for c in cams:
+			cam_host=c['hostname']
+			cam_name=c['name']
+			print('Exporting buffer hosts for %s:%s' % (cam_host,cam_name))
+			app = export_leginon_bufferhost.BufferHostJsonMaker(['',self.db_host, cam_host, cam_name])
+			app.run()
 
 from leginon import importexport
 from dbschema.tools import export_leginon_settings
@@ -231,4 +246,5 @@ if __name__=='__main__':
 	app2=AppExporter(app1.instruments)
 	app=PresetExporter(app1.instruments, app2.app_session_names)
 	app=ReferenceExporter(app1.instruments)
+	app=BufferHostExporter(app1.instruments)
 	mysqlReminder()
