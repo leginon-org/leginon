@@ -121,17 +121,17 @@ class leginondata {
 				$whereproject = ' ';
 			}
 
-			// These two filters, require us to go through each image, rather than sorting sessions = SLOW
+			// These two filters, require us to go through each preset, rather than sorting sessions = a bit slow
 			if (is_numeric($temId)) {
-				$jointem = "LEFT JOIN ".DB_LEGINON.".ScopeEMData scope on (scope.`DEF_id` = a.`REF|ScopeEMData|scope`) ";
-				$wheretem = "AND scope.`REF|InstrumentData|tem` = ".$temId." ";
+				$jointem = " ";
+				$wheretem = "AND preset.`REF|InstrumentData|tem` = ".$temId." ";
 			} else {
 				$jointem = ' ';
 				$wheretem = ' ';
 			}
 			if (is_numeric($camId)) {
-				$joincam = "LEFT JOIN ".DB_LEGINON.".CameraEMData c on (c.`DEF_id` = a.`REF|CameraEMData|camera`) ";
-				$wherecam = "AND c.`REF|InstrumentData|ccdcamera` = ".$camId." ";
+				$joincam = " ";
+				$wherecam = "AND preset.`REF|InstrumentData|ccdcamera` = ".$camId." ";
 			} else {
 				$joincam = ' ';
 				$wherecam = ' ';
@@ -143,16 +143,15 @@ class leginondata {
 				."s.name AS `name_org`, s.`DEF_timestamp` AS `stimestamp` ";
 
 			if (is_numeric($camId) or is_numeric($temId)) {
-				// This form of the query is VERY SLOW ~30-60 seconds
-				// excludes Sessions without images saved
-				// These two filters, require us to go through each image, rather than sorting sessions = SLOW
-				$q .= "FROM ".DB_LEGINON.".AcquisitionImageData AS a "
-					."LEFT JOIN ".DB_LEGINON.".SessionData AS s ON (s.`DEF_id` = a.`REF|SessionData|session`) ";
+				// This form of the query is MEDIUM SLOW ~6-15 seconds
+				// excludes Sessions without presets
+				// These two filters, require us to go through each preset, rather than sorting sessions = SLOW
+				$q .= "FROM ".DB_LEGINON.".PresetData AS preset "
+					."LEFT JOIN ".DB_LEGINON.".SessionData AS s ON (s.`DEF_id` = preset.`REF|SessionData|session`) ";
 				$q .= $jointem.$joincam;
-				$where .= " and a.`REF|SessionData|Session` IS NOT NULL ";
 				$where .= $wheretem.$wherecam;
 				$grouporder = " "
-					."GROUP BY a.`REF|SessionData|session` "
+					."GROUP BY s.`DEF_id` "
 					."ORDER BY s.DEF_timestamp DESC ";
 			} else {
 				// This form of the query is VERY FAST ~0.01 seconds

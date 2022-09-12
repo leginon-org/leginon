@@ -162,6 +162,18 @@ class ReferenceImporter(Importer):
 			app = import_leginon_ref.ReferenceJsonLoader(['',self.db_host, c])
 			app.run()
 
+class BufferHostImporter(Importer):
+	'''
+	Import buffer host settings to a clean database.
+	'''
+	json_dir = 'bufferhost'
+	def runAll(self):
+		from dbschema.tools import import_leginon_bufferhost
+		ref_files = glob.glob('%s_*.json' % (self.json_dir))
+		for c in ref_files:
+			app = import_leginon_bufferhost.BufferHostJsonLoader(['',self.db_host, c])
+			app.run()
+
 
 from leginon import importexport
 from dbschema.tools import import_leginon_settings
@@ -260,3 +272,4 @@ if __name__=='__main__':
 	app=AppImporter()
 	app=PresetImporter()
 	app=ReferenceImporter()
+	app=BufferHostImporter()
