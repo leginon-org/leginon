@@ -94,7 +94,7 @@ class Tecnai(tem.TEM):
 			self.adv_instr = fei_advscripting.connectToFEIAdvScripting().instr
 			self.source = self.adv_instr.Source
 		except Exception as e:
-			#print 'unable to initialize Advanced Scriptiong interface, %s' % e
+			#print('unable to initialize Advanced Scriptiong interface, %s' % e)
 			self.adv_instr = None
 			self.source = None
 		try:
@@ -527,9 +527,9 @@ class Tecnai(tem.TEM):
 		prev_int = self.getIntensity()
 		intensity_step = self.getMinimumIntensityMovement()
 		if self.getDebugAll():
-				print 'prev_int', prev_int
-				print 'minimum_intensity_movement', intensity_step
-				print 'target_intensity', intensity
+				print('prev_int', prev_int)
+				print('minimum_intensity_movement', intensity_step)
+				print('target_intensity', intensity)
 		if abs(prev_int-intensity) > intensity_step:
 			self.int_changed = True
 			setattr(self.tecnai.Illumination, self.intensity_prop, intensity)
@@ -538,9 +538,9 @@ class Tecnai(tem.TEM):
 		# Normalizations
 		if self.normalize_all_after_setting:
 			if self.getDebugAll():
-				print 'mag_changed', self.mag_changed
-				print 'spotsize_changed', self.spotsize_changed
-				print 'int_changed', self.int_changed
+				print('mag_changed', self.mag_changed)
+				print('spotsize_changed', self.spotsize_changed)
+				print('int_changed', self.int_changed)
 			if self.mag_changed or self.spotsize_changed or self.int_changed:
 				if self.getDebugAll():
 					print('normalize all')
