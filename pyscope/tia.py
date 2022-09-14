@@ -196,7 +196,7 @@ acquisition.
 	def _getCameraSize(self):
 		rangex = self.ccd.GetTotalPixelReadoutRange.SizeX
 		rangey = self.ccd.GetTotalPixelReadoutRange.SizeY
-		camsize = {'x':rangex, 'y':rangey}
+		camsize = {'x':int(rangex), 'y':int(rangey)}
 		return camsize
 
 	def finalizeSetup(self):

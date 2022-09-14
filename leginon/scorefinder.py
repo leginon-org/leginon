@@ -9,23 +9,23 @@
 #
 
 from leginon import leginondata
-import targetfinder
-import icetargetfinder
-import scorefinderback
+from leginon import targetfinder
+from leginon import icetargetfinder
+from leginon import scorefinderback
 from pyami import ordereddict
 import threading
-import ice
-import instrument
+from leginon import ice
+from leginon import instrument
 import os.path
 import math
-import gui.wx.ScoreTargetFinder
-import version
+import leginon.gui.wx.ScoreTargetFinder
+from leginon import version
 import itertools
 
 invsqrt2 = math.sqrt(2.0)/2.0
 
 class ScoreTargetFinder(icetargetfinder.IceTargetFinder):
-	panelclass = gui.wx.ScoreTargetFinder.Panel
+	panelclass = leginon.gui.wx.ScoreTargetFinder.Panel
 	settingsclass = leginondata.ScoreTargetFinderSettingsData
 	defaultsettings = dict(icetargetfinder.IceTargetFinder.defaultsettings)
 	defaultsettings.update({

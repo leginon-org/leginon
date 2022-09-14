@@ -10,7 +10,7 @@ from pyami import groupfun, convexhull
 from leginon import leginondata
 from leginon import mosaictargetfinder
 from leginon import targetfinder
-import gui.wx.MosaicScoreTargetFinder
+import leginon.gui.wx.MosaicScoreTargetFinder
 
 def pointInPolygon(x,y,poly):
 	'''
@@ -93,7 +93,7 @@ class StatsBlob(object):
 		self.info_dict = info_dict
 
 class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
-	panelclass = gui.wx.MosaicScoreTargetFinder.Panel
+	panelclass = leginon.gui.wx.MosaicScoreTargetFinder.Panel
 	settingsclass = leginondata.MosaicScoreTargetFinderSettingsData
 	defaultsettings = dict(targetfinder.ClickTargetFinder.defaultsettings)
 	# same as MosaicClickTargetFinder
@@ -292,7 +292,7 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 	External script score finder that operates on individual grid atlas tile.  Multithread
 	process is added when each tile is added, and then loaded later. 
 	"""
-	panelclass = gui.wx.MosaicScoreTargetFinder.Panel
+	panelclass = leginon.gui.wx.MosaicScoreTargetFinder.Panel
 	settingsclass = leginondata.MosaicScoreTargetFinderSettingsData
 	defaultsettings = dict(MosaicTargetFinderBase.defaultsettings)
 

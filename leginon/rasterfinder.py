@@ -15,12 +15,12 @@ import threading
 import numpy
 import math
 import pyami.quietscipy
-import gui.wx.RasterFinder
-import polygon
+import leginon.gui.wx.RasterFinder
+from leginon import polygon
 import itertools
 
 class RasterFinder(icetargetfinder.IceTargetFinder):
-	panelclass = gui.wx.RasterFinder.Panel
+	panelclass = leginon.gui.wx.RasterFinder.Panel
 	settingsclass = leginondata.RasterFinderSettingsData
 	defaultsettings = dict(icetargetfinder.IceTargetFinder.defaultsettings)
 	defaultsettings.update({
