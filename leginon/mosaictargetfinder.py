@@ -129,6 +129,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.sq_prefs = None
 		self.mosaiccreated = threading.Event()
 		self.autofinderlock = threading.Lock()
+		self.sessionclearlock = threading.Lock()
 		self.userpause = threading.Event()
 		self.presetsclient = presets.PresetsClient(self)
 
@@ -158,6 +159,13 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.logger.debug('%s did not insert done on %d' % (self.name,targetlistdata.dbid))
 		pass
 
+	def handleSetSessionEvent(self, ievent):
+		self.sessionclearlock.acquire()
+		super(MosaicClickTargetFinder, self).handleSetSessionEvent(ievent)
+		self.clearTiles()
+		self.sessionclearlock.release()
+
+
 	def handleSubmitMosaicTargets(self, evt):
 		self.notifyTargetReceiver()
 		self.autoSubmitTargets()
@@ -182,8 +190,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# wait until addTile thread is finished.
 		while self.autofinderlock.locked():
 			time.sleep(0.5)
-		if self.settings['create on tile change'] in ('final',):
-			self.createMosaicImage()
+		if self.settings['create on tile change'] in ('all','final',):
+			self.createMosaicImage(True)
 		if not self.hasNewImageVersion():
 			self.targetsFromDatabase()
 			# fresh atlas without acquisition targets (done or not) should run autofinder
@@ -419,8 +427,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.finder_mosaic.clear()
 		self.userpause.set()
 		self.targetlist = None
-		if self.settings['create on tile change'] in ('all', 'final'):
-			self.clearMosaicImage()
+		self.clearMosaicImage()
+		self.clearFinderMosaicImage()
 
 	def addTile(self, imagedata):
 		'''
@@ -667,6 +675,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		not per image, instead we have submitTargets.
 		Each new image becomes a tile in a mosaic.
 		'''
+		while self.sessionclearlock.locked():
+			time.sleep(0.5)
 		self.logger.info('Processing inbound image data')
 		### create a new imagelist if not already done
 		targets = imagedata['target']['list']
@@ -686,7 +696,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 
 		if self.settings['create on tile change'] == 'all':
 			self.logger.debug('create all')
-			self.createMosaicImage()
+			self.createMosaicImage(False)
 			self.logger.debug('done create all')
 		self.autofinderlock.release()
 
@@ -806,7 +816,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.reference_target = self.getReferenceTarget()
 		self.logger.info('Mosaic loaded (%i of %i images loaded successfully)' % (i+1, ntotal))
 		if self.settings['create on tile change'] in ('all', 'final'):
-			self.createMosaicImage()
+			self.createMosaicImage(True)
 		# use currentimagedata to set TargetImageVectors for target multiple
 		self.setTargetImageVectors(self.currentimagedata)
 		self.autofinderlock.release()
@@ -865,19 +875,25 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.publish(targetdata, database=True)
 		return targetdata
 
-	def createMosaicImage(self):
+	def createMosaicImage(self, is_final=True):
 		self.logger.info('creating mosaic image')
 
 		self.setCalibrationParameter()
 
 		if self.settings['scale image']:
 			maxdim = self.settings['scale size']
+			if not is_final:
+				# make smaller mosaic unless it is the final display.  This
+				# reduces peak memory usage
+				maxdim = 1024
 		else:
 			maxdim = None
 		self.mosaicimagescale = maxdim
 		try:
 			self.mosaicimage = self.mosaic.getMosaicImage(maxdim)
-			self.createFinderMosaicImage()
+			if is_final:
+				# create finder mosaic image only for final display.
+				self.createFinderMosaicImage()
 		except Exception as e:
 			self.logger.error('Failed Creating mosaic image: %s' % e)
 		self.mosaicimagedata = None
@@ -896,6 +912,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		if self.remote_targeting and self.mosaicimagedata:
 			self.remote_targeting.unsetImage(self.mosaicimagedata)
 		self.mosaicimagedata = None
+
+	def clearFinderMosaicImage(self):
+		self.finder_mosaicimage = None
+		self.finder_scale_factor = 1
 
 	def uiPublishMosaicImage(self):
 		self.publishMosaicImage()
@@ -1076,20 +1096,24 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		existing_targets.extend(xytargets['acquisition'])
 		return xytargets['example'], existing_targets
 
-	def createFinderMosaicImage(self):
-		'''
-		Downsize mosaicimage so that it does not use too much
-		resource in blob finding.
-		'''
+	def setFinderScaleFactor(self):
 		old_maxdim = self.mosaicimagescale
 		if old_maxdim is None:
 			old_maxdim = max(self.mosaicimage.shape)
 		# no bigger than 2048
 		scale_factor = int(math.ceil(old_maxdim / 2048.0))
-		new_maxdim = old_maxdim // scale_factor
+		self.finder_scale_factor = scale_factor
+
+	def createFinderMosaicImage(self):
+		'''
+		Downsize mosaicimage so that it does not use too much
+		resource in blob finding.
+		'''
+		self.setFinderScaleFactor()
+		old_maxdim = self.mosaicimagescale
+		new_maxdim = old_maxdim // self.finder_scale_factor
 		self.logger.info('Scale down mosaic to finder max dimension of %d' % new_maxdim)
 		self.finder_mosaicimage = self.finder_mosaic.getMosaicImage(new_maxdim)
-		self.finder_scale_factor = scale_factor
 		# This is not exact but appears good enough.
 		self.logger.debug('Scaling  Target mapping from shape %s to %s with setting of max size of %d' % (self.finder_mosaicimage.shape, self.mosaicimage.shape, self.settings['scale size']))
 

@@ -1007,7 +1007,7 @@ class Manager(node.Node):
 		Get application prefix list to filter for history. Defined in leginon/leginon_session.cfg
 		'''
 		try:
-			affixlist = moduleconfig.getConfigured('leginon_session.cfg', 'leginon')['app'][affix_type]
+			affixlist = moduleconfig.getConfigured('leginon_session.cfg', 'leginon', True)['app'][affix_type]
 			if type(affixlist) == type(2):
 				# single entry integer is translated to integer, not list of string
 				affixlist = ['%d' % affixlist]

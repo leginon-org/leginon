@@ -127,8 +127,8 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		super(MosaicTargetFinderBase, self).__init__(id, session, managerlocation, **kwargs)
-		self.start()
 		self.ext_blobs ={}
+		self.start()
 
 	def hasValidScoringScript(self):
 		scoring_script = self.settings['scoring script']
@@ -321,6 +321,14 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 		self.p[imid] = multiprocessing.Process(target=runExternalBlobFinderSubprocess, args=(imagedata['image'], scoring_script, mrcpath,job_basename))
 		self.p[imid].start()
 
+	def clearTiles(self):
+		super(MosaicScoreTargetFinder, self).clearTiles()
+		self.tileblobmap = {}
+		self.finder_blobs = []
+		self.mblob_values = []
+		self.ext_blobs = {}
+		self.p = {}
+
 	def getMergingDistance(self, sizes, means):
 		if len(sizes) == 0:
 			return 10000.0
@@ -407,9 +415,9 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 		for i in to_remove:
 			self.mblob_values.pop(i)
 
-	def createMosaicImage(self):
-		super(MosaicScoreTargetFinder, self).createMosaicImage()
-		if not self.hasValidScoringScript():
+	def createMosaicImage(self, is_final=True):
+		super(MosaicScoreTargetFinder, self).createMosaicImage(is_final)
+		if not self.hasValidScoringScript() or not is_final:
 			return
 		if self.mosaic and self.tileblobmap and self.finder_scale_factor:
 			self.finder_blobs = []

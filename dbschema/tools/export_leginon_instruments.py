@@ -29,10 +29,14 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:
 			raise ValueError('leginondata in sinedon.cfg not set to %s' % params[1])
-		if len(params) > 2:
+		if len(params) > 2 and params[2]:
 			self.hostnames = params[2].split(',')
 
-		self.instruments = self.getSourceInstrumentData(exclude_sim=False)
+		if len(params) > 3:
+			include_sim = params[3] # boolean
+		else:
+			include_sim = False
+		self.instruments = self.getSourceInstrumentData(exclude_sim=not include_sim)
 
 	def getSourceInstrumentData(self, exclude_sim=False):
 		kwargs = {}
@@ -40,6 +44,8 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 		results = q.query()
 		real_instruments = []
 		for r in results:
+			if r['hidden']:
+				continue
 			if (not exclude_sim or not r['name'].startswith('Sim')) and not r['hostname'] in ('fake','appion'):
 				if not self.hostnames or r['hostname'] in self.hostnames:
 					# specific name if have specification

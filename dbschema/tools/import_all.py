@@ -2,6 +2,7 @@
 import sys
 import os
 import glob
+from sinedon import directq
 
 import sinedon
 
@@ -38,6 +39,91 @@ class Importer(object):
 	def runAll(self):
 		NotImplemented()
 
+class ViewerTableCreater(object):
+	def __init__(self):
+		self.db_params = sinedon.getConfig('leginondata')
+		self.db_host=self.db_params['host']
+		if 'engine' in self.db_params.keys() and self.db_params['engine'] != '':
+			self.db_engine = self.db_params['engine']
+		else:
+			self.db_engine = 'MyISAM'
+		self.run()
+
+	def _createViewerImageStatusTable(self):
+		"""
+		create empty table for webviewer
+		"""
+		query = "DROP TABLE IF EXISTS `ViewerImageStatus`;"
+		directq.complexMysqlQuery('leginondata',query)
+		query = """
+			CREATE TABLE `ViewerImageStatus` (
+				`DEF_id` int(11) NOT NULL AUTO_INCREMENT,
+				`DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				`REF|SessionData|session` int(11) DEFAULT NULL,
+				`REF|AcquisitionImageData|image` int(11) DEFAULT NULL,
+				`status` enum('hidden','visible','exemplar','trash') DEFAULT NULL,
+				PRIMARY KEY (`DEF_id`),
+				KEY `DEF_timestamp` (`DEF_timestamp`),
+				KEY `REF|SessionData|session` (`REF|SessionData|session`),
+				KEY `REF|AcquisitionImageData|image` (`REF|AcquisitionImageData|image`),
+				KEY `status` (`status`)
+			) ENGINE=%s DEFAULT CHARSET=latin1;
+			""" % (self.db_engine)
+		directq.complexMysqlQuery('leginondata',query)
+
+	def _createViewerCommentTable(self):
+		"""
+		create empty table for webviewer
+		"""
+		query = "DROP TABLE IF EXISTS `viewer_comment`;"
+		directq.complexMysqlQuery('leginondata',query)
+		query = """
+			CREATE TABLE `viewer_comment` (
+				`id` int(11) NOT NULL AUTO_INCREMENT,
+				`timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				`sessionId` int(11) DEFAULT NULL,
+				`type` enum('rt','post') DEFAULT NULL,
+				`imageId` int(11) DEFAULT NULL,
+				`name` text,
+				`comment` text,
+				PRIMARY KEY (`id`),
+				KEY `timestamp` (`timestamp`),
+				KEY `sessionId` (`sessionId`),
+				KEY `imageId` (`imageId`),
+				KEY `type` (`type`)
+			) ENGINE=%s DEFAULT CHARSET=latin1;
+			""" % (self.db_engine)
+		directq.complexMysqlQuery('leginondata',query)
+
+	def _createViewerDelImageTable(self):
+		"""
+		create empty table for webviewer
+		"""
+		query = "DROP TABLE IF EXISTS `viewer_del_image`;"
+		directq.complexMysqlQuery('leginondata',query)
+		query = """
+			CREATE TABLE `viewer_del_image` (
+				`id` int(11) NOT NULL AUTO_INCREMENT,
+				`timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				`username` varchar(50) DEFAULT NULL,
+				`sessionId` int(11) DEFAULT NULL,
+				`imageId` int(11) DEFAULT NULL,
+				`status` enum('deleted','marked') DEFAULT NULL,
+				PRIMARY KEY (`id`),
+				KEY `timestamp` (`timestamp`),
+				KEY `username` (`username`),
+				KEY `sessionId` (`sessionId`),
+				KEY `imageId` (`imageId`),
+				KEY `status` (`status`)
+			) ENGINE=%s DEFAULT CHARSET=latin1;
+			""" % (self.db_engine)
+		directq.complexMysqlQuery('leginondata',query)
+
+	def run(self):
+		self._createViewerImageStatusTable()
+		self._createViewerCommentTable()
+		self._createViewerDelImageTable()
+
 class InstrumentImporter(Importer):
 	'''
 	Import instruments to a clean database.
@@ -57,8 +143,12 @@ class CalibrationImporter(Importer):
 		from dbschema.tools import import_leginon_cal
 		cal_files = glob.glob('%s_*.json' % (self.json_dir))
 		for c in cal_files:
-			app = import_leginon_cal.CalibrationJsonLoader(['',self.db_host, c])
-			app.run()
+			try:
+				app = import_leginon_cal.CalibrationJsonLoader(['',self.db_host, c])
+				app.run()
+			except KeyError as e:
+				print('Warning: Skipped %s: %s' % (c, e))
+				continue
 
 class ReferenceImporter(Importer):
 	'''
@@ -70,6 +160,18 @@ class ReferenceImporter(Importer):
 		ref_files = glob.glob('%s_*.json' % (self.json_dir))
 		for c in ref_files:
 			app = import_leginon_ref.ReferenceJsonLoader(['',self.db_host, c])
+			app.run()
+
+class BufferHostImporter(Importer):
+	'''
+	Import buffer host settings to a clean database.
+	'''
+	json_dir = 'bufferhost'
+	def runAll(self):
+		from dbschema.tools import import_leginon_bufferhost
+		ref_files = glob.glob('%s_*.json' % (self.json_dir))
+		for c in ref_files:
+			app = import_leginon_bufferhost.BufferHostJsonLoader(['',self.db_host, c])
 			app.run()
 
 
@@ -93,6 +195,7 @@ class AppImporter(Importer):
 				self.importSettings(jsonfile)
 
 	def importXml(self,xmlfile):
+		print('***importing Application from %s' % xmlfile)
 		app = importexport.ImportExport(**self.db_params)
 		app.importApplication(xmlfile)
 
@@ -123,7 +226,7 @@ class PresetImporter(Importer):
 				os.chdir(a)
 				cal_files = glob.glob('%s_*.json' % self.json_dir)
 				for c in cal_files:
-					print c
+					print(c)
 					app = import_leginon_presets.CalibrationJsonLoader(['', self.db_host, c])
 					app.run()
 					app = None
@@ -147,20 +250,26 @@ def mysqlReminder():
 	if answer.lower() != 'y':
 		sys.exit(0)
 
+
 def cleanProcessingdb():
 	"""
 	Refresh processingdb appion database assignment
 	"""
-	from sinedon import directq
-	query=" TRUNCATE TABLE processingdb"
-	directq.complexMysqlQuery('projectdata',query)
+	try:
+		query=" TRUNCATE TABLE processingdb"
+		directq.complexMysqlQuery('projectdata',query)
+	except Exception as e:
+		print("Error: processingdb not found.  The mysql commands above failed")
+		sys.exit(1)
 
 if __name__=='__main__':
 	confirmDBHost()
 	mysqlReminder()
+	app=ViewerTableCreater()
 	cleanProcessingdb()
 	app=InstrumentImporter()
 	app=CalibrationImporter()
 	app=AppImporter()
 	app=PresetImporter()
 	app=ReferenceImporter()
+	app=BufferHostImporter()

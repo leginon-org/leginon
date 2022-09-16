@@ -147,7 +147,7 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 		Use rsync to copy the file.  The sent files are removed
 		after copying.
 		'''
-		cmd = 'rsync -av --owner=%s:%s --remove-sent-files %s %s' % (uid, gid, src, dst)
+		cmd = 'rsync -av --chown=%s:%s --remove-sent-files %s %s' % (uid, gid, src, dst)
 		print(cmd)
 		p = subprocess.Popen(cmd, shell=True)
 		p.wait()
