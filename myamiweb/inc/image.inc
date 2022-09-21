@@ -32,14 +32,17 @@ function __getImageFile($leginondata,$imageId,$loadjpg=false,$is_fft=false,$cach
 	//get image file with full path
 	$path = $leginondata->getImagePathFromImageId($imageId);
 
-	// --- find image
-	if ($is_fft) {
-		$fftinfo = $leginondata->getImageFFT($imageId);
-		if (!$filename = $fftinfo['fftimage']);
-			$filename = $leginondata->getFilenameFromId($imageId);
-	} else {
-		$filename = $leginondata->getFilenameFromId($imageId);
-	}
+	// deprecated
+	// if ($is_fft) {
+	// 	$fftinfo = $leginondata->getImageFFT($imageId);
+	// 	if (!$filename = $fftinfo['fftimage']);
+	// 		$filename = $leginondata->getFilenameFromId($imageId);
+	// } else {
+	// 	$filename = $leginondata->getFilenameFromId($imageId);
+	// }
+
+	// --- find image 
+	$filename = $leginondata->getFilenameFromId($imageId);
 	$pic = $path.$filename;
 	if (!$pic) return false;
 
