@@ -56,7 +56,9 @@ $jsdata='';
 if ($ptcl) {
 	list ($jsdata, $particleruns) = getParticleInfo($sessionId);
 	$particle = new particledata();
-	$filenames = $particle->getFilenamesFromLabel($runId, $preset);
+	if (!empty($runId)) {
+		$filenames = $particle->getFilenamesFromLabel($runId, $preset);
+	}
 	$aceruns = $particle-> getCtfRunIds($sessionId);
 }
 
