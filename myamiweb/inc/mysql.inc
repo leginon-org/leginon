@@ -43,7 +43,12 @@ class mysql {
 		$host = (empty($host)) ? $this->db_host : $host;
 		$link = @mysqli_connect($host, $this->db_user, $this->db_pass);
 		if (!$link || empty($link)) {
-         $this->mysqlerror = "Connect Error: " . mysqli_connect_errno();
+			$this->mysqlerror = "= Connect Error: mysql.inc::connect_db - " . mysqli_connect_errno();
+			error_log($this->mysqlerror);
+			error_log(" host: " . $this->db_host);
+			error_log(" user: " . $this->db_user);
+			error_log(" pass: " . $this->db_pass);
+			error_log("... =");
 			return false;
 		}
 
@@ -285,12 +290,10 @@ class mysql {
 		if (empty($this->__SQLQuery_link)) {
 			$this->__SQLQuery_link = $this->connect_db($this->db_host);
 		}
-		$link = $this->__SQLQuery_link;
 
+		// connection failed
+		$link = $this->__SQLQuery_link;
 		if (!$link) {
-			error_log("DB Connect Error:");
-			$this->mysqlerror = "Connect Error: " . mysqli_connect_errno();
-			error_log($this->mysqlerror);
 			return False;
 		}
 		mysqli_query($link, "SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
