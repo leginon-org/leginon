@@ -185,9 +185,20 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 			self.logger.warning("External square finding did not run")
 			self.ext_blobs[label] = []
 			return
-		f = open(outpath,'r')
-		# returns one line
-		line = f.readlines()[0]
+		try:
+			f = open(outpath,'r')
+			# returns one line
+			line = f.readlines()[0]
+			f.close()
+		except IndexError:
+			# empty file means no blob found
+			self.ext_blobs[label] = []
+			return
+		except Exception as e:
+			# probably access error
+			self.logger.error("Square finder read error: %s" % e)
+			self.ext_blobs[label] = []
+			return
 		blob_dicts = json.loads(line)
 		blobs = []
 		def _revindex(value_tuple):
