@@ -187,17 +187,21 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 			return
 		f = open(outpath,'r')
 		# returns one line
-		line = f.readlines()[0]
-		blob_dicts = json.loads(line)
-		blobs = []
-		def _revindex(value_tuple):
-			return value_tuple[1],value_tuple[0]
-		for n, b in enumerate(blob_dicts):
-			#ptolemy write its coordinates in (x,y) modify them first.
-			b['center'] = _revindex(b['center'])
-			b['vertices'] = list(map((lambda x: _revindex(x)),b['vertices']))
-			blobs.append(StatsBlob(b, n)) # (row, col)
-		self.ext_blobs[label] = blobs
+		try:   # return an empty array if there is some error in reading the expected line
+			line = f.readlines()[0]
+			blob_dicts = json.loads(line)
+			blobs = []
+			def _revindex(value_tuple):
+				return value_tuple[1],value_tuple[0]
+			for n, b in enumerate(blob_dicts):
+				#ptolemy write its coordinates in (x,y) modify them first.
+				b['center'] = _revindex(b['center'])
+				b['vertices'] = list(map((lambda x: _revindex(x)),b['vertices']))
+				blobs.append(StatsBlob(b, n)) # (row, col)
+			self.ext_blobs[label] = blobs
+		except:
+			self.ext_blobs[label] = []
+
 
 	def filterPoints(self, blobs, example_points, panel_points):
 		'''
