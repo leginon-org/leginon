@@ -1011,8 +1011,8 @@ class GatanK3(GatanK2Base):
 		# Not sure why it needs to be done this way.  Most likely because
 		# mrc file in SerialEM is oriented so that the origin
 		# is at bottom-left corner.
-		if gms_flip:
-			return 0
+		if gms_flip or not self.getEnergyFiltered(): # with no enegy filter need to return 0 here as was done in Leginon 3.5
+                    return 0
 		return 4
 
 	def _getAcqBinning(self):
