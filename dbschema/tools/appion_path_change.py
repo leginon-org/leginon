@@ -24,22 +24,22 @@ class AppionPathChange(object):
 
 		import sinedon
 		apdbname = sinedon.getConfig('appiondata')['db']
-		print 'Change apPath in database %s' % apdbname
+		print('Change apPath in database %s' % apdbname)
 
 		# update
 		query = "update %s.`ApPathData` set `path` = '%s' where %s.`ApPathData`.`path` like '%s'" % (apdbname,self.new_path, apdbname,self.old_path)
 
-		print query
+		print(query)
 		# send the query to the database linked to sinedon module named appiondata
 		directq.complexMysqlQuery('appiondata',query)
-		print 'Path changed from %s to %s' % (self.old_path, self.new_path)		
+		print('Path changed from %s to %s' % (self.old_path, self.new_path))
 
 if __name__ == '__main__':
 	if len(sys.argv) != 4:
-		print 'usage: python appion_path_change.py sessionname old_run_path new_run_path'
-		print 'old_run_path needs to lead to where the appion run results are stored'
-		print 'new_run_path needs to lead to where the appion run results are stored'
-		print 'For example, /data/appion/14oct01a/stacks/stack1, and exists'
+		print('usage: python appion_path_change.py sessionname old_run_path new_run_path')
+		print('old_run_path needs to lead to where the appion run results are stored')
+		print('new_run_path needs to lead to where the appion run results are stored')
+		print('For example, /data/appion/14oct01a/stacks/stack1, and exists')
 		sys.exit()
 
 	sessionname = sys.argv[1]

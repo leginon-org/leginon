@@ -28,9 +28,9 @@ class AppionPathChange(object):
 		self.new_parent_path = new_parent_path
 
 	def queryOldPath(self):
-		print 'Change apPath in database %s' % self.apdbname
+		print('Change apPath in database %s' % self.apdbname)
 		query = "Select DEF_id as dbid, path from %s.ApPathData where path like '%s%%'" % (self.apdbname, self.old_parent_path)
-		print query
+		print(query)
 		return directq.complexMysqlQuery('appiondata',query)
 
 	def updatePath(self,old_path_list):
@@ -41,17 +41,17 @@ class AppionPathChange(object):
 			trail_part = old_path[old_parent_len:]
 			new_path = self.new_parent_path + trail_part
 			query = "Update %s.ApPathData set path='%s' where `DEF_id`=%d" % (self.apdbname, new_path,dbid)
-			print query
+			print(query)
 			directq.complexMysqlQuery('appiondata',query)
 			
 if __name__ == '__main__':
 	import sys
 	if len(sys.argv) != 4:
-		print 'usage: python batch_appion_path_change.py sessionname old_parent_path new_parent_path'
-		print 'old_parent_path needs to be the head part of the run path with or without sessionname'
-		print 'new_parent_path needs to be the equivalent part of the run path'
-		print 'For example, /data/appion/14oct10a can be replaced by /data2/appion/14oct10a'
-		print 'sessionname is always appended to the parent_path if not included'
+		print('usage: python batch_appion_path_change.py sessionname old_parent_path new_parent_path')
+		print('old_parent_path needs to be the head part of the run path with or without sessionname')
+		print('new_parent_path needs to be the equivalent part of the run path')
+		print('For example, /data/appion/14oct10a can be replaced by /data2/appion/14oct10a')
+		print('sessionname is always appended to the parent_path if not included')
 		sys.exit()
 
 	sessionname = sys.argv[1]
@@ -62,9 +62,9 @@ if __name__ == '__main__':
 	app.setOldParentPath(old_parent)
 	app.setNewParentPath(new_parent)
 	old_path_list = app.queryOldPath()
-	print 'Found %d records' % (len(old_path_list))
+	print('Found %d records' % (len(old_path_list)))
 	if len(old_path_list):
-		print 'do it'
+		print('do it')
 		app.updatePath(old_path_list)
 
 

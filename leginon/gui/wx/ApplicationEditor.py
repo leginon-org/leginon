@@ -33,12 +33,12 @@ class Frame(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.onSave, save)
 		self.Bind(wx.EVT_MENU, self.onSaveAs, saveas)
 		self.Bind(wx.EVT_MENU, self.onExit, exit)
-		menu.AppendItem(load)
+		menu.Append(load)
 		menu.AppendSeparator()
-		menu.AppendItem(save)
-		menu.AppendItem(saveas)
+		menu.Append(save)
+		menu.Append(saveas)
 		menu.AppendSeparator()
-		menu.AppendItem(exit)
+		menu.Append(exit)
 
 		self.menubar.Append(menu, '&Application')
 
