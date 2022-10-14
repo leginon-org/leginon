@@ -76,7 +76,7 @@ and optional long array.
 			longargs.append(len(longarray))
 
 		self.dtype = [
-			('size', numpy.intc, 1),
+			('size', numpy.intc, (1,)),
 			('longargs', numpy.int_, (len(longargs),)),
 			('boolargs', numpy.int32, (len(boolargs),)),
 			('dblargs', numpy.double, (len(dblargs),)),
@@ -84,7 +84,7 @@ and optional long array.
 		]
 		size_init = [0]
 		self.array = numpy.zeros((), dtype=self.dtype)
-		self.array['size'] = len(self.array.data)
+		self.array['size'] = self.array.nbytes
 		self.array['longargs'] = longargs
 		self.array['boolargs'] = boolargs
 		self.array['dblargs'] = dblargs
@@ -102,7 +102,7 @@ and optional long array.
 		'''
 		Serialize the data
 		'''
-		if len(self.array.data) > ARGS_BUFFER_SIZE:
+		if self.array.nbytes > ARGS_BUFFER_SIZE:
 			raise RuntimeError('Message packet size %d is larger than maximum %d' % (len(packed), ARGS_BUFFER_SIZE))
 		return self.array.data
 
@@ -175,6 +175,7 @@ class GatanSocket(object):
 			self.wait_for_filter = ''
 
 	def hasScriptFunction(self, name):
+		return False
 		script = 'if ( DoesFunctionExist("%s") ) { Exit(1.0); } else { Exit(-1.0); }'
 		script %= name
 		result = self.ExecuteGetDoubleScript(script)
@@ -205,7 +206,7 @@ class GatanSocket(object):
 		if message_recv is None:
 			return
 		recv_buffer = message_recv.pack()
-		recv_len = len(recv_buffer)
+		recv_len = recv_buffer.nbytes
 		total_recv = 0
 		parts = []
 		while total_recv < recv_len:
@@ -213,11 +214,12 @@ class GatanSocket(object):
 			new_recv = self.recv_data(remain)
 			parts.append(new_recv)
 			total_recv += len(new_recv)
-		buf = ''.join(parts)
+		buf = b''.join(parts)
 		message_recv.unpack(buf)
 		## log the error code from received message
 		sendargs = message_send.array['longargs']
 		recvargs = message_recv.array['longargs']
+		print(sendargs[0],recvargs[0])
 		log('Func: %d, Code: %d' % (sendargs[0],recvargs[0]))
 
 	def GetLong(self, funcName):
@@ -572,14 +574,14 @@ class GatanSocket(object):
 			npad = 4 - extra
 			cmd_str = cmd_str + (npad) * '\0'
 		# send the command string as 1D longarray
-		longarray = numpy.frombuffer(cmd_str, dtype=numpy.int_)
+		longarray = numpy.frombuffer(bytes(cmd_str,'utf-8'), dtype=numpy.int_)
 		message_send = Message(longargs=(funcCode,), boolargs=(select_camera,), longarray=longarray)
 		message_recv = Message(longargs=recv_longargs_init, dblargs=recv_dblargs_init, longarray=recv_longarray_init)
 		self.ExchangeMessages(message_send, message_recv)
 		return message_recv
 
 def test1():
-	g = GatanSocket()
+	g = GatanSocket('localhost',9999)
 	print(g)
 	ver = g.GetDMVersion()
 	print('Version', ver)
