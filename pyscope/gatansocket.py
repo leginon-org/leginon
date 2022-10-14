@@ -175,7 +175,6 @@ class GatanSocket(object):
 			self.wait_for_filter = ''
 
 	def hasScriptFunction(self, name):
-		return False
 		script = 'if ( DoesFunctionExist("%s") ) { Exit(1.0); } else { Exit(-1.0); }'
 		script %= name
 		result = self.ExecuteGetDoubleScript(script)
@@ -581,7 +580,7 @@ class GatanSocket(object):
 		return message_recv
 
 def test1():
-	g = GatanSocket('localhost',9999)
+	g = GatanSocket()
 	print(g)
 	ver = g.GetDMVersion()
 	print('Version', ver)
