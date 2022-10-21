@@ -67,7 +67,7 @@ Information packet to send and receive on the socket.
 Initialize with the sequences of args (longs, bools, doubles)
 and optional long array.
 	'''
-#Strings are packaged as long array using numpy.frombuffer(buffer,numpy.int_)
+#Strings are packaged as long array using numpy.frombuffer(bytes(buffer,'utf-8'),numpy.int_)
 # and can be converted back with longarray.tostring()
 	def __init__(self, longargs=[], boolargs=[], dblargs=[], longarray=[]):
 		# add final longarg with size of the longarray
@@ -302,7 +302,7 @@ class GatanSocket(object):
 		if extra:
 			npad = 4 - extra
 			filt_str = filt_str + npad * '\0'
-		longarray = numpy.frombuffer(filt_str, dtype=numpy.int_)
+		longarray = numpy.frombuffer(bytes(filt_str, 'utf-8'), dtype=numpy.int_)
 
 		longs = [
 			funcCode,
@@ -356,7 +356,7 @@ class GatanSocket(object):
 		if extra:
 			npad = 4 - extra
 			names_str = names_str + npad * '\0'
-		longarray = numpy.frombuffer(names_str, dtype=numpy.int_)
+		longarray = numpy.frombuffer(bytes(names_str,'utf-8'), dtype=numpy.int_)
 		message_send = Message(longargs=longs, boolargs=bools, dblargs=dbls, longarray=longarray)
 		message_recv = Message(longargs=(0,0))
 		self.ExchangeMessages(message_send, message_recv)
