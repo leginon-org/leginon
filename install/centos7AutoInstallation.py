@@ -413,7 +413,7 @@ class CentosInstallation(object):
  
 		# install all the myami python packages except appion.
 		os.chdir(self.gitMyamiDir)
-		self.runCommand('./pysetup.sh install')
+		self.runCommand('./py3setup.sh install')
 
 		# install the appion python packages
 		# For the bin scripts, we add an extra directory level below
