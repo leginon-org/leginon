@@ -3,7 +3,7 @@ import os
 from distutils.command.install_data import install_data
 from distutils.core import setup, Extension
 from distutils.sysconfig import get_python_lib
-from leginon import version
+import version
 class InstallData(install_data):
 	def run(self):
 		installcommand = self.get_finalized_command('install')
