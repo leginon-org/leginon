@@ -58,7 +58,7 @@ else:
     lib_threads = joinpath(libdir, libbase + '_threads.'+ ext)
     try:
         lib_threads = ctypes.cdll.LoadLibrary(lib_threads)
-    except OSError, e:
+    except OSError as e:
         warn("Could not load threading library %s, threading support is disabled"
             %lib_threads)
         lib_threads = None

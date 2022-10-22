@@ -29,7 +29,8 @@ fftw_flags = {'measure':0,
               'preserve input': 16,
               'patient': 32,
               'estimate': 64}
-
+ e:
+        warn("Could n
 realfft_type = {'halfcomplex r2c':0,
                 'halfcomplex c2r':1,
                 'discrete hartley':2,
@@ -88,8 +89,8 @@ def select(inarray,outarray):
     fftw3 plan to create.""" 
     if inarray.shape != outarray.shape:
         if inarray.dtype == outarray.dtype:
-            raise TypeError, "Input array and output array must have the same "\
-                             "shape if they have the same dtype"
+            raise TypeError("Input array and output array must have the same "\
+                             "shape if they have the same dtype")
         elif inarray.dtype == typeDict['complex'] and outarray.dtype == typeDict['double']:
             inshape = list(outarray.shape)
             inshape[-1] = inshape[-1]/2 + 1
