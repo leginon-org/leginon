@@ -102,8 +102,9 @@ and optional long array.
 		'''
 		Serialize the data
 		'''
-		if self.array.nbytes > ARGS_BUFFER_SIZE:
-			raise RuntimeError('Message packet size %d is larger than maximum %d' % (len(packed), ARGS_BUFFER_SIZE))
+		packed = self.array.nbytes
+		if packed > ARGS_BUFFER_SIZE:
+			raise RuntimeError('Message packet size %d is larger than maximum %d' % (packed, ARGS_BUFFER_SIZE))
 		return self.array.data
 
 	def unpack(self, buf):
@@ -218,7 +219,6 @@ class GatanSocket(object):
 		## log the error code from received message
 		sendargs = message_send.array['longargs']
 		recvargs = message_recv.array['longargs']
-		print(sendargs[0],recvargs[0])
 		log('Func: %d, Code: %d' % (sendargs[0],recvargs[0]))
 
 	def GetLong(self, funcName):
@@ -486,8 +486,8 @@ class GatanSocket(object):
 		numChunks = longargs[4]
 		bytesPerPixel = 2
 		numBytes = arrSize * bytesPerPixel
-		chunkSize = (numBytes + numChunks - 1) / numChunks
-		imArray = numpy.zeros((height,width), numpy.ushort)
+		chunkSize = (numBytes + numChunks - 1) // numChunks
+		imArray = numpy.zeros((height*width,), numpy.ushort)
 		received = 0
 		remain = numBytes
 		for chunk in range(numChunks):
@@ -501,11 +501,12 @@ class GatanSocket(object):
 			while chunkRemain:
 				new_recv = self.recv_data(chunkRemain)
 				len_recv = len(new_recv)
-				imArray.data[received:received+len_recv] = new_recv
+				imArray.data[received:received+len_recv] = numpy.frombuffer(new_recv,dtype=numpy.ushort)
 				chunkReceived += len_recv
 				chunkRemain -= len_recv
 				remain -= len_recv
 				received += len_recv
+		imArray = imArray.reshape((height,width))
 		return imArray
 
 	def ExecuteSendCameraObjectionFunction(self, function_name, camera_id=0):
