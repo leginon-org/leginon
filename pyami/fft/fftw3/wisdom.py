@@ -37,14 +37,14 @@ def import_wisdom_from_file(filename):
     if lib.fftw_import_wisdom_from_file(c_fp):
         pass
     else:
-        raise IOError, "Could not read wisdom from file %s" % filename
+        raise IOError("Could not read wisdom from file %s" % filename)
 
 def import_wisdom_from_string(wisdom):
     """Import wisdom from the given string"""
     if lib.fftw_import_wisdom_from_string(wisdom):
         pass
     else:
-        raise Exception, "Could not read wisdom from string: %s" % wisdom
+        raise Exception("Could not read wisdom from string: %s" % wisdom)
 
 def import_system_wisdom():
     """Import the system wisdom, this lives under /etc/fftw/wisdom on
@@ -52,8 +52,8 @@ def import_system_wisdom():
     if lib.fftw_import_system_wisdom():
         pass
     else:
-        raise IOError, "Could not read system wisdom. On GNU/Linux and Unix "\
-                "system wisdom is located in /etc/fftw/wisdom"
+        raise IOError("Could not read system wisdom. On GNU/Linux and Unix "\
+                "system wisdom is located in /etc/fftw/wisdom")
 
 def forget_wisdom():
     """Clear all wisdom"""
