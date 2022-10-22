@@ -295,7 +295,7 @@ class CentosInstallation(object):
 	def setupWebServer(self):
 		self.writeToLog("--- Start install Web Server")
 		#myamiweb yum packages
-		packagelist = ['php-pecl-ssh2','php-mongodb.noarch', 'mod_ssl', 'fftw-devel','git','python-imaging','python-devel','mod_python','scipy','httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', ]
+		packagelist = ['php-pecl-ssh2','php-mongodb.noarch', 'mod_ssl', 'fftw-devel','git','python-imaging','python-devel','mod_python','scipy','httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', 'php-mysqli',  'php-xml']
 		self.yumInstall(packagelist)
 
 		# Redux Server is on Web server for now.
