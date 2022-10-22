@@ -125,12 +125,12 @@ class leginonDBImport{
 	}
 }
 
-$link = mysql_connect(DB_HOST, DB_USER, DB_PASS);
+$link = mysqli_connect(DB_HOST, DB_USER, DB_PASS);
 if(!$link) {
-	die('Could not connect: ' . mysql_error());
+	die('Could not connect: ' . mysqli_error());
 }	
-mysql_query('create database '. DB_PROJECT, $link);
-mysql_query('create database '. DB_LEGINON, $link);
+mysqli_query('create database '. DB_PROJECT, $link);
+mysqli_query('create database '. DB_LEGINON, $link);
 	
 $projectDBImport = new projectDBImport(DB_PROJECT);	
 $projectDBImport->install(PROJECT_DB_SCHEMA);
@@ -170,13 +170,13 @@ $leginonDBImport->setLeginonDefaultValues();
 
 // put svn revision number in the database
 $svnRevision = getSubversionRevision($location);
-$link = mysql_connect(DB_HOST, DB_USER, DB_PASS);
+$link = mysqli_connect(DB_HOST, DB_USER, DB_PASS);
 if(!$link) {
-	die('Could not connect: ' . mysql_error());
+	die('Could not connect: ' . mysqli_error());
 }
 $sqlCmd = "insert into " . DB_PROJECT . ".install (`key`, value) Values ('revision', $svnRevision)";
-mysql_query($sqlCmd);
-mysql_close($link);
+mysqli_query($sqlCmd);
+mysqli_close($link);
 
 print "Databases setup successfully ! \n";
 exit;
