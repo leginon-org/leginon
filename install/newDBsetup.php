@@ -129,8 +129,9 @@ $link = mysqli_connect(DB_HOST, DB_USER, DB_PASS);
 if(!$link) {
 	die('Could not connect: ' . mysqli_error());
 }	
-mysqli_query('create database '. DB_PROJECT, $link);
-mysqli_query('create database '. DB_LEGINON, $link);
+
+mysqli_query($link, 'create database '. DB_PROJECT);
+mysqli_query($link, 'create database '. DB_LEGINON);
 	
 $projectDBImport = new projectDBImport(DB_PROJECT);	
 $projectDBImport->install(PROJECT_DB_SCHEMA);
@@ -175,7 +176,7 @@ if(!$link) {
 	die('Could not connect: ' . mysqli_error());
 }
 $sqlCmd = "insert into " . DB_PROJECT . ".install (`key`, value) Values ('revision', $svnRevision)";
-mysqli_query($sqlCmd);
+mysqli_query($link, $sqlCmd);
 mysqli_close($link);
 
 print "Databases setup successfully ! \n";
