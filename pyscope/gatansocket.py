@@ -13,6 +13,7 @@ import time
 ## for example:
 debug_log = None
 #debug_log = 'gatansocket.log'
+debug_print = False
 
 # enum function codes as in GatanSocket.cpp and SocketPathway.cpp
 # need to match exactly both in number and order
@@ -54,7 +55,7 @@ enum_gs = [
 # lookup table of function name to function code, starting with 1
 enum_gs = dict([(x,y) for (y,x) in enumerate(enum_gs,1)])
 
-## C "long" -> numpy "int_"
+## C "long" -> numpy "int32"
 ARGS_BUFFER_SIZE = 1024
 MAX_LONG_ARGS = 16
 MAX_DBL_ARGS = 8
@@ -67,7 +68,7 @@ Information packet to send and receive on the socket.
 Initialize with the sequences of args (longs, bools, doubles)
 and optional long array.
 	'''
-#Strings are packaged as long array using numpy.frombuffer(bytes(buffer,'utf-8'),numpy.int_)
+#Strings are packaged as long array using numpy.frombuffer(bytes(buffer,'utf-8'),numpy.int32)
 # and can be converted back with longarray.tostring()
 	def __init__(self, longargs=[], boolargs=[], dblargs=[], longarray=[]):
 		# add final longarg with size of the longarray
@@ -77,10 +78,10 @@ and optional long array.
 
 		self.dtype = [
 			('size', numpy.intc, (1,)),
-			('longargs', numpy.int_, (len(longargs),)),
+			('longargs', numpy.int32, (len(longargs),)),
 			('boolargs', numpy.int32, (len(boolargs),)),
 			('dblargs', numpy.double, (len(dblargs),)),
-			('longarray', numpy.int_, (len(longarray),)),
+			('longarray', numpy.int32, (len(longarray),)),
 		]
 		size_init = [0]
 		self.array = numpy.zeros((), dtype=self.dtype)
@@ -92,10 +93,10 @@ and optional long array.
 
 		# create numpy arrays for the args and array
 		'''
-		self.longargs = numpy.asarray(longargs, dtype=numpy.int_)
+		self.longargs = numpy.asarray(longargs, dtype=numpy.int32)
 		self.dblargs = numpy.asarray(dblargs, dtype=numpy.double)
 		self.boolargs = numpy.asarray(boolargs, dtype=numpy.int32)
-		self.longarray = numpy.asarray(longarray, dtype=numpy.int_)
+		self.longarray = numpy.asarray(longarray, dtype=numpy.int32)
 		'''
 
 	def pack(self):
@@ -134,6 +135,9 @@ def logwrap(func):
 		return result
 	return newfunc
 
+def debug_print(msg):
+	print(msg)
+
 class GatanSocket(object):
 	def __init__(self, host='', port=None):
 		self.host = host
@@ -167,9 +171,9 @@ class GatanSocket(object):
 			('GT_CenterZLP', 'AlignEnergyFilterZeroLossPeak'),
 		]
 		self.filter_functions = {}
-		for name, method_name in self.script_functions:
-			if self.hasScriptFunction(name):
-				self.filter_functions[method_name] = name
+		#for name, method_name in self.script_functions:
+		#	if self.hasScriptFunction(name):
+		#		self.filter_functions[method_name] = name
 		if 'SetEnergyFilter' in list(self.filter_functions.keys()) and self.filter_functions['SetEnergyFilter'] == 'IFSetSlitIn':
 			self.wait_for_filter = 'IFWaitForFilter();'
 		else:
@@ -302,7 +306,7 @@ class GatanSocket(object):
 		if extra:
 			npad = 4 - extra
 			filt_str = filt_str + npad * '\0'
-		longarray = numpy.frombuffer(bytes(filt_str, 'utf-8'), dtype=numpy.int_)
+		longarray = numpy.frombuffer(bytes(filt_str, 'utf-8'), dtype=numpy.int32)
 
 		longs = [
 			funcCode,
@@ -356,7 +360,7 @@ class GatanSocket(object):
 		if extra:
 			npad = 4 - extra
 			names_str = names_str + npad * '\0'
-		longarray = numpy.frombuffer(bytes(names_str,'utf-8'), dtype=numpy.int_)
+		longarray = numpy.frombuffer(bytes(names_str,'utf-8'), dtype=numpy.int32)
 		message_send = Message(longargs=longs, boolargs=bools, dblargs=dbls, longarray=longarray)
 		message_recv = Message(longargs=(0,0))
 		self.ExchangeMessages(message_send, message_recv)
@@ -478,19 +482,23 @@ class GatanSocket(object):
 		self.ExchangeMessages(message_send, message_recv)
 
 		longargs = message_recv.array['longargs']
+		debug_print(longargs)
 		if longargs[0] < 0:
 			return 1
 		arrSize = longargs[1]
 		width = longargs[2]
 		height = longargs[3]
 		numChunks = longargs[4]
-		bytesPerPixel = 2
+		bytesPerPixel = 2 #depends on the results formated =uint16
 		numBytes = arrSize * bytesPerPixel
 		chunkSize = (numBytes + numChunks - 1) // numChunks
-		imArray = numpy.zeros((height*width,), numpy.ushort)
+		imArray = numpy.zeros((height*width,), numpy.uint16)
 		received = 0
 		remain = numBytes
+		index = 0
+		debug_print('chunk size',chunkSize)
 		for chunk in range(numChunks):
+			recv_bytes = b''
 			# send chunk handshake for all but the first chunk
 			if chunk:
 				message_send = Message(longargs=(enum_gs['GS_ChunkHandshake'],))
@@ -501,11 +509,16 @@ class GatanSocket(object):
 			while chunkRemain:
 				new_recv = self.recv_data(chunkRemain)
 				len_recv = len(new_recv)
-				imArray.data[received:received+len_recv] = numpy.frombuffer(new_recv,dtype=numpy.ushort)
+				recv_bytes += new_recv
 				chunkReceived += len_recv
 				chunkRemain -= len_recv
 				remain -= len_recv
 				received += len_recv
+			last_index = int(index)
+			debug_print('chunk bytes', len(recv_bytes))
+			index =chunkSize*(chunk+1)//bytesPerPixel
+			debug_print('array index range to fill',last_index, index)
+			imArray[last_index:index]=numpy.frombuffer(recv_bytes, dtype=numpy.uint16)
 		imArray = imArray.reshape((height,width))
 		return imArray
 
@@ -574,7 +587,7 @@ class GatanSocket(object):
 			npad = 4 - extra
 			cmd_str = cmd_str + (npad) * '\0'
 		# send the command string as 1D longarray
-		longarray = numpy.frombuffer(bytes(cmd_str,'utf-8'), dtype=numpy.int_)
+		longarray = numpy.frombuffer(bytes(cmd_str,'utf-8'), dtype=numpy.int32)
 		message_send = Message(longargs=(funcCode,), boolargs=(select_camera,), longarray=longarray)
 		message_recv = Message(longargs=recv_longargs_init, dblargs=recv_dblargs_init, longarray=recv_longarray_init)
 		self.ExchangeMessages(message_send, message_recv)
