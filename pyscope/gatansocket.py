@@ -13,7 +13,8 @@ import time
 ## for example:
 debug_log = None
 #debug_log = 'gatansocket.log'
-debug_print = False
+# print debug on teminal
+debug_with_print = False
 
 # enum function codes as in GatanSocket.cpp and SocketPathway.cpp
 # need to match exactly both in number and order
@@ -136,7 +137,8 @@ def logwrap(func):
 	return newfunc
 
 def debug_print(msg):
-	print(msg)
+	if debug_with_print:
+		print(msg)
 
 class GatanSocket(object):
 	def __init__(self, host='', port=None):
@@ -171,9 +173,9 @@ class GatanSocket(object):
 			('GT_CenterZLP', 'AlignEnergyFilterZeroLossPeak'),
 		]
 		self.filter_functions = {}
-		#for name, method_name in self.script_functions:
-		#	if self.hasScriptFunction(name):
-		#		self.filter_functions[method_name] = name
+		for name, method_name in self.script_functions:
+			if self.hasScriptFunction(name):
+				self.filter_functions[method_name] = name
 		if 'SetEnergyFilter' in list(self.filter_functions.keys()) and self.filter_functions['SetEnergyFilter'] == 'IFSetSlitIn':
 			self.wait_for_filter = 'IFWaitForFilter();'
 		else:
@@ -482,7 +484,7 @@ class GatanSocket(object):
 		self.ExchangeMessages(message_send, message_recv)
 
 		longargs = message_recv.array['longargs']
-		debug_print(longargs)
+		debug_print('GetImage longargs %s' % longargs)
 		if longargs[0] < 0:
 			return 1
 		arrSize = longargs[1]
@@ -496,7 +498,7 @@ class GatanSocket(object):
 		received = 0
 		remain = numBytes
 		index = 0
-		debug_print('chunk size',chunkSize)
+		debug_print('chunk size %d' % chunkSize)
 		for chunk in range(numChunks):
 			recv_bytes = b''
 			# send chunk handshake for all but the first chunk
@@ -515,9 +517,9 @@ class GatanSocket(object):
 				remain -= len_recv
 				received += len_recv
 			last_index = int(index)
-			debug_print('chunk bytes', len(recv_bytes))
+			debug_print('chunk bytes length %d' % len(recv_bytes))
 			index =chunkSize*(chunk+1)//bytesPerPixel
-			debug_print('array index range to fill',last_index, index)
+			debug_print('array index range to fill %d:%d' % (last_index, index))
 			imArray[last_index:index]=numpy.frombuffer(recv_bytes, dtype=numpy.uint16)
 		imArray = imArray.reshape((height,width))
 		return imArray
