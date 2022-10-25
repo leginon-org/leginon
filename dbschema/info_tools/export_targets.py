@@ -94,7 +94,7 @@ class Exporter(object):
 		'''
 		presetq = leginondata.PresetData(name=pname, session=self.sessiondata)
 		images = leginondata.AcquisitionImageData(preset=presetq).query()
-		if len(images) > MIN_NUMBER_OF_IMAGES_AT_PRESET:
+		if len(images) >= MIN_NUMBER_OF_IMAGES_AT_PRESET:
 			return True
 		return False
 
