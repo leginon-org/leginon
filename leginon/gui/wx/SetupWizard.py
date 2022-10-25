@@ -1139,14 +1139,23 @@ class Setup(object):
 
 	def getTEM(self,hostname, no_sim=True):
 			temdata = None
+			diffrtemdata = None
 			r = leginon.leginondata.InstrumentData(hostname=hostname).query()
 			if r:
 				for idata in r:
+					if idata['hidden']:
+						continue
 					if no_sim and 'Sim' in idata['name']:
 						continue
 					if idata['cs']:
-						temdata = idata
-						break
+						if 'Diff' not in idata['name']:
+							temdata = idata
+							break
+						else:
+							diffrtemdata = idata
+			if not temdata and diffrtemdata:
+				# use diffraction tem if that is the only one available.  Unlikely case.
+				temdata = diffrtemdata
 			return temdata
 
 	def setC2Size(self,session,clients,c2size):
