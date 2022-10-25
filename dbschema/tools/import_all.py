@@ -75,6 +75,7 @@ class ViewerTableCreater(object):
 		"""
 		create empty table for webviewer
 		"""
+		# viewer_comment is used in loi.php
 		query = "DROP TABLE IF EXISTS `viewer_comment`;"
 		directq.complexMysqlQuery('leginondata',query)
 		query = """
@@ -91,6 +92,24 @@ class ViewerTableCreater(object):
 				KEY `sessionId` (`sessionId`),
 				KEY `imageId` (`imageId`),
 				KEY `type` (`type`)
+			) ENGINE=%s DEFAULT CHARSET=latin1;
+			""" % (self.db_engine)
+		directq.complexMysqlQuery('leginondata',query)
+		# ImageCommentData is used in imageviewer.php
+		query = "DROP TABLE IF EXISTS `ImageCommentData`;"
+		directq.complexMysqlQuery('leginondata',query)
+		query = """
+			CREATE TABLE `ImageCommentData` (
+				`DEF_id` int(11) NOT NULL AUTO_INCREMENT,
+				`DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				`REF|SessionData|session` int(11) DEFAULT NULL,
+				`REF|AcquisitionImageData|image` int(11) DEFAULT NULL,
+				`comment` text DEFAULT NULL,
+				PRIMARY KEY (`DEF_id`),
+				KEY `DEF_timestamp` (`DEF_timestamp`),
+				KEY `REF|SessionData|session` (`REF|SessionData|session`),
+				KEY `REF|AcquisitionImageData|image` (`REF|AcquisitionImageData|image`),
+				KEY `comment` (`comment`)
 			) ENGINE=%s DEFAULT CHARSET=latin1;
 			""" % (self.db_engine)
 		directq.complexMysqlQuery('leginondata',query)
