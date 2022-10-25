@@ -731,6 +731,7 @@ def update_file_header(filename, headerdict):
 	headerbytes = makeHeaderData(oldheader)
 	f.seek(0)
 	f.write(headerbytes)
+	f.close()
 
 def read_file_header(filename):
 	'''get MRC header from a file in the form of a dict'''
@@ -800,7 +801,7 @@ def read(filename, zslice=None):
 		headerbytes = f.read(1024)
 		headerdict = parseHeader(headerbytes)
 		a = readDataFromFile(f, headerdict, zslice)
-
+		f.close()
 		## store keep header with image
 		setHeader(a, headerdict)
 		## cache
