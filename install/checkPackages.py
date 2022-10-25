@@ -46,22 +46,25 @@ class CheckPackages(object):
     #==========================================================================
     
     # min version of Python
-    minPyVer = (2, 3, 4)
+    minPyVer = (2, 7, 5)
     
     # min version of the Python Imaging Library (PIL)
-    minPILVer = (1, 1, 4)
+    minPILVer = (1, 1, 7)
     
-    # min version of MySQL Python client (MySQLdb)
-    minMySQLdbVer = (1, 2)
-    
+    # min version of MySQLdb client (pyMySQL)
+    minMySQLdbVer = (1, 2, 3)
+
+    # min version of PyMySQL client (pyMySQL)
+    minPyMySQLVer = (0, 10, 1)
+
     # define the TESTED versions of Numpy
-    testedNumpyVers = ('1.0.2','1.0.1') 
+    testedNumpyVers = ('1.7.1','1.7.0','1.0.2','1.0.1')
     
     # min version of Python XML module
     minPyXMLVer = (0, 8, 2)
     
     # min version of wxPython
-    minWxPythonVer = (2, 5, 2, 8)
+    minWxPythonVer = (2, 8, 12, 1)
     
     #==========================================================================
     # The function map defined in the init function basically just gives a 
@@ -86,7 +89,8 @@ class CheckPackages(object):
         self.function_map = {'PYTHON' : self.checkPythonVersion,
                         'PYTHONPATH' : self.printPythonPath,
                         'PIL' : self.checkPILVersion,
-                        'MYSQLDB' : self.checkMySQLdbVersion,
+                        #'MYSQLDB' : self.checkMySQLdbVersion,
+                        'PYMYSQL' : self.checkPyMySQLVersion,
                         'NUMPY' : self.checkNumpyVersion,
                         'NUMPYTEST' : self.runNumpyTest,
                         'SCIPY' : self.checkScipyVersion,
@@ -286,6 +290,7 @@ class CheckPackages(object):
                 
         return version
     
+    """
     #==========================================================================
     ## Python MySQL client module
     ## minVersion = (1, 2)
@@ -304,16 +309,36 @@ class CheckPackages(object):
             mymysqlver = MySQLdb.version_info[:3]
             versionOK = self.versionAtLeast(mymysqlver, minVersion)
 
+        return version
+    """
+    #==========================================================================
+    ## MySQL Python client module
+    ## minVersion = (0, 10, 0)
+    ## Returns: installed version if version OK, else 0
+    #==========================================================================
+    def checkPyMySQLVersion(self, minVersion = minPyMySQLVer):
+        version = 0
+        minstr = '.'.join(map(str,minVersion))
+ 
+        try:
+            import pymysql
+        except:
+            raise Exception("!!!! WARNING !!!! Could not import MySQL Python client (MySQLdb). You must install MySQLdb module version %(minver)s or greater." % {'minver' : minstr }  )
+        else:
+            mystr = pymysql.__version__
+            mymysqlver = map(int, mystr.split('.'))
+            versionOK = self.versionAtLeast(mymysqlver, minVersion)
+
             if (versionOK) : 
                 version = mystr
             else :
                 raise Exception("!!!! WARNING !!!! MySQL Python client (MySQLdb) version %(myver)s is too old. Please upgrade to %(minver)s or greater." % {'myver' : mystr, 'minver' : minstr }  )
-                                
+
         return version
-    
+
     #==========================================================================
     ## numpy
-    ##  testedVersions = ('1.0.2','1.0.1')
+    ##  testedVersions = ('1.7.0','1.7.1','1.0.2','1.0.1')
     ## Returns: installed version if version OK, else 0
     #==========================================================================
     def checkNumpyVersion(self, testedVersions = testedNumpyVers):
