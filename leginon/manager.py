@@ -119,6 +119,7 @@ class Manager(node.Node):
 		self.mosaic_target_receiver = None
 		self.auto_atlas_done = threading.Event()
 		self.auto_done = threading.Event()
+		self.preset_changed = threading.Event()
 		# manager pause
 		self.pausable_nodes = []
 		self.paused_nodes = []
@@ -152,6 +153,7 @@ class Manager(node.Node):
 		self.addEventInput(event.ManagerPauseEvent, self.handleManagerPause)
 		self.addEventInput(event.ManagerContinueEvent, self.handleManagerContinue)
 		# this makes every received event get distributed
+		self.addEventInput(event.PresetChangedEvent, self.handlePresetChangedEvent)
 		self.addEventInput(event.Event, self.distributeEvents)
 
 		self.launcherdict = {}
@@ -814,6 +816,14 @@ class Manager(node.Node):
 				out = event.ContinueEvent()
 				self.sendManagerNotificationEvent(to_node, out)
 
+	def handlePresetChangedEvent(self, ievent):
+		"""
+		Intercept PresetChangedEvent to allow autoscreen grid loading wait
+		for its completion.
+		"""
+		self.preset_changed.set()
+		self.distributeEvents(ievent)
+
 	def _addPausableNode(self, nodename):
 		if nodename not in self.pausable_nodes:
 			self.pausable_nodes.append(nodename)
@@ -1227,7 +1237,13 @@ class Manager(node.Node):
 		ievent['name'] = 'gr'
 		ievent['emtarget'] = None
 		ievent['keep image shift'] = False
+		self.preset_changed.clear()
+		# refs Issue #13751
+		# ChangePresetEvent can not really wait. We only know that it
+		# is finished with PresetsManager send PresetChangedEvent.
 		self.outputEvent(ievent, node_name, wait=True, timeout=None)
+		# wait for instrument set to the preset before start loading.
+		self.preset_changed.wait()
 		# load grid
 		node_name = self.auto_class_aliases['TEMController']
 		if node_name is not None:
