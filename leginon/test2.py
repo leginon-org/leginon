@@ -55,7 +55,7 @@ try:
 	## this will connect to the tecnai
 	client.send(evt)
 except datatransport.TransportError as e:
-	print('%s' % e)
+	print('SEND ERROR: %s' % e)
 
 input('hit enter to kill')
 db.exit()

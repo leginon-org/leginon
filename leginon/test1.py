@@ -29,12 +29,16 @@ def printData(d):
 myhostname = mysocket.gethostname().lower()
 
 for myport in range(49152,65536):
+   """
+   Create DataBinder instance on the first available port
+   """
    try:
       db = databinder.DataBinder(myhostname, Logger(), tcpport=myport)
       break
    except:
       continue
 
+# Set binding of the dataclass (event.SetMangerEvent) to the method printData.
 db.addBinding(myhostname, event.SetManagerEvent, printData)
 
 print('---------------------')

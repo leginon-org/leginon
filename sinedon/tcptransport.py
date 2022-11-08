@@ -26,8 +26,7 @@ class Server(socketstreamtransport.Server, SocketServer.ThreadingTCPServer):
 				SocketServer.ThreadingTCPServer.__init__(self, ('', port),
 																									socketstreamtransport.Handler)
 			except socket.error as e:
-				en, string = e
-				raise TransportError(string)
+				raise TransportError(e)
 		else:
 			exception = True
 			# range define by IANA as dynamic/private or so says Jim
@@ -40,9 +39,13 @@ class Server(socketstreamtransport.Server, SocketServer.ThreadingTCPServer):
 					exception = False
 					break
 				except socket.error as e:
-					en, string = e.errno, e.strerror
-					if en == errno.EADDRINUSE:
-						port += 1
+					if hasattr(e, 'errno'):
+						en = e.errno
+						if en == errno.EADDRINUSE:
+							port += 1
+						else:
+							# TODO can it reaches here?
+							pass
 					else:
 						raise TransportError(string)
 			if exception:

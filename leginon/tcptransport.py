@@ -27,8 +27,7 @@ class Server(socketstreamtransport.Server, socketserver.ThreadingTCPServer):
 				socketserver.ThreadingTCPServer.__init__(self, ('', port),
 																									socketstreamtransport.Handler)
 			except socket.error as e:
-				en, string = e
-				raise TransportError(string)
+				raise TransportError(e)
 		else:
 			exception = True
 			# range define by IANA as dynamic/private or so says Jim
@@ -46,8 +45,10 @@ class Server(socketstreamtransport.Server, socketserver.ThreadingTCPServer):
 						if en == errno.EADDRINUSE:
 							port += 1
 							continue
+						else:
+							raise TransportError(e)
 					else:
-						raise TransportError(string)
+						raise TransportError(e)
 			if exception:
 				string = 'No ports in range %s available' % (portrange,)
 				raise TransportError(string)
@@ -78,8 +79,7 @@ class Client(socketstreamtransport.Client):
 		try:
 			s.connect((hostname, port))
 		except socket.error as e:
-			en, string = e
-			raise TransportError(string)
+			raise TransportError(e)
 		return s
 
 Server.clientclass = Client
