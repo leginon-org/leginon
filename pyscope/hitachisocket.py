@@ -54,12 +54,12 @@ class HitachiSocket(object):
 
 	@logwrap
 	def send_data(self, data):
-		return self.sock.sendall(data)
+		return self.sock.sendall(bytes(data,'utf-8'))
 
 	@logwrap
 	def recv_data(self, min_length):
 		data = self.sock.recv(min_length)
-		return data
+		return str(data,'utf-8')
 
 	def sendMessage(self, text):
 		self.send_data(text+self.eof_marker)
@@ -73,7 +73,6 @@ class HitachiSocket(object):
 				break
 			else:
 				recv_text += one_recv
-		#print recv_text
 		return recv_text
 
 	def runSetCommand(self, sub_code, ext_code, args=[], data_types=[],hex_lengths=[6,]):
@@ -103,7 +102,7 @@ class HitachiSocket(object):
 				# string type
 				pass
 		arg_string = ','.join(args)
-		print('send', arg_string, recv_min_length)
+		#print('send', arg_string, recv_min_length)
 		self.sendMessage(cmd+' '+arg_string)
 		# Special case without message coming back.
 		if sub_code == 'Stage' and ext_code == 'SpecimenNo':
@@ -252,7 +251,7 @@ def test2(h):
 
 if __name__=='__main__':
 	try:
-		make_it_fail
+		#works on camera host but should fail on linux in simulation
 		h = HitachiSocket('192.168.10.1',12068)
 		test2(h)
 	except Exception as e:
