@@ -81,11 +81,19 @@ def getSettingsName(classname):
 
 def setSettings(d, settingsclass, session, node_alias, isdefault=False):
 	sd = settingsclass.fromDict(d)
-	sd['session'] = session
-	sd['name'] = node_alias
-	if session['user']['username'] == 'administrator':
-		sd['isdefault'] = True
-	else:
-		sd['isdefault'] = isdefault
+	for k in sd.keys():
+		# refs Issue #13823 set referenced settings first
+		if 'SettingsData' in sd[k].__class__.__name__:
+			sub_sd = setSettings(d[k], sd[k], session, node_alias, isdefault)
+			sd[k] = sub_sd
+	if 'session' in sd.keys():
+		sd['session'] = session
+	if 'name' in sd.keys():
+		sd['name'] = node_alias
+	if 'isdefault' in sd.keys():
+		if session['user']['username'] == 'administrator':
+			sd['isdefault'] = True
+		else:
+			sd['isdefault'] = isdefault
 	sd.insert(force=True)
 	return sd
