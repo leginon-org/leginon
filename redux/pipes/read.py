@@ -11,6 +11,7 @@ import pyami.spidernew
 
 # local
 from redux.pipe import Pipe
+import redux.webimg
 
 class Read(Pipe):
 	cache_file = False
@@ -35,10 +36,14 @@ class Read(Pipe):
 			sys.stderr.write('No file specified')
 			return
 		if not os.path.exists(filename):
-			sys.stderr.write(filename + ' does not exists.')
-			filename = filename.replace('/leginon/', '/cache/')
-			filename = filename.replace('.mrc', '.jpg')
-			sys.stderr.write('Trying cached version instead: '+filename)
+			# if the requested filename is an .mrc and does not exist, 
+			# check to see if we have a webimg jpg archive. otherwise bail.
+			_, ext = os.path.splitext(filename)
+			if not ext.lower().startswith(".mrc"):
+				raise Exception("Read: file does not exist [%s]" % filename)
+			sys.stderr.write(filename + ' does not exist.')
+			filename = redux.webimg.path(filename)
+			sys.stderr.write('Trying webimg version instead: '+filename)
 		if filename.endswith('mrc') or filename.endswith('MRC') or filename.endswith('mrcs'):
 			## use MRC module to read
 			input_format = 'mrc'

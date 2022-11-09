@@ -1,0 +1,487 @@
+#!/usr/bin/env python
+
+import datetime
+import redux.client
+import redux.reduxconfig
+import os
+import sinedon
+import imcacheconfig as config
+import pyami.fileutil
+import logging
+import sys
+import argparse
+import redux.webimg
+
+
+def getopt():
+    def optdate(date):
+        if not len(date) == 8:
+            raise argparse.ArgumentTypeError(
+                "invalid format [%s] - need yyyymmdd" % date)
+        return date
+
+    def today_minus6m():
+        d = datetime.datetime.today() - datetime.timedelta(days=6*31)
+        return d.strftime("%Y%m%d")
+
+    def optbool(x):
+        x = x.lower()
+        if x == "true":
+            return True
+        elif x == "false":
+            return False
+        else:
+            raise argparse.ArgumentTypeError("need true|false")
+
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument("mode", choices=[
+                           "r", "f", "report"], help="(r)ange, (f)orward, report")
+    argparser.add_argument(
+        "archive_root", help="root dir of cache.  session subdirs will be added automatically. ex:/memcweb/webimg.gpfs")
+    argparser.add_argument("--users", nargs="+", default=[])
+    argparser.add_argument("--sessions", nargs="+", default=[])
+    argparser.add_argument("--home", nargs="+", default=[])
+    argparser.add_argument("--delete-mrc-after-archive", nargs="?", const=True,
+                           default=True, type=optbool,
+                           help=":true|false: imarchive deletes mrc after archiving. set this flag to prevent deletion.")
+    argparser.add_argument("--delete-mrc-if-in-webimg", action="store_true",
+                           help="if running post-facto delete .mrc that have been archived")
+    argparser.add_argument("--sweep", action="store_true",
+                           help="ignore old non-conformant (ie, /anchi1/session/...) paths in order to produce reports")
+    argparser.add_argument(
+        "--log-stdout", action="store_true", help="defaults to stderr because the redux library hardcodes trace to stderr")
+    argparser.add_argument(
+        "--min-ts", default=config.min_timestamp[0:8], type=optdate,
+        help=":yyyymmdd: defaults to imcachedconfig.min_timestamp: [%s]" % config.min_timestamp[0:8])
+    argparser.add_argument(
+        "--max-ts", default=today_minus6m(), type=optdate,
+        help=":yyyymmdd: defaults to (6*30) days ago: [%s]" % today_minus6m())
+    args = argparser.parse_args()
+    return args
+
+
+def logger():
+    formatter = logging.Formatter(fmt='%(levelname)-3s %(message)s')
+    stream = sys.stderr
+    if opt.log_stdout:
+        stream = sys.stdout
+    handler = logging.StreamHandler(stream=stream)
+    handler.setFormatter(formatter)
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
+    return logger
+
+
+def mksymlink(s, d):
+    log.info("create relative link: [%s] -> [%s]", d, s)
+    os.symlink(s, d)
+
+
+def home(path):
+    parts = os.path.normpath(path).split(os.sep)
+    return parts[1]
+
+
+def user(path):
+    parts = os.path.normpath(path).split(os.sep)
+    if parts[0] == "gpfs":
+        # malformed (relative) paths
+        assert parts[1] == "leginon"
+        return parts[2]
+    elif parts[1] in ("h1", "h2", "h3"):
+        assert parts[3] == "leginon"
+        return parts[2]
+    elif parts[1] in ("gpfs", "beegfs"):
+        assert parts[2] == "leginon"
+        return parts[3]
+    elif parts[1] == "emg":
+        assert parts[3] == "leginon"
+        return parts[4]
+
+    # at this point there is no known way to extract the user from the path. if
+    # generating a historical report (--sweep) return an invalid user.
+    if opt.sweep:
+        return "--invalid-x00..00x-user--"
+
+    raise Exception("invalid path: [%s]" % path)
+
+
+def in_webimg(jpg_path):
+    """ returns True if the given jpg exists in the webimg archive. False otherwise.
+        :jpg_path: the path to an archived jpg
+    """
+    if os.path.islink(jpg_path):
+        # links can be broken during the creation of an archive session. make
+        # sure a broken link is reported as existing as it will be fixed eventually.
+        return True
+    if os.path.exists(jpg_path):
+        return True
+    return False
+
+
+class Task:
+    def __init__(self, data):
+        self._data = data
+
+    def shape(self):
+        return self._data["shape"]
+
+    def session(self):
+        return self._data["session"]
+
+    def is_done(self):
+        return len(self._data["archived"]) == 2
+
+    def has_pending(self):
+        return len(self._data["pending"]) > 0
+
+    def is_pending(self, img):
+        assert img in ("jpg", "pow.jpg")
+        if not self.has_pending():
+            return False
+        return img in self._data["pending"]
+
+    def jpgfilename(self):
+        assert self.is_pending("jpg")
+        return self._data["pending"]["jpg"]
+
+    def powfilename(self):
+        assert self.is_pending("pow.jpg")
+        return self._data["pending"]["pow.jpg"]
+
+    def mrcfilename(self):
+        return self._data["mrc.filename"]
+
+    def mkwebimgdir(self):
+        if not self.has_pending():
+            raise Exception()
+        # dirname of one of the pending images
+        dirname = os.path.dirname(self._data["pending"].values()[0])
+        pyami.fileutil.mkdirs(dirname)
+
+    def maybe_delmrcafterarchive(self):
+        if not opt.delete_mrc_after_archive:
+            return
+        mrc_path = self.mrcfilename()
+        log.info("remove archived mrc: [%s]\n" % mrc_path)
+        os.unlink(mrc_path)
+
+    def maybe_delmrcifinwebimg(self):
+        if not opt.delete_mrc_if_in_webimg:
+            return
+        if not os.path.exists(mrc_path):
+            return
+        mrc_path = self.mrcfilename()
+        log.info("remove (previously) archived mrc: [%s]" % mrc_path)
+        os.unlink(mrc_path)
+
+
+class ForwardQuery():
+    # fixme(?) - we don't need it
+    pass
+
+
+class RangeQuery():
+    _query_template = """
+        SELECT i.DEF_id, s.name, s.`image path`, i.filename,
+               c.`SUBD|dimension|x`, c.`SUBD|dimension|y`
+        FROM   SessionData s, AcquisitionImageData i, CameraEMData c
+        WHERE  s.DEF_id = i.`REF|SessionData|session`
+        AND    i.`REF|CameraEMData|camera` = c.DEF_id
+        AND    i.DEF_timestamp >= %s AND i.DEF_timestamp < %s
+    """
+
+    def __init__(self, min_ts, max_ts):
+        self._min_ts = min_ts
+        self._max_ts = max_ts
+
+    def _connect(self):
+        args = sinedon.getConfig('leginondata')
+        db = sinedon.sqldb.connect(**args)
+        return db
+
+    def _fetch(self):
+        def datechunks():
+            def fmt(dt):
+                # return in mysql format: yyyymmddhhmmss
+                return dt.strftime("%Y%m%d") + "000000"
+
+            chunksize = datetime.timedelta(days=60)
+            mindt = datetime.datetime.strptime(self._min_ts, "%Y%m%d")
+            maxdt = datetime.datetime.strptime(self._max_ts, "%Y%m%d")
+            assert mindt <= maxdt
+
+            lower = mindt
+            upper = lower + chunksize
+            while True:
+                if upper >= maxdt:
+                    yield fmt(lower), fmt(maxdt)
+                    return
+                yield fmt(lower), fmt(upper)
+                lower = upper
+                upper += chunksize
+
+        for min_ts, max_ts in datechunks():
+            db = self._connect()
+            cur = db.cursor()
+            query = RangeQuery._query_template % (min_ts, max_ts)
+            log.info("query: %s", query)
+            _ = cur.execute(query)
+            rows = cur.fetchall()
+            cur.close()
+            db.close
+            yield rows
+
+    def _task(self, record):
+        def webimgfilename(ext):
+            return os.path.join(
+                opt.archive_root, user(path), session, "rawdata",
+                filename + ext)
+
+        imid, session, path, filename, width, height = record
+
+        # if requested users
+        if opt.users:
+            if not user(path) in opt.users:
+                log.debug("skipping user: [%s]" % user(path))
+                return None
+
+        # if requested sessions
+        if opt.sessions:
+            if not session in opt.sessions:
+                log.debug("skipping session: [%s]" % session)
+                return None
+
+        # if requested home
+        if opt.home:
+            if not home(path) in opt.home:
+                log.debug("skipping home: [%s]" % home(path))
+                return None
+
+        log.debug("RangeQuery._task: path %s", path)
+        log.debug("RangeQuery._task: filename %s", filename)
+
+        # filter out results that are already in webimg
+        pending = {}
+        archived = {}
+        for imtype in ("jpg", "pow.jpg"):
+            candidate = webimgfilename("." + imtype)
+            if in_webimg(candidate):
+                archived[imtype] = candidate
+                continue
+            pending[imtype] = candidate
+
+        return Task({
+            "id": imid,
+            "session": session,
+            "mrc.filename": os.path.join(path, filename + ".mrc"),
+            "archived": archived,
+            "pending": pending,
+            "shape": (height, width),
+        })
+
+    def next(self):
+        for records in self._fetch():
+            for record in records:
+                yield record, self._task(record)
+
+
+class Redux():
+    def __init__(self):
+        self._reduxclient = redux.client.SimpleClient()
+
+    def run(self, task):
+        # region :: deal with symlinks created after shrinking script.
+        if os.path.islink(task.mrcfilename()):
+            target = os.path.realpath(task.mrcfilename())
+            target = os.path.basename(target)
+            log.info("= [%s] is linked to [%s]", task.mrcfilename(), target)
+            target, ext = os.path.splitext(target)
+            assert(ext == ".mrc")
+            task.mkwebimgdir()
+            # make symlinks to the target (likely a "-a-DW.mrc") in webimg archive
+            if task.is_pending("jpg"):
+                mksymlink(target + '.jpg', task.jpgfilename())
+            # if we are here the .pow.jpg must surely be pending so do not check.
+            # task.powfilename() asserts.
+            mksymlink(target + '.pow.jpg', task.powfilename())
+            task.maybe_delmrcafterarchive()
+            return
+        # endregion
+
+        # region :: create an intermediate image, no greater than size1
+        inshape1 = task.shape()
+        inmax1 = max(*inshape1)
+        if inmax1 > config.redux_maxsize1:
+            factor = float(config.redux_maxsize1) / float(inmax1)
+        else:
+            factor = 1
+        outshape1 = int(factor*inshape1[0]), int(factor*inshape1[1])
+        # copy default redux args and update for current task
+        kwargs1 = dict(config.redux_args1)
+        kwargs1['shape'] = outshape1
+        kwargs1['filename'] = task.mrcfilename()
+        # endregion
+
+        # when an .mrc is not found, it triggers a webimg search in pipes/Read.
+        # in the imarchive case it is a noop.
+        assert(redux.webimg.path is redux.webimg.noop)
+        log.info("= read [%s]", task.mrcfilename())
+        try:
+            image1 = self._reduxclient.process_kwargs(**kwargs1)
+        except redux.webimg.NotFound:
+            log.info('%s %s', '! failed to read', task.mrcfilename())
+            return
+        except ValueError as e:
+            log.info('%s %s', '! failed to process', task.mrcfilename())
+            log.info('  %s', e)
+            return
+
+        task.mkwebimgdir()
+
+        # region :: final jpg and pow jpg are no greater than size2
+        inshape2 = outshape1
+        inmax2 = max(*inshape2)
+        if inmax2 > config.redux_maxsize2:
+            factor = float(config.redux_maxsize2) / float(inmax2)
+        else:
+            factor = 1
+        outshape2 = int(factor*inshape2[0]), int(factor*inshape2[1])
+        # endregion
+
+        # region :: write jpeg to disk
+        if task.is_pending('jpg'):
+            # copy default redux args and update for current task
+            kwargs = dict(config.redux_args_jpg)
+            kwargs['shape'] = outshape2
+            kwargs['initial_input'] = image1
+            jpg = self._reduxclient.process_kwargs(**kwargs)
+            # save jpg atomically.
+            tmpfile = task.jpgfilename() + '._tmp_%s_' % os.getpid()
+            f = open(tmpfile, 'w')
+            f.write(jpg)
+            f.close()
+            os.rename(tmpfile, task.jpgfilename())
+            log.info('done %s', task.jpgfilename())
+        # endregion
+
+        # region :: write power to disk
+        if task.is_pending("pow.jpg"):
+            # copy default redux args and update for current task
+            kwargs = dict(config.redux_args_pow)
+            kwargs['shape'] = outshape2
+            kwargs['initial_input'] = image1
+            pow = self._reduxclient.process_kwargs(**kwargs)
+            # save pow jpg atomically
+            tmpfile = task.powfilename() + '._tmp_%s_' % os.getpid()
+            f = open(tmpfile, 'w')
+            f.write(pow)
+            f.close()
+            os.rename(tmpfile, task.powfilename())
+            log.info('done %s',  task.powfilename())
+        # endregion
+        task.maybe_delmrcafterarchive()
+
+
+def run():
+    redux = Redux()
+    for _, task in RangeQuery(opt.min_ts, opt.max_ts).next():
+        if task is None:
+            continue
+        if not task.has_pending():
+            assert task.is_done()
+            task.maybe_delmrcifinwebimg()
+            continue
+        if not os.path.exists(task.mrcfilename()):
+            log.info("%s %s\n", "! missing", task.mrcfilename())
+            continue
+        if os.path.getsize(task.mrcfilename()) == 0:
+            log.info("%s %s\n", "! invalid (size = 0)", task.mrcfilename())
+            continue
+        redux.run(task)
+
+
+def report():
+    data = {}
+    skip = set()
+
+    def getrecord(task):
+        class Record:
+            def __init__(self):
+                self.total = 0
+                self.missing = 0
+
+            def incrtotal(self):
+                self.total += 1
+
+            def incrmissing(self):
+                self.missing += 1
+
+            def __str__(self):
+                available = self.total - self.missing
+                return "[%s/%s]" % (available, self.total)
+
+        record = data.get(task.session(), None)
+        if not record:
+            record = Record()
+            data[task.session()] = record
+        return record
+
+    def delrecord(task):
+        if task.session() in data:
+            data.pop(task.session())
+
+    for _, task in RangeQuery(opt.min_ts, opt.max_ts).next():
+        if task is None:
+            # no task => entry is filtered
+            continue
+        if task.session() in skip:
+            continue
+        if os.path.exists(task.mrcfilename()):
+            # the session still has pending items
+            skip.add(task.session())
+            # remove from data any previously processed tasks (this mostly affects sessions in archive progress)
+            delrecord(task)
+            continue
+        record = getrecord(task)
+        record.incrtotal()
+        if task.has_pending():
+            record.incrmissing()
+    # --
+    for session, record in data.items():
+        print("%s: %s" % (session, record))
+
+
+opt = getopt()
+log = logger()
+log.setLevel(logging.INFO)
+log.info("argv: %s", vars(opt))
+
+if opt.users:
+    log.info("archiving mrc for users=%s", opt.users)
+if opt.sessions:
+    log.info("archiving mrc for sessions=%s", opt.sessions)
+
+# region :: import redux config to disable cache.
+redux.reduxconfig.config['cache on'] = False
+redux.reduxconfig.config['cache path'] = False
+redux.reduxconfig.config['log file'] = False
+log.debug("redux config is: %s", redux.reduxconfig.config)
+# webimg handler will not try to resolve missing .mrc
+redux.webimg.path = redux.webimg.noop
+# endregion
+
+try:
+    if opt.mode == "report":
+        log.info("running report ...")
+        report()
+    else:
+        run()
+except Exception as e:
+    log.error(e, exc_info=True)
+    exit(1)
+
+
+log.info(
+    "terminated successfuly (%s) for range %s <= x < %s" % (opt.mode, opt.min_ts, opt.max_ts))
