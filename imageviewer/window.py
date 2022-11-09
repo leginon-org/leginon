@@ -8,8 +8,9 @@ class Window(wx.ScrolledWindow):
 
         self.plugins = []
         self.pluginsregion = wx.Region()
-
-        self.rect = wx.Rect()
+        # TODO this sets the window of updatable image.
+        # Need to find out how to modify and apply it.
+        self.rect = wx.Rect(wx.Size(200,200))
         self.rect.size = self.GetClientSize()
         self.buffer = wx.Bitmap(*self.rect.size)
 
@@ -264,8 +265,8 @@ class Window(wx.ScrolledWindow):
         copyregions = {}
         sourceregion = wx.Region()
         for i, plugin in enumerate(self.plugins):
-            offset  = tuple(plugin.region.GetBox().Position
-                        - regions[i].GetBox().Position)
+            offset  = tuple(plugin.region.GetBox().GetPosition()
+                        - regions[i].GetBox().GetPosition())
             if updates[i]:
                 copyregion = wx.Region()
                 if not bufferedregions[i].IsEmpty():
@@ -281,7 +282,7 @@ class Window(wx.ScrolledWindow):
                             copyregion.Subtract(regions[j])
 
                 if not copyregion.IsEmpty():
-                    copyregion.Offset(offset.x, offset.y)
+                    copyregion.Offset(offset[0], offset[1])
 
                 for p in self.plugins[i+1:]:
                     if p.hasalpha:
@@ -300,7 +301,7 @@ class Window(wx.ScrolledWindow):
                     sourceregion.Union(plugin.buffered)
                 if not copyregion.IsEmpty():
                     sourceregion.Subtract(copyregion)
-                    copyregion.Offset(-offset.x, -offset.y)
+                    copyregion.Offset(-offset[0], -offset[1])
                 if not copyregion.IsEmpty():
                     copyregions[offset].Union(copyregion)
             else:
@@ -354,9 +355,11 @@ class Window(wx.ScrolledWindow):
         sourceregion, copyregions = self.getUpdateRegions(updates, regions,
                                                            bufferedregions)
 
+        self.rect = rect
+        self.buffer = wx.Bitmap(*self.rect.size)
+
         self.updateBuffer(sourceregion, copyregions, rect)
 
-        self.rect = rect
 
         self.Refresh()
 

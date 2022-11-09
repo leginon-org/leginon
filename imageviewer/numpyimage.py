@@ -21,7 +21,6 @@ def numpy2Image(array):
     try:
         mode, rawmode = typemap[arraytype]
     except KeyError:
-        print('TYPE', arraytype)
         raise TypeError
     height, width = array.shape
     size = width, height
@@ -142,7 +141,7 @@ def numpy2wxImageBin(array, x=0, y=0, width=None, height=None,
             fromrange = image.getextrema()
         image = scaleImage(image, fromrange, (0, 255))
         rgbimage = image.convert('RGB')
-        wximage = wx.EmptyImage(*rgbimage.size)
+        wximage = wx.Image(*rgbimage.size)
         wximage.SetData(numpil.pil_image_tostring(rgbimage))
         return wximage
 
@@ -161,7 +160,7 @@ def numpy2wxImageBin(array, x=0, y=0, width=None, height=None,
 
     rgbimage = image.convert('RGB')
 
-    wximage = wx.EmptyImage(*rgbimage.size)
+    wximage = wx.Image(*rgbimage.size)
     wximage.SetData(numpil.pil_image_tostring(rgbimage))
     # Scale size
     wximage.Rescale(imagewidth,imageheight)
@@ -175,7 +174,7 @@ def numpy2wxBitmap(array, x=0, y=0, width=None, height=None,
                        divide_factor=1,
                        fromrange=None, filter=Image.BICUBIC):
     if divide_factor > 1:
-        return wx.BitmapFromImage(numpy2wxImageBin(array, x, y, width, height, imagewidth, imageheight, array_offset_x, array_offset_y, divide_factor, fromrange, filter))
+        return wx.Bitmap(numpy2wxImageBin(array, x, y, width, height, imagewidth, imageheight, array_offset_x, array_offset_y, divide_factor, fromrange, filter))
     else:
         return wx.Bitmap(numpy2wxImageZoom(array, x, y, width, height, imagewidth, imageheight, fromrange, filter))
 
