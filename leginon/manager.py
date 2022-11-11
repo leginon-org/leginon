@@ -1220,6 +1220,13 @@ class Manager(node.Node):
 					break
 		return auto_class_aliases
 
+	def getFirstPresetName(self):
+		try:
+			r = leginondata.PresetData(session=sessiondata, number=0).query(results=1)
+			return r[0]['name']
+		except:
+			return 'gr'
+
 	def autoStartApplication(self, task='atlas'):
 		'''
 		Experimental automatic start of application.
@@ -1233,8 +1240,8 @@ class Manager(node.Node):
 		# simulator pause
 		time.sleep(2)
 		ievent = event.ChangePresetEvent()
-		# TODO determine which preset name to set.
-		ievent['name'] = 'gr'
+		preset_name = self.getFirstPresetName()
+		ievent['name'] = preset_name
 		ievent['emtarget'] = None
 		ievent['keep image shift'] = False
 		self.preset_changed.clear()
