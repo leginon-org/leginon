@@ -134,7 +134,6 @@ Func SetApertureSelection($aIndices, $sSelection)
    Local $iCurrentColor = 0
    Local $iBackGroundColor = 0
 
-   ControlFocus($my_title,"","[CLASS:ComboBox;INSTANCE:" & $iComboInst & "]")
    $iBackGroundColor = getCtrlBackgroundColor($iComboInst)
    ; Select aperture position
    If _ArraySearch($aSelections, $sSelection) = -1 Then
