@@ -83,8 +83,20 @@ class TEMController(node.Node):
 			return
 		self._activateClickTools()
 
+	def waitForTem(self, time_out=120.0):
+		# Wait until some TEM instrument is loaded.
+		time_out = 120.0
+		t0=time.time()
+		while not self.instrument.getTEMNames():
+			time.sleep(5)
+			time_delta = time.time() - t0
+			self.logger.warning('Waited for %.1f s for tem' % (time_delta))
+			if time_delta - time_out > 0:
+				# Will need restart to clear confirm event.
+				self.logger.error('No TEM for %.1f min. Please restart.' % (time_out/60.0))
+				return
+
 	def handleLoadAutoLoaderGrid(self,evt):
-		# Hope instrument is loaded by now.
 		self.grid_slot_numbers = self.researchLoadableGridSlots()
 		grid_slot_name = evt['slot name']
 		t0 = time.time()
@@ -93,7 +105,7 @@ class TEMController(node.Node):
 			self.confirmEvent(evt)
 		else:
 			# Will need restart to clear confirm event.
-			self.logger.error('Failer auto loading.  Please restart.')
+			self.logger.error('Failed auto loading.  Please restart.')
 
 	def _toScope(self,name, stagedict):
 		try:
@@ -259,6 +271,7 @@ class TEMController(node.Node):
 		Slot name refers to the position on grid loader
 		Grid name refers to the identity grid preparation. 
 		'''
+		self.waitForTem()
 		try:
 			total_grids = self.instrument.tem.getGridLoaderNumberOfSlots()
 			slot_number_list = map((lambda x:x+1),range(total_grids))
