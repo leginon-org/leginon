@@ -1220,6 +1220,13 @@ class Manager(node.Node):
 					break
 		return auto_class_aliases
 
+	def getFirstPresetName(self):
+		try:
+			r = leginondata.PresetData(session=sessiondata, number=0).query(results=1)
+			return r[0]['name']
+		except:
+			return 'gr'
+
 	def autoStartApplication(self, task='atlas'):
 		'''
 		Experimental automatic start of application.
@@ -1229,14 +1236,14 @@ class Manager(node.Node):
 		node_name = self.auto_class_aliases['PresetsManager']
 		if node_name is None:
 			return
-		# TODO How to know instruments are ready?
-		# simulator pause
-		time.sleep(2)
 		ievent = event.ChangePresetEvent()
-		# TODO determine which preset name to set.
-		ievent['name'] = 'gr'
+		preset_name = self.getFirstPresetName()
+		ievent['name'] = preset_name
 		ievent['emtarget'] = None
 		ievent['keep image shift'] = False
+		# pass node name as manager to acquire lock.  This allows it to
+		# go through 3 trials with waiting.
+		ievent['node'] = 'manager'
 		self.preset_changed.clear()
 		# refs Issue #13751
 		# ChangePresetEvent can not really wait. We only know that it

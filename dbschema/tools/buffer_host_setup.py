@@ -18,9 +18,9 @@ class BufferHostSetter(scriptrun.ScriptRun):
 		parser.add_option("--change_status", dest="change_status", default=False,
 			action="store_true", help="Change status of the existing record")
 		parser.add_option("--prepend_to_full_path", dest="prepend_to_full_path", default=False,
-			action="store_true", help="Prepand base_path to the full path instead of before 'leginon'")
+			action="store_true", help="Prepand base_path to the full path instead of before 'leginon', i.e. /base_path/common_data/leginon/22oct25a/rawdata")
 		parser.add_option("--prepend_to_leginon", dest="prepend_to_full_path", default=False,
-			action="store_false", help="Prepand base_path to the full path instead of before 'leginon'")
+			action="store_false", help="Prepand base_path before the part after 'leginon', i.e. /base_path/22oct25a/rawdata")
 
 	def checkOptionConflicts(self,params):
 		camera_hostname = params['camera_host']

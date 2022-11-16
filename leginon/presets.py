@@ -380,6 +380,11 @@ class PresetsManager(node.Node):
 		succeed = False
 		for i in range(failtries):
 			try:
+				pdata = self.presetByName(pname)
+				# check if tem and ccdcamera is available
+				# this helps the first ChangePresetEvent handling of autoscreen to wait for instrument to be ready
+				if pdata['tem']['name'] not in self.instrument.getTEMNames() or pdata['ccdcamera']['name'] not in self.instrument.getCCDCameraNames():
+					raise PresetChangeError('preset %s tem/camera pair is not ready' % (pname))
 				if emtarget is None or emtarget['movetype'] is None:
 					# can not set with emtarget and moveype
 					# change preset with current values
