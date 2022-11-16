@@ -63,13 +63,14 @@ def remove_all_files_in_dir(dirname):
 	else:
 		return -1
 
-def get_config_dirs(module=None, package_name=None):
+def get_config_dirs(module_name=None, package_name=None):
 	'''
 	Determine a list of directories where config files may be located.
 	One of the directories will be the installed module directory, but
 	this only works automatically if this function is called from that
-	module.  If you want to force a certain module, pass it to this
-	function in the optional argument.
+	module.  If you want to force a certain module, pass its name to this
+	function in the optional argument. Environment variable *_CFG_PATH
+  can do final overwrite of this.
 	'''
 	# system config location is /etc/myami on unix like systems or
 	# under PROGRAMFILES on windows
@@ -79,15 +80,12 @@ def get_config_dirs(module=None, package_name=None):
 		system_dir = '/etc/myami'
 
 	# installed module directory, specified by argument, or auto detected
-	if module is None:
-		if package_name is None:
-			# not this function, but the caller of this function, so up=2
-			installed_dir = getMyDir(up=2)
-		else:
-			package_path = imp.find_module(package_name)[1]
-			installed_dir = os.path.abspath(package_path)
+	if package_name is None:
+		# not this function, but the caller of this function, so up=2
+		installed_dir = getMyDir(up=2)
 	else:
-		installed_dir = os.path.dirname(os.path.abspath(module.__file__))
+		package_path = imp.find_module(package_name)[1]
+		installed_dir = os.path.abspath(package_path)
 
 	# user home dir
 	user_dir = os.path.expanduser('~')
@@ -95,7 +93,18 @@ def get_config_dirs(module=None, package_name=None):
 	confdirs = [system_dir, installed_dir, user_dir]
 	# module config environment variable
 	installed_dir_basename = os.path.basename(installed_dir)
-	config_environ_name = '%s_CFG_PATH' % (installed_dir_basename.upper())
+	if module_name is None:
+		# use installed_dir_basename
+		if installed_dir_basename == 'pyscope':
+
+			# More aligned with user expectation to call it 'instruments'
+			env_module_name = 'instruments'
+		else:
+			env_module_name = installed_dir_basename
+	else:
+		# use input module_name
+		env_module_name = module_name
+	config_environ_name = '%s_CFG_PATH' % (env_module_name.upper())
 	if os.environ.has_key(config_environ_name):
 		confdirs.append(os.environ[config_environ_name])#added to have an option to have mutiple sinedon.cfg files
 	return confdirs
