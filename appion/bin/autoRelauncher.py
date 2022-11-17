@@ -55,7 +55,7 @@ class appionRelauncher(basicScript.BasicScript):
 		scripts = old.scripts
 		new_sessions = self.getSessionsInAutoSet()
 		for session in new_sessions:
-			apDisplay.printMsg('Monitor and run scripts in session %s' % session['name'])
+			apDisplay.printColor('Monitor and run scripts in session %s' % session['name'], "cyan")
 			self._start(session, scripts)
 
 	def getSessionsInAutoSet(self):
@@ -141,7 +141,7 @@ class appionRelauncher(basicScript.BasicScript):
 			for p in s.processes:
 				if p.returncode == None:
 					p.communicate()
-			print '%s ended' % (s.prog_name)
+			apDisplay.printMsg('%s ended' % (s.prog_name))
 
 	#=====================
 	def showCommands(self,script,cmds):
