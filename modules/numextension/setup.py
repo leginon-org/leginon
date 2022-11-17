@@ -12,6 +12,6 @@ setup(
 	ext_modules=[numextmod],
 	packages=['numextension'],
 	package_dir={'numextension': ''},
-	version='svn',
+	version='1.0.0',
 )
 
