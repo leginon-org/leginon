@@ -111,11 +111,23 @@ class ModuleConfigParser(object):
 			newkeys.append(newkey)
 		return newkeys
 
-	def getConfigPath(self):
-		#print "parsing %s...." % self.config_filename
+	def _getConfigModuleName(self):
+		'''
+		return the name used in environment variable before _CFG_PATH
+		for fileutil.get_config_dirs
+		If None is return, then package name is used.
+		'''
+		#print("parsing %s" % self.config_filename)
+		if self.config_filename.endswith('.cfg'):
+			module_name = self.config_filename[:-4]
+		else:
+			module_name = None
+		return module_name
 
-		# read instruments.cfg
-		confdirs = pyami.fileutil.get_config_dirs(package_name=self.package)
+	def getConfigPath(self):
+		# read module_name.cfg
+		module_name = self._getConfigModuleName()
+		confdirs = pyami.fileutil.get_config_dirs(module_name=module_name, package_name=self.package)
 		filenames = [os.path.join(confdir, self.config_filename) for confdir in confdirs]
 		# refs Issue #10221. Use the last filename if exists.
 		filenames.reverse()
@@ -133,7 +145,8 @@ class ModuleConfigParser(object):
 			return self.getConfigPath()
 		else:
 			# combine all confdirs
-			confdirs = pyami.fileutil.get_config_dirs(package_name=self.package)
+			module_name = self._getConfigModuleName()
+			confdirs = pyami.fileutil.get_config_dirs(module_name=module_name, package_name=self.package)
 			filenames = [os.path.join(confdir, self.config_filename) for confdir in confdirs]
 			one_exists = sum(map((lambda x:os.path.exists(x)),filenames))
 			if not one_exists:
@@ -153,7 +166,6 @@ class ModuleConfigParser(object):
 
 		# parse
 		names = self.configparser.sections()
-
 		for name in names:
 			self.configured[name] = {}
 			hierarchy_keys = self.configparser.options(name)
