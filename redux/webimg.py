@@ -1,6 +1,6 @@
 import sys
 import imp
-import reduxconfig
+from redux import reduxconfig
 
 # this namespace should export one function:
 #   path(mrc_path: str) -> str
