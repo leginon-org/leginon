@@ -160,6 +160,15 @@ def getSessionDataFromSessionName(sessionname, msg=True):
 		apDisplay.printWarning("could not find session, "+sessionname)
 		return None
 
+def getSessionDone(session):
+	'''
+	Check if the session(data) is logged as done. Only log in autorun.
+	'''
+	r = leginon.leginondata.SessionDoneLog(session=session).query(results=1)
+	if r:
+		return r[0]['done']
+	return False
+
 #================
 def getTiltSeriesDataFromTiltNumAndSessionId(tiltseries,sessiondata):
 	apDisplay.printMsg("Looking up session first, "+ str(sessiondata.dbid));

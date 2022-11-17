@@ -53,8 +53,26 @@ class appionRelauncher(basicScript.BasicScript):
 	def start(self):
 		old = apScriptRemake.OldSessionScripts(self.params['old-sessionname'])
 		scripts = old.scripts
+		new_sessions = self.getSessionsInAutoSet()
+		for session in new_sessions:
+			apDisplay.printMsg('Monitor and run scripts in session %s' % session['name'])
+			self._start(session, scripts)
+
+	def getSessionsInAutoSet(self):
+		r = leginondata.AutoSessionData(session=self.new_session).query(results=1)
+		if r:
+			q = leginondata.AutoSessionData()
+			q['session set'] = r[0]['session set']
+			results = q.query()
+			sessions = list(map((lambda x: x['session']), results))
+			sessions.reverse()
+			return sessions
+		else:
+			return [self.new_session]
+
+	def _start(self, new_session, scripts):
 		for s in scripts:
-			s.setNewRun(self.new_session, self.params['runname'])
+			s.setNewRun(new_session, self.params['runname'])
 			def modifyParams(s):
 				# in-place change
 				if self.params['force-wait']:
@@ -70,41 +88,53 @@ class appionRelauncher(basicScript.BasicScript):
 			else:
 				self.waitToStart(s)
 				self.runCommands(s, cmds)
+		# we start all scripts and then wait for all to end.
+		#if not self.params['testing'] and s.params['wait']==True:
 		if not self.params['testing']:
 			self.waitToEnd(scripts)
 
-	def waitToStart(self,script):
+	def waitToStart(self,script_obj):
+		"""
+		Wait either for preset or dependencies to start.
+		"""
 		t0 = time.time()
 		while True:			
-			if 'wait' in script.params and script.params['wait'] == True:
+			if 'wait' in script_obj.params and script_obj.params['wait'] == True:
 				#appionLoop only need one valid preset image
-				if 'preset' in script.params:
-					script_preset = script.params['preset']
-					pq = leginondata.PresetData(session=self.new_session,name=script_preset)
+				if 'preset' in script_obj.params:
+					script_preset = script_obj.params['preset']
+					pq = leginondata.PresetData(session=script_obj.new_session,name=script_preset)
 					images = leginondata.AcquisitionImageData(preset=pq).query()
 					if len(images) >=1:
 						break
 					apDisplay.printMsg('Waiting for some image with %s preset to be saved' % script_preset)
 			else:
-				if not script.dependencies:
+				# case for not waiting for new images.
+				if not script_obj.dependencies:
 					break
 				#wait for dependency to finish.
 				alldone = []
-				for d in script.dependencies:
+				for d in script_obj.dependencies:
 					done = False
 					returncodes = map((lambda x: x.returncode),d.processes)
 					if len(returncodes)>0:
 						if not all(map((lambda x: x!= None),returncodes)):
 							apDisplay.printMsg('Waiting for %s.py to finish' % d.prog_name)
 							for p in d.processes:
-								p.communicate()
+								try:
+									p.communicate()
+								except ValueError as e:
+									print(e)
+									pass
+								except Exception:
+									raise
 						done = True
 					alldone.append(done)
 				if all(alldone):
 					break
 			time.sleep(10)
 		t1 = time.time()
-		apDisplay.printMsg('%s waited %.2f min before starting' % (script.prog_name,(t1-t0)/60.0))
+		apDisplay.printMsg('%s waited %.2f min before starting' % (script_obj.prog_name,(t1-t0)/60.0))
 
 	def waitToEnd(self,scripts):
 		for s in scripts:

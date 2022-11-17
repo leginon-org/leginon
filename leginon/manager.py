@@ -1189,6 +1189,7 @@ class Manager(node.Node):
 		d = leginondata.LaunchedApplicationData(initializer=initializer)
 		self.publish(d, database=True, dbforce=True)
 		self.onApplicationStarted(name)
+		self.logDoneSession(False)
 		if self.autorun:
 			try:
 				self.tasker = autotask.AutoTaskOrganizer(self.session)
@@ -1227,6 +1228,13 @@ class Manager(node.Node):
 		except:
 			return 'gr'
 
+	def logDoneSession(self,is_done):
+		'''
+		Save log in database that session is done. Used to stop AppionLoop waiting.
+		'''
+		q = leginondata.SessionDoneLog(session=self.session, done=is_done)
+		q.insert(force=True)
+
 	def autoStartApplication(self, task='atlas'):
 		'''
 		Experimental automatic start of application.
@@ -1236,6 +1244,8 @@ class Manager(node.Node):
 		node_name = self.auto_class_aliases['PresetsManager']
 		if node_name is None:
 			return
+		# standard pause before first check
+		time.sleep(2)
 		ievent = event.ChangePresetEvent()
 		preset_name = self.getFirstPresetName()
 		ievent['name'] = preset_name
@@ -1286,6 +1296,7 @@ class Manager(node.Node):
 				ievent = event.SubmitMosaicTargetsEvent()
 				self.outputEvent(ievent, node_name, wait=False, timeout=None)
 				self.auto_done.wait()
+		self.logDoneSession(True)
 		# next grid session
 		next_auto_task = self.tasker.nextAutoTask()
 		if next_auto_task:
