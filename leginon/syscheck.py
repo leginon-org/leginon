@@ -172,7 +172,26 @@ else:
 		print '       OK'
 	except:
 		print '        *** FAILED: need version of scipy.optimize with leastsq'
-		
+
+######################################################################
+## numextension
+######################################################################
+print '--------------------------------------------------------------'
+print 'numextension:'
+print '    importing numextension module...'
+try:
+	import numextension
+except ImportError:
+	print '    *** Failed to import numextension.  Install and Build numextension first'
+else:
+	try:
+		print '      testing for minmax function...'
+		numextension.minmax
+		print '       OK'
+	except:
+		print '        *** FAILED: could not find minmax.'
+
+
 ######################################################################
 ## wxPython
 ######################################################################
