@@ -1317,6 +1317,9 @@ class IceTargetFinderPrefsData(InSessionData):
 			('filter-ice-on-convolved-on', bool),
 			('sampling targets', bool),
 			('max sampling', int),
+			('randomize acquisition',bool),
+			('random y offset',int),
+			('randomize chunky',bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1746,6 +1749,9 @@ class IceTargetFinderSettingsData(TargetFinderSettingsData):
 			('filter ice on convolved', bool),
 			('sampling targets', bool),
 			('max sampling', int),
+			('randomize acquisition',bool),
+			('random y offset',int),
+			('randomize chunky',bool),
 		)
 	typemap = classmethod(typemap)
 
