@@ -3218,6 +3218,7 @@ class ZeroLossIceThicknessSettingsData(SettingsData):
 			('process_obj_thickness', bool),
 			('obj mean free path', float),
 			('vacuum intensity', float),
+			('use_entire_image', bool),
 		)
 	typemap = classmethod(typemap)
 

@@ -142,6 +142,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'Vacuum intensity for exposure images:')
 		sz_vac.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz_vac.Add(self.widgets['vacuum intensity'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		self.widgets['use_entire_image'] = wx.CheckBox(self, -1, 'Use entire image for calculation (original behavior)')
 
 
 		sz = wx.GridBagSizer(5, 10)
@@ -152,13 +153,13 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(sz_decimate, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_binning, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-		#sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		sz = wx.GridBagSizer(5, 10)
 		#label = wx.StaticText(self, -1, 'Find images in this session with label:')
 		sz.Add(self.widgets['process_obj_thickness'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_objmeanfreepath, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_vac, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['use_entire_image'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sbszdb.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sbsz, sbszdb]
