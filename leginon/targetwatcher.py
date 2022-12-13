@@ -73,6 +73,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.targetlistevents = {}
 		self.startQueueProcessor()
 		self.is_firstimage = False
+		self.obj_aperture_reset_value = 'unknown'
+		self.c2_aperture_reset_value = 'unknown'
 
 	def processData(self, newdata):
 		if isinstance(newdata, leginondata.ImageTargetListData):
@@ -370,7 +372,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		obj_to_set = self.settings['objective aperture']
 		c2_to_set = self.settings['c2 aperture']
 		if self.obj_aperture_reset_value == 'unknown' or self.obj_aperture_reset_value == 'unknown':
-			self.logger.warning('Objective aperture not in a restorable state. Skip setting aperture')
+			self.logger.warning('Apertures not in a restorable state. Skip setting aperture')
 			return False
 		can_do = self.obj_aperture_reset_value not in (obj_to_set,) or self.c2_aperture_reset_value != c2_to_set
 		return can_do

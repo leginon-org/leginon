@@ -130,7 +130,11 @@ Func SetApertureSelection($aIndices, $sSelection)
    Local $iComboInst = $aIndices[1]
    Local $tText = ControlGetText($my_title,"","[CLASS:ComboBox;INSTANCE:" & $iComboInst & "]")
    Local $iTry = 0
+   Local $iWait = 0
+   Local $iCurrentColor = 0
+   Local $iBackGroundColor = 0
 
+   $iBackGroundColor = getCtrlBackgroundColor($iComboInst)
    ; Select aperture position
    If _ArraySearch($aSelections, $sSelection) = -1 Then
 	  _WriteError("Selection not valid: " & $sSelection)
@@ -142,18 +146,45 @@ Func SetApertureSelection($aIndices, $sSelection)
 		 ControlClick($my_title,"","[CLASS:Button;INSTANCE:" & $iButtonInst & "]")
 		 ;MsgBox(0,'button',$iButtonInst)
 		 ;long sleep to wait for the combobox to change to [none]
-		 Sleep(10000)
+     ; BackGround color changes back to original signals it really has ended.
+     $iWait = 0
+     While $iCurrentColor <> $iBackGroundColor And $iWait <= 10
+        Sleep(500)
+        $iCurrentColor = getCtrlBackgroundColor($iComboInst)
+				$iWait += 1
+     WEnd
+		 Sleep(1000)
 	  EndIf
    Else
 	  ;Try multiple times since combobox selection does not always works when the selection is not adjacent
 	  While $sSelection <> $tText And $iTry <=10
 		 ControlSend($my_title,"","[CLASS:ComboBox;INSTANCE:" & $iComboInst & "]",$sSelection)
-		 Sleep(2000)
+     ; BackGround color changes back to original signals it really has ended.
+     $iWait = 0
+     While $iCurrentColor <> $iBackGroundColor And $iWait <= 10
+        Sleep(500)
+        $iCurrentColor = getCtrlBackgroundColor($iComboInst)
+				$iWait += 1
+     WEnd
 		 $tText = ControlGetText($my_title,"","[CLASS:ComboBox;INSTANCE:" & $iComboInst & "]")
 		 ;MsgBox(0,'tries',$iTry & " " & $sSelection & " ? " & $tText)
 		 $iTry += 1
 	  WEnd
+   Sleep(500)
    EndIf
+EndFunc
+
+Func getCtrlBackgroundColor($iComboInst)
+   Local $iOffset_x = 35
+   Local $iOffset_Y = 12
+   Local $hCtrl = ControlGetHandle($my_title,"","[CLASS:ComboBox;INSTANCE:" & $iComboInst & "]")
+   Local $aWinPos = WinGetPos($hCtrl)
+   Local $aOffsetedPos[2]
+
+   $aOffsetedPos[0] = $aWinPos[0] + $iOffset_x
+   $aOffsetedPos[1] = $aWinPos[1] + $iOffset_y
+	 ;MsgBox(0,'backgroud pos',$aOffsetedPos[0] & ", " & $aOffsetedPos[1] & " color: " & $PixelGetColor($aOffsetedPos[0],$aOffsetedPos[1]))
+   return PixelGetColor($aOffsetedPos[0],$aOffsetedPos[1])
 EndFunc
 
 Func getFeiConfigPath()

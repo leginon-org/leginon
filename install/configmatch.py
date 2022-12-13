@@ -37,7 +37,7 @@ def printResult(configname,allconfigfiles):
 
 def checkSinedonConfig():
 	from sinedon import dbconfig
-	confdirs = pyami.fileutil.get_config_dirs(dbconfig)
+	confdirs = pyami.fileutil.get_config_dirs(package_name='pyscope')
 	printSearch('sinedon.cfg')
 	print(("\t",confdirs))
 	allconfigfiles = dbconfig.configfiles
@@ -57,7 +57,7 @@ def checkSinedonConfig():
 
 def checkLeginonConfig():
 	from leginon import leginonconfigparser
-	confdirs = pyami.fileutil.get_config_dirs(leginonconfigparser)
+	confdirs = pyami.fileutil.get_config_dirs(package_name='leginon')
 	allconfigfiles = leginonconfigparser.configfiles
 	configfile = printResult('leginon',allconfigfiles)
 	if configfile:

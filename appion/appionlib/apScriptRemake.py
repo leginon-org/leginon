@@ -94,6 +94,7 @@ class ScriptRemaker(object):
 		self._replaceParam('expid',session.dbid)
 		self._replaceParam('sessionname',session['name'])
 		self._setNewProject(session)
+		self.new_session = session
 
 	def _setNewProject(self, session):
 		r = projectdata.projectexperiments(session=session).query(results=1)
@@ -169,7 +170,7 @@ class DDAlignerRemaker(LoopScriptRemaker):
 	DD frame alignment command remake for another session.
 	"""
 	valid_dependencies = []
-	jobtypes = ['makeddrawframestack',]
+	jobtypes = ['makeddrawframestack','loopddtest']
 	# Need to include both because both Bft and bft was used in the past
 	# and mysql query is not case-sensitive so it would having either
 	# Bft or bft as haskey.
@@ -228,6 +229,7 @@ class OldSessionScripts(object):
 			self.session = leginondata.SessionData(name=session_name).query()[0]
 		except:
 			apDisplay.printError('Old Session (%s) to base the appion script on not found' % session_name)
+		self.new_session = None
 		apProject.setAppiondbBySessionName(session_name)
 		self.dep_map = self.getRemakerMap() 
 		self.scripts = [None]*len(self.order)

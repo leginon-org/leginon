@@ -10,6 +10,8 @@ setup(
 	name='numextension',
 	description='Extension to numpy',
 	ext_modules=[numextmod],
-	version='git',
+	packages=['numextension'],
+	package_dir={'numextension': ''},
+	version='1.0.0',
 )
 

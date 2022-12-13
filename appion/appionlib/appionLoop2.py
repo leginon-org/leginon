@@ -38,7 +38,8 @@ class AppionLoop(appionScript.AppionScript):
 		self._initializeDoneDict()
 		self.result_dirs={}
 		self.bad_images = []
-		self.sleep_minutes = 6
+		self.session_done_count = 0
+		self.sleep_minutes = 6 #minutes
 		self.process_batch_count = 10
 
 	#=====================
@@ -917,6 +918,14 @@ class AppionLoop(appionScript.AppionScript):
 		sys.stderr.write("\t------------------------------------------\n")
 
 	#=====================
+	def _sessionDone(self):
+		"""
+		Stop waiting if this returns True
+		"""
+		sessiondata = self.getSessionData()
+		return apDatabase.getSessionDone(sessiondata)
+
+	#=====================
 	def _waitForMoreImages(self):
 		"""
 		pauses and then checks for more images to process
@@ -947,6 +956,18 @@ class AppionLoop(appionScript.AppionScript):
 			return True
 
 		### WAIT
+		if self._sessionDone():
+			# only here if it is part of AutoSessionSet
+			if self.stats['totalcount'] > 0 and  self.stats['imagesleft'] == 0:
+				self.session_done_count += 1
+				# consecutive condition met makes self.session_done_count > 1
+				# so it should be o.k. to quit.
+				if self.session_done_count > 1:
+					apDisplay.printWarning("Auto session is done, and no more image to process for a while, so I am quitting")
+					return False
+		else:
+			# reset count
+			self.session_done_count = 0
 		if(self.stats['waittime'] > 180):
 			apDisplay.printWarning("waited longer than three hours for new images with no results, so I am quitting")
 			return False

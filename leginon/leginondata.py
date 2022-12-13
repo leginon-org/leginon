@@ -117,6 +117,16 @@ class InSessionData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class SessionDoneLog(InSessionData):
+	'''
+	Mark ending of a session
+	'''
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('done', bool),
+		)
+	typemap = classmethod(typemap)
+
 class AutoSessionSetData(Data):
 	'''
 	Sets of auto grid loader sessions. Such as one cassette in FEI gridloader.
