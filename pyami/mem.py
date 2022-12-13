@@ -28,7 +28,7 @@ def meminfo2dictMacOSX():
 	cmd = "/usr/bin/vm_stat"
 	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 	data = proc.stdout.readlines()
-	line = data[0]
+	line = data[0].decode('utf-8')
 	m = re.search("page size of ([0-9]+) bytes", line)
 	if not m or not m.groups():
 		return None
@@ -36,6 +36,7 @@ def meminfo2dictMacOSX():
 	pagesize = int(m.groups()[0])/1024
 	meminfo = {}
 	for line in data:
+		line = line.decode('utf-8')
 		name,value = line.split(":")
 		value = value.strip()
 		if name == "Pages free":
