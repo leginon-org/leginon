@@ -105,7 +105,7 @@ def get_config_dirs(module_name=None, package_name=None):
 		# use input module_name
 		env_module_name = module_name
 	config_environ_name = '%s_CFG_PATH' % (env_module_name.upper())
-	if os.environ.has_key(config_environ_name):
+	if config_environ_name in os.environ.keys():
 		confdirs.append(os.environ[config_environ_name])#added to have an option to have mutiple sinedon.cfg files
 	return confdirs
 
