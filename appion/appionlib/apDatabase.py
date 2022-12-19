@@ -165,7 +165,7 @@ def getSessionDone(session):
 	Check if the session(data) is logged as done. Only log in autorun.
 	'''
 	r = leginon.leginondata.SessionDoneLog(session=session).query(results=1)
-	if r:
+	if r and 'done' in r[0].keys():
 		return r[0]['done']
 	return False
 
