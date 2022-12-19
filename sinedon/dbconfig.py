@@ -10,7 +10,7 @@ modulepath = os.path.dirname(__file__)
 
 configfilename = 'sinedon.cfg'
 
-confdirs = pyami.fileutil.get_config_dirs()
+confdirs = pyami.fileutil.get_config_dirs(None,'sinedon')
 config_locations = [os.path.join(confdir, configfilename) for confdir in confdirs]
 pyami.fileutil.check_exist_one_file(config_locations)
 
