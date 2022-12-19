@@ -183,7 +183,7 @@ class FalconFrameMaker(object):
 		Fill spare items from the end
 		'''
 		# keep bin as equally occupied as possible
-		equal_step = n_items / bins
+		equal_step = n_items // bins
 		spare_frames = n_items - equal_step * bins
 		n_items_in_bins = []
 		if equal_step > 0:
@@ -366,7 +366,7 @@ class FalconFrameRangeListMaker(FalconFrameMaker):
 		self.setExposureTime(exposure_second)
 		bin_second = frame_time_second
 		self.createFramePath(self.base_frame_path)
-		bins = int(math.ceil(exposure_second*1000 / (bin_second*1000)))
+		bins = int(math.ceil(exposure_second*1000.0 / (bin_second*1000)))
 		self.setMaxNumberOfFrameBins(bins)
 		starts, ends = self.setFrameRange()
 		rangelist = self.makeRangeList(starts, ends)

@@ -34,8 +34,8 @@ class ScreenInfoMap(wx.Frame):
 		self.sz_slot_numbers = []
 		self.sz_choices = []
 		self.sz_comments = []
-		self.project_choices = map((lambda x: x['name']),self.projects)
-		self.project_ids = map((lambda x: x.dbid),self.projects)
+		self.project_choices = list(map((lambda x: x['name']),self.projects))
+		self.project_ids = list(map((lambda x: x.dbid),self.projects))
 		self.default_project_index = self.project_ids.index(old_project.dbid)
 		for i in range(len(allmap_info)):
 			self.addGridMapping(i, allmap_info[i])
