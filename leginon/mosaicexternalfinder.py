@@ -173,8 +173,11 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 			os.remove(outpath)
 		# This process must create the output '%s.json' % job_basename at outpath
 		scoring_script = self.settings['scoring script']
+		shell_source = '/bin/bash'
+		if scoring_script.endswith('csh'):
+			shell_source = '/bin/csh'
 		cmd = 'source %s %s %s %s' % (scoring_script, job_basename, mosaic_image_path, outdir)
-		proc = subprocess.Popen(cmd, shell=True)
+		proc = subprocess.Popen(cmd, shell=True, executable=shell_source)
 		proc.wait()
 
 	def loadBlobs(self, label, outpath):
