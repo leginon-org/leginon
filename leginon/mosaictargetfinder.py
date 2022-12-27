@@ -1356,7 +1356,11 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			mean = blob.stats['mean']
 			std = blob.stats['stddev']
 			size = blob.stats['n']
-			on_edge = self.finder_edge_mosaicimage[row,col]
+			try:
+				on_edge = self.finder_edge_mosaicimage[row,col]
+			except Exception as e:
+				self.logger.debug('edge filtering error: %s' % e)
+				on_edge = True
 			if (mean_min <= mean <= mean_max) and (std_min <= std <= std_max) and (size_min <= size <= size_max) and not on_edge:
 				good_blobs.append(blob)
 			else:
