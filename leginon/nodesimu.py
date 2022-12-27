@@ -11,6 +11,8 @@ class Logger(object):
 		print 'WARNING: %s' % msg
 	def error(self,msg):
 		print 'ERROR: %s' % msg
+	def debug(self,msg):
+		print('DEBUG: %s' % msg)
 
 class NodeSimulator(object):
 	def __init__(self, session):
@@ -25,8 +27,15 @@ class NodeSimulator(object):
 	def addEventOutput(self,evt):
 		self.event_output.append(evt)
 
-	def research(self,datainstance):
-		return datainstance.query()
+	def research(self, datainstance, results=None, readimages=True, timelimit=None):
+		'''
+		find instances in the database that match the given datainstance
+		'''
+		try:
+			resultlist = datainstance.query(results=results, readimages=readimages, timelimit=timelimit)
+		except (IOError, OSError) as e:
+			raise ResearchError(e)
+		return resultlist
 
 if __name__ == '__main__':
 	# Use Example

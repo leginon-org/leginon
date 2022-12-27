@@ -1447,6 +1447,7 @@ class SquareStatsData(InSessionData):
 			('stdev', float),
 			('score', float),
 			('good', bool),
+			('on_edge', bool),
 		)
 	typemap = classmethod(typemap)
 
