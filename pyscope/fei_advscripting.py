@@ -3,18 +3,15 @@ from pyami import moduleconfig
 configs = moduleconfig.getConfigured('fei.cfg')
 
 
-SIMULATION = False
-
 class FEIAdvScriptingConnection(object):
 	instr = None
+	acq = None
+	csa = None
+	cameras = None
 
-if SIMULATION:
-	import simscripting
-	connection = simscripting.Connection()
-else:
-	import comtypes
-	import comtypes.client
-	connection = FEIAdvScriptingConnection()
+import comtypes
+import comtypes.client
+connection = FEIAdvScriptingConnection()
 
 def chooseTEMAdvancedScriptingName():
 	if 'version' not in configs.keys() or 'tfs_software_version' not in configs['version'].keys():
@@ -58,20 +55,10 @@ def get_feiadv():
 		connection.cameras = connection.csa.SupportedCameras
 	return connection
 
-def get_feiadv_sim():
-	connection.instr = connection.Instrument
-	connection.acq = connection.instr.Acquisitions
-	connection.csa = connection.acq.CameraSingleAcquisition
-	connection.cameras = connection.csa.SupportedCameras
-	return connection
-
 def connectToFEIAdvScripting():
 	'''
 	Connects to the ESVision COM server
 	'''
 	global connection
-	if SIMULATION:
-		connection = get_feiadv_sim()
-	else:
-		connection = get_feiadv()
+	connection = get_feiadv()
 	return connection
