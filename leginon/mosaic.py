@@ -6,7 +6,8 @@
 #       see  http://leginon.org
 #
 import numpy
-from pyami import correlator, peakfinder, imagefun
+import scipy
+from pyami import correlator, convolver, peakfinder, imagefun
 import math
 from leginon import leginondata
 
@@ -26,6 +27,7 @@ class Mosaic(object):
 
 		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
+		self.convolver = convolver.Convolver()
 
 		self.tiles = []
 
@@ -76,14 +78,14 @@ class Mosaic(object):
 		return {'min': (int(round(mosaicmin[0])), int(round(mosaicmin[1]))), 
 						'max': (int(round(mosaicmax[0])), int(round(mosaicmax[1])))}
 
-	def getMosaicImage(self, maxdimension=None, numtype=numpy.uint16):
+	def getMosaicImage(self, maxdimension=None, numtype=numpy.uint16, make_edge=False):
 		if not self.tiles:
 			return None
 		bbox = self.getMosaicImageBoundaries()
 		self.boundaries = bbox
 		imageshape = [bbox['max'][0] - bbox['min'][0], 
 									bbox['max'][1] - bbox['min'][1]]
-
+		### scale the mosaic shape
 		scale = 1.0
 		scaleoffset = [0, 0]
 		if maxdimension is not None:
@@ -94,10 +96,14 @@ class Mosaic(object):
 
 			for i, value in enumerate(imageshape):
 				imageshape[i] = int(numpy.ceil(scale*value))
-#				scaleoffset[i] = int(numpy.floor((maxdimension - imageshape[i])/2.0))
+		self.scale = scale
+		### create mosaic image
 		if self.tiles:
 			numtype = self.tiles[0].image.dtype
+		if make_edge:
+			numtype = numpy.bool
 		mosaicimage = numpy.zeros(imageshape, numtype)
+		### scale and insert tiles
 		for tile in self.tiles:
 			position = self.getTilePosition(tile)
 			shape = self.getTileShape(tile)
@@ -106,10 +112,23 @@ class Mosaic(object):
 									int(round(offset[1] * scale + scaleoffset[1])))
 
 			image = imagefun.scale(tile.image, scale)
-			image = numpy.asarray(image, numtype)
+			if make_edge:
+				# fill mosaic with flat tiles with values of one
+				image = numpy.ones(image.shape,numtype)
+			else:
+				image = numpy.asarray(image, numtype)
 			mosaicimage[offset[0]:offset[0] + image.shape[0],
 									offset[1]:offset[1] + image.shape[1]] = image
-		self.scale = scale
+		if make_edge:
+			### Make sure the edge of the mosaic canvas are treated as tile edge.
+			# set first and last column and rows to zero
+			mosaicimage[:,0]=0
+			mosaicimage[:,shape[1]-1]=0
+			mosaicimage[0,:]=0
+			mosaicimage[shape[0]-1,:]=0
+			mosaicimage = scipy.ndimage.generic_gradient_magnitude(mosaicimage, derivative=scipy.ndimage.sobel)
+			# convert to boolean to save space
+			mosaicimage = mosaicimage.astype(numpy.bool)
 		return mosaicimage
 
 	def addTile(self, image, neighbors):
@@ -324,6 +343,8 @@ class EMMosaic(object):
 		# This will be set to a float number once getMosaicImage is called
 		# with maxdimension is input
 		self.scale = None
+		self.edge_width = None
+		self.convolver = convolver.Convolver()
 		self.setCalibrationClient(calibrationclient)
 		self.clear()
 
@@ -432,7 +453,7 @@ class EMMosaic(object):
 		newcoord = float(coord[0])/self.scale, float(coord[1])/self.scale
 		return newcoord
 
-	def getMosaicImage(self, maxdimension=None):
+	def getMosaicImage(self, maxdimension=None, make_edge=False):
 		self.calculateMosaicImage()
 
 		### scale the mosaic shape
@@ -467,17 +488,55 @@ class EMMosaic(object):
 		mshape = (maxrow,maxcol)
 
 		### create mosaic image
+		if make_edge:
+			numtype = numpy.bool
 		mosaicimage = numpy.zeros(mshape, numtype)
 
 		### scale and insert tiles
 		for tile in self.tiles:
+			# TODO: This part duplicates the code above. Keeping it for now
+			# since mshape is not equal to self.mosaicshape.
 			scaled_tile = imagefun.scale(tile.image, scale)
 			scaled_tile = numpy.asarray(scaled_tile, numtype)
 			scaled_shape = scaled_tile.shape
 			scaled_pos = self.scaled(tile.corner_pos)
 			rowslice = slice(scaled_pos[0],scaled_pos[0]+scaled_shape[0])
 			colslice = slice(scaled_pos[1],scaled_pos[1]+scaled_shape[1])
+			if make_edge:
+				# fill mosaic with flat tiles with values of one
+				scaled_tile = numpy.ones(scaled_tile.shape, numtype)
 			mosaicimage[rowslice, colslice] = scaled_tile
+		if make_edge:
+			### Make sure the edge of the mosaic canvas are treated as tile edge.
+			# set first and last column and rows to zero
+			mosaicimage[:,0]=0
+			mosaicimage[:,mshape[1]-1]=0
+			mosaicimage[0,:]=0
+			mosaicimage[mshape[0]-1,:]=0
+			# edge finding
+			mosaicimage = scipy.ndimage.generic_gradient_magnitude(mosaicimage, derivative=scipy.ndimage.sobel)
+			# convert to boolean to save space
+			mosaicimage = mosaicimage.astype(numpy.bool)
+		return mosaicimage
+
+	def getEdgeMosaicImage(self, maxdimension=None, width=None):
+		'''
+		Return a binary image of the outer edge of the mosaic atlas.
+		This is used to eliminate targets auto-selected near the edge.
+		width defines a convolution kernel to make the edge to returned
+		at the given width.
+		'''
+		mosaicimage = self.getMosaicImage(maxdimension, make_edge=True)
+		if width is None:
+			# default to 15 percent of the tile size based on typical gr images.
+			t0 = self.tiles[0]
+			t0_half_shape = t0.center_pos[0]-t0.corner_pos[0],t0.center_pos[1]-t0.corner_pos[1]
+			width = int(max(self.scaled(t0_half_shape))*0.3)
+		self.edge_width = width
+		kernel = numpy.ones(width*width)
+		kernel = kernel.reshape((width,width))
+		self.convolver.setKernel(kernel)
+		mosaicimage = numpy.greater(self.convolver.convolve(image=mosaicimage),numpy.ones(mosaicimage.shape))
 		return mosaicimage
 
 	def distanceToTile(self, tile, row, col):

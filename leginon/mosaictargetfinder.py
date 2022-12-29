@@ -121,6 +121,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.mosaicimagescale = None
 		self.mosaicimagedata = None
 		self.finder_mosaicimage = None
+		self.finder_edge_mosaicimage = None
 		self.finder_scale_factor = 1
 		self.convolver = convolver.Convolver()
 		self.multihole = multihole.TemplateConvolver()
@@ -915,6 +916,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 
 	def clearFinderMosaicImage(self):
 		self.finder_mosaicimage = None
+		self.finder_edge_mosaicimage = None
 		self.finder_scale_factor = 1
 
 	def uiPublishMosaicImage(self):
@@ -1113,9 +1115,13 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		old_maxdim = self.mosaicimagescale
 		new_maxdim = old_maxdim // self.finder_scale_factor
 		self.logger.info('Scale down mosaic to finder max dimension of %d' % new_maxdim)
+		self.finder_maxdim = new_maxdim
 		self.finder_mosaicimage = self.finder_mosaic.getMosaicImage(new_maxdim)
+		# make edge_mosaicimage with a guess of the edge width at 15% of image length.
 		# This is not exact but appears good enough.
+		self.finder_edge_mosaicimage = self.finder_mosaic.getEdgeMosaicImage(new_maxdim, width=None)
 		self.logger.debug('Scaling  Target mapping from shape %s to %s with setting of max size of %d' % (self.finder_mosaicimage.shape, self.mosaicimage.shape, self.settings['scale size']))
+		self.logger.debug('Finder edge mosaicimage edge width = %d pixels' % self.finder_mosaic.edge_width)
 
 	def writeMosaicInfo(self, m_inst, mosaicimagedata):
 		scale = m_inst.scale
@@ -1350,11 +1356,17 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			mean = blob.stats['mean']
 			std = blob.stats['stddev']
 			size = blob.stats['n']
-			if (mean_min <= mean <= mean_max) and (std_min <= std <= std_max) and (size_min <= size <= size_max):
+			try:
+				on_edge = self.finder_edge_mosaicimage[row,col]
+			except Exception as e:
+				self.logger.debug('edge filtering error: %s' % e)
+				on_edge = True
+			if (mean_min <= mean <= mean_max) and (std_min <= std <= std_max) and (size_min <= size <= size_max) and not on_edge:
 				good_blobs.append(blob)
 			else:
-				stats = leginondata.SquareStatsData(prefs=self.sq_prefs, row=row, column=column, mean=mean, stdev=std, size=size)
+				stats = leginondata.SquareStatsData(session=self.session, prefs=self.sq_prefs, row=row, column=column, mean=mean, stdev=std, size=size)
 				stats['good'] = False
+				stats['on_edge'] = on_edge
 				# only publish bad stats
 				self.publish(stats, database=True)
 		return good_blobs
