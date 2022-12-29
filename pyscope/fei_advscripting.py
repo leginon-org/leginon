@@ -51,7 +51,7 @@ def get_feiadv():
 	if connection.cameras:
 		try:
 			camera_name_list = list(map(lambda x: x.Name,connection.cameras))
-		except Exception as e:
+		except comtypes.COMError as e:
 			# This gives back comtypes.COMError if there is no connection to server.
 			# forcing instr attribute to None to force reconnection.
 			connection.instr = None
