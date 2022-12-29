@@ -7,10 +7,11 @@ class FEIAdvScriptingConnection(object):
 	instr = None
 	acq = None
 	csa = None
-	cameras = None
+	cameras = []
 
 import comtypes
 import comtypes.client
+# a clean class instance at import
 connection = FEIAdvScriptingConnection()
 
 def chooseTEMAdvancedScriptingName():
@@ -42,7 +43,19 @@ def chooseTEMAdvancedScriptingName():
 		return '1'
 
 def get_feiadv():
+	'''
+	Returns adv_scripting connection. Connect if not not done.
+	'''
 	global connection
+	# a simple test for server connection.
+	if connection.cameras:
+		try:
+			camera_name_list = list(map(lambda x: x.Name,connection.cameras))
+		exception Exception as e:
+			# This gives back comtypes.COMError if there is no connection to server.
+			# forcing instr attribute to None to force reconnection.
+			connection.instr = None
+	# make a coonection
 	if connection.instr is None:
 		try:
 			comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
@@ -57,7 +70,7 @@ def get_feiadv():
 
 def connectToFEIAdvScripting():
 	'''
-	Connects to the ESVision COM server
+	Connects to the COM server
 	'''
 	global connection
 	connection = get_feiadv()
