@@ -35,6 +35,15 @@ configs = moduleconfig.getConfigured('tvips.cfg')
 ## this module due to multiple imports.
 def get_emmenu():
 	global connection
+	# a simple test for server connection.
+	if connection.instr:
+		try:
+			vp_test = connection.instr.Viewports
+		except comtypes.COMError as e:
+			# This gives back comtypes.COMError if there is no connection to server.
+			# forcing instr attribute to None to force reconnection.
+			connection.instr = None
+	# make a coonection
 	if connection.instr is None:
 		try:
 			comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
