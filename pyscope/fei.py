@@ -39,9 +39,16 @@ except ImportError:
 configs = moduleconfig.getConfigured('fei.cfg')
 configpath = moduleconfig.getConfigPath('fei.cfg')
 
-HAS_CFEG = False
+def configHasColdFeg():
+	if 'source' in configs and 'has_cold_feg' in configs['source'] and configs['source']['has_cold_feg']==True:
+		return True
+	return False
+
+HAS_CFEG = configHasColdFeg()
+
 if HAS_CFEG:
 	from pyscope import fei_advscripting
+
 class MagnificationsUninitialized(Exception):
 	pass
 
@@ -378,9 +385,9 @@ class Tecnai(tem.TEM):
 			except AttributeError:
 				return False
 			except Exception as e:
-				print('hasColdFeg exception %s' % e)
 				return False
 			return True
+		return False
 
 	def getFlashingAdvised(self, flash_type):
 		try:
@@ -420,6 +427,22 @@ class Tecnai(tem.TEM):
 					break
 				except Exception as e:
 					raise RuntimeError(e)
+
+	def getColdFegBeamCurrent(self):
+		# Cold FEG beam current is used to decide whether to flash or not.
+		# Unit is Amp.  Returns -1.0 if not available
+		if self.source and self.hasColdFeg():
+			return float(self.source.BeamCurrent)
+		return -1.0
+
+	def getExtractorVoltage(self):
+		# FEG extractor voltage. Unit is Voltage
+		# Returns -1.0 if not available
+		if self.source:
+			try:
+				return float(self.source.ExtractorVoltage)
+			except:
+				return -1.0
 
 	def getGunTilt(self):
 		value = {'x': None, 'y': None}

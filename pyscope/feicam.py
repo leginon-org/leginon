@@ -18,19 +18,15 @@ except ImportError:
 	USE_SAFEARRAY_AS_NDARRAY = False
 
 SIMULATION = False
-class FEIAdvScriptingConnection(object):
-	instr = None
-	csa = None
-	cameras = []
-
 if SIMULATION:
 	import simscripting
-	connection = simscripting.Connection()
+	connection = simscripting.connection
 else:
 	from pyscope import tia_display
 	import comtypes
 	import comtypes.client
-	connection = FEIAdvScriptingConnection()
+	from pyscope import fei_advscripting
+	connection = fei_advscripting.connection
 
 READOUT_FULL = 0
 READOUT_HALF = 1
@@ -41,54 +37,6 @@ configs = moduleconfig.getConfigured('fei.cfg')
 ## Muliple calls to get_feiadv will return the same connection.
 ## Store the handle in the com module, which is safer than in
 ## this module due to multiple imports.
-def chooseTEMAdvancedScriptingName():
-	if 'version' not in configs.keys() or 'tfs_software_version' not in configs['version'].keys():
-		print 'Need version section in fei.cfg. Please update it'
-		raw_input('Hit return to exit')
-		sys.exit(0)
-	version_text = configs['version']['tfs_software_version']
-	bits = version_text.split('.')
-	if len(bits) != 3 or not bits[1].isdigit():
-		print 'Unrecognized Version number, not in the format of %d.%d.%d'
-		raw_input('Hit return to exit')
-	major_version = int(bits[0])
-	minor_version = int(bits[1])
-	if 'software_type' not in  configs['version'].keys():
-		print 'Need software_type in version section in fei.cfg. Please update it'
-		raw_input('Hit return to exit')
-		sys.exit(0)
-	software_type = configs['version']['software_type'].lower()
-	adv_script_version = configs['version']['tem_advanced_scripting_version']
-	if adv_script_version:
-		return '%d' % adv_script_version
-	if software_type == 'titan':
-		# titan major version is one higher than talos
-		major_version += 1
-	if major_version > 2 or minor_version >= 15:
-		return '2'
-	else:
-		return '1'
-
-def get_feiadv():
-	global connection
-	if connection.instr is None:
-		try:
-			comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
-		except:
-			comtypes.CoInitialize()
-		type_name = 'TEMAdvancedScripting.AdvancedInstrument.' + chooseTEMAdvancedScriptingName()
-		connection.instr = comtypes.client.CreateObject(type_name)
-		connection.acq = connection.instr.Acquisitions
-		connection.csa = connection.acq.CameraSingleAcquisition
-		connection.cameras = connection.csa.SupportedCameras
-	return connection
-
-def get_feiadv_sim():
-	connection.instr = connection.Instrument
-	connection.acq = connection.instr.Acquisitions
-	connection.csa = connection.acq.CameraSingleAcquisition
-	connection.cameras = connection.csa.SupportedCameras
-	return connection
 
 class FeiCam(ccdcamera.CCDCamera):
 	name = 'FEICAM'
@@ -258,9 +206,9 @@ class FeiCam(ccdcamera.CCDCamera):
 		Connects to the ESVision COM server
 		'''
 		if SIMULATION:
-			connection = get_feiadv_sim()
+			connection = simscripting.get_feiadv_sim()
 		else:
-			connection = get_feiadv()
+			connection = fei_advscripting.get_feiadv()
 		self.instr = connection.instr
 		self.csa = connection.csa
 		# TODO: setCamera

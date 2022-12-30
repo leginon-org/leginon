@@ -188,6 +188,11 @@ class TEM(baseinstrument.BaseInstrument):
 	def getBeamBlankedDuringCameraExchange(self):
 		return True
 
+	def getExtractorVoltage(self):
+		# FEG extractor voltage. Unit is Voltage
+		# Returns -1.0 if not available
+		return False
+
 	def hasColdFeg(self):
 		return False
 
@@ -200,6 +205,11 @@ class TEM(baseinstrument.BaseInstrument):
 	def setColdFegFlashing(self,state):
 		# 'on' starts flashing, 'off' stops flashing
 		pass
+
+	def getColdFegBeamCurrent(self):
+		# Cold FEG beam current is used to decide whether to flash or not.
+		# Unit is Amp.  Returns -1.0 if not available
+		return -1.0
 
 	def getRefrigerantLevel(self,id=0):
 		'''
