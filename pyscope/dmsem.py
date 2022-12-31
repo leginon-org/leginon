@@ -255,8 +255,8 @@ class DMSEM(ccdcamera.CCDCamera):
 	def _getAcqDimension(self, acq_binning, binscale):
 		acq_dimension = self.camsize.copy()
 		physical_binning = binscale * acq_binning
-		acq_dimension['x'] = acq_dimension['x']/physical_binning
-		acq_dimension['y'] = acq_dimension['y']/physical_binning
+		acq_dimension['x'] = acq_dimension['x'] // physical_binning
+		acq_dimension['y'] = acq_dimension['y'] // physical_binning
 		return acq_dimension
 
 	def _getAcqOffset(self, acq_binning, binscale):
@@ -348,7 +348,7 @@ class DMSEM(ccdcamera.CCDCamera):
 				dec=4 # decimation value : decimate image to 1k x 1.4k for faster stat calculation
 				if image.size > 23569920:  # counted size for k3
 					dec=8
-					decimated_image = image[::dec,::dec]
+				decimated_image = image[::dec,::dec]
 				if not self.getDoEarlyReturn():
 					#fake 8x8 image with the same mean and standard deviation for fast transfer
 					fake_image = self.base_fake_image*decimated_image.std() + decimated_image.mean()*numpy.ones((8,8))
@@ -378,7 +378,7 @@ class DMSEM(ccdcamera.CCDCamera):
 	def _modifyImageShape(self, image):
 		image = self._fixBadShape(image)
 		acq_binning, binscale = self._getAcqBinning()
-		added_binning = self.binning['x'] / acq_binning
+		added_binning = self.binning['x'] // acq_binning
 		if added_binning > 1:
 			# software binning
 			image = imagefun_bin(image, added_binning)
