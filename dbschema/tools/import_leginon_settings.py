@@ -6,6 +6,15 @@ import time
 
 from leginon import leginondata
 
+ref_class_alias_dict = {
+'target grouping': leginondata.TargetGroupingSettingsData,
+'lpf': leginondata.LowPassFilterSettingsData,
+'blobs': leginondata.BlobFinderSettingsData,
+'template lpf': leginondata.LowPassFilterSettingsData,
+'edge lpf': leginondata.LowPassFilterSettingsData,
+}
+ignored_refs = ['camera settings',]
+
 class DataJsonLoader(object):
 	def __init__(self):
 		self.alldata = []
@@ -30,7 +39,15 @@ class DataJsonLoader(object):
 			if realkey not in q.keys():
 				print 'missing key %s' % (realkey)
 				continue
-			q[realkey] = kwargs[key]
+			if key in ref_class_alias_dict.keys():
+				ref_class = ref_class_alias_dict[realkey]
+				values = self._insertQuery(self.makequery(ref_class.__name__,kwargs[key]))
+			elif key in ignored_refs:
+				print('ignore %s' % key)
+				continue
+			else:
+				values = kwargs[key]
+			q[realkey] = values
 		return q
 
 	def readJsonFile(self,filename='test.json'):
@@ -83,6 +100,9 @@ class SettingsJsonLoader(DataJsonLoader):
 			classname = settings.keys()[0]
 			print 'inserting %s' % classname
 			q = self.makequery(classname, settings[classname])
+			self._insertQuery(q)
+
+	def _insertQuery(self, q):
 			if 'session' in q.keys():
 				session = self.getSession()
 				q['session'] = session
@@ -93,6 +113,7 @@ class SettingsJsonLoader(DataJsonLoader):
 				q['isdefault'] = True
 			# force to become the current default settings
 			q.insert(force=True)
+			return q
 
 	def run(self):
 		self.readJsonFile(self.jsonfile)

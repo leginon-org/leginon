@@ -24,6 +24,14 @@ connection = TIAConnection()
 comtypes.client.tiaccd = connection
 def get_tiaccd():
 	global connection
+	if connection.esv:
+		# pointer is linked to connection.esv
+		try:
+			# test connection with a call of method
+			display_names = connection.esv.DisplayWindowNames()
+		except comtypes.COMError as e:
+			# force reconnection by setting esv attribute to None
+			connection.esv = None
 	if connection.esv is None:
 		try:
 			comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)

@@ -7,6 +7,13 @@ import random
 from pyami import mrc
 random.seed()
 
+def get_feiadv_sim():
+	connection.instr = connection.Instrument
+	connection.acq = connection.instr.Acquisitions
+	connection.csa = connection.acq.CameraSingleAcquisition
+	connection.cameras = connection.csa.SupportedCameras
+	return connection
+
 camsize = (4096,4096) # row,col
 
 class SupportedCamera(object):
@@ -173,3 +180,6 @@ class Capabilities(object):
 class ListWithCount(list):
 	def __init__(self):
 		self.Count = 0
+
+# create Connection instance on importlike what we do in fei_advscripting.py
+connection = Connection()
