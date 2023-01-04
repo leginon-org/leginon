@@ -13,6 +13,8 @@ TEM_ADVANCED_SCRIPTING_VERSION = 2
 [source]
 # Cold FEG configuration
 HAS_COLD_FEG = False
+# Low temperture flashing behavior
+FLASH_COLD_FEG_ONLY_IF_ADVISED = False
 [optics]
 # Lens normalization is usually set in TUI but there are cases that
 # they are not desirable, for example on Talos column. This force

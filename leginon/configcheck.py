@@ -85,7 +85,7 @@ def checkLeginonConfig():
 		if not image_path:
 			printError('Default image path required')
 
-def checkInstrumentConfig():
+def checkInstrumentsConfig():
 	print '---------------------------'
 	confdirs = pyami.fileutil.get_config_dirs(package_name='pyscope')
 	printSearch('instruments.cfg')
@@ -94,7 +94,7 @@ def checkInstrumentConfig():
 		from pyscope import config
 		config.parse()
 	except Exception as e:
-		printWarning('No instrument.cfg configured.  Fatal only if an instrument is needed on this host.')
+		printWarning('No instruments.cfg configured.  Fatal only if an instrument is needed on this host.')
 		return
 	allconfigfiles = config.configfiles
 	printResult('instruments',allconfigfiles)
@@ -117,7 +117,7 @@ if __name__ == '__main__':
 	try:
 		checkSinedonConfig()
 		checkLeginonConfig()
-		checkInstrumentConfig()
+		checkInstrumentsConfig()
 	finally:
 		print
 		if sys.platform == 'win32':
