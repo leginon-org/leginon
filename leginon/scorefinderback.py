@@ -154,8 +154,8 @@ class HoleFinder(icefinderback.IceFinder):
 	
 	def _runExternalHoleFinder(self,config):
 		scoring_script = config['script']
-		if not script:
-			raise ValueError('%s invalid.' % script)
+		if not scoring_script:
+			raise ValueError('%s invalid.' % scoring_script)
 		shell_source = '/bin/bash'
 		if scoring_script.endswith('csh'):
 			shell_source = '/bin/csh'
