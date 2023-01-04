@@ -390,11 +390,11 @@ class Tecnai(tem.TEM):
 		return False
 
 	def getFlashingAdvised(self, flash_type):
+		advised_only = self.getFeiConfig('source','flash_cold_feg_only_if_advised')
 		try:
 			flash_type_constant = self.cold_feg_flash_types[flash_type]
 			should_flash = self.source.Flashing.IsFlashingAdvised(flash_type_constant)
 		except AttributeError as e:
-			print(e)
 			return False
 		except KeyError:
 			print('flash type can only be %s' % list(self.cold_feg_flash_types.keys()))
@@ -402,6 +402,12 @@ class Tecnai(tem.TEM):
 		except Exception as e:
 			print('other getFlashAdvised exception %s' % e)
 			return False
+		if advised_only:
+			return should_flash
+		else:
+			if flash_type == 'low':
+				# only low temp can flash without advised.
+				return True
 		return should_flash
 
 	def getColdFegFlashing(self):
