@@ -174,6 +174,7 @@ class EditListBox(OrderListBox):
         # or by selecting existing choices
         self.Bind(wx.EVT_TEXT, self.onText, self.textentry)
         self.Bind(wx.EVT_COMBOBOX, self.onText, self.textentry)
+        self.insertbutton.Enable(True)
     
     def setSelected(self, string):
         result = OrderListBox.setSelected(self, string)
@@ -193,6 +194,8 @@ class EditListBox(OrderListBox):
         try:
             string = self.textentry.GetValue()
         except ValueError:
+            return
+        if not string:
             return
         n = self.listbox.GetSelection()
         if n < 0:
