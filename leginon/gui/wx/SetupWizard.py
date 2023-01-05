@@ -11,7 +11,6 @@ import wx
 import wx.wizard
 import wx.lib.intctrl
 import wx.lib.agw.hyperlink as hl
-from pyami import mysocket
 
 import leginon.leginondata
 import leginon.projectdata
@@ -239,18 +238,21 @@ class SessionSelectPage(WizardPage):
 
 		clientssizer = wx.GridBagSizer(5, 5)
 		self.clientslabel = wx.StaticText(self, -1, '')
+		self.allhostcheckbox = wx.CheckBox(self, -1, 'Check all hosts for client history')
 		self.setClients([])
 		clientssizer.Add(self.clientslabel, (0, 0), (1, 1),
 											wx.ALIGN_CENTER_VERTICAL)
 		editclientsbutton = wx.Button(self, -1, 'Edit...')
 		clientssizer.Add(editclientsbutton, (0, 1), (1, 1),
 											wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		clientssizer.Add(self.allhostcheckbox, (1, 0), (1, 2),
+											wx.ALIGN_CENTER_VERTICAL)
+		self.Bind(wx.EVT_CHECKBOX, self.onAllHosts, self.allhostcheckbox)
 		clientssizer.AddGrowableCol(0)
 		clientssizer.AddGrowableCol(1)
-		self.sizer.Add(clientssizer, (7, 0), (1, 2), wx.EXPAND)
-
+		self.sizer.Add(clientssizer, (7, 0), (2, 2), wx.EXPAND)
 		self.sizer.Add(wx.StaticText(self, -1,
-							'Finally, press the "Finish" button to begin.'), (9, 0), (1, 2))
+							'Finally, press the "Finish" button to begin.'), (10, 0), (1, 2))
 
 		self.pagesizer.Add(self.sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		self.pagesizer.AddGrowableRow(0)
@@ -260,8 +262,17 @@ class SessionSelectPage(WizardPage):
 
 		self.Bind(wx.EVT_BUTTON, self.onEditClientsButton, editclientsbutton)
 
+	def onAllHosts(self, evt):
+		if self.IsShown():
+			self.history = self.GetParent().setup.getRecentClients(self.allhostcheckbox.GetValue())
+
 	def setClients(self, clients):
+		'''
+		Set clients of the existing session.
+		'''
 		self.clients = clients
+		# set allhost check box back to False
+		self.allhostcheckbox.SetValue(False)
 		self.history = self.GetParent().setup.getRecentClients()
 		label = 'Connect to clients: '
 		if clients:
@@ -680,19 +691,23 @@ class SessionCreatePage(WizardPage):
 
 		clientssizer = wx.GridBagSizer(5, 5)
 		self.clientslabel = wx.StaticText(self, -1, '')
+		self.allhostcheckbox = wx.CheckBox(self, -1, 'Check all hosts for client history')
 		self.setClients([])
 		clientssizer.Add(self.clientslabel, (0, 0), (1, 1),
 											wx.ALIGN_CENTER_VERTICAL)
 		editclientsbutton = wx.Button(self, -1, 'Edit...')
 		clientssizer.Add(editclientsbutton, (0, 1), (1, 1),
 											wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		clientssizer.Add(self.allhostcheckbox, (1, 0), (1, 2),
+											wx.ALIGN_CENTER_VERTICAL)
+		self.Bind(wx.EVT_CHECKBOX, self.onAllHosts, self.allhostcheckbox)
 		clientssizer.AddGrowableCol(0)
 		clientssizer.AddGrowableCol(1)
-		self.sizer.Add(clientssizer, (5, 0), (1, 2), wx.EXPAND)
+		self.sizer.Add(clientssizer, (5, 0), (2, 2), wx.EXPAND)
 
 		self.sizer.Add(wx.StaticText(self, -1,
 					'Please press the "Next" button if these settings are correct.'),
-									(7, 0), (1, 2))
+									(8, 0), (1, 2))
 
 		self.pagesizer.Add(self.sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		self.pagesizer.AddGrowableRow(0)
@@ -702,8 +717,17 @@ class SessionCreatePage(WizardPage):
 
 		self.Bind(wx.EVT_BUTTON, self.onEditClientsButton, editclientsbutton)
 
+	def onAllHosts(self, evt):
+		if self.IsShown():
+			self.history = self.GetParent().setup.getRecentClients(self.allhostcheckbox.GetValue())
+
 	def setClients(self, clients):
+		'''
+		Set clients of the new session.
+		'''
 		self.clients = clients
+		# set allhost check box back to False
+		self.allhostcheckbox.SetValue(False)
 		self.history = self.GetParent().setup.getRecentClients()
 		label = 'Connect to clients: '
 		if clients:
@@ -882,7 +906,6 @@ class SetupWizard(wx.wizard.Wizard):
 		elif page is self.sessionselectpage:
 			self.session = self.sessionselectpage.getSelectedSession()
 			self.clients = self.sessionselectpage.clients
-			self.history = self.sessionselectpage.history
 			self.setup.saveClients(self.session, self.clients)
 		elif page is self.sessioncreatepage:
 			user = self.userpage.getSelectedUser()
@@ -916,7 +939,6 @@ class SetupWizard(wx.wizard.Wizard):
 					# not connected. OK. to let go. 
 					pass
 			self.clients = self.sessioncreatepage.clients
-			self.history = self.sessioncreatepage.history
 			self.setup.saveClients(self.session, self.clients)
 		elif page is self.c2sizepage:
 			if self.session:
@@ -1019,6 +1041,7 @@ class Setup(object):
 			self.projectdata = leginon.project.ProjectData()
 		except:
 			self.projectdata = None
+		self.myhostname=leginon.session.getMyHostname()
 
 	def isLeginonUser(self, userdata):
 		return not userdata['noleginon']
@@ -1062,11 +1085,24 @@ class Setup(object):
 		except IndexError:
 			return []
 
-	def getRecentClients(self):
-		try:
-			results = self.research(leginon.leginondata.ConnectToClientsData(), results=500)
-		except IndexError:
+	def getRecentClients(self, all_hosts=False):
+		my_client_set = set([])
+		if not all_hosts:
+			# try connected clients from this host first
+			try:
+				results = self.research(leginon.leginondata.ConnectToClientsData(localhost=self.myhostname), results=25)
+			except IndexError:
+				results = []
+			for r in results:
+				my_client_set.update(r['clients'])
+		else:
 			results = []
+		# if no clients found try any host
+		if len(results) == 0 or len(list(my_client_set)) == 0:
+			try:
+				results = self.research(leginon.leginondata.ConnectToClientsData(), results=500)
+			except IndexError:
+				results = []
 		
 		try:
 			q = leginon.leginondata.InstrumentData()
@@ -1100,7 +1136,7 @@ class Setup(object):
 	def saveClients(self, session, clients):
 		ver = leginon.version.getVersion()
 		loc = leginon.version.getInstalledLocation()
-		host = mysocket.gethostname()
+		host = self.myhostname
 		initializer = {'session': session, 'clients': clients, 'localhost':host, 'version': ver, 'installation': loc}
 		clientsdata = leginon.leginondata.ConnectToClientsData(initializer=initializer)
 		self.publish(clientsdata, database=True, dbforce=True)
@@ -1167,7 +1203,7 @@ class Setup(object):
 			if temdata:
 				break
 		if not temdata:
-			localhost = mysocket.gethostname()
+			localhost = self.myhostname
 			# use tem on localhost, including simulation
 			temdata = self.getTEM(localhost,False)
 		if temdata and c2size:
