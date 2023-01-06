@@ -36,7 +36,7 @@ class Tableau(object):
 		center_row = -y
 		center_col = x
 		image = imageinfo['image']
-		halfshape = image.shape[0]/2, image.shape[1]/2
+		halfshape = image.shape[0]//2, image.shape[1]//2
 		rowmin = center_row-halfshape[0]
 		rowmax = center_row+halfshape[0]
 		colmin = center_col-halfshape[1]
@@ -63,7 +63,7 @@ class Tableau(object):
 		background = self.images[0]['image'][(0,0)]
 		finalimage = numpy.ones(totalshape, self.images[0]['image'].dtype)
 		finalimage = background * finalimage
-		center = finalimage.shape[0]/2, finalimage.shape[1]/2
+		center = finalimage.shape[0]//2, finalimage.shape[1]//2
 		for image in self.images:
 			extents = self.imageExtents(image)
 			pos = center[0]+extents['row'][0], center[1]+extents['column'][0]
@@ -71,8 +71,8 @@ class Tableau(object):
 
 		if len(self.images) > 1:
 			extents = self.imageExtents(self.images[1])
-			scalerow = (extents['row'][0]+extents['row'][1])/2
-			scalecol = (extents['column'][0]+extents['column'][1])/2
+			scalerow = (extents['row'][0]+extents['row'][1])//2
+			scalecol = (extents['column'][0]+extents['column'][1])//2
 			scale = math.sqrt(scalerow**2+scalecol**2)
 		else:
 			scale = None

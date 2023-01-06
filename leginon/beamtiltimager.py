@@ -137,9 +137,9 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 			self.rpixelsize['x'] *= split
 			self.rpixelsize['y'] *= split
 		splitsize = int(math.floor(image.shape[0]*0.5/int(split)))*2, int(math.floor(image.shape[1]*0.5/int(split)))*2
-		for row in (0,(split/2)*splitsize[0],(split-1)*splitsize[0]):
+		for row in (0,(split//2)*splitsize[0],(split-1)*splitsize[0]):
 			rowslice = slice(row,row+splitsize[0])
-			for col in (0,(split/2)*splitsize[1],(split-1)*splitsize[1]):
+			for col in (0,(split//2)*splitsize[1],(split-1)*splitsize[1]):
 				colslice = slice(col,col+splitsize[1])
 				splitimage = image[rowslice,colslice]
 				labeled, ctfdata = self.binAndAddCTFlabel(splitimage, self.ht, self.cs, self.rpixelsize, 1, self.defocus)
@@ -439,7 +439,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 	def getCtfEstimator(self):
 		from pyami import ctfestimator
 		aceexe = self.getACEPath('gctfCurrent')
-		if True:
+		if aceexe:
 			return ctfestimator.GctfEstimator(aceexe)
 
 	def getACEPath(self, exename):

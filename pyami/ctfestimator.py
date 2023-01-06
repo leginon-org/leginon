@@ -56,7 +56,7 @@ class GctfEstimator(object):
 		cmd = "%s --apix %.5f --defL %.0f --defH %.0f --kV %d --Cs %.1f --ac %.3f %s.mrc" % (self.gctfexe, pixelsize*1e10, defocus*1e10, defocusH*1e10, int(ht/1000), cs*1e3, amp_contrast, path_pattern)
 		print(cmd)
 		proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,)
-		proc.stdin.write(cmd)
+		proc.stdin.write(cmd.encode('ascii'))
 		proc.communicate()
 
 	def getCTFResults(self):
