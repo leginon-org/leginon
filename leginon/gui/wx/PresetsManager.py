@@ -40,6 +40,7 @@ EditPresetEventType = wx.NewEventType()
 UpdatePresetLabelsEventType = wx.NewEventType()
 AcquireAlignDoneEventType = wx.NewEventType()
 NeedRecoverBeamTiltEventType = wx.NewEventType()
+EnableAlignDoneButtonEventType = wx.NewEventType()
 
 EVT_PRESETS = wx.PyEventBinder(PresetsEventType)
 EVT_SET_DOSE_VALUE = wx.PyEventBinder(SetDoseValueEventType)
@@ -49,6 +50,7 @@ EVT_EDIT_PRESET = wx.PyEventBinder(EditPresetEventType)
 EVT_UPDATE_PRESET_LABELS = wx.PyEventBinder(UpdatePresetLabelsEventType)
 EVT_ACQUIRE_ALIGN_DONE = wx.PyEventBinder(AcquireAlignDoneEventType)
 EVT_NEED_RECOVER_BEAM_TILT = wx.PyEventBinder(NeedRecoverBeamTiltEventType)
+EVT_ENABLE_ALIGN_DONE_BUTTON = wx.PyEventBinder(EnableAlignDoneButtonEventType)
 
 class PresetsEvent(wx.PyCommandEvent):
 	def __init__(self, source):
@@ -96,6 +98,11 @@ class NeedRecoverBeamTiltEvent(wx.PyCommandEvent):
 		wx.PyCommandEvent.__init__(self, NeedRecoverBeamTiltEventType, source.GetId())
 		self.SetEventObject(source)
 		self.beamtilt_diff = beamtilt_diff
+
+class EnableAlignDoneButtonEvent(wx.PyCommandEvent):
+	def __init__(self, source):
+		wx.PyCommandEvent.__init__(self, EnableAlignDoneButtonEventType, source.GetId())
+		self.SetEventObject(source)
 
 class Calibrations(wx.StaticBoxSizer):
 	def __init__(self, parent):
@@ -900,6 +907,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.Bind(EVT_UPDATE_PRESET_LABELS, self.onUpdatePresetLabels)
 		self.Bind(EVT_ACQUIRE_ALIGN_DONE, self.onAcquireAlignDone)
 		self.Bind(EVT_NEED_RECOVER_BEAM_TILT, self.onNeedRecoverBeamTilt)
+		self.Bind(EVT_ENABLE_ALIGN_DONE_BUTTON, self.onDoneLastAlign)
 
 	def onNodeInitialized(self):
 		leginon.gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
@@ -1047,7 +1055,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.beamdialog.ShowModal()
 		self.node.new_beamshift = None
 
-	def onDoneLastAlign(self):
+	def onDoneLastAlign(self, evt):
 		self.aligndialog.enableDone()
 
 	def onDoneAllAlign(self):
@@ -1377,14 +1385,14 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		self.labref = wx.StaticText(self, -1, 'Overall Reference Preset: ')
 		self.presetlabelref = wx.StaticText(self, -1)
 		sz.Add(self.labref, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		sz.AddSpacer((10,10))
+		sz.AddSpacer(10)
 		sz.Add(self.presetlabelref, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
 #		szref = wx.BoxSizer(wx.HORIZONTAL)
 		szref.Add(sz, 1, wx.ALIGN_CENTER|wx.ALL, 5)
 		szmode = wx.BoxSizer(wx.HORIZONTAL)
 		szmode.Add(szref, 1)
 		self.choiceacquiremode = wx.Choice(self, -1, choices=(['Full Camera','Similar look across mags']))
-		szmode.Add(self.choiceacquiremode, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5)
+		szmode.Add(self.choiceacquiremode, 0, wx.ALL, 5)
 
 		preset_names = list(self.node.presets.keys())
 		lableft = wx.StaticText(self, -1, 'Current Reference Preset ')
@@ -1510,7 +1518,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 	def enableDone(self):
 		self.bstart.Disable()
 		self.bcontinue.Disable()
-		self.bdone.Enable(True)
+		self.bdone.Enable()
 
 	def onClose(self, evt):
 		self.enableStart()

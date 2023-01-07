@@ -1286,7 +1286,7 @@ class PresetsManager(node.Node):
 		imagelength = min(self.settings['smallsize'], min_fullcamdim)
 
 		#assume highmag imag is binning of full camera to imagelength
-		maxbin = min_fullcamdim / imagelength
+		maxbin = min_fullcamdim // imagelength
 		highbin = maxbin
 		highmaglook = float(highmag) / highbin
 		lowbin = int(math.pow(2,round(math.log(lowmag / highmaglook) / math.log(2))))
@@ -1369,7 +1369,6 @@ class PresetsManager(node.Node):
 				self.alignimages[label] = imagedata
 				self.panel.setAlignImage(imagedata['image'], label)
 
- 
 			self.panel.presetsEvent()
 			
 
@@ -1387,7 +1386,7 @@ class PresetsManager(node.Node):
 	def modifyImageLength(self,fullcamdim,imagelength):
 		binning_values = [1,2,4,8]
 		for my_bin in binning_values:
-			minlength = min((fullcamdim['x']/my_bin,fullcamdim['y']/my_bin))
+			minlength = min((fullcamdim['x']//my_bin,fullcamdim['y']//my_bin))
 			if minlength <= imagelength:
 				break
 		# always use even prime
@@ -1399,7 +1398,6 @@ class PresetsManager(node.Node):
 		self.logger.info('Acquiring %s image' %(acquirestr))
 		camdata0 = leginondata.CameraEMData()
 		camdata0.friendly_update(preset)
-
 		# These will be overwritten to acquire special image
 		was_saving_frames = bool(camdata0['save frames'])
 		was_aligning_frames = bool(camdata0['align frames'])
@@ -1414,7 +1412,6 @@ class PresetsManager(node.Node):
 		camdata1 = copy.copy(camdata0)
 		fullcamdim = self.instrument.camerasizes[camdata1['ccdcamera']['name']]
 
-
 		if mode == 'center':
 			imagelength = self.modifyImageLength(fullcamdim,imagelength)
 			## send new binning to camera to get binned multiplier
@@ -1427,14 +1424,14 @@ class PresetsManager(node.Node):
 				if change > 0:
 					camdata1['dimension'][axis] = imagelength
 					# keep it center
-					camdata1['offset'][axis] = (fullcamdim[axis] / binning[axis] - imagelength) / 2
+					camdata1['offset'][axis] = (fullcamdim[axis]//binning[axis] - imagelength)// 2
 					camdata1['binning'][axis] = binning[axis]
-			camdata1['exposure time'] = camdata1['exposure time'] * (camdata0['binning']['x'] * camdata0['binning']['y'] / camdata0['binned multiplier'])
-			camdata1['exposure time'] = camdata1['exposure time'] / (camdata1['binning']['x'] * camdata1['binning']['y'] / camdata1['binned multiplier'])
+			camdata1['exposure time'] = float(camdata1['exposure time']) * (camdata0['binning']['x'] * camdata0['binning']['y'] / camdata0['binned multiplier'])
+			camdata1['exposure time'] = float(camdata1['exposure time']) / (camdata1['binning']['x'] * camdata1['binning']['y'] / camdata1['binned multiplier'])
 		if mode == 'bin':
 			## at maximum bin using as much camera as possible to at most imagelength x imagelength
 			## with exposure time adjustment
-			new_bin = max((fullcamdim['x']/imagelength,fullcamdim['y']/imagelength))
+			new_bin = max((fullcamdim['x']//imagelength,fullcamdim['y']//imagelength))
 
 			# keep new bin in the binning choices available to the camera
 			binnings = self.instrument.ccdcamera.CameraBinnings
@@ -1452,11 +1449,10 @@ class PresetsManager(node.Node):
 			## send new binning to camera to get binned multiplier
 			self.instrument.ccdcamera.Binning = {'x': new_bin, 'y': new_bin}
 			camdata1['binned multiplier'] = self.instrument.ccdcamera.BinnedMultiplier
-
 			for axis in ('x','y'):
-				new_camdim = int(math.floor( fullcamdim[axis] / new_bin ))
+				new_camdim = int(math.floor( fullcamdim[axis] / float(new_bin) ))
 				extrabin = float(new_bin) / camdata0['binning'][axis]
-				camdata1['offset'][axis] = (fullcamdim[axis] / new_bin - new_camdim) / 2
+				camdata1['offset'][axis] = (fullcamdim[axis] // new_bin - new_camdim) // 2
 				camdata1['dimension'][axis] = new_camdim
 				camdata1['binning'][axis] = new_bin
 				camdata1['exposure time'] = camdata1['exposure time'] / extrabin
@@ -1472,6 +1468,7 @@ class PresetsManager(node.Node):
 		try:
 			imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		except:
+			raise
 			self.logger.error(errstr % 'unable to acquire corrected image data')
 			return
 		try:
@@ -1594,6 +1591,7 @@ class PresetsManager(node.Node):
 				# include a relative  image rotation and scale addition to the transform
 				pixvect2 = self.calclients['scale rotation'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
 				# transform to the binned pixelsift
+				# pixvect2 is float
 				pixelshift2 = {'row':pixvect2[0] / newpreset['binning']['y'],'col':pixvect2[1] / newpreset['binning']['x']}
 				newscope = self.calclients['image'].transform(pixelshift2, fakescope2, fakecam2)
 				myimage = newscope['image shift']
@@ -1767,8 +1765,8 @@ class PresetsManager(node.Node):
 		acqimagedata['preset'] = self.presets[p]
 		target = leginondata.AcquisitionImageTargetData(image=acqimagedata)
 
-		dr = row - imagedata['image'].shape[0]/2 - 0.5
-		dc = col - imagedata['image'].shape[1]/2 - 0.5
+		dr = row - imagedata['image'].shape[0]/2.0 - 0.5
+		dc = col - imagedata['image'].shape[1]/2.0 - 0.5
 
 		target['delta row'] = dr
 		target['delta column'] = dc
@@ -1908,8 +1906,11 @@ class PresetsManager(node.Node):
 
 	def doneLastAlignPresets(self):
 		# This is called when last alignment Preset Labels
-		#are set and image acquired
-		self.panel.onDoneLastAlign()
+		# are set and image acquired
+		# Need to send event because loopAlighPreset and this are called
+		# in a thread of self.panel.
+		evt = leginon.gui.wx.PresetsManager.EnableAlignDoneButtonEvent(self.panel)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def doneAllAlignPresets(self):
 		# THis is called when the dialog window is forced closed
@@ -2023,7 +2024,7 @@ class PresetsManager(node.Node):
 		orig_dim = preset['dimension']['x']
 		orig_bin = preset['binning']['x']
 		temp_bin = 4
-		temp_dim = fullcamdim / temp_bin
+		temp_dim = fullcamdim // temp_bin
 
 		self.instrument.ccdcamera.Dimension = {'x':temp_dim, 'y':temp_dim}
 		self.instrument.ccdcamera.Binning = {'x': temp_bin, 'y': temp_bin}
@@ -2032,7 +2033,7 @@ class PresetsManager(node.Node):
 		temp_mult = self.instrument.ccdcamera.BinnedMultiplier
 		# calculate temporary exposure time
 		orig_unbinned_dim = orig_bin * orig_dim
-		orig_zoom = fullcamdim / orig_unbinned_dim 
+		orig_zoom = fullcamdim / float(orig_unbinned_dim)
 		expscale = (temp_mag / float(original_mag)) ** 2
 		binscale = (orig_bin / float(temp_bin)/orig_zoom) ** 2
 		binscale = binscale * temp_mult / orig_mult   ## Is this right?
@@ -2089,8 +2090,8 @@ class PresetsManager(node.Node):
 		acqimagedata['preset'] = fakepreset
 		target = leginondata.AcquisitionImageTargetData(image=acqimagedata)
 
-		dr = row - imagedata['image'].shape[0]/2 - 0.5
-		dc = col - imagedata['image'].shape[1]/2 - 0.5
+		dr = row - imagedata['image'].shape[0]/2.0 - 0.5
+		dc = col - imagedata['image'].shape[1]/2.0 - 0.5
 
 		target['delta row'] = dr
 		target['delta column'] = dc
