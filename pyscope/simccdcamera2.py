@@ -290,7 +290,6 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 			sigma = 0.1 * mean
 		image = numpy.random.normal(mean, sigma, shape)
 		if self.exposure_type != 'dark':
-			print(shape, shape[0]//16, shape[1]//16)
 			row_offset = random.randint(-shape[0]//16, shape[0]//16) + shape[0]//4
 			column_offset = random.randint(-shape[1]//16, shape[1]//16) + shape[0]//4
 			image[row_offset:row_offset+shape[0]//2,
