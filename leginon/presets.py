@@ -1281,12 +1281,12 @@ class PresetsManager(node.Node):
 			reverse = True
 		# This restrict the image to imagelength in x only
 		# and works only for camera dimension at power of 2 
-		fullcamdim = min(self.instrument.camerasizes[camname]['x'],self.instrument.camerasizes[camname]['y'])
+		min_fullcamdim = min(self.instrument.camerasizes[camname]['x'],self.instrument.camerasizes[camname]['y'])
 		# smallsize may actually be too big for this camera
-		imagelength = min(self.settings['smallsize'], fullcamdim)
+		imagelength = min(self.settings['smallsize'], min_fullcamdim)
 
 		#assume highmag imag is binning of full camera to imagelength
-		maxbin = fullcamdim / imagelength
+		maxbin = min_fullcamdim / imagelength
 		highbin = maxbin
 		highmaglook = float(highmag) / highbin
 		lowbin = int(math.pow(2,round(math.log(lowmag / highmaglook) / math.log(2))))
@@ -1386,8 +1386,8 @@ class PresetsManager(node.Node):
 
 	def modifyImageLength(self,fullcamdim,imagelength):
 		binning_values = [1,2,4,8]
-		for bin in binning_values:
-			minlength = min((fullcamdim['x']/bin,fullcamdim['y']/bin))
+		for my_bin in binning_values:
+			minlength = min((fullcamdim['x']/my_bin,fullcamdim['y']/my_bin))
 			if minlength <= imagelength:
 				break
 		# always use even prime
@@ -1426,7 +1426,8 @@ class PresetsManager(node.Node):
 				change = camdata0['dimension'][axis]*camdata0['binning'][axis] - imagelength*binning[axis]
 				if change > 0:
 					camdata1['dimension'][axis] = imagelength
-					camdata1['offset'][axis] = (camdata0['offset'][axis]*camdata0['binning'][axis]+(change / 2))/binning[axis]
+					# keep it center
+					camdata1['offset'][axis] = (fullcamdim[axis] / binning[axis] - imagelength) / 2
 					camdata1['binning'][axis] = binning[axis]
 			camdata1['exposure time'] = camdata1['exposure time'] * (camdata0['binning']['x'] * camdata0['binning']['y'] / camdata0['binned multiplier'])
 			camdata1['exposure time'] = camdata1['exposure time'] / (camdata1['binning']['x'] * camdata1['binning']['y'] / camdata1['binned multiplier'])
