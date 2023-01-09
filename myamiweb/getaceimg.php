@@ -64,7 +64,7 @@ $opfile = $ctfdata['path'].'/opimages/'.$basename;
 $rtfile = $ctfdata['path'].'/'.$basename;
 
 $img_requester = new imageRequester();
-foreach (array($rtfile, $opfile) as &$path) {
+foreach (array($rtfile, $opfile) as $path) {
     $img = $img_requester->requestImage($path, 'PNG', $shape=false, $scaleType=false);
     if (!is_redux_error($img)) {
 		echo_image($img);
