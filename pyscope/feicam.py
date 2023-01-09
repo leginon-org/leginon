@@ -211,7 +211,7 @@ class FeiCam(ccdcamera.CCDCamera):
 			connection = fei_advscripting.get_feiadv()
 		self.instr = connection.instr
 		self.csa = connection.csa
-		# TODO: setCamera
+		# setCamera
 		this_camera = self.getCamera()
 		if this_camera is None:
 			raise ValueError('%s not found' % self.camera_name)
@@ -410,8 +410,8 @@ class FeiCam(ccdcamera.CCDCamera):
 
 		t0 = time.time()
 
-		#TODO: Check if this is going to be an issue
-		self.csa.Wait()
+		#Queue has no wait at start.
+		#self.csa.Wait()
 		if self.getDebugCamera():
 			print 'done waiting before acquire'
 		retry = False
@@ -427,6 +427,7 @@ class FeiCam(ccdcamera.CCDCamera):
 			if self.getSaveRawFrames() and 'Timeout' in e.text:
 				# dose fractionation queue may timeout on the server. The next acquisition
 				# is independent enough that we allow it to retry.
+				#TODO: only needed parameter settings retry if the first in queue.
 				reason = 'Falcon WaitForImageReady Timeout'
 				retry = True
 			if self.getAlignFrames() and self.getSaveRawFrames() and 'The parameter is incorrect' in e.text:
@@ -443,6 +444,7 @@ class FeiCam(ccdcamera.CCDCamera):
 					raise RuntimeError('Error camera acquiring after retry: %s--%s' % (reason,e,))
 			else:
 				raise RuntimeError('Error camera acquiring: %s' % (e,))
+		# TODO: what happens to array if queuing ?
 		try:
 			arr = self._getSafeArray()
 		except Exception, e:
@@ -452,6 +454,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		if isinstance(arr,type(None)):
 			if self.getDebugCamera():
 				print 'No array in memory, yet. Try again.'
+			# TODO: maybe only do this when queue ends.
 			self.csa.Wait()
 			try:
 				arr = self._getSafeArray()
@@ -463,6 +466,7 @@ class FeiCam(ccdcamera.CCDCamera):
 			self.image_metadata = self.getMetaDataDict(self.im.MetaData)
 		else:
 			self.image_metadata = {}
+		# TODO: maybe generate this from valid older images ?
 		if hasattr(self, 'save_frames') and hasattr(self,'align_frames') and (self.save_frames or self.align_frames) and self.save8x8:
 			arr = self.base_fake_image*arr.std() + arr.mean()*numpy.ones((8,8))
 			return arr
