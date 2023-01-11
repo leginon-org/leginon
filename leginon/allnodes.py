@@ -71,6 +71,9 @@ noderegistry.registerNodeClass(MosaicClickTargetFinder,classtype)
 from mosaicexternalfinder import MosaicScoreTargetFinder
 noderegistry.registerNodeClass(MosaicScoreTargetFinder,classtype)
 
+from mosaiclearnfinder import MosaicActiveLearnTargetFinder
+noderegistry.registerNodeClass(MosaicActiveLearnTargetFinder,classtype)
+
 from mosaicquiltfinder import MosaicQuiltFinder
 noderegistry.registerNodeClass(MosaicQuiltFinder,classtype)
 
