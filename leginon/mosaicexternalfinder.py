@@ -147,7 +147,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 			label='all'
 			mosaic_image_path = os.path.join(self.session['image path'],self.mosaicimagedata['filename']+'.mrc')
 			self.logger.info('Running external square finding')
-			blobs = self._runExternalBlobFinder(self.mosaicimagedata['image'],mosaic_image_path, label)
+			blobs = self._runExternalBlobFinder(mosaic_image_path, label)
 			self.loadBlobs(label, self.getOutPath(label))
 			# show blob target and stats
 			return self.ext_blobs[label]
@@ -165,7 +165,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		'''
 		return '%s_%s' % (self.session['name'], label)
 
-	def _runExternalBlobFinder(self, imagearray, mosaic_image_path,label='all'):
+	def _runExternalBlobFinder(self, mosaic_image_path,label='all'):
 		outdir = os.path.dirname(mosaic_image_path)
 		job_basename = self.getJobBasename(label)
 		outpath = os.path.join(outdir, '%s.json' % job_basename)
@@ -335,7 +335,7 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 		label = '%d' % imid
 		self.logger.info('running external square finding on imgid=%d' % imid)
 		job_basename = self.getJobBasename(label)
-		self.p[imid] = multiprocessing.Process(target=self._runExternalBlobFinder, args=(imagedata['image'], mrcpath,label))
+		self.p[imid] = multiprocessing.Process(target=self._runExternalBlobFinder, args=(mrcpath,label))
 		self.p[imid].start()
 
 	def clearTiles(self):
