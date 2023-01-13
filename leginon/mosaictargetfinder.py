@@ -1246,7 +1246,6 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		targets = map((lambda x: self.blobToDisplayTarget(x,self.finder_scale_factor)), combined_blobs)
 		# flat list of multihole convolution at the original mosaic dimension
 		targets = self.multiHoleConvolution(targets)
-		# TODO save SquareStatsData
 		return targets
 
 	def multiHoleConvolution(self, targets):

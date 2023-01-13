@@ -1065,6 +1065,7 @@ class AcquisitionImageTargetData(ImageTargetData):
 			# target mapping to a well on the prep plate if applicable
 			('spotmap', SpotWellMapData),
 			('last_focused', ImageTargetListData),
+			('square', SquareStatsData),
 		)
 	typemap = classmethod(typemap)
 
@@ -1435,11 +1436,23 @@ class ScoreSquareFinderPrefsData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class PtolemySquareData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('grid_id', int), #ImageListData.dbid
+			('tile_id', int), #AcquisitionImageData.dbid
+			('square_id', int), #assigned by ptolemy
+			('center_x', int),
+			('center_y', int),
+		)
+	typemap = classmethod(typemap)
+
 class SquareStatsData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('prefs', SquareFinderPrefsData),
 			('score_prefs', ScoreSquareFinderPrefsData),
+			('tile_image', AcquisitionImageData),
 			('row', int),
 			('column', int),
 			('size', float),
@@ -1448,6 +1461,14 @@ class SquareStatsData(InSessionData):
 			('score', float),
 			('good', bool),
 			('on_edge', bool),
+		)
+	typemap = classmethod(typemap)
+
+class PtolemySquareStatsLinkData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('ptolemy', PtolemySquareData),
+			('stats', SquareStatsData),
 		)
 	typemap = classmethod(typemap)
 

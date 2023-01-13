@@ -78,6 +78,10 @@ class StatsBlob(object):
 		self.stats = {"label_index": index, "center":center, "n":size, "size":size, "mean":mean, "score":score}
 		self.vertices = vertices
 		self.info_dict = info_dict
+		# imagedata of the tile if available
+		self.tile_image = info_dict['tile_image']
+		# placeholder for recording merged blobs
+		self.squares = []
 
 class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 	panelclass = gui.wx.MosaicScoreTargetFinder.Panel
@@ -210,8 +214,15 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 			#ptolemy write its coordinates in (x,y) modify them first.
 			b['center'] = _revindex(b['center'])
 			b['vertices'] = list(map((lambda x: _revindex(x)),b['vertices']))
+			b['tile_image'] = self._getTileImage(label)
 			blobs.append(StatsBlob(b, n)) # (row, col)
 		self.ext_blobs[label] = blobs
+
+	def _getTileImage(label):
+		'''
+		full mosaic has no tile image id. Tile based one should overwrite this.
+		'''
+		return None
 
 	def filterPoints(self, blobs, example_points, panel_points):
 		'''
@@ -272,6 +283,8 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 			size = blob.stats['n']
 			mean = blob.stats['mean']
 			score = blob.stats['score']
+			squares = blob.squares
+			tile_image = blob.tile_image
 			edge_mosaic_shape = self.finder_edge_mosaicimage.shape
 			try:
 				on_edge = self.finder_edge_mosaicimage[row,column]
@@ -280,12 +293,19 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 				on_edge = True
 			if (value_min <= blob.stats[key] <= value_max) and not on_edge:
 				good_blobs.append(blob)
+				is_good = True
 			else:
-				stats = leginondata.SquareStatsData(score_prefs=self.sq_prefs, row=row, column=column, mean=mean, size=size, score=score)
-				stats['good'] = False
-				stats['on_edge'] = on_edge
-				# only publish bad stats
-				self.publish(stats, database=True)
+				is_good = False
+			# publish all square stats
+			stats = leginondata.SquareStatsData(session=self.session, score_prefs=self.sq_prefs, row=row, column=column, mean=mean, size=size, score=score, tile_image=tile_image)
+			stats['good'] = False
+			stats['on_edge'] = on_edge
+			stats.insert()
+			# link SquareStatsData with PtolemySquareData if available
+			for sq in squares:
+				sqdata = leginondata.PtolemySquareData().direct_query(sq)
+				q = leginondata.PtolemySquareStatsLinkData(stats=stats, ptolemy=sqdata)
+				q.insert()
 		self.logger.info('Filtering number of blobs down number to %d' % len(good_blobs))
 		return good_blobs
 
@@ -368,6 +388,9 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 		return r-r0
 
 	def mergeFinderBlobs(self):
+		'''
+		Merge small and nearby blobs on finder_mosaic
+		'''
 		blob_values = self.mblob_values
 		if len(self.tilemap) > 2 and len(blob_values) >= 10:
 			self.logger.info('Running blob merging')
@@ -398,8 +421,16 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 		# update values of the second blob
 		to_remove = []
 		for i in unique_close:
-			first = too_close[0][i]
-			second = too_close[1][i]
+			j0 = too_close[0][i]
+			j1 = too_close[1][i]
+			values = [blob_values[j0]['area'],blob_values[j1]['area']]
+			if values[0] == values[1]:
+				first = j0
+				second = j1
+			else:
+				# first is the one with smaller area
+				first = [j0,j1][values.index(min(values))]
+				second = [j0,j1][values.index(max(values))]
 			to_remove.append(first)
 			b1 = blob_values[first]['brightness']
 			b2 = blob_values[second]['brightness']
@@ -411,6 +442,8 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 			new_brightness = (b1*w1+b2*w2)/(w1+w2)
 			new_center = tuple(((c1*w1+c2*w2)/(w1+w2)).tolist())
 			new_score = max(blob_values[first]['score'],blob_values[second]['score'])
+			new_squares = list(blob_values[first]['squares'])
+			new_squares.extend(blob_values[second]['squares'])
 			# merge vertices as convex hull
 			# use union set to avoid duplicates
 			v = set(blob_values[first]['vertices'])
@@ -422,7 +455,8 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 					'center':new_center,
 					'score':new_score,
 					'brightness':new_brightness,
-					'vertices':new_vertices
+					'vertices':new_vertices,
+					'squares':new_squares,
 			})
 		# pop merged
 		to_remove = list(set(to_remove))
@@ -445,12 +479,17 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 					shape = tile.image.shape
 					label = '%d' % imid
 					if label in self.ext_blobs.keys():
+						# tileblobmap holds StatsBlobs on tile image
 						self.tileblobmap[imid] = self.ext_blobs[label]
+						# mblob_values holds blobinof on mosaic image
 						self.addMosaicBlobValues(tile, imid)
 			# merge finder blobs
 			self.mergeFinderBlobs()
 
 	def addMosaicBlobValues(self, tile, imid):
+		'''
+		Mosaic blobs are blobs on self.finder_mosaic
+		'''
 		s = self.finder_scale_factor
 		for b in self.tileblobmap[imid]:
 			#statistics are calculated on finder_mosaic
@@ -494,3 +533,9 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 		# merge finder blobs
 		self.mergeFinderBlobs()
 		return list(self.finder_blobs)
+
+	def _getTileImage(self, label):
+		'''
+		PerTileSquareFinder label is tile image id
+		'''
+		return leginondata.AcquisitionImageData().direct_query(int(label))

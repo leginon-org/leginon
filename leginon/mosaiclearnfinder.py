@@ -14,27 +14,17 @@ from leginon import targetfinder
 from leginon import ptolemyhandler as ph
 import gui.wx.MosaicScoreTargetFinder
 
-class StatsBlob(object):
+def revindex(value_tuple):
+	return value_tuple[1],value_tuple[0]
+
+class StatsBlob(mosaicexternalfinder.StatsBlob):
 	def __init__(self, info_dict, index):
 		'''Simple blob object with image and stats as attribute
 			both input and output center/vertices = (row, col) on image
 		'''
-		mean = info_dict['brightness']
-		stddev = 1.0
-		size = info_dict['area']
-		score = info_dict['score']
-		center = info_dict['center'][0],info_dict['center'][1]
-		vertices = info_dict['vertices']
-		self.center_modified = False
-		# n in blob is the same as size from Ptolemy. Need n for displaying stats
-		# in gui.
-		self.stats = {"label_index": index, "center":center, "n":size, "size":size, "mean":mean, "score":score}
-		self.vertices = vertices
-		self.info_dict = info_dict
-		self.grid_id = info_dict['grid_id']
-		# do something for merging ?
-		self.image_id = info_dict['image_id']
-		self.square_id = info_dict['square_id']
+		super(StatsBlob, self).__init__(info_dict, index)
+		# list of PtolemySquareData.dbids in the potentially merged blobs
+		self.squares = info_dict['squares']
 
 class MosaicActiveLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder):
 	"""
@@ -95,6 +85,9 @@ class MosaicActiveLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder
 			self.p.pop(imid)
 		self.logger.info('All scripts finished')
 		new_imids = set(imids).difference(self.tileblobmap.keys())
+		# TODO: this sleep makes it less likely to fail in reloading atlas
+		# but need better solution.
+		time.sleep(6)
 		self.loadBlobs()
 		for imid in new_imids:
 			label = '%d' % imid
@@ -111,6 +104,15 @@ class MosaicActiveLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder
 	def _runPtolemyBlobFinder(self, imagedata):
 		ph.push_lm(imagedata)
 
+	def savePtolemySquare(self,infodict):
+		q=leginondata.PtolemySquareData(session=self.session)
+		q['tile_id']=infodict['image_id']
+		q['grid_id']=infodict['grid_id']
+		q['square_id']=infodict['square_id']
+		q['center_x']=infodict['center'][1]
+		q['center_y']=infodict['center'][0]
+		q.insert()
+		return q
 		
 	def loadBlobs(self):
 		'''
@@ -129,19 +131,20 @@ class MosaicActiveLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder
 				self.ext_blobs[img_id] = []
 			return
 		# blob_dicts is for all images
-		def _revindex(value_tuple):
-			return value_tuple[1],value_tuple[0]
 		for n, b in enumerate(blob_dicts):
-			#ptolemy write its coordinates in (x,y) modify them first.
-			b['center'] = _revindex(b['center'])
-			b['vertices'] = list(map((lambda x: _revindex(x)),b['vertices']))
+			#ptolemy write its coordinates in (x,y) modify them first. we want
+			# them in (row, col)
+			b['center'] = revindex(b['center'])
+			b['vertices'] = list(map((lambda x: revindex(x)),b['vertices']))
 			label = '%d' % b['image_id']
+			b['tile_image'] = self._getTileImage(label)
+			b['squares'] = [self.savePtolemySquare(b).dbid,]
 			if label not in self.ext_blobs.keys():
 				self.ext_blobs[label] = []
 			self.ext_blobs[label].append(StatsBlob(b,n)) # (row, col)
 
 	def _addTile(self, imagedata):
-		super(MosaicActiveLearnTargetFinder, self)._addTile(imagedata)
+		super(mosaicexternalfinder.MosaicScoreTargetFinder, self)._addTile(imagedata)
 		if not self.hasValidScoringScript():
 			return
 		mrcpath = os.path.join(imagedata['session']['image path'], imagedata['filename']+'.mrc')
@@ -151,3 +154,40 @@ class MosaicActiveLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder
 		job_basename = self.getJobBasename(label)
 		self.p[imid] = multiprocessing.Process(target=self._runPtolemyBlobFinder, args=(imagedata,))
 		self.p[imid].start()
+
+	def researchSquareWithStats(self, row, col):
+		'''
+		Use row and col from mosaicimage to find SquareStatsData which contains
+		merged ptolemy squares
+		'''
+		#TODO: maybe better do multiple square to ptolemy square mapping.
+		# since we want to go from ptolemy square to squarestats.
+		pref_q = leginondata.ScoreSquareFinderPrefsData(image=self.mosaicimagedata)
+		q = leginondata.SquareStatsData(column=col, row=row,score_prefs=pref_q)
+		results = q.query(results=1)
+		if not results:
+			return self.findNearestSquare(pref_q, row, col)
+		return results[0]	
+
+	def findNearestSquare(self, prefdata, row, col):
+		stats = leginondata.SquareStatsData(score_prefs=prefdata).query()
+		if not stats:
+			self.logger.error('no squares found by Ptolemy')
+			return None
+		magnitudes = map((lambda x: (col-x['column'])**2+(row-x['row'])**2), stats)
+		nearest = stats[magnitudes.index(min(magnitudes))]
+		return nearest
+
+	def mosaicToTarget(self, typename, row, col, **kwargs):
+		'''
+		Convert and publish the mosaic position to targetdata of the tile image.
+		'''
+		imagedata, drow, dcol = self._mosaicToTarget(row, col)
+		# TODO add SquareStatsData that contains ptolemy merging list in targetdata
+		square = self.researchSquareWithStats(row, col)
+		# publish as targets on most recent version of image to preserve adjusted z
+		recent_imagedata = self.researchImages(list=imagedata['list'],target=imagedata['target'])[-1]
+		targetdata = self.newTargetForTile(recent_imagedata, drow, dcol, type=typename, list=self.targetlist, square=square, **kwargs)
+		## can we do dbforce here?  it might speed it up
+		self.publish(targetdata, database=True)
+		return targetdata
