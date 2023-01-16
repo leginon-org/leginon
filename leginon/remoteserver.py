@@ -14,9 +14,9 @@ import time
 import threading
 try:
 	import requests
-	NO_REQUESTS=False
+	NO_REMOTE=False
 except:
-	NO_REQUESTS=True
+	NO_REMOTE=True
 import json
 
 from leginon import leginondata
@@ -30,9 +30,10 @@ SLEEP_TIME = 2
 try:
 	configs = pyami.moduleconfig.getConfigured('remote.cfg')
 except:
-	if not NO_REQUESTS:
+	if not NO_REMOTE:
 		# Don't want it to crash here.
-		print 'remote.cfg does not exist. Remote disabled'
+		NO_REMOTE = True
+		configs = {}
 
 class RemoteServerMaster(object):
 	'''
@@ -44,8 +45,10 @@ class RemoteServerMaster(object):
 		self.node = node
 		
 		self.leginon_base = os.path.join(os.path.dirname(sessiondata['image path']),'remote')
-		pyami.fileutil.mkdirs(self.leginon_base)
-		# django media
+		try:
+			pyami.fileutil.mkdirs(self.leginon_base)
+		except OSError:
+			self.logger.error('making remote directory failed')
 
 class RemoteSessionServer(object):
 	def __init__(self, logger, sessiondata):
