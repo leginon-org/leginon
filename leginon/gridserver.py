@@ -33,8 +33,9 @@ class GridHookServer(object):
 	Similar request server as leginon remoteserver but simpler and generalized
 	on the route and field used with a config file.
 	'''
-	def __init__(self, sessiondata, projdata):
+	def __init__(self, sessiondata, projdata,is_auto_session=False):
 		self.sessiondata = sessiondata
+		self.is_auto_session = is_auto_session
 		self.project = projdata
 		try:
 			self.leg_gridhook_auth = (configs['rest auth']['user'],configs['rest auth']['password'])
@@ -204,17 +205,19 @@ class GridHookServer(object):
 		pk = results[0]['id']
 		return pk
 
-	def setSession(self, session_id=None):
+	def setSession(self, session_id=None, is_auto=True):
 		'''
-		insert or updat LeginonSession model primary key on grid management system
+		insert or update LeginonSession model primary key on grid management system
 		rest api.  It raises error if having trouble.
 		'''
 		this_api = configs['session api router']
 		router_name = this_api['path']
 		field_name = this_api['name_field']
+		field_is_auto = this_api['is_auto_field']
 		# data
 		data = {
 				field_name:self.sessiondata['name'],
+				field_is_auto:self.is_auto_session,
 		}
 		patch_dict = {}
 		if session_id:

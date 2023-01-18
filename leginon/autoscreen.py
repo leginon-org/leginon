@@ -153,7 +153,7 @@ class SessionCreator(object):
 		is defined.  The grid is identified in session comment.
 		'''
 		grid_id_string = self.session['comment']
-		gapp = gridserver.GridHookServer(self.session, self.project)
+		gapp = gridserver.GridHookServer(self.session, self.project, is_auto_session=True)
 		if not gapp.gridhook_server_active:
 			# Do nothing
 			return

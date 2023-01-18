@@ -16,10 +16,12 @@ model: project
 path: api/project/1/
 # leginon session record on the django rest api using
 # session name as the identifier.
+# is_auto_field is boolean field to indicate that this is an auto screening/collection, a.k.a. smart leginon
 [session api router]
 path: api/leginon_session
 name_field: name
 id_field: leginon_id
+is_auto_field: is_smart
 # group_id_field is required if weblink group is specified
 group_id_field: project
 # use grid to session mapping rest api to get the a grid string for display
