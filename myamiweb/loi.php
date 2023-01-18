@@ -42,6 +42,9 @@ if($projectdb) {
 
 if ( is_numeric(SESSION_LIMIT) && count($sessions) > SESSION_LIMIT) $sessions=array_slice($sessions,0,SESSION_LIMIT);
 
+// --- Get is_auto
+$is_auto = $leginondata->getIsAutoSession($sessionId);
+
 $viewer = new viewer();
 if($projectdb && !empty($sessions)) {
 	foreach($sessions as $k=>$s) {
@@ -60,6 +63,7 @@ $viewer->setImageId($imageId);
 $viewer->addSessionSelector($sessions);
 $viewer->setScopeId($scopeId);
 $viewer->addScopeSelector($scopes);
+$viewer->addAutoSessionLabel($is_auto);
 $viewer->addLoiControl($refreshtime);
 $viewer->addCommentBox();
 $viewer->addQueueCountBox();
