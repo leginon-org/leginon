@@ -213,12 +213,17 @@ class GridHookServer(object):
 		this_api = configs['session api router']
 		router_name = this_api['path']
 		field_name = this_api['name_field']
-		field_is_auto = this_api['is_auto_field']
 		# data
 		data = {
 				field_name:self.sessiondata['name'],
-				field_is_auto:self.is_auto_session,
 		}
+		# gridhook will record is_auto_session if
+		# config file is configured for this, and configured
+		# to match the REST api field name in the grid
+		# management system.
+		if 'is_auto_field' in this_api.keys():
+			field_is_auto = this_api['is_auto_field']
+			data[field_is_auto] = self.is_auto_session
 		patch_dict = {}
 		if session_id:
 			# add leginondata SessionData id
