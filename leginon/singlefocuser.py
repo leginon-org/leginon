@@ -113,6 +113,9 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		sequence = []
 		has_manual_on = False
 		for name in focus_sequence_data['sequence']:
+			if not name:
+				# clean up empty string names for bug #14149
+				continue
 			focus_setting = self.researchFocusSetting(name)
 			if focus_setting is None:
 				warning = 'Unable to find focus setting \'%s\'.' % name
@@ -141,7 +144,13 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		return [setting.copy() for setting in self.focus_sequence]
 
 	def setFocusSequence(self, sequence, isdefault=False, init=False):
-		sequence_names = [s['name'] for s in sequence]
+		sequence_names = []
+		for s in sequence:
+			# prevent empty name focus step to be added to the sequence. See #14149
+			if s['name']:
+				sequence_names.append(s['name'])
+		new_sequence = []
+		self.focus_sequence = new_sequence
 		if init or sequence_names != [s['name'] for s in self.focus_sequence]:
 			initializer = {
 				'session': self.session,

@@ -115,6 +115,8 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		correction_types = self.node.correction_types.keys()
 		correlation_types = self.node.correlation_types
 		default_setting = self.node.default_setting
+		# use first preset as default
+		default_setting['preset name'] = preset_names[0]
 		sequence = self.node.getFocusSequence()
 		dialog_settings = leginon.gui.wx.FocusSequence.DialogSettings(
 			preset_names,
