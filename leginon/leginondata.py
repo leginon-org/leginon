@@ -2240,6 +2240,7 @@ class SingleFocuserSettingsData(AcquisitionSettingsData):
 			('manual focus preset', str),
 			('beam tilt settle time', float),
 			('on phase plate', bool),
+			('accuracy limit', float),
 		)
 	typemap = classmethod(typemap)
 

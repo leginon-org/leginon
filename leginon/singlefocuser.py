@@ -30,9 +30,10 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		'melt preset': '',
 		'manual focus preset': '',
 		'acquire final': True,
-        'process target type': 'focus',
+		'process target type': 'focus',
 		'beam tilt settle time': 0.25,
 		'on phase plate': False,
+		'accuracy limit': 3e-7,
 	})
 
 	eventinputs = manualfocuschecker.ManualFocusChecker.eventinputs

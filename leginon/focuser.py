@@ -9,15 +9,6 @@ class Focuser(singlefocuser.SingleFocuser):
 	panelclass = gui.wx.Focuser.Panel
 	settingsclass = leginondata.FocuserSettingsData
 	defaultsettings = dict(singlefocuser.SingleFocuser.defaultsettings)
-	defaultsettings.update({
-		'process target type': 'focus',
-		'melt time': 0.0,
-		'melt preset': '',
-		'manual focus preset': '',
-		'acquire final': True,
-        'process target type': 'focus',
-		'beam tilt settle time': 0.25,
-	})
 
 	eventinputs = singlefocuser.SingleFocuser.eventinputs
 	eventoutputs = singlefocuser.SingleFocuser.eventoutputs
@@ -35,6 +26,7 @@ class Focuser(singlefocuser.SingleFocuser):
 
 
 	def simulateTarget(self):
+		self.good_enough = False
 		self.setStatus('processing')
 		# no need to pause longer for simulateTarget
 		self.is_firstimage = False
@@ -78,11 +70,14 @@ class Focuser(singlefocuser.SingleFocuser):
 		self.current_focus_sequence_step = 0
 		self.delayed_targets = []
 		self.is_last_target_and_focus_step = False
+		self.good_enough = False
 
 		for j, setting in enumerate(self.focus_sequence):
 			self.corrected_focus = []
 			self.corrected_stagez = []
 			self.current_focus_sequence_step = j
+			if self.good_enough == True:
+				break
 			for i, target in enumerate(goodtargets):
 				self.logger.debug('Step %d of target %d' % (j,i))
 				if j == len(self.focus_sequence)-1 and i == len(goodtargets)-1:
@@ -153,6 +148,11 @@ class Focuser(singlefocuser.SingleFocuser):
 				# end of target loop
 	
 			self.applyAverageCorrection(setting)
+			if self.good_enough and not self.is_last_target_and_focus_step:
+				self.logger.info('Skipping the rest of focus sequence. Defocus accuracy better than %.2f um.' % (self.settings['accuracy limit']*1e6,))
+				if self.settings['acquire final']:
+					presetdata = self.useFirstPresetOrderPreset()
+					self.acquireFinal(presetdata, self.last_emtarget)
 			# end of focus sequence loop
 
 	def applyAverageCorrection(self, setting):
@@ -166,6 +166,8 @@ class Focuser(singlefocuser.SingleFocuser):
 			self.instrument.tem.Focus = avg_focus
 			defocus1 = self.instrument.tem.Defocus
 			delta = defocus1 - defocus0
+			if abs(delta) < abs(self.settings['accuracy limit']):
+				self.good_enough = True
 			self.logger.info('Corrected defocus to target average by %.3e' % (delta,))
 			self.resetDefocus()
 		elif setting['correction type'] == 'Stage Z' and len(self.corrected_stagez) > 0:
@@ -173,6 +175,8 @@ class Focuser(singlefocuser.SingleFocuser):
 			avg_stagez = sum(self.corrected_stagez) / len(self.corrected_stagez)
 			self.instrument.tem.StagePosition = {'z':avg_stagez}
 			delta = avg_stagez - stage0['z']
+			if abs(delta) < abs(self.settings['accuracy limit']):
+				self.good_enough = True
 			self.logger.info('Corrected stage z to target average by %.3e' % (delta,))
 		self.reportDelayedTargetStatusToDone()
 
@@ -217,6 +221,12 @@ class Focuser(singlefocuser.SingleFocuser):
 
 		status = 'unknown'
 
+		self.last_emtarget = emtarget
+		if self.good_enough:
+			message = 'Skipping the rest because it is good enough in focuser.acquire'
+			self.logger.info(message)
+			self.current_focus_sequence_step = len(self.focus_sequence)
+			status = 'ok'
 		if self.current_focus_sequence_step in range(len(self.focus_sequence)):
 			setting = self.focus_sequence[self.current_focus_sequence_step]
 			if not setting['switch']:
@@ -238,8 +248,10 @@ class Focuser(singlefocuser.SingleFocuser):
 
 
 		# aquire and save the focus image
-		# only needed at the last target
+		# only done at the last target
 		if status != 'repeat' and self.settings['acquire final'] and self.is_last_target_and_focus_step:
+			# if autofocus is good enough before reaching last focus_step,
+			# this part is not reached.
 			self.acquireFinal(presetdata, emtarget)
 		return status
 
