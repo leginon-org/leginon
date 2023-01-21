@@ -366,7 +366,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		defoc0 = self.instrument.tem.Defocus
 		self.logger.info('Defocus correction...')
 		defoc = resultdata['defocus']
-		delta = defoc - defoc0
+		delta = defoc + defoc0
 		if abs(delta) < abs(self.settings['accuracy limit']):
 				self.good_enough = True
 		resultdata['defocus correction'] = correction_type
