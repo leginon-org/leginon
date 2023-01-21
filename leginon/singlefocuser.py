@@ -363,8 +363,12 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			resultstring = resultstring + ', corrected stig by x,y=%.4f,%.4f' % (stigx, stigy)
 			self.logger.info(resultstring)
 
+		defoc0 = self.instrument.tem.Defocus
 		self.logger.info('Defocus correction...')
 		defoc = resultdata['defocus']
+		delta = defoc - defoc0
+		if abs(delta) < abs(self.settings['accuracy limit']):
+				self.good_enough = True
 		resultdata['defocus correction'] = correction_type
 		newdefoc = defoc - self.deltaz
 		self.correctDefocus(newdefoc, setting)
@@ -680,6 +684,8 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			alpha = stage['a']
 
 		deltaz = delta * numpy.cos(alpha)
+		if abs(deltaz) < abs(self.settings['accuracy limit']):
+				self.good_enough = True
 		newz = stage['z'] + deltaz
 		self.logger.info('Correcting stage Z by %s (defocus change %s at alpha %s)' % (deltaz,delta,alpha))
 		try:

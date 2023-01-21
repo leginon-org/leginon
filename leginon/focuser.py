@@ -166,8 +166,9 @@ class Focuser(singlefocuser.SingleFocuser):
 			self.instrument.tem.Focus = avg_focus
 			defocus1 = self.instrument.tem.Defocus
 			delta = defocus1 - defocus0
-			if abs(delta) < abs(self.settings['accuracy limit']):
-				self.good_enough = True
+			# individual may be good enough but not collectively.
+			if delta > abs(self.settings['accuracy limit']):
+				self.good_enough = False
 			self.logger.info('Corrected defocus to target average by %.3e' % (delta,))
 			self.resetDefocus()
 		elif setting['correction type'] == 'Stage Z' and len(self.corrected_stagez) > 0:
@@ -175,8 +176,9 @@ class Focuser(singlefocuser.SingleFocuser):
 			avg_stagez = sum(self.corrected_stagez) / len(self.corrected_stagez)
 			self.instrument.tem.StagePosition = {'z':avg_stagez}
 			delta = avg_stagez - stage0['z']
-			if abs(delta) < abs(self.settings['accuracy limit']):
-				self.good_enough = True
+			# individual may be good enough but not collectively.
+			if abs(delta) > abs(self.settings['accuracy limit']):
+				self.good_enough = False
 			self.logger.info('Corrected stage z to target average by %.3e' % (delta,))
 		self.reportDelayedTargetStatusToDone()
 
