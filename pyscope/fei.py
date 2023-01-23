@@ -130,6 +130,7 @@ class Tecnai(tem.TEM):
 		self.stage_speed_fraction = self.default_stage_speed_fraction
 		self.mainscreenscale = 44000.0 / 50000.0
 		self.wait_for_stage_ready = True
+		self.probe_changed = False
 		self.mag_changed = False
 		self.spotsize_changed = False
 		self.int_changed = False
@@ -561,6 +562,7 @@ class Tecnai(tem.TEM):
 				print 'minimum_intensity_movement', intensity_step
 				print 'target_intensity', intensity
 		if abs(prev_int-intensity) > intensity_step:
+			self.setAutoNormalizeEnabled(False)
 			self.int_changed = True
 			setattr(self.tecnai.Illumination, self.intensity_prop, intensity)
 		else:
@@ -571,7 +573,7 @@ class Tecnai(tem.TEM):
 				print 'mag_changed', self.mag_changed
 				print 'spotsize_changed', self.spotsize_changed
 				print 'int_changed', self.int_changed
-			if self.mag_changed or self.spotsize_changed or self.int_changed:
+			if self.probe_changed or self.mag_changed or self.spotsize_changed or self.int_changed:
 				if self.getDebugAll():
 					print 'normalize all'
 				self.normalizeLens('all')
@@ -580,10 +582,22 @@ class Tecnai(tem.TEM):
 		if self.int_changed and extra_sleep:
 			time.sleep(extra_sleep)
 		#reset changed flag
+		self.probe_changed = False
 		self.mag_changed = False
 		self.spotsize_changed = False
 		self.int_changed = False
+		self.setAutoNormalizeEnabled(True)
 
+	def setAutoNormalizeEnabled(self, value):
+		if self.normalize_all_after_setting:
+			self.tecnai.AutoNormalizeEnabled = bool(value)
+
+	def getAutoNormalizeEnabled(self, value):
+		try:
+			return self.tecnai.AutoNormalizeEnabled
+		except:
+			# does not have such call.
+			return False
 
 	def getDarkFieldMode(self):
 		if self.tecnai.Illumination.DFMode == self.tem_constants.dfOff:
@@ -611,8 +625,12 @@ class Tecnai(tem.TEM):
 		return probe
 
 	def setProbeMode(self, probe_str):
+		current_probe = self.getProbeMode()
 		const = self.probe_str_const[probe_str]
-		self.tecnai.Illumination.Mode = const
+		if current_probe != probe_str:
+			self.setAutoNormalizeEnable(False)
+			self.probe_changed = True
+			self.tecnai.Illumination.Mode = const
 
 	def getProbeModes(self):
 		return list(self.probe_str_const.keys())
@@ -1015,6 +1033,7 @@ class Tecnai(tem.TEM):
 			# This makes defocus accuracy better like a objective 
 			# normalization. This assumes that defocus will be set
 			# after this not before.
+			self.setAutoNormalizeEnabled(False)
 			self.tecnai.Projection.Focus = 0.0
 			self.setMagnificationIndex(index)
 			self.mag_changed = True
