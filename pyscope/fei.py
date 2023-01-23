@@ -592,7 +592,7 @@ class Tecnai(tem.TEM):
 		if self.normalize_all_after_setting:
 			self.tecnai.AutoNormalizeEnabled = bool(value)
 
-	def getAutoNormalizeEnabled(self, value):
+	def getAutoNormalizeEnabled(self):
 		try:
 			return self.tecnai.AutoNormalizeEnabled
 		except:
@@ -628,7 +628,7 @@ class Tecnai(tem.TEM):
 		current_probe = self.getProbeMode()
 		const = self.probe_str_const[probe_str]
 		if current_probe != probe_str:
-			self.setAutoNormalizeEnable(False)
+			self.setAutoNormalizeEnabled(False)
 			self.probe_changed = True
 			self.tecnai.Illumination.Mode = const
 
@@ -759,6 +759,7 @@ class Tecnai(tem.TEM):
 			raise ValueError
 		prev = self.getSpotSize()
 		if prev != ss:
+			self.setAutoNormalizeEnabled(False)
 			self.tecnai.Illumination.SpotsizeIndex = ss
 			self.spotsize_changed = True
 
