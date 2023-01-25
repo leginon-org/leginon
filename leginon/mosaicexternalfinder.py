@@ -10,6 +10,7 @@ from pyami import groupfun, convexhull
 from leginon import leginondata
 from leginon import mosaictargetfinder
 from leginon import targetfinder
+from leginon import distancefun
 import gui.wx.MosaicScoreTargetFinder
 
 def pointInPolygon(x,y,poly):
@@ -48,18 +49,6 @@ def pointsInBlobs(blobs, points):
 			if total == total_points:
 					break
 	return has_point
-
-def getDistanceArray(centers):
-	'''
-	using array math to get a square of distance matrix between all pairs of centers.
-	'''
-	s = len(centers)
-	#create repeating 2D array
-	x = numpy.repeat(centers[:,0],s).reshape((s,s))
-	y = numpy.repeat(centers[:,1],s).reshape((s,s))
-	# use transposed array to calculate square of distance.
-	a = (x-x.T)**2+(y-y.T)**2
-	return a
 
 class StatsBlob(object):
 	def __init__(self, info_dict, index):
@@ -389,7 +378,7 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 		means = map((lambda x: x['brightness']), blob_values )
 		max_distance = self.getMergingDistance(sizes, means)
 		# distance
-		d_array = getDistanceArray(centers)
+		d_array = distancefun.getDistanceArray(centers)
 		max_d2 = max_distance*max_distance
 		too_close = numpy.where(d_array < max_d2, 1,0).nonzero()
 		# exclude the symmetrical distance and distance to self.

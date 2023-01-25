@@ -2,8 +2,28 @@
 from leginon import acquisition, singlefocuser, manualfocuschecker
 import gui.wx.Focuser
 from leginon import leginondata
-from leginon import node, targetwatcher
+from leginon import node, targetwatcher, distancefun
 import math
+import numpy
+
+class FocusResult(object):
+	def __init__(self, focus_result_data, mosaic_image_target_list):
+		self.grid_mosaic_id = mosaic_image_target_list.dbid #ImageTargetListData
+		self.grid_label = mosaic_image_target_list['label']
+		self.id = focus_result_data.dbid
+		self.position = focus_result_data['scope']['stage position']
+		self.preset_defocus = focus_result_data['preset']['defocus']
+		self.correction_method = focus_result_data['defocus correction']
+		if self.correction_method == 'Defocus':
+			self.correction = self.preset_defocus + focus_result_data['defocus']
+			self.focus = focus_result_data['scope']['focus']  #This where defocus is reset to.
+		elif self.correction_method == 'Stage Z':
+			self.correction = focus_result_data['defocus']
+			self.focus = focus_result_data['scope']['stage position']['z']
+		else:
+			# manual focus nothing to do
+			self.correction = 0.0
+			self.focus = focus_result_data['scope']['focus']  #This where defocus is reset to.
 
 class Focuser(singlefocuser.SingleFocuser):
 	panelclass = gui.wx.Focuser.Panel
@@ -48,11 +68,76 @@ class Focuser(singlefocuser.SingleFocuser):
 		try:
 			ret = self.processGoodTargets([proctargetdata,])
 		except Exception, e:
+			raise
 			self.logger.error('processing simulated target failed: %s' %e)
 			ret = 'aborted'
 		self.reportTargetStatus(proctargetdata, 'done')
 		self.logger.info('Done with simulated target, status: %s (repeat will not be honored)' % (ret,))
 		self.setStatus('idle')
+
+	def researchFocusResultsOnGrid(self, targetdata):
+		def get_grid_atlas(r):
+			if r['list'] and r['list']['mosaic']:
+				return r['list']
+			if r['image']:
+				if r['image']['target']:
+					return get_grid_atlas(r['image']['target'])
+			else:
+				# simulated
+				return
+		this_grid_list = get_grid_atlas(targetdata)
+		print 'this', this_grid_list
+		if not this_grid_list:
+			return []
+		ok_results = leginondata.FocuserResultData(session=self.session, status='ok').query()
+		# make a list of all valid result instance that is the last focus step performed.
+		foc_results = []
+		target_ids_with_result = []
+		for r in ok_results:
+			target = r['target']
+			grid_target_list = get_grid_atlas(target)
+			if grid_target_list and grid_target_list.dbid == this_grid_list.dbid and target.dbid not in target_ids_with_result:
+				foc_results.append(FocusResult(r, grid_target_list))
+				target_ids_with_result.append(target.dbid)
+		self.grid_target_list = this_grid_list
+		return foc_results
+
+	def setCorrectedFocus(self, foc_results):
+		correction_method = 'Defocus'
+		valid_results = list(filter((lambda x: x.correction_method==correction_method), foc_results))
+		self.corrected_focus = list(map((lambda x: x.focus), valid_results))
+		print('corrected_focus', self.corrected_focus)
+
+	def setCorrectedStageZ(self, foc_results):
+		correction_method = 'Stage Z'
+		valid_results = list(filter((lambda x: x.correction_method==correction_method), foc_results))
+		self.corrected_stagez = list(map((lambda x: x.focus), valid_results))
+		print('corrected_stagez', self.corrected_stagez)
+
+	def processFocusResultsInRange(self, targetdata):
+		scopedata=targetdata['scope']
+		# TODO: can add only the last focus result to self.foc_results if is on the same grid atlas
+		rlist = self.researchFocusResultsOnGrid(targetdata)
+		if not rlist:
+			return 'continue'
+		d = 1e-5
+		centers = numpy.array(list(map((lambda x: (x.position['x'],x.position['y'])), rlist)))
+		self.foc_results = rlist
+		center = numpy.array(((scopedata['stage position']['x'], scopedata['stage position']['y'])))
+		in_range_indices = distancefun.withinDistance(center, centers, d)
+		in_range_rlist = numpy.array(rlist)[in_range_indices].tolist()
+		if not in_range_indices:
+			return 'continue'
+		for j, setting in enumerate(self.focus_sequence):
+			self.setCorrectedFocus(in_range_rlist)
+			self.setCorrectedStageZ(in_range_rlist)
+			self.applyAverageCorrection(setting)
+		if self.settings['acquire final']:
+			presetdata = self.useFirstPresetOrderPreset()
+			# TODO: need self.last_emtarget
+			self.acquireFinal(presetdata, self.last_emtarget)
+		return 'bypass'
+		# end of focus sequence loop
 
 	def processGoodTargets(self, goodtargets):
 		"""
@@ -61,6 +146,14 @@ class Focuser(singlefocuser.SingleFocuser):
 		The correction result are kept and at the end of target loop
 		an average of the correction is applied.
 		"""
+		if goodtargets:
+			# scopedata is always recorded with targets, including simulated ones
+			first_targetdata = goodtargets[0]
+			status = self.processFocusResultsInRange(first_targetdata)
+			if status == 'bypass':
+				return
+		else:
+			return
 		if self.getIsResetTiltInList() and goodtargets:
 			# ? Do we need to reset on every target ?
 			self.logger.info('Tilting to %.2f degrees on first good target.' % (self.targetlist_reset_tilt*180.0/math.pi))
