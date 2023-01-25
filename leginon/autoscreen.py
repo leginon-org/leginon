@@ -111,11 +111,29 @@ class SessionCreator(object):
 			raise ValueError('old session or comment not valid')
 		self.session = self.makeNewSessionFromOld(old_session, comment)
 		self.project = self.linkSessionProject(self.project_id)
-		self.setDataFromOld('C2ApertureSizeData',old_session)
-		self.clients = self.setDataFromOld('ConnectToClientsData',old_session)['clients']
-		self.launched_app = self.setDataFromOld('LaunchedApplicationData',old_session)
-		self.copyPresets(old_session)
 
+		self.aperture = self.setDataFromOld('C2ApertureSizeData',old_session)
+		try:
+			self.clients = self.setDataFromOld('ConnectToClientsData',old_session)['clients']
+		except TypeError as e:
+			raise ValueError('Bad old session %s missing ConnectToClientsData' % old_session['name'])
+		self.launched_app = self.setDataFromOld('LaunchedApplicationData',old_session)
+		if not self.launched_app:
+			raise ValueError('Bad old session %s has no launched application' % old_session['name'])
+		tem = self.copyPresets(old_session)
+		if self.aperture == None:
+			# refs #14195 In odd cases there are sessions not having C2ApertureSize recorded.
+			print('WARNING: no C2 aperture size recorded in the old session')
+			# Using most recent C2ApertureSize
+			r = leginondata.C2ApertureSizeData(tem=tem).query(results=1)
+			if r:
+				q=leginondata.C2ApertureSizeData(initializer=r[0])
+				q['session']=old_session
+				q.insert()
+				print('WARNING: Use most recent C2ApertureSizeData %d um on tem %s-%s' % (q['size'],tem['hostname'],tem['name']))
+				self.aperture = self.setDataFromOld('C2ApertureSizeData',old_session)
+			else:
+				raise ValueError('no C2 aperture size ever recorded on %s-%s' % (tem['hostname'],tem['name']))
 	def getUser(self):
 		user_fullname = leginon.leginonconfig.USERNAME
 		search_name = user_fullname.strip().lower()
@@ -169,7 +187,7 @@ class SessionCreator(object):
 			q = getattr(leginondata,class_name)(initializer=r[0])
 			q['session'] = self.session
 			q.insert()
-		return q
+			return q
 
 	def copyPresets(self, old_session):
 		# Node allows session information to pass through
@@ -182,6 +200,10 @@ class SessionCreator(object):
 			q = leginondata.PresetData(initializer=preset_dict[pname])
 			q['session'] = self.session
 			q.insert()
+			# set tem
+			if 'Diffr' not in q['tem']['name']:
+				tem=q['tem']
+		return tem
 
 	def saveGridSessionMap(self, order, slot_number, stagez):
 		q = leginondata.AutoSessionData()
