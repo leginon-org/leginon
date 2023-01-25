@@ -86,6 +86,12 @@ def getGITHash(module_path=''):
 	return gitlib.getMostRecentCommitID()
 
 def getVersion(module_path=''):
+	sourcedir = os.path.realpath(os.path.dirname(__file__))
+	parent = os.path.dirname(sourcedir)
+	version = os.path.join(parent, "etc", "git-version.txt")
+	if os.path.exists(version):
+		with open(version) as f:
+			return f.read().strip()
 	# myami svn frozen before revision 20000
 	return gitlib.getCurrentCommitCount()
 

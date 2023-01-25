@@ -41,7 +41,10 @@ class EditListBox(leginon.gui.wx.ListBox.EditListBox):
 			string = self.textentry.GetValue()
 		except ValueError:
 			return
-		
+		# no string, do not insert. #14149. Do it this way because we can not
+		# prevent this function to be called.
+		if not string:
+			return
 		n = self.listbox.FindString(string)
 		if n != wx.NOT_FOUND:
 			return

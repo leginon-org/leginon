@@ -32,6 +32,9 @@ define('BASE_PATH',"myamiweb");
 define('BASE_URL', "/".BASE_PATH."/");
 define('PROJECT_URL', BASE_URL."project/");
 
+// --- define label for auto screen sessions
+define('AUTO_SESSION_LABEL',"auto-screen");
+
 // --- myamiweb login --- //
 // Browse to the administration tools in myamiweb prior to 
 // changing this to true to populate DB tables correctly.

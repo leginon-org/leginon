@@ -67,6 +67,9 @@ if (!$filenames) {
 // --- Get data type list
 $datatypes = $leginondata->getAllDatatypes($sessionId);
 
+// --- Get is_auto
+$is_auto = $leginondata->getIsAutoSession($sessionId);
+
 $viewer = new viewer();
 if($projectdb && !empty($sessions)) {
 	foreach($sessions as $k=>$s) {
@@ -93,6 +96,7 @@ $viewer->setImageId($imageId);
 $viewer->addSessionSelector($sessions, $limit);
 $viewer->setScopeId($scopeId);
 $viewer->addScopeSelector($scopes);
+$viewer->addAutoSessionLabel($is_auto);
 $viewer->addFileSelector($filenames);
 $viewer->setNbViewPerRow('2');
 $viewer->addjs($jsdata);

@@ -73,3 +73,4 @@ for package in ${packages[@]}; do
 		else echo " *************FAILED!!! (see log for details)";
 	fi
 done
+cd $myamidir
