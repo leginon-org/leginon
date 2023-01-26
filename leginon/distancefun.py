@@ -23,7 +23,9 @@ def withinDistance(center, centers, d):
 	x = numpy.repeat(center,s).reshape((2,s)).T
 	dist_sq = numpy.sum((x-centers)*(x-centers), axis=1)
 	indices_in_range = numpy.less_equal(dist_sq, d*d).nonzero()
-	return indices_in_range
+	#indices_in_range is a one item tuple of 1D-array of integer.
+	# count of indices_in_range is indices_in_range[0].shape[0]
+	return indices_in_range[0]
 
 if __name__=='__main__':
 	centers = numpy.array(range(16), dtype=numpy.float).reshape((8,2))
@@ -31,4 +33,4 @@ if __name__=='__main__':
 	center = numpy.array((5,5))
 	distance = 1.0
 	r = withinDistance(center, centers, distance)
-	print(r)
+	print(r.shape)

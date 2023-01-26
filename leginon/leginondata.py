@@ -1227,6 +1227,7 @@ class FocuserResultData(InSessionData):
 			('status', str),
 			('drift', DriftData),
 			('scope', ScopeEMData),
+			('node name', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -2241,6 +2242,7 @@ class SingleFocuserSettingsData(AcquisitionSettingsData):
 			('beam tilt settle time', float),
 			('on phase plate', bool),
 			('accuracy limit', float),
+			('bypass distance', float),
 		)
 	typemap = classmethod(typemap)
 

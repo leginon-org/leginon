@@ -34,6 +34,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		'beam tilt settle time': 0.25,
 		'on phase plate': False,
 		'accuracy limit': 3e-7,
+		'bypass distance': 5e-6,
 	})
 
 	eventinputs = manualfocuschecker.ManualFocusChecker.eventinputs

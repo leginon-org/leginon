@@ -181,6 +181,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		self.presetnames = self.node.presetsclient.getPresetNames()
 
 		newrow,newcol = self.createAutoFocusAccuracyEntry((0,0))
+		newrow,newcol = self.createBypassDistanceEntry((newrow,0))
 		newrow,newcol = self.createManualFocusPresetSelector((newrow,0))
 		newrow,newcol = self.createMeltPresetSelector((newrow,0))
 		newrow,newcol = self.createMeltTimeEntry((newrow,0))
@@ -217,7 +218,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		return start_position[0]+total_length[0],start_position[1]+total_length[1]
 
 	def createAutoFocusAccuracyEntry(self,start_position):
-		self.widgets['accuracy limit'] = FloatEntry(self, -1, min=1e-8, allownone=False, chars=5, value='1e-6')
+		self.widgets['accuracy limit'] = FloatEntry(self, -1, min=1e-8, allownone=False, chars=6, value='3e-7')
 		afc_sizer = wx.GridBagSizer(5, 5)
 		afc_sizer.Add(self.widgets['accuracy limit'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
@@ -228,6 +229,19 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		total_length = (1,2)
 		self.szmain.Add(label, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.szmain.Add(afc_sizer, (start_position[0],start_position[1]+1), (1, 1), wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
+
+	def createBypassDistanceEntry(self,start_position):
+		self.widgets['bypass distance'] = FloatEntry(self, -1, min=1e-8, allownone=False, chars=6, value='5e-6')
+		my_sizer = wx.GridBagSizer(5, 5)
+		my_sizer.Add(self.widgets['bypass distance'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		my_sizer.Add(wx.StaticText(self, -1, 'm'), (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Bypass focusing radius:')
+		total_length = (1,2)
+		self.szmain.Add(label, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szmain.Add(my_sizer, (start_position[0],start_position[1]+1), (1, 1), wx.ALIGN_CENTER)
 		return start_position[0]+total_length[0],start_position[1]+total_length[1]
 
 	def createManualFocusPresetSelector(self,start_position):

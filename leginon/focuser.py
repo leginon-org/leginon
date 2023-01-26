@@ -13,11 +13,11 @@ class FocusResult(object):
 		self.id = focus_result_data.dbid
 		self.position = focus_result_data['scope']['stage position']
 		self.preset_defocus = focus_result_data['preset']['defocus']
-		self.correction_method = focus_result_data['defocus correction']
-		if self.correction_method == 'Defocus':
+		self.correction_type = focus_result_data['defocus correction']
+		if self.correction_type == 'Defocus':
 			self.correction = self.preset_defocus + focus_result_data['defocus']
 			self.focus = focus_result_data['scope']['focus']  #This where defocus is reset to.
-		elif self.correction_method == 'Stage Z':
+		elif self.correction_type == 'Stage Z':
 			self.correction = focus_result_data['defocus']
 			self.focus = focus_result_data['scope']['stage position']['z']
 		else:
@@ -76,6 +76,11 @@ class Focuser(singlefocuser.SingleFocuser):
 		self.setStatus('idle')
 
 	def researchFocusResultsOnGrid(self, targetdata):
+		'''
+		Gather successful autofocus results from the same node name and same grid atlas.
+		Excluding those from the input targetdata. Results from simulated target focus
+		are ignored.
+		'''
 		def get_grid_atlas(r):
 			if r['list'] and r['list']['mosaic']:
 				return r['list']
@@ -86,56 +91,96 @@ class Focuser(singlefocuser.SingleFocuser):
 				# simulated
 				return
 		this_grid_list = get_grid_atlas(targetdata)
-		print 'this', this_grid_list
 		if not this_grid_list:
 			return []
-		ok_results = leginondata.FocuserResultData(session=self.session, status='ok').query()
+		#TODO ok FocuserResultData does not include those set to eucentric focus when failing
+		# fit limit.  Is this going to be a problem ?
+		q = leginondata.FocuserResultData(session=self.session, status='ok')
+		q['node name']=self.name
+		ok_results = q.query()
 		# make a list of all valid result instance that is the last focus step performed.
 		foc_results = []
-		target_ids_with_result = []
+		target_ids_with_result = [targetdata.dbid,] # avoid earlier results from the same target
 		for r in ok_results:
 			target = r['target']
 			grid_target_list = get_grid_atlas(target)
+			# each target only keep the most recent result.
 			if grid_target_list and grid_target_list.dbid == this_grid_list.dbid and target.dbid not in target_ids_with_result:
 				foc_results.append(FocusResult(r, grid_target_list))
 				target_ids_with_result.append(target.dbid)
 		self.grid_target_list = this_grid_list
 		return foc_results
 
-	def setCorrectedFocus(self, foc_results):
-		correction_method = 'Defocus'
-		valid_results = list(filter((lambda x: x.correction_method==correction_method), foc_results))
+	def _setCorrectedFocus(self, foc_results):
+		correction_type = 'Defocus'
+		valid_results = list(filter((lambda x: x.correction_type==correction_type), foc_results))
 		self.corrected_focus = list(map((lambda x: x.focus), valid_results))
-		print('corrected_focus', self.corrected_focus)
 
-	def setCorrectedStageZ(self, foc_results):
-		correction_method = 'Stage Z'
-		valid_results = list(filter((lambda x: x.correction_method==correction_method), foc_results))
+	def _setCorrectedStageZ(self, foc_results):
+		correction_type = 'Stage Z'
+		valid_results = list(filter((lambda x: x.correction_type==correction_type), foc_results))
 		self.corrected_stagez = list(map((lambda x: x.focus), valid_results))
-		print('corrected_stagez', self.corrected_stagez)
+
+	def _getCorrectedAttr(self, correction_type):
+		if correction_type == 'Stage Z':
+			return self.corrected_stagez
+		elif correction_type == 'Defocus':
+			return self.corrected_focus
+		else:
+			# not corrected
+			return []
 
 	def processFocusResultsInRange(self, targetdata):
+		'''
+		Apply correction according to focus results saved previously within a user
+		defined radius.  This will do both stagez and defocus if both are in the steps.
+		The FocuserResultData of these inferred corrections are not saved.
+		'''
 		scopedata=targetdata['scope']
 		# TODO: can add only the last focus result to self.foc_results if is on the same grid atlas
 		rlist = self.researchFocusResultsOnGrid(targetdata)
 		if not rlist:
 			return 'continue'
-		d = 1e-5
+		# make a list of FocusResult objects that are within bypass distance of targetdata
+		# scope state.
+		d = self.settings['bypass distance']
 		centers = numpy.array(list(map((lambda x: (x.position['x'],x.position['y'])), rlist)))
 		self.foc_results = rlist
 		center = numpy.array(((scopedata['stage position']['x'], scopedata['stage position']['y'])))
 		in_range_indices = distancefun.withinDistance(center, centers, d)
-		in_range_rlist = numpy.array(rlist)[in_range_indices].tolist()
-		if not in_range_indices:
+		if not in_range_indices.shape[0]:
 			return 'continue'
+		in_range_rlist = numpy.array(rlist)[in_range_indices].tolist()
+		# set these corrected values as corrected_focus and corrected_stagez for later average.
+		self._setCorrectedFocus(in_range_rlist)
+		self._setCorrectedStageZ(in_range_rlist)
+		#
+		used_correction_types = []
 		for j, setting in enumerate(self.focus_sequence):
-			self.setCorrectedFocus(in_range_rlist)
-			self.setCorrectedStageZ(in_range_rlist)
+			# only work on the steps that are switched on
+			if not setting['switch']:
+				continue
+			# if focus_steps use the same correction type, only do once.
+			if setting['correction type'] in used_correction_types:
+				continue
+			used_correction_types.append(setting['correction type'])
+			# empty correction should not go to the next part which changes preset.
+			correction_count = len(self._getCorrectedAttr(setting['correction type']))
+			if correction_count == 0:
+				continue
+			self.logger.info('Applying correction as in focus step %s from average of %d measurements' % (setting['name'], correction_count))
+			presetname = setting['preset name']
+			# use None as emtarget to send to scope
+			self.presetsclient.toScope(presetname, None)
 			self.applyAverageCorrection(setting)
+		# acquire final to confirm success if needed.
 		if self.settings['acquire final']:
+			# this z will be after correction
+			z = self.instrument.tem.StagePosition['z']
+			# calculate emtarget for acquiring final 
+			emtarget = self.targetToEMTargetData(targetdata, z)
 			presetdata = self.useFirstPresetOrderPreset()
-			# TODO: need self.last_emtarget
-			self.acquireFinal(presetdata, self.last_emtarget)
+			self.acquireFinal(presetdata, emtarget)
 		return 'bypass'
 		# end of focus sequence loop
 
@@ -252,7 +297,6 @@ class Focuser(singlefocuser.SingleFocuser):
 		if not setting['switch']:
 			return
 		# average the results for current
-		#print self.corrected_focus
 		if setting['correction type'] == 'Defocus' and len(self.corrected_focus) > 0:
 			defocus0 = self.instrument.tem.Defocus
 			avg_focus = sum(self.corrected_focus) / len(self.corrected_focus)
@@ -269,7 +313,6 @@ class Focuser(singlefocuser.SingleFocuser):
 			avg_stagez = sum(self.corrected_stagez) / len(self.corrected_stagez)
 			self.instrument.tem.StagePosition = {'z':avg_stagez}
 			delta = avg_stagez - stage0['z']
-			# individual may be good enough but not collectively.
 			if abs(delta) > abs(self.settings['accuracy limit']):
 				self.good_enough = False
 			self.logger.info('Corrected stage z to target average by %.3e' % (delta,))
@@ -362,6 +405,7 @@ class Focuser(singlefocuser.SingleFocuser):
 		resultdata['target'] = emtarget['target']
 		resultdata['preset'] = emtarget['preset']
 		resultdata['method'] = setting['focus method']
+		resultdata['node name'] = self.name
 		status = 'unknown'
 		# measuremrnt
 		try:
