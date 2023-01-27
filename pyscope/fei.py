@@ -578,7 +578,7 @@ class Tecnai(tem.TEM):
 	def setAutoNormalizeEnabled(self, value):
 		if self.normalize_all_after_setting:
 			self.tecnai.AutoNormalizeEnabled = bool(value)
-			self.need_normalize_all = True
+			self.need_normalize_all = not bool(value)
 		else:
 			self.need_normalize_all = False
 
