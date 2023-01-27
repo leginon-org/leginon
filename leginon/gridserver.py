@@ -205,7 +205,7 @@ class GridHookServer(object):
 		pk = results[0]['id']
 		return pk
 
-	def setSession(self, session_id=None, is_auto=True):
+	def setSession(self, session_id=None):
 		'''
 		insert or update LeginonSession model primary key on grid management system
 		rest api.  It raises error if having trouble.
@@ -217,6 +217,7 @@ class GridHookServer(object):
 		data = {
 				field_name:self.sessiondata['name'],
 		}
+		patch_dict = {}
 		# gridhook will record is_auto_session if
 		# config file is configured for this, and configured
 		# to match the REST api field name in the grid
@@ -224,10 +225,12 @@ class GridHookServer(object):
 		if 'is_auto_field' in this_api.keys():
 			field_is_auto = this_api['is_auto_field']
 			data[field_is_auto] = self.is_auto_session
-		patch_dict = {}
+			patch_dict[field_is_auto] = self.is_auto_session
+		# add leginondata SessionData id
+		field_name = this_api['id_field']
+		if hasattr(self.sessiondata,'dbid'):
+			data[field_name] = self.sessiondata.dbid
 		if session_id:
-			# add leginondata SessionData id
-			field_name = this_api['id_field']
 			patch_dict[field_name] = session_id
 		# a grouping model that organizes the session.  It should
 		# be a ForeignKey field in the LeginonSession model.
@@ -336,8 +339,8 @@ if __name__=='__main__':
 	sessionname = raw_input('session name to test=')
 	s = leginondata.SessionData(name=sessionname).query(results=1)[0]
 	pe=projectdata.projectexperiments(session=s).query(results=1)[0]
-	app = GridHookServer(s,pe['project'])
+	app = GridHookServer(s,pe['project'],True)
 	if app.gridhook_server_active:
 		session_pk = app.setSession()
 		gridsession_pk = app.setGridSession(s['comment'])
-		print gridsession_pk
+		print(gridsession_pk)
