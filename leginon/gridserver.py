@@ -224,13 +224,14 @@ class GridHookServer(object):
 		# management system.
 		if 'is_auto_field' in this_api.keys():
 			field_is_auto = this_api['is_auto_field']
-			data[field_is_auto] = self.is_auto_session
+			#patchable
 			patch_dict[field_is_auto] = self.is_auto_session
 		# add leginondata SessionData id
 		field_name = this_api['id_field']
 		if hasattr(self.sessiondata,'dbid'):
-			data[field_name] = self.sessiondata.dbid
+			session_id = self.sessiondata.dbid
 		if session_id:
+			#patchable
 			patch_dict[field_name] = session_id
 		# a grouping model that organizes the session.  It should
 		# be a ForeignKey field in the LeginonSession model.
@@ -242,6 +243,7 @@ class GridHookServer(object):
 			patch_dict[field_name] = group_model_pk
 		result = self.getSession()
 		if not result:
+			# both creat only and patchable
 			data.update(patch_dict)
 			p_result = self.post(router_name, data)
 			if p_result is False:
