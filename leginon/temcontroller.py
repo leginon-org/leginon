@@ -46,7 +46,7 @@ class TEMController(node.Node):
 		self.loaded_grid_slot = None
 		self.grid_slot_numbers = []
 		self.grid_slot_names = []
-		if not remoteserver.NO_REQUESTS and session is not None:
+		if not remoteserver.NO_REMOTE and session is not None:
 			self.remote_toolbar = remoteserver.RemoteToolbar(self.logger, session, self, self.remote.leginon_base)
 		else:
 			self.remote_toolbar = None

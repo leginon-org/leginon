@@ -143,8 +143,16 @@ class viewer {
 			}
 			$selector .= '</select>';
 			$selector .= '<input type="hidden" name="scopeIdmemo" value="'.$this->scopeId.'">';
+		} else {
+			// space holder
+			$selector = '<br>';
 		}
 		$this->addscopesel = $selector;
+	}
+
+	function addAutoSessionLabel($is_auto) {
+		$display = ($is_auto) ? AUTO_SESSION_LABEL: '';
+		$this->addautolabel = $display;
 	}
 
 	function addLoiControl($refreshtime="") {
@@ -497,12 +505,23 @@ class viewer {
 				$display .= '</td>';
 			}
 			$display .= '<td colspan=2>';
-			$display .= $this->addsessionsel;
+				$display .= $this->addsessionsel;
 				$display .= "<br>";
-				if ($this->addscopesel) {
-					$display .= $this->addscopesel;
-					$display .= "<br>";
-				}
+				$display .= '<table border="0" width=100%>';
+					$display .= '<tr valign="top">';
+					$display .= '<td>';
+					if ($this->addscopesel) {
+						$display .= $this->addscopesel;
+					}
+					$display .= '</td>';
+					$display .= '<td align="right">';
+					if ($this->addautolabel) {
+						$display .= $this->addautolabel;
+					}
+					$display .= '</tr>';
+				$display .= '</table>';
+				$display .= '</td>';
+				$display .= "<br>";
 			$display .= '</td>';
 			$display .= '</tr>';
 		}

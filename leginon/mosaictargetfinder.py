@@ -1357,7 +1357,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			std = blob.stats['stddev']
 			size = blob.stats['n']
 			try:
-				on_edge = self.finder_edge_mosaicimage[row,col]
+				on_edge = self.finder_edge_mosaicimage[row,column]
 			except Exception as e:
 				self.logger.debug('edge filtering error: %s' % e)
 				on_edge = True
