@@ -1223,7 +1223,7 @@ class Manager(node.Node):
 
 	def getFirstPresetName(self):
 		try:
-			r = leginondata.PresetData(session=sessiondata, number=0).query(results=1)
+			r = leginondata.PresetData(session=self.session, number=0).query(results=1)
 			return r[0]['name']
 		except:
 			return 'gr'
