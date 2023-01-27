@@ -86,7 +86,7 @@ else
 		echo "processing "$package >> $logfile
 		echo "########################" >> $logfile
 		cd $myamidir/$package
-		if [[ $package=='appion' ]]; then
+		if [[ $package == 'appion' ]]; then
 			cmd="python setup.py $general_options $install_scripts_option"
 		else
 			cmd="python setup.py $general_options"
