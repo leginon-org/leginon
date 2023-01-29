@@ -557,9 +557,11 @@ class Tecnai(tem.TEM):
 				print 'prev_int', prev_int
 				print 'minimum_intensity_movement', intensity_step
 				print 'target_intensity', intensity
-		if abs(prev_int-intensity) > intensity_step:
-			self.setAutoNormalizeEnabled(False)
-			setattr(self.tecnai.Illumination, self.intensity_prop, intensity)
+		# Try don't include intensity change for normalize_all
+		# since it is not done in TUI
+		#if abs(prev_int-intensity) > intensity_step:
+		#	self.setAutoNormalizeEnabled(False)
+		setattr(self.tecnai.Illumination, self.intensity_prop, intensity)
 		# Normalizations
 		if self.normalize_all_after_setting:
 			if self.getDebugAll():
