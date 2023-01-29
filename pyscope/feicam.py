@@ -65,6 +65,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.unsupported = []
 		ccdcamera.CCDCamera.__init__(self)
 		self.save_frames = False
+		self.batch = False
 		self._connectToFEIAdvScripting()
 		# set binning first so we can use it
 		self.setCameraBinnings()
@@ -311,8 +312,13 @@ class FeiCam(ccdcamera.CCDCamera):
 		t0 = time.time()
 		# BUG: IsActive only detect correctly with frame saving, not
 		# camera availability
-		while self.csa.IsActive:
-			time.sleep(0.1)
+		if self.save_frames:
+			self.batch = True
+		else:
+			self.batch = False
+		if not self.batch:
+			while self.csa.IsActive:
+				time.sleep(0.1)
 		if self.readoutcallback:
 			name = str(time.time())
 			self.registerCallback(name, self.readoutcallback)
@@ -322,7 +328,8 @@ class FeiCam(ccdcamera.CCDCamera):
 				result=self._getFakeDark()
 			elif self.getExposureType() != 'norm':
 				result=self._getImage()
-				self.csa.Wait()
+				if not self.batch:
+					self.csa.Wait()
 			else:
 				result= self._getSavedNorm()
 			return result
@@ -411,7 +418,8 @@ class FeiCam(ccdcamera.CCDCamera):
 		t0 = time.time()
 
 		#Queue has no wait at start.
-		#self.csa.Wait()
+		if not self.batch:
+			self.csa.Wait()
 		if self.getDebugCamera():
 			print 'done waiting before acquire'
 		retry = False
@@ -445,6 +453,12 @@ class FeiCam(ccdcamera.CCDCamera):
 			else:
 				raise RuntimeError('Error camera acquiring: %s' % (e,))
 		# TODO: what happens to array if queuing ?
+		if self.batch and self.save8x8 and ((hasattr(self, 'save_frames') and self.save_frames) or (hasattr(self, 'align_frames') and self.algn_frames)):
+			# This is 0.20 s faster than get array and then make fake for 1 s exposure.
+			fake_std = 50
+			fake_mean = 4000
+			arr = self.base_fake_image*fake_std + fake_mean*numpy.ones((8,8))
+			return arr
 		try:
 			arr = self._getSafeArray()
 		except Exception, e:
@@ -455,7 +469,8 @@ class FeiCam(ccdcamera.CCDCamera):
 			if self.getDebugCamera():
 				print 'No array in memory, yet. Try again.'
 			# TODO: maybe only do this when queue ends.
-			self.csa.Wait()
+			if not self.batch:
+				self.csa.Wait()
 			try:
 				arr = self._getSafeArray()
 			except Exception, e:
