@@ -154,6 +154,11 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['sampling targets'] = wx.CheckBox(self, -1,
 			'Use subset of the acquisition targets')
 		self.widgets['max sampling'] = IntEntry(self, -1, chars=6)
+		self.widgets['randomize acquisition'] = wx.CheckBox(self, -1,
+			'Add random amount to  acquisition')
+		self.widgets['random y offset'] = IntEntry(self, -1, chars=6)
+		self.widgets['randomize chunky'] = wx.CheckBox(self, -1,
+			'Limit offsets to  0,max offset/2, or max offset')
 
 		szice = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Min. mean:')
@@ -178,6 +183,14 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		szice.Add(self.createFocusOffsetSizer(), (5,0), (1,2),
 										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+
+		szice.Add(self.widgets['randomize acquisition'], (6, 0), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szice.Add(self.widgets['randomize chunky'], (6, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szice.Add(self.widgets['random y offset'], (6, 2), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+
 		szice.AddGrowableCol(1)
 
 		sbszice.Add(szice, 1, wx.EXPAND|wx.ALL, 5)

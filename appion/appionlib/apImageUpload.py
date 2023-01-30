@@ -433,7 +433,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 			else:
 				darkarray = numpy.zeros(rawarray.shape)
 			apDisplay.printMsg('Normalizing image before upload')
-			return self.c_client.normalizeImageArray(rawarray, darkarray, normarray, is_counting=False)
+			return self.c_client.normalizeImageArray(rawarray, darkarray, normarray)
 		else:
 			# no norm/dark to correct
 			return rawarray

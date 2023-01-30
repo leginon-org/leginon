@@ -660,6 +660,16 @@ class leginondata {
 		return array_merge($defaulttypes, $types);
 	}
 
+	function getIsAutoSession($sessionId) {
+		$has_AutoSessionData = $this->mysql->isTable('AutoSessionData');
+		if (!$has_AutoSessionData) return false;
+		$q="select * from AutoSessionData "
+			."where `REF|SessionData|session` = '$sessionId' ";
+		$r = $this->mysql->getSQLResult($q);
+		$is_auto = (is_array($r) && count($r) > 0) ? true:false;
+		return $is_auto;
+	}
+
 	function hasManualImages($sessionId) {
 		$q="select * from AcquisitionImageData "
 			."where `REF|SessionData|session` = '$sessionId' "

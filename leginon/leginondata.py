@@ -1318,6 +1318,9 @@ class IceTargetFinderPrefsData(InSessionData):
 			('filter-ice-on-convolved-on', bool),
 			('sampling targets', bool),
 			('max sampling', int),
+			('randomize acquisition',bool),
+			('random y offset',int),
+			('randomize chunky',bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1767,6 +1770,9 @@ class IceTargetFinderSettingsData(TargetFinderSettingsData):
 			('filter ice on convolved', bool),
 			('sampling targets', bool),
 			('max sampling', int),
+			('randomize acquisition',bool),
+			('random y offset',int),
+			('randomize chunky',bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -2255,6 +2261,7 @@ class SingleFocuserSettingsData(AcquisitionSettingsData):
 			('manual focus preset', str),
 			('beam tilt settle time', float),
 			('on phase plate', bool),
+			('accuracy limit', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -3239,6 +3246,7 @@ class ZeroLossIceThicknessSettingsData(SettingsData):
 			('process_obj_thickness', bool),
 			('obj mean free path', float),
 			('vacuum intensity', float),
+			('use_best_quart_stats', bool),
 		)
 	typemap = classmethod(typemap)
 

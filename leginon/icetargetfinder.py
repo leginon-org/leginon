@@ -21,6 +21,7 @@ import numpy
 import gui.wx.IceTargetFinder
 import version
 import itertools
+import random
 
 invsqrt2 = math.sqrt(2.0)/2.0
 
@@ -53,6 +54,9 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		'filter ice on convolved': False,
 		'sampling targets': False,
 		'max sampling': 100,
+		'randomize acquisition': False,
+		'random y offset': 50,	
+		'randomize chunky': False,
 	})
 	targetnames = targetfinder.TargetFinder.targetnames + ['Hole']
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -180,6 +184,8 @@ class IceTargetFinder(targetfinder.TargetFinder):
 			return
 		# self.hf['holes'] has holestats such as hole_mean but not i0-related values
 		orig_holes = self.hf['holes']
+		if self.settings['randomize acquisition']:
+			self.randomizeIce(input_name='holes')
 		self.filterIce(input_name='holes')
 		self.focus_hole = None
 		focus_points = self.filterIceForFocus()
@@ -202,6 +208,28 @@ class IceTargetFinder(targetfinder.TargetFinder):
 			self.storeHoleStatsData(hfprefs,'holes')
 			# this saves stats of the points after convolution
 			self.storeHoleStatsData(hfprefs,'holes2')
+
+	def randomizeIce(self, input_name='holes'):
+		''' to add a random value to the y coordinate of the found point. Will randomly go up or down to make it appear better
+			2 options: 	continous distribution of offsets between 0 and full offset
+				or
+					random choice of no offset, 1/2 offset, or full offset
+			Note: this changes the original value, so it keeps adding offsets if the same set is tested multiple times in the gui
+			wjr 12-1-22
+		'''
+		direction = (-1,1)
+		if self.settings['randomize chunky']:
+			addtupple=(0, self.settings['random y offset']/2, self.settings['random y offset'])
+			for hole in  self.hf[input_name]:
+				new_y = hole.stats['center'][0] + random.choice(addtupple) * random.choice(direction)
+				new_x = hole.stats['center'][1]
+				hole.stats['center'] = (new_y,new_x)
+		else:
+			for hole in  self.hf[input_name]:
+				new_y = hole.stats['center'][0] + random.randint(0,self.settings['random y offset']) *  random.choice(direction)
+				new_x = hole.stats['center'][1]
+				hole.stats['center'] = (new_y,new_x)
+
 
 	def filterIce(self, input_name='holes'):
 		'''
@@ -565,6 +593,10 @@ class IceTargetFinder(targetfinder.TargetFinder):
 			'template-acquisition': self.settings['acquisition template'],
 			'sampling targets': self.settings['sampling targets'],
 			'max sampling': self.settings['max sampling'],
+			'randomize acquisition': self.settings['randomize acquisition'],
+			'random y offset': self.settings['random y offset'],
+			'randomize chunky': self.settings['randomize chunky'],
+
 		})
 
 		self.publish(hfprefs, database=True)

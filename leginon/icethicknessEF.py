@@ -62,6 +62,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		'obj mean free path': 300.0, #nm
 		'vacuum intensity': -1.0, #counts 
 		'binning': 1,  # binning for image, will throw uncorrected warning if not match exposure binning, but can significantly speed up with no effect on result
+		'use_best_quart_stats': False,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation, **kwargs)
@@ -120,9 +121,10 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 			objth = leginondata.ObjIceThicknessData()
 			objth['vacuum intensity'] = self.settings['vacuum intensity']
 			objth['mfp'] = self.settings['obj mean free path']
-			print(imagedata['filename'])
-			bestmean = bestice.getBestHoleMeanIntensity(imagedata['image'])
-			objth['intensity'] = bestmean
+			if self.settings['use_best_quart_stats'] :
+				objth['intensity'] = bestice.getBestHoleMeanIntensity(imagedata['image'])
+			else:
+				objth['intensity'] = arraystats.mean(imagedata['image'])
 			try:
 				objth['thickness'] = objth['mfp'] * log (objth['vacuum intensity'] / objth['intensity']) 
 			except: 

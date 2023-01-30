@@ -33,8 +33,9 @@ class GridHookServer(object):
 	Similar request server as leginon remoteserver but simpler and generalized
 	on the route and field used with a config file.
 	'''
-	def __init__(self, sessiondata, projdata):
+	def __init__(self, sessiondata, projdata,is_auto_session=False):
 		self.sessiondata = sessiondata
+		self.is_auto_session = is_auto_session
 		self.project = projdata
 		try:
 			self.leg_gridhook_auth = (configs['rest auth']['user'],configs['rest auth']['password'])
@@ -206,7 +207,7 @@ class GridHookServer(object):
 
 	def setSession(self, session_id=None):
 		'''
-		insert or updat LeginonSession model primary key on grid management system
+		insert or update LeginonSession model primary key on grid management system
 		rest api.  It raises error if having trouble.
 		'''
 		this_api = configs['session api router']
@@ -217,9 +218,20 @@ class GridHookServer(object):
 				field_name:self.sessiondata['name'],
 		}
 		patch_dict = {}
+		# gridhook will record is_auto_session if
+		# config file is configured for this, and configured
+		# to match the REST api field name in the grid
+		# management system.
+		if 'is_auto_field' in this_api.keys():
+			field_is_auto = this_api['is_auto_field']
+			#patchable
+			patch_dict[field_is_auto] = self.is_auto_session
+		# add leginondata SessionData id
+		field_name = this_api['id_field']
+		if hasattr(self.sessiondata,'dbid'):
+			session_id = self.sessiondata.dbid
 		if session_id:
-			# add leginondata SessionData id
-			field_name = this_api['id_field']
+			#patchable
 			patch_dict[field_name] = session_id
 		# a grouping model that organizes the session.  It should
 		# be a ForeignKey field in the LeginonSession model.
@@ -231,6 +243,7 @@ class GridHookServer(object):
 			patch_dict[field_name] = group_model_pk
 		result = self.getSession()
 		if not result:
+			# both creat only and patchable
 			data.update(patch_dict)
 			p_result = self.post(router_name, data)
 			if p_result is False:
@@ -328,8 +341,8 @@ if __name__=='__main__':
 	sessionname = raw_input('session name to test=')
 	s = leginondata.SessionData(name=sessionname).query(results=1)[0]
 	pe=projectdata.projectexperiments(session=s).query(results=1)[0]
-	app = GridHookServer(s,pe['project'])
+	app = GridHookServer(s,pe['project'],True)
 	if app.gridhook_server_active:
 		session_pk = app.setSession()
 		gridsession_pk = app.setGridSession(s['comment'])
-		print gridsession_pk
+		print(gridsession_pk)

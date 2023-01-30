@@ -212,7 +212,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				queue_node_class.logger = self.logger
 				self.remote_queue_count = remoteserver.RemoteQueueCount(self.logger, self.session, queue_node_class, self.remote.leginon_base)
 			else:
-				# remoteserver.NO_REQUESTS=True
+				# remoteserver.NO_REMOTE=True
 				self.remote_queue_count = None
 		if self.remote_queue_count:
 			self.remote_queue_count.setQueueCount(count)
