@@ -46,8 +46,6 @@ class MosaicActiveLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder
 		self.start()
 		self.p = {}
 		self.script_exists = None
-		ph.initialize()
-		
 
 	def hasValidScoringScript(self):
 		self.baseurl = self.settings['scoring script']

@@ -1065,7 +1065,8 @@ class AcquisitionImageTargetData(ImageTargetData):
 			# target mapping to a well on the prep plate if applicable
 			('spotmap', SpotWellMapData),
 			('last_focused', ImageTargetListData),
-			('square', SquareStatsData),
+			('square', SquareStatsData), # one target may be on multiple ptolemy squares
+			('ptolemy_hole', PtolemyHoleData), # multiple target may be from on ptolemy hole
 		)
 	typemap = classmethod(typemap)
 
@@ -1384,7 +1385,7 @@ class HoleStatsData(InSessionData):
 		return InSessionData.typemap() + (
 			('finder-type', str),
 			('prefs', HoleFinderPrefsData),
-			('score-prefs', ScoreTargetFinderPrefsData),
+			('score_prefs', ScoreTargetFinderPrefsData),
 			('row', int),
 			('column', int),
 			('mean', float),
@@ -1395,6 +1396,7 @@ class HoleStatsData(InSessionData):
 			('score', float),
 			('hole-number', int),
 			('convolved', bool),
+			('ptolemy', PtolemyHoleData),
 		)
 	typemap = classmethod(typemap)
 
@@ -1445,6 +1447,17 @@ class PtolemySquareData(InSessionData):
 			('grid_id', int), #ImageListData.dbid
 			('tile_id', int), #AcquisitionImageData.dbid
 			('square_id', int), #assigned by ptolemy
+			('center_x', int),
+			('center_y', int),
+		)
+	typemap = classmethod(typemap)
+
+class PtolemyHoleData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('square', PtolemySquareData),
+			('image', AcquisitionImageData),
+			('hole_id', int), #
 			('center_x', int),
 			('center_y', int),
 		)
@@ -1773,6 +1786,14 @@ class IceTargetFinderSettingsData(TargetFinderSettingsData):
 			('randomize acquisition',bool),
 			('random y offset',int),
 			('randomize chunky',bool),
+		)
+	typemap = classmethod(typemap)
+
+class PtolemyMmTargetFinderSettingsData(IceTargetFinderSettingsData):
+	def typemap(cls):
+		return IceTargetFinderSettingsData.typemap() + (
+			('score key', str),
+			('score threshold', float),
 		)
 	typemap = classmethod(typemap)
 

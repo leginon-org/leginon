@@ -83,7 +83,7 @@ class ScoreTargetFinder(icetargetfinder.IceTargetFinder):
 			holestats = leginondata.HoleStatsData(session=self.session)
 			holestats['finder-type'] = 'score'
 			holestats['score'] = stats[self.settings['score key']]
-			holestats['score-prefs'] = score_prefs
+			holestats['score_prefs'] = score_prefs
 			# IceTargetFinder HoleStats
 			holestats['row'] = stats['center'][0] * self.shrink_factor + self.shrink_offset[0]
 			holestats['column'] = stats['center'][1] * self.shrink_factor + self.shrink_offset[1]
@@ -95,6 +95,9 @@ class ScoreTargetFinder(icetargetfinder.IceTargetFinder):
 			holestats['hole-number'] = stats['hole_number']
 			holestats['convolved'] = stats['convolved']
 			self.publish(holestats, database=True)
+
+	def _getScriptPref(self):
+		return self.settings['script']
 
 	def storeHoleFinderPrefsData(self, imagedata):
 		hfprefs = leginondata.ScoreTargetFinderPrefsData()
@@ -115,7 +118,7 @@ class ScoreTargetFinder(icetargetfinder.IceTargetFinder):
 			'template-on': self.settings['target template'],
 			'template-focus': self.settings['focus template'],
 			'template-acquisition': self.settings['acquisition template'],
-			'script': self.settings['script'],
+			'script': self._getScriptPref(),
 			'score-key': self.settings['score key'],
 			'score-threshold':self.settings['score threshold'],
 			'filter-ice-on-convolved-on': self.settings['filter ice on convolved'],
