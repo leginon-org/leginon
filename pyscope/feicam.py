@@ -72,6 +72,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		self.setReadoutLimits()
 		self.initSettings()
 		self.setFrameFormatFromConfig()
+		self.setUseCameraQueue()
 		if not SIMULATION:
 			self.tia_display = tia_display.TIA()
 
@@ -165,6 +166,9 @@ class FeiCam(ccdcamera.CCDCamera):
 		except:
 			pass
 		self.frame_format = fformat
+
+	def setUseCameraQueue(self):
+		self.use_queue = False
 
 	def getCameraBinnings(self):
 		return self.binning_limits
@@ -312,7 +316,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		t0 = time.time()
 		# BUG: IsActive only detect correctly with frame saving, not
 		# camera availability
-		if self.save_frames:
+		if self.use_queue and self.save_frames:
 			self.batch = True
 		else:
 			self.batch = False
@@ -452,8 +456,10 @@ class FeiCam(ccdcamera.CCDCamera):
 					raise RuntimeError('Error camera acquiring after retry: %s--%s' % (reason,e,))
 			else:
 				raise RuntimeError('Error camera acquiring: %s' % (e,))
-		# TODO: what happens to array if queuing ?
+		# If getSafeArray, it slows down as if not done.  Therefore return a fake 8x8
 		if self.batch and self.save8x8 and ((hasattr(self, 'save_frames') and self.save_frames) or (hasattr(self, 'align_frames') and self.algn_frames)):
+			if self.getDebugCamera():
+				print('fake 8x8')
 			# This is 0.20 s faster than get array and then make fake for 1 s exposure.
 			fake_std = 50
 			fake_mean = 4000
@@ -910,6 +916,16 @@ class Falcon4EC(Falcon3EC):
 	intensity_averaged = False
 	base_frame_time = 0.02907 # seconds
 	physical_frame_rate = 250 # rolling shutter frames per second
+
+	def setUseCameraQueue(self):
+		use_queue = False
+		try:
+				config_queue = self.getFeiConfig('camera','use_camera_queue')
+				if config_queue is True:
+					use_queue = True
+		except:
+			pass
+		self.use_queue = use_queue
 
 	def setInserted(self, value):
 		super(Falcon4EC, self).setInserted(value)
