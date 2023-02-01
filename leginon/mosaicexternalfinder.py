@@ -82,6 +82,9 @@ class StatsBlob(object):
 		self.tile_image = info_dict['tile_image']
 		# placeholder for recording merged blobs
 		self.squares = []
+		# pass on squares if already there
+		if 'squares' in info_dict:
+			self.squares = info_dict['squares']
 
 class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 	panelclass = gui.wx.MosaicScoreTargetFinder.Panel
