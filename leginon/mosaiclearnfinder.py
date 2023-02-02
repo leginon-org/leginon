@@ -12,19 +12,11 @@ from leginon import leginondata
 from leginon import mosaicexternalfinder
 from leginon import targetfinder
 from leginon import ptolemyhandler as ph
+from leginon import statssquare
 import gui.wx.MosaicScoreTargetFinder
 
 def revindex(value_tuple):
 	return value_tuple[1],value_tuple[0]
-
-class StatsBlob(mosaicexternalfinder.StatsBlob):
-	def __init__(self, info_dict, index):
-		'''Simple blob object with image and stats as attribute
-			both input and output center/vertices = (row, col) on image
-		'''
-		super(StatsBlob, self).__init__(info_dict, index)
-		# list of PtolemySquareData.dbids in the potentially merged blobs
-		self.squares = info_dict['squares']
 
 class MosaicActiveLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder):
 	"""
@@ -45,33 +37,32 @@ class MosaicActiveLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder
 		self.mblob_values = []
 		self.start()
 		self.p = {}
-		self.script_exists = None
+		self.server_exists = None
 
-	def hasValidScoringScript(self):
-		self.baseurl = self.settings['scoring script']
+	def hasValidPtolemyService(self):
 		r = requests.get(ph.BASEURL)
 		if not r.ok:
-			if self.script_exists == False:
+			if self.server_exists == False:
 				#log error just once.
 				return
 			else:
-				self.script_exists = False
+				self.server_exists = False
 				self.logger.error('url %s not accessible.' % scoring_script)
 				return
 		else:
-			self.script_exists = True
-		return self.script_exists
+			self.server_exists = True
+		return self.server_exists
 
 	def findSquareBlobs(self):
 		"""
 		Get blobs at finder scale with stats. In this case load the
 		blobs found during _addTile
 		"""
-		if self.script_exists == False:
-			self.logger.error('You must reload the atlas if you have changed the script path')
+		print "Running findSquareBlobs with Ptolemy server"
+		if self.server_exists == False:
 			return []
-		if not self.hasValidScoringScript():
-			self.logger.error('Failed square finding without scoring script')
+		if not self.hasValidPtolemyService():
+			self.logger.error('Failed square finding without running Ptolemy server')
 			self.script_exists = None #reset
 			return []
 		imids = list(map((lambda x: int(x)),self.p.keys()))
@@ -139,7 +130,7 @@ class MosaicActiveLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder
 			b['squares'] = [self.savePtolemySquare(b).dbid,]
 			if label not in self.ext_blobs.keys():
 				self.ext_blobs[label] = []
-			self.ext_blobs[label].append(StatsBlob(b,n)) # (row, col)
+			self.ext_blobs[label].append(statssquare.StatsBlob(b,n)) # (row, col)
 
 	def _addTile(self, imagedata):
 		super(mosaicexternalfinder.MosaicScoreTargetFinder, self)._addTile(imagedata)

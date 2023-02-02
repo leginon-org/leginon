@@ -10,6 +10,7 @@ from pyami import groupfun, convexhull
 from leginon import leginondata
 from leginon import mosaictargetfinder
 from leginon import targetfinder
+from leginon import statssquare
 import gui.wx.MosaicScoreTargetFinder
 
 def pointInPolygon(x,y,poly):
@@ -60,31 +61,6 @@ def getDistanceArray(centers):
 	# use transposed array to calculate square of distance.
 	a = (x-x.T)**2+(y-y.T)**2
 	return a
-
-class StatsBlob(object):
-	def __init__(self, info_dict, index):
-		'''Simple blob object with image and stats as attribute
-			both input and output center/vertices = (row, col) on image
-		'''
-		mean = info_dict['brightness']
-		stddev = 1.0
-		size = info_dict['area']
-		score = info_dict['score']
-		center = info_dict['center'][0],info_dict['center'][1]
-		vertices = info_dict['vertices']
-		self.center_modified = False
-		# n in blob is the same as size from Ptolemy. Need n for displaying stats
-		# in gui.
-		self.stats = {"label_index": index, "center":center, "n":size, "size":size, "mean":mean, "score":score}
-		self.vertices = vertices
-		self.info_dict = info_dict
-		# imagedata of the tile if available
-		self.tile_image = info_dict['tile_image']
-		# placeholder for recording merged blobs
-		self.squares = []
-		# pass on squares if already there
-		if 'squares' in info_dict:
-			self.squares = info_dict['squares']
 
 class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 	panelclass = gui.wx.MosaicScoreTargetFinder.Panel
@@ -218,7 +194,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 			b['center'] = _revindex(b['center'])
 			b['vertices'] = list(map((lambda x: _revindex(x)),b['vertices']))
 			b['tile_image'] = self._getTileImage(label)
-			blobs.append(StatsBlob(b, n)) # (row, col)
+			blobs.append(statssquare.StatsBlob(b, n)) # (row, col)
 		self.ext_blobs[label] = blobs
 
 	def _getTileImage(label):
@@ -403,7 +379,7 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 		for info_dict in self.mblob_values:
 			c = info_dict['center']
 			info_dict['center'] = int(c[0]), int(c[1])
-			self.finder_blobs.append(StatsBlob(info_dict, len(self.finder_blobs)))
+			self.finder_blobs.append(statssquare.StatsBlob(info_dict, len(self.finder_blobs)))
 
 	def _mergeFinderBlobs(self):
 		'''
