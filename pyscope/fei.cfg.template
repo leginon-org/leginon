@@ -60,6 +60,10 @@ HAS_FALCON_PROTECTOR = True
 FALCON_IMAGE_STORAGE_PATH = z:\TEMScripting\BM-Falcon\
 # Falcon III subpath. Must exists and writable
 FRAME_SUBPATH = leginonframes
+# Falcon4EC frame saving queuing.  Maybe available to other camera in the future.
+# Glacios 2.11 or above, Titan 3.11 or above are eligiable.
+# 1 sec saving for 10 s exposure
+USE_CAMERA_QUEUE = False
 # Falcon EC EER
 SAVE_EER = False
 # Falcon EC Gain reference directory for EER files

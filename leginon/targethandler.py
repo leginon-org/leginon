@@ -440,7 +440,10 @@ class TargetHandler(object):
 		scopedata.friendly_update(preset)
 		lastnumber = self.lastTargetNumber(session=self.session, type='simulated')
 		nextnumber = lastnumber + 1
-		newtarget = self.newTarget(drow=0, dcol=0, number=nextnumber, type='simulated', scope=scopedata, preset=preset, grid=grid)
+		# fix for #14305
+		# all simulated targets from the same node will share the same targetlist
+		simu_list = self.newTargetList()
+		newtarget = self.newTarget(drow=0, dcol=0, number=nextnumber, type='simulated', scope=scopedata, preset=preset, grid=grid, list=simu_list)
 		return newtarget
 
 	def getReferenceTarget(self):
