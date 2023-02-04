@@ -9,27 +9,21 @@ import wx.lib.filebrowsebutton as filebrowse
 
 from leginon.gui.wx.Entry import Entry, FloatEntry
 import leginon.gui.wx.Settings
+import leginon.gui.wx.MosaicScoreTargetFinder
 import leginon.gui.wx.MosaicClickTargetFinder
 import leginon.gui.wx.ToolBar
 import threading
 
-class Panel(leginon.gui.wx.MosaicClickTargetFinder.Panel):
+class Panel(leginon.gui.wx.MosaicScoreTargetFinder.Panel):
 	icon = 'atlastarget'
 	def initialize(self):
-		leginon.gui.wx.MosaicClickTargetFinder.Panel.initialize(self)
+		leginon.gui.wx.MosaicScoreTargetFinder.Panel.initialize(self)
 
 	def addOtherTools(self):
-		self.toolbar.InsertSeparator(10)
-		self.toolbar.InsertTool(11, leginon.gui.wx.ToolBar.ID_ALIGN,
-			'alignpresets', shortHelpString='Transfer targets')
-		self.toolbar.InsertTool(12, leginon.gui.wx.ToolBar.ID_FIND_SQUARES,
-			'squarefinder',shortHelpString='Find Squares')
-		self.imagepanel.addTargetTool('Blobs', wx.Colour(0, 255, 255), shape='o', settings=True)
-		self.imagepanel.selectiontool.setDisplayed('Blobs', True)
-		self.imagepanel.addTypeTool('Thresholded', display=True, settings=True)
+		leginon.gui.wx.MosaicScoreTargetFinder.Panel.addOtherTools(self)
 
 	def onNodeInitialized(self):
-		leginon.gui.wx.MosaicClickTargetFinder.Panel.onNodeInitialized(self)
+		leginon.gui.wx.MosaicScoreTargetFinder.Panel.onNodeInitialized(self)
 
 		# need this enabled for new auto region target finding
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, True)
@@ -47,11 +41,9 @@ class Panel(leginon.gui.wx.MosaicClickTargetFinder.Panel):
 			dialog = ThresholdSettingsDialog(self)
 			dialog.ShowModal()
 			dialog.Destroy()
-
 	def onFindSquaresButton(self, evt):
 		xys = self.imagepanel.shapetool.fitted_shape_points
-		threading.Thread(target=self.node.guiTargetMask, args=[xys,]).start()
-		threading.Thread(target=self.node.autoTargetFinder).start()
+		threading.Thread(target=self.node.updatePtolemyTargets).start()
 
 class BlobSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -60,15 +52,10 @@ class BlobSettingsDialog(leginon.gui.wx.Settings.Dialog):
 class BlobsScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, 'External Blob Finding and Scoring')
+		sb = wx.StaticBox(self, -1, 'Ptolemy Active Learning and Scoring')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
-		self.widgets['scoring script'] = filebrowse.FileBrowseButton(self, -1)
-		self.widgets['scoring script'].SetMinSize((500,50))
-
 		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.widgets['scoring script'], (0, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
 
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 		return [sbsz]
@@ -113,7 +100,7 @@ class ThresholdScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
-			frame = wx.Frame(None, -1, 'Mosaic Score Target Finder Test')
+			frame = wx.Frame(None, -1, 'Mosaic Learn Target Finder Test')
 			panel = Panel(frame, 'Test')
 			frame.Fit()
 			self.SetTopWindow(frame)

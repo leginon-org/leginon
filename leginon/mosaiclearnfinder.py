@@ -13,25 +13,33 @@ from leginon import mosaicexternalfinder
 from leginon import targetfinder
 from leginon import ptolemyhandler as ph
 from leginon import statssquare
-import gui.wx.MosaicScoreTargetFinder
+import gui.wx.MosaicLearnTargetFinder
 
 def revindex(value_tuple):
 	return value_tuple[1],value_tuple[0]
 
-class MosaicActiveLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder):
+def dummy():
+	'''
+	dummy function for fake multiprocess.
+	'''
+	return
+
+class MosaicLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder):
 	"""
 	External script score finder that operates on individual grid atlas tile.  Multithread
 	process is added when each tile is added, and then loaded later. 
 	"""
-	panelclass = gui.wx.MosaicScoreTargetFinder.Panel
-	settingsclass = leginondata.MosaicScoreTargetFinderSettingsData
+	panelclass = gui.wx.MosaicLearnTargetFinder.Panel
+	settingsclass = leginondata.MosaicLearnTargetFinderSettingsData
+	# same as MosaicScoreTargetFinder except one
 	defaultsettings = dict(mosaicexternalfinder.MosaicScoreTargetFinder.defaultsettings)
+	defaultsettings.pop('scoring_script',None)
 
 	eventoutputs = mosaicexternalfinder.MosaicScoreTargetFinder.eventoutputs
 	targetnames = mosaicexternalfinder.MosaicScoreTargetFinder.targetnames
 
 	def __init__(self, id, session, managerlocation, **kwargs):
-		super(MosaicActiveLearnTargetFinder, self).__init__(id, session, managerlocation, **kwargs)
+		super(MosaicLearnTargetFinder, self).__init__(id, session, managerlocation, **kwargs)
 		self.tileblobmap = {}
 		self.finder_blobs = []
 		self.mblob_values = []
@@ -47,18 +55,20 @@ class MosaicActiveLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder
 				return
 			else:
 				self.server_exists = False
-				self.logger.error('url %s not accessible.' % scoring_script)
+				self.logger.error('url %s not accessible.' % ph.BASEURL)
 				return
 		else:
 			self.server_exists = True
 		return self.server_exists
+
+	def hasValidScoringScript(self):
+		return self.hasValidPtolemyService()
 
 	def findSquareBlobs(self):
 		"""
 		Get blobs at finder scale with stats. In this case load the
 		blobs found during _addTile
 		"""
-		print "Running findSquareBlobs with Ptolemy server"
 		if self.server_exists == False:
 			return []
 		if not self.hasValidPtolemyService():
@@ -72,7 +82,7 @@ class MosaicActiveLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder
 			self.p[imid].join()
 			self.p[imid].terminate()
 			self.p.pop(imid)
-		self.logger.info('All scripts finished')
+		self.logger.info('All finished')
 		new_imids = set(imids).difference(self.tileblobmap.keys())
 		# TODO: this sleep makes it less likely to fail in reloading atlas
 		# but need better solution.
@@ -134,14 +144,19 @@ class MosaicActiveLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder
 
 	def _addTile(self, imagedata):
 		super(mosaicexternalfinder.MosaicScoreTargetFinder, self)._addTile(imagedata)
-		if not self.hasValidScoringScript():
+		if not self.hasValidPtolemyService():
 			return
 		mrcpath = os.path.join(imagedata['session']['image path'], imagedata['filename']+'.mrc')
 		imid = imagedata.dbid
 		label = '%d' % imid
 		self.logger.info('running external square finding on imgid=%d' % imid)
-		job_basename = self.getJobBasename(label)
-		self.p[imid] = multiprocessing.Process(target=self._runPtolemyBlobFinder, args=(imagedata,))
+		# if already has PtolemySquare, don't push
+		r = leginondata.PtolemySquareData(session=self.session,tile_id=imid).query()
+		if not r:
+			self.logger.info('running external square finding on imgid=%d' % imid)
+			self.p[imid] = multiprocessing.Process(target=self._runPtolemyBlobFinder, args=(imagedata,))
+		else:
+			self.p[imid] = multiprocessing.Process(target=dummy)
 		self.p[imid].start()
 
 	def researchSquareWithStats(self, row, col):
@@ -180,3 +195,106 @@ class MosaicActiveLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder
 		## can we do dbforce here?  it might speed it up
 		self.publish(targetdata, database=True)
 		return targetdata
+
+	def updatePtolemyTargets(self):
+		"""
+		Find all ptolemy targets, merge and filter out those on edge and already
+		in database.  Submitting these targets means Ptolemy will be the one deciding
+		on the target order, not leginon.  There is no sampling nor stats filtering.
+		"""
+		self.finder_blobs = []
+		self.mblob_values = []
+		if self.mosaicimage is None:
+			self.logger.error('Must have atlas display to find squares')
+			return
+		try:
+			# get blobs at finder scale with stats
+			blobs = self.getCurrentStateBlobs()
+		except ValueError as e:
+			self.logger.error(e)
+			return
+		targets = self.blobStatsTargets(blobs, self.finder_scale_factor)
+		self.logger.info('Number of blobs: %s' % (len(targets),))
+		self.setTargets(targets, 'Blobs')
+		##################################
+		# TODO: This clear targets thread won't complete before
+		# getPanelTargets is called below
+		self.setTargets([], 'acquisition')
+		###################################
+		time.sleep(2)
+		# get ranked and filtered acquisition
+		mosaic_image_shape = self.mosaicimage.shape
+		self.refreshDatabaseDisplayedTargets()
+		xytargets = self.getPanelTargets(mosaic_image_shape)
+		##################################
+		# HACKING: disgard all acquisition targets because the
+		# above threading problem
+		xytargets['acquisition']=[]
+		###################################
+		#
+		xys = self.runDatabaseBlobFilter(blobs, xytargets)
+		message = 'found %s squares' % (len(xys),)
+		self.last_xys = xys
+		## display them
+		# IMPORTANT: Don't put back unprocessed but submitted targets
+		# because they will get duplicated.
+		# It will also cause autoSubmitTargets break its while loop
+		# to break too early
+		self.setTargets(xys, 'acquisition')
+		self.setTargets([], 'example')
+		self.logger.info(message)
+
+	def runDatabaseBlobFilter(self, finder_blobs, xytargets):
+		'''
+		Filter the blobs at finder image scale to get final targets.
+		xytargets are dictionary of existing targets on the mosaic image.
+		No example and thresholding. Edge targets are filtered out.
+		'''
+		if not finder_blobs:
+			return []
+		# These xy tuples are those in the database on self.mosaic scale.
+		database_xys=self.existing_position_targets.keys()
+		##############
+		# blobs and filtering are done at smaller dimension to save memory usage.
+		##############
+		s = self.finder_scale_factor
+		finder_database_points = map((lambda x: (x[1]//s,x[0]//s)),database_xys)
+		priority_blobs, other_blobs, finder_display_array = self._runBlobRankFilter(finder_blobs, [], finder_database_points)
+		# filter out blobs with edge only.  We want ptolemy to decide the rest of the workflow.
+		other_blobs = self.filterOnEdge(other_blobs)
+		combined_blobs = priority_blobs+other_blobs
+		################
+		# turn combined blobs into targets at the original mosaic dimension
+		################
+		targets = map((lambda x: self.blobToDisplayTarget(x,self.finder_scale_factor)), combined_blobs)
+		# TODO: Should we keep this?
+		# flat list of multihole convolution at the original mosaic dimension
+		targets = self.multiHoleConvolution(targets)
+		return targets
+
+	def filterOnEdge(self, blobs):
+		self.logger.info('Filtering out targets on atlas edges....')
+		good_blobs = []
+		for i, blob in enumerate(blobs):
+			row = blob.stats['center'][0]
+			column = blob.stats['center'][1]
+			try:
+				on_edge = self.finder_edge_mosaicimage[row,column]
+			except Exception as e:
+				self.logger.debug('edge filtering error: %s' % e)
+				on_edge = True
+			if not on_edge:
+				good_blobs.append(blob)
+		return good_blobs
+
+	def getCurrentStateBlobs(self):
+		# like findSquareBlobs
+		self.loadBlobs()
+		for label in self.ext_blobs.keys():
+			imid = int(label)
+			self.tileblobmap[imid] = self.ext_blobs[label]
+			tile = self.tilemap[imid]
+			self.addMosaicBlobValues(tile,imid)
+		# merge finder blobs
+		self.mergeFinderBlobs()
+		return list(self.finder_blobs)

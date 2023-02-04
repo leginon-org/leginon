@@ -66,11 +66,12 @@ class Reservation(object):
 		## make new reservation
 		sessionres = leginon.leginondata.SessionReservationData(name=name, reserved=True)
 		sessionres.insert(force=True)
-		# TODO: Find a better place to initialize
-		try:
-			ph.initialize()
-		except Exception as e:
-			print(e)
+		# TODO: Find a better place to initialize. This one initialize if the last wizard was
+		# set to create new session
+		#try:
+		#	ph.initialize()
+		#except Exception as e:
+		#	print(e)
 		return True
 
 	def cancel(self):

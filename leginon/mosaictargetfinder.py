@@ -849,13 +849,13 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return self._mosaicToTargetOnMosaic(row, col, self.mosaic)
 
 	def _mosaicToTargetOnMosaic(self, row, col, mosaic_instance):
-		self.logger.info('mosaicToTarget r %s, c %s' % (row, col))
+		self.logger.debug('mosaicToTarget r %s, c %s' % (row, col))
 		unscaled = mosaic_instance.unscaled((row,col))
 		tile, pos = mosaic_instance.mosaic2tile(unscaled)
 		shape = tile.image.shape
 		drow,dcol = pos[0]-shape[0]/2.0, pos[1]-shape[1]/2.0
 		imagedata = tile.imagedata
-		self.logger.info('target tile image: %s, pos: %s' % (imagedata.dbid,pos))
+		self.logger.debug('target tile image: %s, pos: %s' % (imagedata.dbid,pos))
 		return imagedata, drow, dcol
 
 	def mosaicToTarget(self, typename, row, col, **kwargs):

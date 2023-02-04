@@ -20,11 +20,12 @@ def push_lm(imagedata):
 	# Use imagedata.dbid as tile_id for ptolemy
 	payload={'image': a.tolist(), 'grid_id':imagelist_id, 'tile_id':image_id}
 	payload = json.dumps(payload)
-	requests.post(BASEURL + '/push_lm', payload)
+	r=requests.post(BASEURL + '/push_lm', payload)
 
 def _read_csv_row(r):
+	# possiable keys in either lm or mm
 	int_keys = ['square_id','tile_id','grid_id','hole_id','mm_img_id']
-	float_keys = ['prior_score', 'radius','ctf','ice_thickness','ctf_pred','ice_pred','ctf_var','ice_var']
+	float_keys = ['prior_score', 'brightness', 'area', 'radius','ctf','ice_thickness','ctf_pred','ice_pred','ctf_var','ice_var']
 	bool_keys = ['visited',]
 	center_keys = ['center_x','center_y']
 	#
@@ -60,19 +61,14 @@ def _read_lm_state_csv(csv_dicts):
 	all_data = []
 	for r in csv_dicts:
 		data = _read_csv_row(r)
-		#vertices
+		#vertices are convert to {'vert_1':(x,y),....}
 		data['vertices'] = []
 		for v in vertice_keys:
 			if v[0] in r.keys():
 				vname = v[0][:-2]
-				value = []
-				for i in range(2):
-					coord = list(map((lambda x: float(x)),r[v[0]][1:-1].split(',')))
-					value.append(coord[0]) # Taking the first number, Paull will fix this
+				value = float(r[v[0]]),float(r[v[1]])
 				data['vertices'].append(value)
 		data['image_id'] = data['tile_id']
-		data['area'] = 4000.0
-		data['brightness'] = 40.0
 		all_data.append(data)
 	return all_data
 
@@ -120,6 +116,7 @@ def get_ptolemy_square(r):
 			raise ValueError('Ptolemy active learning can not handle simulated target')
 
 def push_and_evaluate_mm(imagedata):
+	t0 = time.time()
 	grid_tile_image = get_grid_tile_image(imagedata)
 	if not grid_tile_image:
 		raise ValueError('Ptolemy active learning can not handle simulated target')
@@ -138,7 +135,8 @@ def push_and_evaluate_mm(imagedata):
 	payload = json.dumps(payload)
 	r = requests.post(BASEURL + '/push_and_evaluate_mm', payload)
 	data=csv.DictReader(io.StringIO(r.json()))
-	return _read_mm_state_csv(data)
+	jsondict = _read_mm_state_csv(data)
+	return jsondict
 
 def visit_holes(hole_ids, ctfs, ice_thicknesses):
 	payload = {
@@ -161,8 +159,15 @@ if __name__=='__main__':
 	push_lm(tile_image)
 	print('%d time= %.2f----' % (tile_image_id, time.time()-t0))
 	r=current_lm_state()
-	for row in r:
+	for row in r[:1]:
 		print(row)
-	i0 = 150
+	i0 = 180
 	set_noice_hole_intensity(i0)
-	print(push_and_evaluate_mm(hlimage))
+	t0=time.time()
+	print('running %d' % hl_id)
+	r=push_and_evaluate_mm(hlimage)
+	if r:
+		print('first hole',r[0])
+	else:
+		print('empty result', r)
+	print('%d time= %.2f----' % (hl_id, time.time()-t0))
