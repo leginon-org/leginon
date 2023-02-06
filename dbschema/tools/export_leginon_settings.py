@@ -52,16 +52,25 @@ class DataJsonMaker(object):
 		'''
 		if not results:
 			return
-			
-		for r in results:
+
+		def _makeDataDict(r):
 			classname = r.__class__.__name__
 			data = {}
 			for k in r.keys():
 				if k not in self.ignorelist:
 					if hasattr(r[k],'dbid'):
-						print("ignored ",k)
+						if r[k].__class__.__name__=='CameraSettingsData':
+							print("ignore %s" % k)
+							continue
+						data[k] = _makeDataDict(r[k])
+						print("child data: %s" % k)
 					else:
 						data[k] = r[k]
+			return data
+
+		for r in results:
+			classname = r.__class__.__name__
+			data = _makeDataDict(r)
 			self.alldata.append({classname:data})
 
 	def writeJsonFile(self,filename='test.json'):

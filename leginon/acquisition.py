@@ -1409,7 +1409,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def useFirstPresetOrderPreset(self):
 			presetnames = self.settings['preset order']
-			currentpreset = self.presetsclient.getPresetByName(presetnames[0])
+			try:
+				currentpreset = self.presetsclient.getPresetByName(presetnames[0])
+			except IndexError as e:
+				raise InvalidPresetsSequence('no preset set for the node')
 			if not currentpreset:
 				raise InvalidPresetsSequence('selected preset name %s not found in presets manager')
 			return currentpreset

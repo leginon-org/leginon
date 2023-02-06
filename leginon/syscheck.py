@@ -9,6 +9,10 @@
 #  on this system to see if all requirements are met.
 ########################################################################
 
+import leginon.version
+
+print 'Leginon version: ', leginon.version.getVersion()
+
 def leginonInstalled():
 	'''print info about if Leginon is already installed'''
 

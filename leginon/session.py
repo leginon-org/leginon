@@ -6,7 +6,7 @@ name while in the process of creating a session.
 import os
 import time
 
-from pyami import moduleconfig
+from pyami import moduleconfig, mysocket
 
 import leginon.leginondata
 import leginon.projectdata
@@ -73,6 +73,9 @@ class Reservation(object):
 		sessionres = leginon.leginondata.SessionReservationData(name=self.name, reserved=False)
 		sessionres.insert(force=True)
 		self.name = None
+
+def getMyHostname():
+	return mysocket.gethostname()
 
 def getSessionPrefix():
 	session_name = '<cannot suggest a name>'

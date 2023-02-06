@@ -115,6 +115,8 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		correction_types = list(self.node.correction_types.keys())
 		correlation_types = self.node.correlation_types
 		default_setting = self.node.default_setting
+		# use first preset as default
+		default_setting['preset name'] = preset_names[0]
 		sequence = self.node.getFocusSequence()
 		dialog_settings = leginon.gui.wx.FocusSequence.DialogSettings(
 			preset_names,
@@ -178,7 +180,8 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 
 		self.presetnames = self.node.presetsclient.getPresetNames()
 
-		newrow,newcol = self.createManualFocusPresetSelector((0,0))
+		newrow,newcol = self.createAutoFocusAccuracyEntry((0,0))
+		newrow,newcol = self.createManualFocusPresetSelector((newrow,0))
 		newrow,newcol = self.createMeltPresetSelector((newrow,0))
 		newrow,newcol = self.createMeltTimeEntry((newrow,0))
 		newrow,newcol = self.createAcquireFinalCheckBox((newrow,0))
@@ -211,6 +214,20 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		total_length = (1,2)
 		self.szmain.Add(label, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.szmain.Add(melt_sizer, (start_position[0],start_position[1]+1), (1, 1), wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
+
+	def createAutoFocusAccuracyEntry(self,start_position):
+		self.widgets['accuracy limit'] = FloatEntry(self, -1, min=1e-8, allownone=False, chars=5, value='1e-6')
+		afc_sizer = wx.GridBagSizer(5, 5)
+		afc_sizer.Add(self.widgets['accuracy limit'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		afc_sizer.Add(wx.StaticText(self, -1, 'm'), (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Desired autofocus accuracy:')
+
+		total_length = (1,2)
+		self.szmain.Add(label, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szmain.Add(afc_sizer, (start_position[0],start_position[1]+1), (1, 1), wx.ALIGN_CENTER)
 		return start_position[0]+total_length[0],start_position[1]+total_length[1]
 
 	def createManualFocusPresetSelector(self,start_position):

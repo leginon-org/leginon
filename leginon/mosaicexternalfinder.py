@@ -276,11 +276,18 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 			size = blob.stats['n']
 			mean = blob.stats['mean']
 			score = blob.stats['score']
-			if (value_min <= blob.stats[key] <= value_max):
+			edge_mosaic_shape = self.finder_edge_mosaicimage.shape
+			try:
+				on_edge = self.finder_edge_mosaicimage[row,column]
+			except Exception as e:
+				self.logger.debug('edge filtering error: %s' % e)
+				on_edge = True
+			if (value_min <= blob.stats[key] <= value_max) and not on_edge:
 				good_blobs.append(blob)
 			else:
 				stats = leginondata.SquareStatsData(score_prefs=self.sq_prefs, row=row, column=column, mean=mean, size=size, score=score)
 				stats['good'] = False
+				stats['on_edge'] = on_edge
 				# only publish bad stats
 				self.publish(stats, database=True)
 		self.logger.info('Filtering number of blobs down number to %d' % len(good_blobs))

@@ -89,7 +89,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.targetbeamradius = 0
 		self.resetLastFocusedTargetList(None)
 		self.ignore_focus_targets = False
-		if not remoteserver.NO_REQUESTS and session is not None:
+		if not remoteserver.NO_REMOTE and session is not None:
 			self.remote_targeting = remoteserver.RemoteTargetingServer(self.logger, session, self, self.remote.leginon_base)
 			self.remote_toolbar = remoteserver.RemoteToolbar(self.logger, session, self, self.remote.leginon_base)
 			self.remote_queue_count = remoteserver.RemoteQueueCount(self.logger, session, self, self.remote.leginon_base)

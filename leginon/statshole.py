@@ -125,7 +125,8 @@ class HoleSampler(Configurer):
 			raise ValueError('category "%s" used for grouping not in hole stats' % cat)
 		holes_in_bins = self._groupHoles(holes, n_class, cat)
 		holes = self._samplingInClass(holes_in_bins, n_class, n_sample)
-		return sorted(holes, key=lambda x: x.stats['hole_number'], reverse=False)
+		#return sorted(holes, key=lambda x: x.stats['hole_number'], reverse=False)
+		return sorted(holes, key=lambda x: x.stats[cat], reverse=False)
 
 	def _samplingInClass(self, holes_in_bins, n_class, total_targets_need):
 		# get a list at least as long as total_targets_need

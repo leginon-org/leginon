@@ -3,18 +3,16 @@ from pyami import moduleconfig
 configs = moduleconfig.getConfigured('fei.cfg')
 
 
-SIMULATION = False
-
 class FEIAdvScriptingConnection(object):
 	instr = None
+	acq = None
+	csa = None
+	cameras = []
 
-if SIMULATION:
-	import simscripting
-	connection = simscripting.Connection()
-else:
-	import comtypes
-	import comtypes.client
-	connection = FEIAdvScriptingConnection()
+import comtypes
+import comtypes.client
+# a clean class instance at import
+connection = FEIAdvScriptingConnection()
 
 def chooseTEMAdvancedScriptingName():
 	if 'version' not in configs.keys() or 'tfs_software_version' not in configs['version'].keys():
@@ -45,7 +43,19 @@ def chooseTEMAdvancedScriptingName():
 		return '1'
 
 def get_feiadv():
+	'''
+	Returns adv_scripting connection. Connect if not not done.
+	'''
 	global connection
+	# a simple test for server connection.
+	if connection.cameras:
+		try:
+			camera_name_list = list(map(lambda x: x.Name,connection.cameras))
+		except comtypes.COMError as e:
+			# This gives back comtypes.COMError if there is no connection to server.
+			# forcing instr attribute to None to force reconnection.
+			connection.instr = None
+	# make a coonection
 	if connection.instr is None:
 		try:
 			comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
@@ -58,20 +68,10 @@ def get_feiadv():
 		connection.cameras = connection.csa.SupportedCameras
 	return connection
 
-def get_feiadv_sim():
-	connection.instr = connection.Instrument
-	connection.acq = connection.instr.Acquisitions
-	connection.csa = connection.acq.CameraSingleAcquisition
-	connection.cameras = connection.csa.SupportedCameras
-	return connection
-
 def connectToFEIAdvScripting():
 	'''
-	Connects to the ESVision COM server
+	Connects to the COM server
 	'''
 	global connection
-	if SIMULATION:
-		connection = get_feiadv_sim()
-	else:
-		connection = get_feiadv()
+	connection = get_feiadv()
 	return connection

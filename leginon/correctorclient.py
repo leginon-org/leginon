@@ -356,7 +356,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		normarray = numpy.ma.masked_greater(normarray,20).filled(1)
 		return normarray
 
-	def normalizeImageArray(self, rawarray, darkarray, normarray, is_counting=False):
+	def normalizeImageArray(self, rawarray, darkarray, normarray):
 		try:
 			diff = rawarray - darkarray
 			r = diff * normarray
@@ -366,7 +366,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		except TypeError:
 			ValueError('reference image array loaded as None')
 
-	def gainCorrectImageArray(self, diffarray, normarray, is_counting=False):
+	def gainCorrectImageArray(self, diffarray, normarray):
 		try:
 			r = diffarray * normarray
 			## remove nan and inf
@@ -375,7 +375,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		except TypeError:
 			ValueError('reference image array loaded as None')
 
-	def darkSubtractImageArray(self, rawarray, darkarray, is_counting=False):
+	def darkSubtractImageArray(self, rawarray, darkarray):
 		try:
 			r = rawarray - darkarray
 			return r
@@ -383,6 +383,9 @@ class CorrectorClient(cameraclient.CameraClient):
 			ValueError('reference image array loaded as None')
 
 	def normalizeCameraImageData(self, imagedata, channel):
+		'''
+		Perform dark subtraction and gain correction and put them back in imagedata
+		'''
 		cameradata = imagedata['camera']
 		scopedata = imagedata['scope']
 		dark = None
@@ -392,38 +395,44 @@ class CorrectorClient(cameraclient.CameraClient):
 			if dark is None:
 				self.logger.warning('Cannot find references, image will not be normalized')
 				return
-		if not cameradata['sum gain corrected'] or (cameradata['save frames'] and not cameradata['frame gain corrected']):
+		save_norm_no_correction = cameradata['save frames'] and not cameradata['frame gain corrected']
+		if not cameradata['sum gain corrected'] or save_norm_no_correction:
 			# find norm data to save in imagedata for later frame processing
 			#even though no correction needed on the sum image
 			norm = self.retrieveCorrectorImageData('norm', scopedata, cameradata, channel)
 			if norm is None:
 				self.logger.warning('Cannot find references, image will not be normalized')
 				return
-		rawarray = imagedata['image'] # This will read image if not in memory
-		if not self.isFakeImageObj(imagedata):
-			r = rawarray
-			if dark:
-				self.logger.info('preparing dark array')
-				# cached reference may lose its file access at this point
-				darkarray = self.prepareDark(dark, imagedata)
-				if darkarray is None:
-					raise RuntimeError('lost %s.mrc' % dark['filename'])
-				self.logger.info('done reading dark array')
-				r = self.darkSubtractImageArray(rawarray,darkarray,'GatanK2' in cameradata['ccdcamera']['name'])
-			if not cameradata['sum gain corrected'] and norm:
-				self.logger.info('reading norm array')
-				# cached reference may lose its file access at this point
-				normarray = norm['image']
-				if normarray is None:
-					raise RuntimeError('lost %s.mrc' % norm['filename'])
-				self.logger.info('done reading norm array')
-				r = self.gainCorrectImageArray(r,normarray, 'GatanK2' in cameradata['ccdcamera']['name'])
-		else:
-			# normalize the fake array, too, but faking it to speed up
-			fake_dark = numpy.zeros((8,8))
-			fake_norm = numpy.ones((8,8))
-			r = self.gainCorrectImageArray(rawarray,fake_norm, 'GatanK2' in cameradata['ccdcamera']['name'])
-		imagedata['image'] = r
+		if not cameradata['sum gain corrected']:
+			# do normalization only if sum needs correction
+			rawarray = imagedata['image'] # This will read image if not in memory
+			if not self.isFakeImageObj(imagedata):
+				r = rawarray
+				if dark:
+					self.logger.info('preparing dark array')
+					# cached reference may lose its file access at this point
+					darkarray = self.prepareDark(dark, imagedata)
+					if darkarray is None:
+						raise RuntimeError('lost %s.mrc' % dark['filename'])
+					self.logger.info('done reading dark array')
+					r = self.darkSubtractImageArray(rawarray,darkarray)
+				if not cameradata['sum gain corrected'] and norm:
+					self.logger.info('reading norm array')
+					# cached reference may lose its file access at this point
+					normarray = norm['image']
+					if normarray is None:
+						raise RuntimeError('lost %s.mrc' % norm['filename'])
+					self.logger.info('done reading norm array')
+					r = self.gainCorrectImageArray(r,normarray)
+			else:
+				# normalize the fake array, too, but faking it to speed up
+				fake_dark = numpy.zeros((8,8))
+				fake_norm = numpy.ones((8,8))
+				r = self.gainCorrectImageArray(rawarray,fake_norm)
+			# replace rawarray with corrected array
+			imagedata['image'] = r
+			self.logger.info('image array corrected')
+		# save data objs related to the correction
 		imagedata['dark'] = dark
 		if norm:
 			imagedata['bright'] = norm['bright']
@@ -467,9 +476,10 @@ class CorrectorClient(cameraclient.CameraClient):
 		'''
 		this puts an image through a pipeline of corrections
 		'''
-		no_correction = False
+		no_save_normdata = False
 		if ('sum gain corrected' in imagedata['camera'].keys() and imagedata['camera']['sum gain corrected']) and ('frame gain corrected' in imagedata['camera'].keys() and imagedata['camera']['frame gain corrected']):
-			no_correction = True
+			# not just no correction, imagedata['norm'] will be None, too.
+			no_save_normdata = True
 		else:
 			try:
 				self.normalizeCameraImageData(imagedata, channel)
@@ -480,7 +490,7 @@ class CorrectorClient(cameraclient.CameraClient):
 
 		cameradata = imagedata['camera']
 		plan, plandata = self.retrieveCorrectorPlan(cameradata)
-		if no_correction:
+		if no_save_normdata:
 			# ignore corrector plan completely.
 			plan = None
 			imagedata['corrector plan'] = None

@@ -39,9 +39,16 @@ except ImportError:
 configs = moduleconfig.getConfigured('fei.cfg')
 configpath = moduleconfig.getConfigPath('fei.cfg')
 
-HAS_CFEG = False
+def configHasColdFeg():
+	if 'source' in configs and 'has_cold_feg' in configs['source'] and configs['source']['has_cold_feg']==True:
+		return True
+	return False
+
+HAS_CFEG = configHasColdFeg()
+
 if HAS_CFEG:
 	from pyscope import fei_advscripting
+
 class MagnificationsUninitialized(Exception):
 	pass
 
@@ -122,9 +129,6 @@ class Tecnai(tem.TEM):
 		self.stage_speed_fraction = self.default_stage_speed_fraction
 		self.mainscreenscale = 44000.0 / 50000.0
 		self.wait_for_stage_ready = True
-		self.mag_changed = False
-		self.spotsize_changed = False
-		self.int_changed = False
 
 		## figure out which intensity property to use
 		## try to move this to installation
@@ -377,16 +381,16 @@ class Tecnai(tem.TEM):
 			except AttributeError:
 				return False
 			except Exception as e:
-				print('hasColdFeg exception %s' % e)
 				return False
 			return True
+		return False
 
 	def getFlashingAdvised(self, flash_type):
+		advised_only = self.getFeiConfig('source','flash_cold_feg_only_if_advised')
 		try:
 			flash_type_constant = self.cold_feg_flash_types[flash_type]
 			should_flash = self.source.Flashing.IsFlashingAdvised(flash_type_constant)
 		except AttributeError as e:
-			print(e)
 			return False
 		except KeyError:
 			print('flash type can only be %s' % list(self.cold_feg_flash_types.keys()))
@@ -394,6 +398,12 @@ class Tecnai(tem.TEM):
 		except Exception as e:
 			print('other getFlashAdvised exception %s' % e)
 			return False
+		if advised_only:
+			return should_flash
+		else:
+			if flash_type == 'low':
+				# only low temp can flash without advised.
+				return True
 		return should_flash
 
 	def getColdFegFlashing(self):
@@ -419,6 +429,22 @@ class Tecnai(tem.TEM):
 					break
 				except Exception as e:
 					raise RuntimeError(e)
+
+	def getColdFegBeamCurrent(self):
+		# Cold FEG beam current is used to decide whether to flash or not.
+		# Unit is Amp.  Returns -1.0 if not available
+		if self.source and self.hasColdFeg():
+			return float(self.source.BeamCurrent)
+		return -1.0
+
+	def getExtractorVoltage(self):
+		# FEG extractor voltage. Unit is Voltage
+		# Returns -1.0 if not available
+		if self.source:
+			try:
+				return float(self.source.ExtractorVoltage)
+			except:
+				return -1.0
 
 	def getGunTilt(self):
 		value = {'x': None, 'y': None}
@@ -530,30 +556,39 @@ class Tecnai(tem.TEM):
 				print('prev_int', prev_int)
 				print('minimum_intensity_movement', intensity_step)
 				print('target_intensity', intensity)
-		if abs(prev_int-intensity) > intensity_step:
-			self.int_changed = True
-			setattr(self.tecnai.Illumination, self.intensity_prop, intensity)
-		else:
-			self.int_changed = False
+		# Try don't include intensity change for normalize_all
+		# since it is not done in TUI
+		#if abs(prev_int-intensity) > intensity_step:
+		#	self.setAutoNormalizeEnabled(False)
+		setattr(self.tecnai.Illumination, self.intensity_prop, intensity)
 		# Normalizations
 		if self.normalize_all_after_setting:
 			if self.getDebugAll():
-				print('mag_changed', self.mag_changed)
-				print('spotsize_changed', self.spotsize_changed)
-				print('int_changed', self.int_changed)
-			if self.mag_changed or self.spotsize_changed or self.int_changed:
+				self.need_normalize_all
+			if self.need_normalize_all:
 				if self.getDebugAll():
 					print('normalize all')
 				self.normalizeLens('all')
 		# sleep for intensity change
 		extra_sleep = self.getFeiConfig('camera','extra_protector_sleep_time')
-		if self.int_changed and extra_sleep:
+		if self.need_normalize_all and extra_sleep:
 			time.sleep(extra_sleep)
 		#reset changed flag
-		self.mag_changed = False
-		self.spotsize_changed = False
-		self.int_changed = False
+		self.setAutoNormalizeEnabled(True)
 
+	def setAutoNormalizeEnabled(self, value):
+		if self.normalize_all_after_setting:
+			self.tecnai.AutoNormalizeEnabled = bool(value)
+			self.need_normalize_all = not bool(value)
+		else:
+			self.need_normalize_all = False
+
+	def getAutoNormalizeEnabled(self):
+		try:
+			return self.tecnai.AutoNormalizeEnabled
+		except:
+			# does not have such call.
+			return False
 
 	def getDarkFieldMode(self):
 		if self.tecnai.Illumination.DFMode == self.tem_constants.dfOff:
@@ -581,8 +616,11 @@ class Tecnai(tem.TEM):
 		return probe
 
 	def setProbeMode(self, probe_str):
+		current_probe = self.getProbeMode()
 		const = self.probe_str_const[probe_str]
-		self.tecnai.Illumination.Mode = const
+		if current_probe != probe_str:
+			self.setAutoNormalizeEnabled(False)
+			self.tecnai.Illumination.Mode = const
 
 	def getProbeModes(self):
 		return list(self.probe_str_const.keys())
@@ -711,8 +749,8 @@ class Tecnai(tem.TEM):
 			raise ValueError
 		prev = self.getSpotSize()
 		if prev != ss:
+			self.setAutoNormalizeEnabled(False)
 			self.tecnai.Illumination.SpotsizeIndex = ss
-			self.spotsize_changed = True
 
 	def getBeamTilt(self):
 		value = {'x': None, 'y': None}
@@ -985,9 +1023,9 @@ class Tecnai(tem.TEM):
 			# This makes defocus accuracy better like a objective 
 			# normalization. This assumes that defocus will be set
 			# after this not before.
+			self.setAutoNormalizeEnabled(False)
 			self.tecnai.Projection.Focus = 0.0
 			self.setMagnificationIndex(index)
-			self.mag_changed = True
 		return
 
 	def setPreDiffractionMagnification(self):
@@ -1308,6 +1346,9 @@ class Tecnai(tem.TEM):
 		# Always set to the class projection_mode.  This is a work around to
 		# proxy not knowing the projection_mode of the instrument.
 		mode = self.projection_mode
+		if self.getProjectionMode() == mode:
+			return 0
+		self.setAutoNormalizeEnabled(False)
 		if mode == 'imaging':
 			self.tecnai.Projection.Mode = self.tem_constants.pmImaging
 		elif mode == 'diffraction':
