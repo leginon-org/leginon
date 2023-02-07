@@ -1452,6 +1452,14 @@ class PtolemySquareData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class PtolemyScoreHistoryData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('square', PtolemySquareData),
+			('score', float),
+		)
+	typemap = classmethod(typemap)
+		
 class PtolemyHoleData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
