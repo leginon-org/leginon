@@ -36,7 +36,11 @@ class PtolemyMmTargetFinder(scorefinder.ScoreTargetFinder):
 		self.start()
 
 	def processImageData(self, imagedata):
-		self.ptolemy_square = ph.get_ptolemy_square(imagedata)
+		try:
+			self.ptolemy_square = ph.get_ptolemy_square(imagedata)
+		except Exception as e:
+			self.logger.error(e)
+			self.ptolemy_square = None
 		super(PtolemyMmTargetFinder, self).processImageData(imagedata)
 
 	def _getStatsKeys(self):
