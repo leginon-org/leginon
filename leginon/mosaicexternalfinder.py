@@ -446,9 +446,13 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 			self.mblob_values.pop(i)
 
 	def createMosaicImage(self, is_final=True):
+		'''
+		Create mosaic image of each tile adding/loading.
+		'''
 		super(MosaicScoreTargetFinder, self).createMosaicImage(is_final)
 		if not self.hasValidScoringScript() or not is_final:
 			return
+		# first time this function is call self.tileblobmap is empty
 		if self.mosaic and self.tileblobmap and self.finder_scale_factor:
 			self.finder_blobs = []
 			self.mblob_values = []

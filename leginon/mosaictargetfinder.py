@@ -818,11 +818,18 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.logger.info('Mosaic loaded (%i of %i images loaded successfully)' % (i+1, ntotal))
 		if self.settings['create on tile change'] in ('all', 'final'):
 			self.createMosaicImage(True)
+		self.loadSquareBlobsAfterAllTiles()
 		# use currentimagedata to set TargetImageVectors for target multiple
 		self.setTargetImageVectors(self.currentimagedata)
 		self.autofinderlock.release()
 		# hacking
 		self.handleTargetListDone(None)
+
+	def loadSquareBlobsAfterAllTiles(self):
+		'''
+		load square blobs if available after create final mosaic image.
+		'''
+		pass
 
 	def targetToMosaic(self, tile, targetdata):
 		scalepos = self._targetToMosaic(tile, targetdata, self.mosaic)

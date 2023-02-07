@@ -149,15 +149,47 @@ class MosaicLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder):
 		mrcpath = os.path.join(imagedata['session']['image path'], imagedata['filename']+'.mrc')
 		imid = imagedata.dbid
 		label = '%d' % imid
-		self.logger.info('running external square finding on imgid=%d' % imid)
 		# if already has PtolemySquare, don't push
 		r = leginondata.PtolemySquareData(session=self.session,tile_id=imid).query()
 		if not r:
-			self.logger.info('running external square finding on imgid=%d' % imid)
+			self.logger.info('running ptolemy square finding on imgid=%d' % imid)
 			self.p[imid] = multiprocessing.Process(target=self._runPtolemyBlobFinder, args=(imagedata,))
 		else:
+			self.logger.info('load current square finding score on imgid=%d' % imid)
 			self.p[imid] = multiprocessing.Process(target=dummy)
 		self.p[imid].start()
+
+	def loadSquareBlobsAfterAllTiles(self):
+		'''
+		Load current square state as blobs.
+		'''
+		# This is called after createMosaicImage in loadMosaicTiles
+		# self.tileblobmap is empty at this point.
+		# populate self.tileblobmap from self.imagemap so that
+		# it can be used to filter self.ext_blobs
+		for imid in self.imagemap.keys():
+			label = '%d' % imid
+			self.tileblobmap[imid] = []
+			tile = self.tilemap[imid]
+			self.addMosaicBlobValues(tile,imid)
+		self.finder_blobs = []
+		self.mblob_values = []
+		if self.mosaicimage is None:
+			self.logger.error('Must have atlas display to find squares')
+			return
+		try:
+			# get current_lm_state ptolemy blobs at finder scale with stats on this atlas
+			blobs = self.getCurrentStateBlobs()
+		except ValueError as e:
+			self.logger.error(e)
+			return
+		# convert to targets and display
+		targets = self.blobStatsTargets(blobs, self.finder_scale_factor)
+		self.logger.info('Number of blobs: %s' % (len(targets),))
+		self.setTargets(targets, 'Blobs')
+		time.sleep(2)
+		mosaic_image_shape = self.mosaicimage.shape
+		self.refreshDatabaseDisplayedTargets()
 
 	def researchSquareWithStats(self, row, col):
 		'''
@@ -292,6 +324,10 @@ class MosaicLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder):
 		self.loadBlobs()
 		for label in self.ext_blobs.keys():
 			imid = int(label)
+			if imid not in self.tileblobmap.keys():
+				# from a different atlas
+				self.ext_blobs.pop(label, None)
+				continue
 			self.tileblobmap[imid] = self.ext_blobs[label]
 			tile = self.tilemap[imid]
 			self.addMosaicBlobValues(tile,imid)
