@@ -198,6 +198,8 @@ class MosaicLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder):
 		'''
 		#TODO: maybe better do multiple square to ptolemy square mapping.
 		# since we want to go from ptolemy square to squarestats.
+		if not self.mosaicimagedata:
+			raise ValueError('No mosaicimagedata')
 		pref_q = leginondata.ScoreSquareFinderPrefsData(image=self.mosaicimagedata)
 		q = leginondata.SquareStatsData(column=col, row=row,score_prefs=pref_q)
 		results = q.query(results=1)
@@ -214,13 +216,37 @@ class MosaicLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder):
 		nearest = stats[magnitudes.index(min(magnitudes))]
 		return nearest
 
+	def confirmMosaicImage(self,imagedata):
+		'''
+		Make sure there is MosaicImageData based on input imagedata. It is required
+		to properly find the square stats and ptolemy square to add to the target.
+		'''
+		# newly acquired mosaic that use auto finding would have self.mosaicimagedata
+		if self.mosaicimagedata:
+			return
+		if not imagedata['list']:
+			raise ValueError('Image not acquired to make mosaic')
+		scale = self.settings['scale size']
+		r = leginondata.MosaicImageData(session=self.session, list=imagedata['list']).query(results=1)
+		if not r:
+			# If the scale size setting is changed without saving image, there is no self.mosaicimagedata
+			#self.publishMosaicImage()
+			raise ValueError('You must Enable auto targeting to use this')
+		else:
+			self.logger.info('Loading existing mosaic image data')
+			self.mosaicimagedata = r[0]
+
 	def mosaicToTarget(self, typename, row, col, **kwargs):
 		'''
 		Convert and publish the mosaic position to targetdata of the tile image.
 		'''
 		imagedata, drow, dcol = self._mosaicToTarget(row, col)
+		# must have self.mosaicimagedata to researchSquareWithStats
+		self.confirmMosaicImage(imagedata)
 		# TODO add SquareStatsData that contains ptolemy merging list in targetdata
 		square = self.researchSquareWithStats(row, col)
+		if square is None:
+			raise ValueError('No ptolemy results to be linked to the target')
 		# publish as targets on most recent version of image to preserve adjusted z
 		recent_imagedata = self.researchImages(list=imagedata['list'],target=imagedata['target'])[-1]
 		targetdata = self.newTargetForTile(recent_imagedata, drow, dcol, type=typename, list=self.targetlist, square=square, **kwargs)

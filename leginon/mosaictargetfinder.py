@@ -363,6 +363,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 
 		if self.targetlist is None:
 			self.targetlist = self.newTargetList()
+			# force to make it in front
 			self.publish(self.targetlist, database=True, dbforce=True)
 
 		if self.hasNewImageVersion():
@@ -396,11 +397,23 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# create a list of targets of each type
 		self.logger.info('Submitting targets...')
 		self.target_order = self.getTargetOrder(self.targetlist)
-		self.publishNewTargetsOfType('acquisition')
-		self.publishNewTargetsOfType('focus')
-		self.publishNewTargetsOfType('preview')
-		self.publishTargetOrder(self.targetlist,self.target_order)
 		try:
+			self.publishNewTargetsOfType('acquisition')
+			self.publishNewTargetsOfType('focus')
+			self.publishNewTargetsOfType('preview')
+		except ValueError as e:
+			self.logger.error('New target creation failed: %s' % e)
+			self.logger.error('Reload tiles with auto finding to correct this.')
+			# trigger onTargetsSubmitted in the gui.
+			self.panel.targetsSubmitted()
+			return
+		except Exception as e:
+			self.logger.error('New target creation failed: %s' % e)
+			# trigger onTargetsSubmitted in the gui.
+			self.panel.targetsSubmitted()
+			return
+		try:
+			self.publishTargetOrder(self.targetlist,self.target_order)
 			self.publish(self.targetlist, pubevent=True)
 		except node.PublishError, e:
 			self.logger.error('Submitting acquisition targets failed')
@@ -665,7 +678,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 
 		self.mosaicimagelist = leginondata.ImageListData(session=self.session, targets=targetlist)
 		self.logger.debug('publishing new mosaic image list')
-		self.publish(self.mosaicimagelist, database=True, dbforce=True)
+		# not to force insertion so mosaicimage and tile images are on the same imagelist
+		self.publish(self.mosaicimagelist, database=True)
 		self.logger.debug('published new mosaic image list')
 		self.setMosaicName(targetlist)
 		return self.mosaicimagelist
@@ -870,12 +884,6 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		Convert and publish the mosaic position to targetdata of the tile image.
 		'''
 		imagedata, drow, dcol = self._mosaicToTarget(row, col)
-		### create a new target list if we don't have one already
-		'''
-		if self.targetlist is None:
-			self.targetlist = self.newTargetList()
-			self.publish(self.targetlist, database=True, dbforce=True)
-		'''
 		# publish as targets on most recent version of image to preserve adjusted z
 		recent_imagedata = self.researchImages(list=imagedata['list'],target=imagedata['target'])[-1]
 		targetdata = self.newTargetForTile(recent_imagedata, drow, dcol, type=typename, list=self.targetlist, **kwargs)
