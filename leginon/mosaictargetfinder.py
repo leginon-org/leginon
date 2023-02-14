@@ -191,6 +191,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# wait until addTile thread is finished.
 		while self.autofinderlock.locked():
 			time.sleep(0.5)
+		while len(self.mosaic.tiles) < 1:
+			self.logger.info('waiting for at least one mosaic tile to create mosaic image')
+			time.sleep(0.2)
 		if self.settings['create on tile change'] in ('all','final',):
 			self.createMosaicImage(True)
 		if not self.hasNewImageVersion():
