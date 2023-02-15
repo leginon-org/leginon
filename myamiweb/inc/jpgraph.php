@@ -4344,6 +4344,7 @@ class LinearTicks extends Ticks {
             }
         }
         else {
+		$precision = abs ($precision);  # wjr BUGFIX IN LIBRARY from stackoverflow
             $l = sprintf('%01.'.$precision.'f',round($aVal,$precision));
         }
 

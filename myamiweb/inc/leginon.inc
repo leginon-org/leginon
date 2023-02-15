@@ -660,16 +660,6 @@ class leginondata {
 		return array_merge($defaulttypes, $types);
 	}
 
-	function getIsAutoSession($sessionId) {
-		$has_AutoSessionData = $this->mysql->isTable('AutoSessionData');
-		if (!$has_AutoSessionData) return false;
-		$q="select * from AutoSessionData "
-			."where `REF|SessionData|session` = '$sessionId' ";
-		$r = $this->mysql->getSQLResult($q);
-		$is_auto = (is_array($r) && count($r) > 0) ? true:false;
-		return $is_auto;
-	}
-
 	function hasManualImages($sessionId) {
 		$q="select * from AcquisitionImageData "
 			."where `REF|SessionData|session` = '$sessionId' "
@@ -1556,7 +1546,8 @@ class leginondata {
 		return $imageinfo;
 	}
 
-	function getImageBeamTilt($imgid, $bt0) {
+	#function getImageBeamTilt($imgid, $bt0) {  wjr fix php 7
+	function getImageBeamTilt($imgid) {
 		// Get beam tilt from image shift coma calibration.  Returns 0,0 if
 		// no calibration.
 		$imginfo = $this->getImageInfo($imgid);

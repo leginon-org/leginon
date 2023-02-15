@@ -2572,7 +2572,7 @@ class particledata {
 		return $data;
 	}
 
-	function getShiftDistancesFromPositions($data)
+	function getShiftDistancesFromPositions($data,$numpoints)
 	{
 		$distances = array();
 		$i = 0;
@@ -2582,6 +2582,9 @@ class particledata {
 			$distance = hypot($p0['x']-$p1['x'], $p0['y']-$p1['y']);
 			$distances[] = $distance;
 			$i += 1;
+			if (( $i > $numpoints) and ($numpoints > 1)) {
+				break;
+			}
 		}
 		return $distances;
 	}

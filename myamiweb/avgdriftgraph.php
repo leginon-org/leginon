@@ -99,6 +99,7 @@ if (!$datax && !$datay) {
 		$graph->Add($p1);
 
 	}
+	$graph->SetMarginColor('white');    # WJR
 	$source = $graph->Stroke(_IMG_HANDLER);
 }
 resample($source, $width, $height);
