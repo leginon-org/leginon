@@ -228,7 +228,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			if self.isAboveImageNumberLimit():
 				self.logger.info('Image number limit reached. Stop processing TargetList')
 				self.setStatus('idle')
-			return
+				return
 		self.setStatus('processing')
 		mytargettype = self.settings['process target type']
 		### get targets that belong to this target list

@@ -184,10 +184,10 @@ class TargetHandler(object):
 		dequeuedquery = leginondata.DoneImageTargetListData(list=targetlist)
 		dequeuedlists = self.research(datainstance=dequeuedquery)
 		if len(dequeuedlists) > 0:
-			self.logger.info('targetlist id %d in DoneTargetLIst' % listid)
+			self.logger.info('targetlist id %d in DoneTargetList' % listid)
 			return True
 		else:
-			self.logger.info('targetlist id %d not in DoneTargetLIst' % listid)
+			self.logger.info('targetlist id %d not in DoneTargetList' % listid)
 			return False
 
 	def queueIdleFinish(self):
