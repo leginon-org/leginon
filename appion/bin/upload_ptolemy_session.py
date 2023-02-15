@@ -5,6 +5,7 @@ from appionlib import appionScript, apDisplay
 from appionlib import apDDResult
 from appionlib.apCtf import ctfdb
 
+
 class PtolemySessionUploader(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
@@ -30,11 +31,10 @@ class PtolemySessionUploader(appionScript.AppionScript):
 
 	#=====================.
 	def start(self):
-		print(self.sessiondata)
-		print(self.params)
+		self.short_hole_image_ids = []
 		atlases = self.getGridAtlasList()
 		for a in atlases:
-			print a.dbid
+			print(a.dbid)
 			self.processGridAtlas(a)
 		self.processVisitedHoles()
 
@@ -53,7 +53,6 @@ class PtolemySessionUploader(appionScript.AppionScript):
 		squares = leginondata.PtolemySquareData(session=self.sessiondata,grid_id=grid_id).query()
 		tile_ids = list(set(map((lambda x: x['tile_id']), squares)))
 		tile_ids.sort()
-		tile_ids.reverse()
 		print('processing %d tiles from mosaic %s' % (len(tile_ids), imagelist['targets']['label']))
 		for t in tile_ids:
 			print('processing tile image %d' % t)
@@ -68,8 +67,9 @@ class PtolemySessionUploader(appionScript.AppionScript):
 		holes = leginondata.PtolemyHoleData(session=self.sessiondata).query()
 		hole_image_ids = list(set(map((lambda x: x['image'].dbid), holes)))
 		hole_image_ids.sort()
-		hole_image_ids.reverse()
-		for t in hole_image_ids:
+		# you may shorten the list by using a subset
+		self.short_hole_image_ids = list(hole_image_ids)
+		for t in self.short_hole_image_ids:
 			print('processing mm image %d' % t)
 			hole_image = leginondata.AcquisitionImageData().direct_query(t)
 			pref = leginondata.ScoreTargetFinderPrefsData(image=hole_image).query(results=1)
@@ -94,6 +94,11 @@ class PtolemySessionUploader(appionScript.AppionScript):
 	def processImage(self, imgdata):
 		if not imgdata['target']['ptolemy_hole']:
 			apDisplay.printWarning('Not ptolemy active learning image')
+			self.icedata = None
+			self.ctfvalue = None
+			return
+		if imgdata['target']['image'].dbid not in self.short_hole_image_ids:
+			apDisplay.printWarning('Not from short list of hole image')
 			self.icedata = None
 			self.ctfvalue = None
 			return

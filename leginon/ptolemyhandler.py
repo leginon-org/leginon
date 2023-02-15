@@ -28,7 +28,7 @@ def push_lm(imagedata):
 	# Use imagedata.dbid as tile_id for ptolemy
 	payload={'image': a.tolist(), 'grid_id':imagelist_id, 'tile_id':image_id}
 	debug_print("----------")
-	debug_print('grid_id',payload['grid_id'],'tile_id',payload['tile_id'])
+	debug_print('grid_id:%d, tile_id:%d' % (payload['grid_id'],payload['tile_id']))
 	payload = json.dumps(payload)
 	debug_print("requests.post(BASEURL + '/push_lm',payload")
 	r=requests.post(BASEURL + '/push_lm', payload)
@@ -77,11 +77,16 @@ def _read_lm_state_csv(csv_dicts):
 			debug_print(r)
 		#vertices are convert to {'vert_1':(x,y),....}
 		data['vertices'] = []
-		for v in vertice_keys:
-			if v[0] in r.keys():
-				vname = v[0][:-2]
-				value = float(r[v[0]]),float(r[v[1]])
-				data['vertices'].append(value)
+		try:
+			for v in vertice_keys:
+				if v[0] in r.keys():
+					vname = v[0][:-2]
+					value = float(r[v[0]]),float(r[v[1]])
+					data['vertices'].append(value)
+		except:
+			# unreadable when the square is out of square_ids range
+			debug_print(r)
+			continue
 		data['image_id'] = data['tile_id']
 		all_data.append(data)
 	return all_data
@@ -155,14 +160,14 @@ def push_and_evaluate_mm(imagedata):
 			'square_id':square_id,
 			'mm_img_id':mm_img_id,
 	}
-	debug_print "-------"
-	debug_print('grid_id',payload['grid_id'],'tile_id',payload['tile_id'],'square_id',payload['square_id'],'mm_img_id',payload['mm_img_id'])
+	debug_print("-------")
+	debug_print('grid_id:%d, tile_id:%d, square_id:%d, mm_img_id:%d' % (payload['grid_id'],payload['tile_id'],payload['square_id'],payload['mm_img_id']))
 	payload = json.dumps(payload)
 	r = requests.post(BASEURL + '/push_and_evaluate_mm', payload)
 	debug_print("requests.post(BASEURL + '/push_and_evaluate_mm', payload)")
 	data=csv.DictReader(io.StringIO(r.json()))
 	jsondict = _read_mm_state_csv(data)
-	debug_print('hole_ids',list(map((lambda x: x['hole_id']),jsondict)))
+	debug_print('hole_ids %s' % (list(map((lambda x: x['hole_id']),jsondict))))
 	return jsondict
 
 def visit_square(square_id):
