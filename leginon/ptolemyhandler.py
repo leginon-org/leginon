@@ -7,10 +7,18 @@ import io
 import csv
 
 BASEURL = 'http://127.0.0.1:8000'
+DEBUG = False
+
+def debug_print(msg):
+	if DEBUG:
+		print(msg)
 
 def initialize():
 	payload={'historical_state_paths':[]}
+	debug_print("----------")
+	debug_print(payload)
 	payload = json.dumps(payload)
+	debug_print("requests.post(BASEURL + '/initialize_new_session', data=payload)")
 	requests.post(BASEURL + '/initialize_new_session', data=payload)
 
 def push_lm(imagedata):
@@ -19,7 +27,10 @@ def push_lm(imagedata):
 	a = imagedata['image']
 	# Use imagedata.dbid as tile_id for ptolemy
 	payload={'image': a.tolist(), 'grid_id':imagelist_id, 'tile_id':image_id}
+	debug_print("----------")
+	debug_print('grid_id',payload['grid_id'],'tile_id',payload['tile_id'])
 	payload = json.dumps(payload)
+	debug_print("requests.post(BASEURL + '/push_lm',payload")
 	r=requests.post(BASEURL + '/push_lm', payload)
 
 def _read_csv_row(r):
@@ -32,7 +43,7 @@ def _read_csv_row(r):
 	data = {}
 	for k in int_keys:
 		if k in r.keys():
-			data[k] = int(r[k])
+			data[k] = int(float(r[k]))
 	for k in float_keys:
 		if k in r.keys():
 			if r[k] != '':
@@ -60,7 +71,10 @@ def _read_lm_state_csv(csv_dicts):
 	vertice_keys = [['vert_1_x','vert_1_y'],['vert_2_x','vert_2_y'],['vert_3_x','vert_3_y'],['vert_4_x','vert_4_y']]
 	all_data = []
 	for r in csv_dicts:
-		data = _read_csv_row(r)
+		try:
+			data = _read_csv_row(r)
+		except:
+			debug_print(r)
 		#vertices are convert to {'vert_1':(x,y),....}
 		data['vertices'] = []
 		for v in vertice_keys:
@@ -81,13 +95,22 @@ def _read_mm_state_csv(csv_dicts):
 	return all_data
 
 def current_lm_state():
+	debug_print("requests.get(BASEURL + '/current_lm_state'")
 	r=requests.get(BASEURL + '/current_lm_state')
 	data=csv.DictReader(io.StringIO(r.json()))
 	return _read_lm_state_csv(data)
 
+def save_state(path):
+	payload={'path': path}
+	payload = json.dumps(payload)
+	requests.post(BASEURL + '/save_state', payload)
+
 def set_noice_hole_intensity(value):
 	payload={'value': float(value)}
+	debug_print("----------")
+	debug_print(payload)
 	payload = json.dumps(payload)
+	debug_print("requests.post(BASEURL + '/set_noice_hole_intensity', payload")
 	requests.post(BASEURL + '/set_noice_hole_intensity', payload)
 
 def get_grid_tile_image(r):
@@ -121,7 +144,7 @@ def push_and_evaluate_mm(imagedata):
 	if not grid_tile_image:
 		raise ValueError('Ptolemy active learning can not handle simulated target')
 	mm_img_id = imagedata.dbid
-	grid_id = grid_tile_image['target']['list'].dbid
+	grid_id = grid_tile_image['list'].dbid
 	tile_id = grid_tile_image.dbid
 	square_id = get_ptolemy_square(imagedata)['square_id']
 	a = imagedata['image']
@@ -132,11 +155,27 @@ def push_and_evaluate_mm(imagedata):
 			'square_id':square_id,
 			'mm_img_id':mm_img_id,
 	}
+	debug_print "-------"
+	debug_print('grid_id',payload['grid_id'],'tile_id',payload['tile_id'],'square_id',payload['square_id'],'mm_img_id',payload['mm_img_id'])
 	payload = json.dumps(payload)
 	r = requests.post(BASEURL + '/push_and_evaluate_mm', payload)
+	debug_print("requests.post(BASEURL + '/push_and_evaluate_mm', payload)")
 	data=csv.DictReader(io.StringIO(r.json()))
 	jsondict = _read_mm_state_csv(data)
+	debug_print('hole_ids',list(map((lambda x: x['hole_id']),jsondict)))
 	return jsondict
+
+def visit_square(square_id):
+	"""
+	Mark a square visited. visit_holes will automark square as visited, but
+	this may be usefule when no holes are picked because of an empty square is rejected
+	by leginon.
+	"""
+	payload = {
+		'square_id':square_id,
+	}
+	payload = json.dumps(payload)
+	r = requests.post(BASEURL + '/visit_square', payload)
 
 def visit_holes(hole_ids, ctfs, ice_thicknesses):
 	payload = {
@@ -144,8 +183,17 @@ def visit_holes(hole_ids, ctfs, ice_thicknesses):
 			'ctfs': ctfs,
 			'ice_thicknesses': ice_thicknesses,
 	}
+	debug_print('--------')
+	debug_print(payload)
 	payload = json.dumps(payload)
+	debug_print("r = requests.post(BASEURL + '/visit_holes', payload)")
 	r = requests.post(BASEURL + '/visit_holes', payload)
+
+def select_next_square(grid_id=-1):
+	debug_print("r=requests.post(BASEURL + '/select_next_square', data=json.dumps({'value':%d}))" % grid_id)
+	r=requests.post(BASEURL + '/select_next_square', data=json.dumps({'value':grid_id}))
+	data=csv.DictReader(io.StringIO(r.json()))
+	return _read_lm_state_csv(data)
 
 if __name__=='__main__':
 	initialize()
