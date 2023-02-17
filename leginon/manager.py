@@ -202,7 +202,7 @@ class Manager(node.Node):
 		if gridslot and auto_task is not None:
 			self.autorun = True
 			self.autogridslot = gridslot
-			# None, 'atlas','full'
+			# None, 'atlas','full','submit squares'
 			self.auto_task = auto_task
 		if stagez is not None:
 			# float
@@ -229,7 +229,7 @@ class Manager(node.Node):
 	def setSessionByName(self, name):
 		new_session = self.getSessionByName(name)
 		if not new_session:
-			print 'Cannot find existing session %s to set' % (name,)
+			print('Session %s must exist to set' % (name,))
 		self.session = new_session
 		## do every node
 		do = list(self.initializednodes)
@@ -954,8 +954,9 @@ class Manager(node.Node):
 
 	def handleAutoDoneNotification(self, ievent):
 		if ievent['task'] == 'atlas':
+			# atlas done either from creation or reload
 			self.auto_atlas_done.set()
-		if self.auto_task == 'full':
+		if self.auto_task in ('full','submit squares'):
 			# since all acquisition node send this event, make sure it is the right one.
 			if self.mosaic_target_receiver and ievent['node'] == self.mosaic_target_receiver:
 				self.auto_done.set()
@@ -1199,7 +1200,6 @@ class Manager(node.Node):
 				return
 			except Exception:
 				raise
-			self.auto_class_names = ['PresetsManager', 'TEMController','MosaicTargetMaker']
 			self.auto_class_aliases = self.getAutoStartNodeNames(app)
 			self.setTimeoutTimerStatus(True)
 			self.autoStartApplication(self.auto_task)
@@ -1267,15 +1267,16 @@ class Manager(node.Node):
 			ievent = event.LoadAutoLoaderGridEvent()
 			ievent['slot name'] = self.autogridslot
 			self.outputEvent(ievent, node_name, wait=True, timeout=None)
-		# acquire grid atlas
-		node_name = self.auto_class_aliases['MosaicTargetMaker']
-		if node_name is not None:
-			ievent = event.MakeTargetListEvent()
-			# Set grid to None for now since we don't have a system for
-			# passing emgrid info, yet.
-			ievent['grid'] = None
-			ievent['stagez'] = self.autostagez
-			self.outputEvent(ievent, node_name, wait=False, timeout=None)
+		if task != 'submit squares':
+			# acquire grid atlas
+			node_name = self.auto_class_aliases['MosaicTargetMaker']
+			if node_name is not None:
+				ievent = event.MakeTargetListEvent()
+				# Set grid to None for now since we don't have a system for
+				# passing emgrid info, yet.
+				ievent['grid'] = None
+				ievent['stagez'] = self.autostagez
+				self.outputEvent(ievent, node_name, wait=False, timeout=None)
 		# let square finder node knows what the task is.
 		for class_name in self.square_finder_class_names:
 			node_name = self.auto_class_aliases[class_name]
@@ -1286,8 +1287,8 @@ class Manager(node.Node):
 		self.auto_atlas_done.clear()
 		# Listen to atlas finished
 		self.auto_atlas_done.wait()
-		#
-		if task == 'full':
+		# atlas is created and targets either loaded or auto-found.
+		if task in ('full','submit squares'):
 			#submit auto square target and move on.
 			class_names = filter((lambda x: self.auto_class_aliases[x] is not None), self.square_finder_class_names)
 			if class_names:

@@ -77,6 +77,12 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.c2_aperture_reset_value = 'unknown'
 
 	def processData(self, newdata):
+		if self.settings['limit image']:
+			if self.isAboveImageNumberLimit():
+				self.logger.info('Image number limit reached. Skip processing')
+				self.reportTargetListDone(newdata, 'aborted')
+				self.setStatus('idle')
+				return
 		if isinstance(newdata, leginondata.ImageTargetListData):
 			self.clearBeamPath()
 			self.setStatus('processing')
@@ -218,6 +224,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.remote_queue_count.setQueueCount(count)
 
 	def processTargetList(self, newdata):
+		if self.settings['limit image']:
+			if self.isAboveImageNumberLimit():
+				self.logger.info('Image number limit reached. Stop processing TargetList')
+				self.setStatus('idle')
+				return
 		self.setStatus('processing')
 		mytargettype = self.settings['process target type']
 		### get targets that belong to this target list
@@ -459,12 +470,46 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		index_order = map((lambda x:target_numbers.index(x)), valid_order)
 		return index_order
 
+	def appendUpdatedTargetsFromAtlas(self, remain, full):
+		# only for the same type of target
+		old_count = len(full)
+		if old_count <= 1:
+			return
+		last_old = full[-1]
+		last_number = last_old['number']
+		targets = leginondata.AcquisitionImageTargetData(status='new',list=last_old['list']).query()
+		targets.reverse()
+		for t in targets:
+			if t['number'] > last_number:
+				full.append(t)
+				remain.append(t)
+
+	def isAboveImageNumberLimit(self):
+		preset_name=self.settings['limit preset']
+		if preset_name is None:
+			self.logger.error('preset for limiting acquisition is not set')
+			return False
+		availablepresets = self.getPresetNames()
+		if preset_name not in availablepresets:
+			self.logger.error('preset for limiting acquisition is not valid')
+			return False
+		qpreset = leginondata.PresetData(name=preset_name,session=self.session)
+		r = leginondata.AcquisitionImageData(preset=qpreset).query()
+		if len(r) >= self.settings['limit number']:
+			return True
+		return False
+
 	def processGoodTargets(self, good_targets):
-		good_target_count = len(good_targets)
 		# Approach 1: order targets 
-		remaining_targets = good_targets
+		remaining_targets = list(good_targets)
 		targetliststatus = 'success'
 		while True:
+			try:
+				is_from_mosaic=remaining_targets[0]['image']['target']['list']['mosaic']
+			except Exception as e:
+				is_from_mosaic=False
+			if is_from_mosaic:
+				self.appendUpdatedTargetsFromAtlas(remaining_targets, good_targets)
 			index_order = self.makeTargetIndexOrder(remaining_targets)
 			if index_order:
 				i = index_order[0]
@@ -478,6 +523,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			else:
 				# end of good targets
 				break
+			# abort if image number limit reached
+			if self.settings['limit image']:
+				if self.isAboveImageNumberLimit():
+					self.logger.info('Image number limit reached. Stop processing good targets')
+					break
 			# target adjustment may have changed the tilt.
 			if self.getIsResetTiltInList() and self.is_firstimage:
 				# ? Do we need to reset on every target ?

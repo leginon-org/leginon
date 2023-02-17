@@ -2135,6 +2135,9 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('set aperture', bool),
 			('objective aperture',str),
 			('c2 aperture',str),
+			('limit image',bool),
+			('limit preset',str),
+			('limit number',int),
 		)
 	typemap = classmethod(typemap)
 

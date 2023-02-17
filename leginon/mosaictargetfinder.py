@@ -140,6 +140,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.oldsession = self.session
 
 		self.existing_targets = {}
+		self.donetargets = []
 		self.last_xys = [] # last acquisition targets found in autofinder
 		self.mask_xys = []
 		self.clearTiles()
@@ -171,8 +172,27 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.notifyTargetReceiver()
 		self.autoSubmitTargets()
 
+	def autoReloadLastAtlas(self):
+		try:
+			selection = self.getMosaicNames()[0]
+		except IndexError:
+			self.logger.error('No existing mosaic to reload')
+			return
+		self.setMosaicName(selection)
+		self.loadMosaicTiles(selection)
+		# use existing target map to get count of targets
+		# count includes also the done targets
+		count = sum(map((lambda x: len(self.targetmap[x]['acquisition'])), self.targetmap.keys()))
+		# length of self.last_xys is used to make target submission wait for display thread.
+		self.last_xys = range(count-len(self.donetargets))
+		# notify manage atlas and targets are loaded.
+		self.notifyAutoDone('atlas')
+		self.setStatus('idle')
+
 	def handleNotifyTaskType(self, evt):
 		self.autotask_type = evt['task']
+		if self.autotask_type == 'submit squares':
+			self.autoReloadLastAtlas()
 
 	def notifyTargetReceiver(self):
 			'''
@@ -182,7 +202,6 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			evt['receiver'] = self.next_acq_node['node']['alias']
 			self.outputEvent(evt)
 
-	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
 		if targetlistdoneevent:
 			self.logger.debug('Got real targetlistdone event')
@@ -191,6 +210,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# wait until addTile thread is finished.
 		while self.autofinderlock.locked():
 			time.sleep(0.5)
+		while len(self.mosaic.tiles) < 1:
+			self.logger.info('waiting for at least one mosaic tile to create mosaic image')
+			time.sleep(0.2)
 		if self.settings['create on tile change'] in ('all','final',):
 			self.createMosaicImage(True)
 		if not self.hasNewImageVersion():
@@ -270,7 +292,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# IMPORTANT: Don't put back unprocessed but submitted targets
 		# because they will get duplicated.
 		# It will also cause autoSubmitTargets break its while loop
-		# to break too early
+		# too early
 		self.setTargets(xys, 'acquisition')
 		self.setTargets([], 'example')
 		self.logger.info(message)
@@ -617,6 +639,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 
 		#
 		targets, donetargets = self.createExistingPositionTargets()
+		# self.donetargets is used to help confirm targets are all displayed
+		# in autoReloadLastAtlas
+		self.donetargets = donetargets
 		for ttype in targets.keys():
 			self.setTargets(targets[ttype], ttype)
 		self.setTargets(donetargets, 'done')

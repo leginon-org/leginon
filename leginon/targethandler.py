@@ -184,10 +184,10 @@ class TargetHandler(object):
 		dequeuedquery = leginondata.DoneImageTargetListData(list=targetlist)
 		dequeuedlists = self.research(datainstance=dequeuedquery)
 		if len(dequeuedlists) > 0:
-			self.logger.info('targetlist id %d in DoneTargetLIst' % listid)
+			self.logger.info('targetlist id %d in DoneTargetList' % listid)
 			return True
 		else:
-			self.logger.info('targetlist id %d not in DoneTargetLIst' % listid)
+			self.logger.info('targetlist id %d not in DoneTargetList' % listid)
 			return False
 
 	def queueIdleFinish(self):
@@ -226,12 +226,25 @@ class TargetHandler(object):
 				self.queueupdate.clear()
 				self.logger.info('received queue update')
 
-			active = self.getListsInQueue(self.getQueue())
+			# abort if image number limit reached
+			if self.settings['limit image']:
+				if self.isAboveImageNumberLimit():
+					self.logger.info('Image number limit reached. set active queue to 0')
+					active = []
+				else:
+					active = self.getListsInQueue(self.getQueue())
+			else:
+				active = self.getListsInQueue(self.getQueue())
 			self.logger.info('%d targetlists in queue' % len(active))
 			self.postQueueCount(len(active))
 			self.total_queue_left_in_loop = len(active)
 			# process all target lists in the queue
 			for targetlist in active:
+				# abort if image number limit reached
+				if self.settings['limit image']:
+					if self.isAboveImageNumberLimit():
+						self.logger.info('Image number limit reached. stop processing active')
+						break
 				state = self.clearBeamPath()
 				if state == 'stopqueue' or self.inDequeued(targetlist) or self.inDoneTargetList(targetlist):
 					self.logger.info('Queue aborted, skipping target list')
@@ -440,7 +453,10 @@ class TargetHandler(object):
 		scopedata.friendly_update(preset)
 		lastnumber = self.lastTargetNumber(session=self.session, type='simulated')
 		nextnumber = lastnumber + 1
-		newtarget = self.newTarget(drow=0, dcol=0, number=nextnumber, type='simulated', scope=scopedata, preset=preset, grid=grid)
+		# fix for #14305
+		# all simulated targets from the same node will share the same targetlist
+		simu_list = self.newTargetList()
+		newtarget = self.newTarget(drow=0, dcol=0, number=nextnumber, type='simulated', scope=scopedata, preset=preset, grid=grid, list=simu_list)
 		return newtarget
 
 	def getReferenceTarget(self):
