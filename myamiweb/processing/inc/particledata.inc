@@ -1120,6 +1120,8 @@ class particledata {
 			// ScopeEMData timestamp is not changed after DD frame alignment
 			."unix_timestamp(s.`DEF_timestamp`) as unix_timestamp, "
 			."s.`defocus`, "
+			."s.`SUBD|image shift|x` AS is_x, "
+			."s.`SUBD|image shift|y` AS is_y, "
 			."c.`defocus1`, "
 			."c.`defocus2`, "
 			."c.`defocusinit`, "
@@ -1325,11 +1327,13 @@ class particledata {
 			."FROM "
 			."	( "
 			."	SELECT  "
-			."		i.`filename`, "
+			."		i.`filename`AS filename, "
 			."		i.`DEF_id` AS imageid, "
 			."		p.`name`, "
 			."		s.`defocus`, "
 			."		s.`defocus` AS nominal_defocus, "
+			."		s.`SUBD|image shift|x` AS is_x, "
+			."		s.`SUBD|image shift|y` AS is_y, "
 			// ScopeEMData timestamp is not changed after DD frame alignment
 			."    unix_timestamp(s.`DEF_timestamp`) as unix_timestamp, "
 			."		2*ABS(ctf.defocus1-ctf.defocus2)/(ctf.defocus1+ctf.defocus2) AS difference_from_mean, "

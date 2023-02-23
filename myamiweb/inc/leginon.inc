@@ -1561,6 +1561,15 @@ class leginondata {
 		return $result_vector;
 	}
 
+	function calcImageBeamTilt($is_x,$is_y,$m) {
+		// Calculate beam tilt from image shift coma calibration.  
+		// 
+		$matrix = matrix($m[a11],$m[a12],$m[a21],$m[a22]);
+		$vector = array($is_x,$is_y);
+		$result_vector = matrix_multiply($matrix, $vector);
+		return $result_vector;
+	}
+
 	function getPhasePlateInfo($pp_usageId) {
 		if ($this->mysql->isTable('PhasePlateUsageData') && $pp_usageId) {
 			$q = "select * from PhasePlateUsageData where `DEF_id`=".$pp_usageId." ";
