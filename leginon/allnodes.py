@@ -108,6 +108,9 @@ noderegistry.registerNodeClass(Tomography,classtype)
 from tomography.tomography2 import Tomography2
 noderegistry.registerNodeClass(Tomography2,classtype)
 
+from batchacquisition import BatchAcquisition
+noderegistry.registerNodeClass(BatchAcquisition,classtype)
+
 from acquisition import Acquisition
 noderegistry.registerNodeClass(Acquisition,classtype)
 
