@@ -11,7 +11,7 @@ import datetime
 import time
 import imcacheconfig
 import threading
-import Queue
+import queue
 import pyami.fileutil
 
 import sys
@@ -97,18 +97,18 @@ class QueryThread(threading.Thread):
 			# include minimum timestamp on first query only.
 			# after that, only start_id matters
 			if self.query_counter:
-				print ''
-				print 'NO NEW QUERY %d' % self.query_counter
-				print ''
+				print ('')
+				print ('NO NEW QUERY %d' % self.query_counter)
+				print ('')
 				self.query_counter += 1
 				return
 			else:
 				if not self.start_id:
 					self.start_id = self.runQuery(newest_image_query)[0][0]
-				print 'START_ID', self.start_id
+				print ('START_ID', self.start_id)
 				imageid_query = 'AND i.`DEF_id` <= %d' % self.start_id
 		this_query = self.image_query % (instrument_join, imageid_query, time_query,camera_query,direction_query)
-		print 'THISQUERY', this_query
+		print ('THISQUERY', this_query)
 
 		results = self.runQuery(this_query)
 		# filter out results that are already cached
@@ -201,11 +201,11 @@ class ReduxThread(threading.Thread):
 					image1 = None
 				time.sleep(0.5)
 			if image1 is None:
-				print '**Failed to read', task['infilename']
+				print ('**Failed to read', task['infilename'])
 				continue
 
 			# create session directory
-			outfile = still_missing.values()[0]
+			outfile = list(still_missing.values())[0]
 			dirname = os.path.dirname(outfile)
 			pyami.fileutil.mkdirs(dirname)
 
@@ -226,10 +226,10 @@ class ReduxThread(threading.Thread):
 				kwargs['initial_input'] = image1
 				jpg = self.reduxclient.process_kwargs(**kwargs)
 				# save jpeg
-				f = open(still_missing['jpg'], 'w')
+				f = open(still_missing['jpg'], 'wb')
 				f.write(jpg)
 				f.close()
-				print 'done', still_missing['jpg']
+				print ('done', still_missing['jpg'])
 
 			# final power
 			if 'pow' in still_missing:
@@ -239,14 +239,14 @@ class ReduxThread(threading.Thread):
 				kwargs['initial_input'] = image1
 				pow = self.reduxclient.process_kwargs(**kwargs)
 				# save pow jpeg
-				f = open(still_missing['pow'], 'w')
+				f = open(still_missing['pow'], 'wb')
 				f.write(pow)
 				f.close()
-				print 'done', still_missing['pow']
+				print ('done', still_missing['pow'])
 
 
 def run():
-	imagequeue = Queue.Queue()
+	imagequeue = queue.Queue()
 
 	querythread = QueryThread(imagequeue)
 	querythread.daemon = True
@@ -259,7 +259,7 @@ def run():
 	# main thread should run as long as other threads are alive
 	while True:
 		time.sleep(5)
-		if not (querythread.isAlive() and reduxthread.isAlive()):
+		if not (querythread.is_alive() and reduxthread.is_alive()):
 			break
 
 if __name__ == '__main__':

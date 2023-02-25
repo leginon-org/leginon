@@ -19,6 +19,7 @@ def noop(mrc):
 def _legacy(mrc):
     # type :: (str) -> str
     jpg = mrc.replace("/leginon/", "/cache/")
+    jpg = jpg.replace("/rawdata", "/")
     return jpg.replace(".mrc", ".jpg")
 
 

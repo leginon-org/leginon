@@ -1,8 +1,6 @@
 # standard lib
 import os, sys
 
-import scipy.misc
-
 # myami
 import pyami.mrc
 import pyami.numpil
@@ -75,7 +73,7 @@ class Read(Pipe):
 			if info:
 				result = pyami.numpil.readInfo(filename)
 			else:
-				result = scipy.misc.imread(filename)
+				result = pyami.numpil.read(filename)
 				if len(result.shape) < 2:
 					# some combination of scipy os gives pngimagefile object as the scaler item of array
 					result = pyami.numpil.im2numpy(result.item())

@@ -30,14 +30,14 @@ def getOptions():
 	(options, args) = parser.parse_args()
 
 	if options.sinedonname is None:
-		print "Please provide a sinedon name of database, e.g., appiondata"
+		print ("Please provide a sinedon name of database, e.g., appiondata")
 	if options.modulename is None:
-		print "Please provide a module name of database, e.g., appionlib.appiondata"
+		print ("Please provide a module name of database, e.g., appionlib.appiondata")
 
-	print "Using sinedon name: "+options.sinedonname
-	print "Using module name: "+options.modulename
+	print ("Using sinedon name: "+options.sinedonname)
+	print ("Using module name: "+options.modulename)
 	if options.dbname is not None:
-		print "Using database name: "+options.dbname
+		print ("Using database name: "+options.dbname)
 
 	return options
 
@@ -76,7 +76,7 @@ def definitionToXml(xmlf, tablename, definition):
 def makeTables(sinedonname,modulename,dbname=None,xmlfile=None,check_exist=False):
 	### use alternate db name if desired
 	if dbname is not None:
-		print "setting alternate database name"
+		print ("setting alternate database name")
 		sinedon.setConfig(sinedonname, db=dbname)
 
 	### connect to DB
@@ -91,7 +91,7 @@ def makeTables(sinedonname,modulename,dbname=None,xmlfile=None,check_exist=False
 	### get module members
 	funcs = inspect.getmembers(tableData, inspect.isclass)
 
-	print "Found %d classes in module"%(len(funcs))
+	print ("Found %d classes in module"%(len(funcs)))
 	#print funcs
 
 	### parse members
@@ -116,14 +116,14 @@ def makeTables(sinedonname,modulename,dbname=None,xmlfile=None,check_exist=False
 		if check_exist:
 			try:
 				dbd.diffSQLTable(tablename,definition)
-			except (pymysql.err.ProgrammingError, pymysql.err.OperationalError), e:
+			except:
 				errno = e.args[0]
 				## some version of mysqlpython parses the exception differently
 				if not isinstance(errno, int):
 					errno = errno.args[0]
 				## 1146:  table does not exist
 				if errno in (1146,):
-					print tablename,' does not yet exist, and will be created'
+					print (tablename,' does not yet exist, and will be created')
 					create_flag=True
 		else:
 			create_flag=True
@@ -138,7 +138,7 @@ def makeTables(sinedonname,modulename,dbname=None,xmlfile=None,check_exist=False
 		xmlf.write(" </definition>\n</defaulttables>\n")
 		xmlf.close()
 
-	print "Created %d tables"%(count)
+	print ("Created %d tables"%(count))
 
 #=================
 #=================

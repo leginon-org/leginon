@@ -44,7 +44,7 @@ class RequestHandler(socketserver.StreamRequestHandler):
 			error = 'REDUX ERROR %d %s'%(time.time(), e)
 			logger.error(error)
 			logger.error(traceback.format_exc())
-			self.wfile.write(error)
+			self.wfile.write(error).encode()
 		finally:
 			self.wfile.flush()
 

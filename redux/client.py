@@ -28,8 +28,8 @@ class NetworkClient(Client):
 		sock.connect((self.host, self.port))
 		wfile = sock.makefile('wb')
 		rfile = sock.makefile('rb')
-		wfile.write(request)
-		wfile.write('\n')
+		wfile.write(request.encode())
+		wfile.write('\n'.encode())
 		wfile.flush()
 		response = rfile.read()
 		sock.close()
@@ -139,7 +139,7 @@ def run():
 	else:
 		result = client.process_kwargs(**kwargs)
 		
-	sys.stdout.write(result)
+	sys.stdout.buffer.write(result)
 
 if __name__ == '__main__':
 	run()

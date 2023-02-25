@@ -69,7 +69,6 @@ def runExternalBlobFinderSubprocess(imagearray, scoring_script, mosaic_image_pat
 	outpath = os.path.join(outdir, '%s.json' % job_basename)
 	if os.path.isfile(outpath):
 		os.remove(outpath)
-	scoring_script = self.settings['scoring script']
 	shell_source = '/bin/bash'
 	if scoring_script.endswith('csh'):
 		shell_source = '/bin/csh'
