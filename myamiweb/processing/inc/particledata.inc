@@ -1120,6 +1120,8 @@ class particledata {
 			// ScopeEMData timestamp is not changed after DD frame alignment
 			."unix_timestamp(s.`DEF_timestamp`) as unix_timestamp, "
 			."s.`defocus`, "
+			."s.`SUBD|image shift|x` AS is_x, "
+			."s.`SUBD|image shift|y` AS is_y, "
 			."c.`defocus1`, "
 			."c.`defocus2`, "
 			."c.`defocusinit`, "
@@ -1325,11 +1327,13 @@ class particledata {
 			."FROM "
 			."	( "
 			."	SELECT  "
-			."		i.`filename`, "
+			."		i.`filename`AS filename, "
 			."		i.`DEF_id` AS imageid, "
 			."		p.`name`, "
 			."		s.`defocus`, "
 			."		s.`defocus` AS nominal_defocus, "
+			."		s.`SUBD|image shift|x` AS is_x, "
+			."		s.`SUBD|image shift|y` AS is_y, "
 			// ScopeEMData timestamp is not changed after DD frame alignment
 			."    unix_timestamp(s.`DEF_timestamp`) as unix_timestamp, "
 			."		2*ABS(ctf.defocus1-ctf.defocus2)/(ctf.defocus1+ctf.defocus2) AS difference_from_mean, "
@@ -2572,7 +2576,7 @@ class particledata {
 		return $data;
 	}
 
-	function getShiftDistancesFromPositions($data)
+	function getShiftDistancesFromPositions($data,$numpoints)
 	{
 		$distances = array();
 		$i = 0;
@@ -2582,6 +2586,9 @@ class particledata {
 			$distance = hypot($p0['x']-$p1['x'], $p0['y']-$p1['y']);
 			$distances[] = $distance;
 			$i += 1;
+			if (( $i > $numpoints) and ($numpoints > 1)) {
+				break;
+			}
 		}
 		return $distances;
 	}

@@ -626,6 +626,7 @@ class PresetsManager(node.Node):
 				scopedata['tem energy filter width'] = None
 				cameradata['energy filter'] = None
 				cameradata['energy filter width'] = None
+				cameradata['energy filter offset'] = None
 
 				scopedata['aperture size'] = None
 			scopedata['defocus'] = mydefocus
