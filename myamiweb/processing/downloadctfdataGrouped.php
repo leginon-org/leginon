@@ -98,6 +98,7 @@ foreach ($ctfdatas as $ctfdata) {
 		}
 		if ( $relion >= 3 ) {
 			$beamtiltdata = $leginon->calcImageBeamTilt($ctfdata['is_x'],$ctfdata['is_y'],$m);
+			#$beamtiltdata = $leginon->getImageBeamTilt($imgid);
 			$data_string .= sprintf(" %.6f", $beamtiltdata['1'] * 1000); #mrad
 			$data_string .= sprintf(" %.6f", $beamtiltdata['2'] * 1000); #mrad
 		}
@@ -144,7 +145,8 @@ if ($rversion == '3.1') $rversion = 'relion31';
 else $rversion = 'relion3';
 header("Content-Disposition: attachment; filename=$downname;");
 
-$dir = sys_get_temp_dir();
+#$dir = sys_get_temp_dir();
+$dir = TEMP_DIR;
 $tmp = tempnam($dir, $downname);
 $handle = fopen($tmp, "w");
 foreach ($data as $line) {
@@ -152,7 +154,8 @@ foreach ($data as $line) {
 }
 fclose($handle);
 #var_dump('cd '.$dir.'; /usr/local/bin/tiltgroup_wrangler_cli.py '.$tmp.' -n_kmeans='.$ncluster.' -r_version='.$rversion );
-$output = exec('cd '.$dir.'; /usr/local/bin/tiltgroup_wrangler_cli.py '.$tmp.' -n_kmeans='.$ncluster.' -r_version='.$rversion );
+$act_py = ACTIVATE_PYTHON;
+$output = exec('cd '. $dir . ';' . $act_py .  'tiltgroup_wrangler_cli.py '.$tmp.' -n_kmeans='.$ncluster.' -r_version='.$rversion . '>& ' . $dir . 'downloadctfdatagrouped.log');
 $file = file_get_contents($dir.'/tw_out.star');
 echo $file;
 ?>
