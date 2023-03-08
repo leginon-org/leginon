@@ -130,7 +130,8 @@ if ($ctfrundatas) {
 		$ctfinfo = $ctf->getBestCtfInfoByResolution($expId, $minconf);
 
 		// store ctfinfo in file to speed things up
-		$ctff = TEMP_DIR.time().".json";
+		$temp_dir = defined("TEMP_DIR") ? TEMP_DIR:"/tmp/";
+		$ctff = $temp_dir . time().".json";
 		file_put_contents($ctff,json_encode($ctfinfo));
 
 		$numctfest = count($ctfinfo);

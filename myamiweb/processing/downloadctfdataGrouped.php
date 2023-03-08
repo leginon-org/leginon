@@ -146,7 +146,8 @@ else $rversion = 'relion3';
 header("Content-Disposition: attachment; filename=$downname;");
 
 #$dir = sys_get_temp_dir();
-$dir = TEMP_DIR;
+#$dir = TEMP_DIR;
+$dir = defined("TEMP_DIR") ? TEMP_DIR:"/tmp/";
 $tmp = tempnam($dir, $downname);
 $handle = fopen($tmp, "w");
 foreach ($data as $line) {
@@ -154,7 +155,7 @@ foreach ($data as $line) {
 }
 fclose($handle);
 #var_dump('cd '.$dir.'; /usr/local/bin/tiltgroup_wrangler_cli.py '.$tmp.' -n_kmeans='.$ncluster.' -r_version='.$rversion );
-$act_py = ACTIVATE_PYTHON;
+$act_py = defined("ACTIVATE_PYTHON")? ACTIVATE_PYTHON:"";
 $output = exec('cd '. $dir . ';' . $act_py .  'tiltgroup_wrangler_cli.py '.$tmp.' -n_kmeans='.$ncluster.' -r_version='.$rversion . '>& ' . $dir . 'downloadctfdatagrouped.log');
 $file = file_get_contents($dir.'/tw_out.star');
 echo $file;
