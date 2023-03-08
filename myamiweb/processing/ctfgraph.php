@@ -79,7 +79,7 @@ foreach($ctfinfo as $t) {
 		continue;
 
 	$imageid = $t['imageid'];
-	$imageinfo = $leginondata->getMinimalImageInfo($t['imageid']);
+	#$imageinfo = $leginondata->getMinimalImageInfo($t['imageid']);
 
 	if ($pp ) {
 		$ppinfo = $ctf->getPhasePlateInfoFromImageId($imageid);
@@ -88,9 +88,9 @@ foreach($ctfinfo as $t) {
 	$data[$imageid] = $value;
 	$where[] = "DEF_id=".$id;
 	if ($f!='astig_distribution') {
-		$ndata[]=array('unix_timestamp' => $t['unix_timestamp'], 'image_id' => $t['imageid'], 'filename'=>$imageinfo['filename'], "$f"=>$value);
+		$ndata[]=array('unix_timestamp' => $t['unix_timestamp'], 'image_id' => $t['imageid'],  "$f"=>$value);
 	} else {
-		$ndata[]=array('unix_timestamp' => $t['unix_timestamp'], 'image_id' => $t['imageid'], 'filename'=>$imageinfo['filename'], 'astig_x' => $t['astig_x'], "astig_y"=>$t['astig_y']);
+		$ndata[]=array('unix_timestamp' => $t['unix_timestamp'], 'image_id' => $t['imageid'], 'astig_x' => $t['astig_x'], "astig_y"=>$t['astig_y']);
 	}
 }
 if ($f == 'astig_distribution') {
@@ -105,9 +105,11 @@ if ($histogram == true && $histaxis == 'x')
 	$axes = array($display_y,$display_x);
 $dbemgraph = new dbemgraph($ndata, $axes[0], $axes[1]);
 //plot type
-$is_lineplot = ($f == 'astig_distribution') ? false:true;
+// $is_lineplot = ($f == 'astig_distribution') ? false:true;
+// wjr I don;t like the line plots
+$is_lineplot = false;
 $dbemgraph->lineplot=$is_lineplot;
-$graph_title = ($f == 'ctffind4_resolution') ? 'package resolution' : $f;
+$graph_title = ($f == 'ctffind4_resolution') ? 'CTFFIND4 resolution' : $f;
 $graph_title = ($preset) ? $graph_title." for preset $preset": $graph_title;
 $dbemgraph->title=$graph_title;
 //axis titles
@@ -123,7 +125,7 @@ $ytitle = ($cutoff) ? $ytitle.' avg defocus (um)' : $ytitle.$yunit;
 $dbemgraph->yaxistitle= $ytitle;
 
 if ($viewdata) {
-	$dbemgraph->dumpData(array('unix_timestamp','image_id','filename',$display_x, $display_y));
+	$dbemgraph->dumpData(array('unix_timestamp','image_id',$display_x, $display_y));
 }
 if ($histogram) {
 	$dbemgraph->histogram=true;

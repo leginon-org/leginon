@@ -8,11 +8,14 @@
  */
 
 require_once "inc/leginon.inc";
-
 $defaultId= 1445;
 $sessionId= ($_GET['Id']) ? $_GET['Id'] : $defaultId;
 $maxrate = (is_numeric($_POST['maxr'])) ? $_POST['maxr'] 
 		: (is_numeric($_GET['maxr']) ? $_GET['maxr'] : false);
+#$slow=($_POST['slow']) ? int ($_POST['slow']) : 0;
+#$sloo=($_GET['slow']);
+#$slow = (is_numeric($_POST['slow'])) ? $_POST['slow'] 
+#		: (is_numeric($_GET['slow']) ? $_GET['slow'] : 0);
 
 if ($driftdata = $leginondata->getDriftDataFromSessionId($sessionId)) {
 foreach ($driftdata as $drift) {
@@ -38,7 +41,7 @@ function getFrameDriftGraphs($expId) {
 		foreach($align_source_presets as $preset) {
 			if ( strstr($preset['name'],'-') != false ) continue;
 			$html .= "<tr><td colspan='3'>";
-			$html .= divtitle("Frame Movement of Movies Acquire by ".$preset['name']." Preset");
+			$html .= divtitle("Frame Movement of Movies Acquire by ".$preset['name']." Preset ");
 			$html .= "</td></tr>";
 			$html .= "<tr>";
 			$graph_prefix = 'dddriftstatsgraph.php?expId='.$expId.'&preset='.$preset['name'];
@@ -49,17 +52,17 @@ function getFrameDriftGraphs($expId) {
 			$html .= "<tr>";
 			$html .= "<td>";
 			$html .= "<a href='".$graph_prefix."'>";
-			$html .= "<img border='0' src='".$graph_prefix."&w=512'>";
+			$html .= "<img border='0' src='".$graph_prefix."'";
 			$html .= "</a>\n";
 			$html .= "</td>\n";
 			$html .= "</tr>\n";
-			$html .= "<tr>";
-			$html .= "<td>";
-			$html .= "<a href='".$graph_prefix."&hg=1'>";
-			$html .= "<img border='0' src='".$graph_prefix."&hg=1&w=512'>";
-			$html .= "</a>\n";
-			$html .= "</td>\n";
-			$html .= "</tr>\n";
+			#$html .= "<tr>";
+			#$html .= "<td>";
+			#$html .= "<a href='".$graph_prefix."&hg=1'>";
+			#$html .= "<img border='0' src='".$graph_prefix."&hg=1&w=512'>";
+			#$html .= "</a>\n";
+			#$html .= "</td>\n";
+			#$html .= "</tr>\n";
 		}
 	} else $html .= "no Frame Movement information available";
 		$html .= "</td>";

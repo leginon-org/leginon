@@ -475,7 +475,9 @@ $sessionId=$expId;
 $particle = new particledata();
 if ($particle->hasCtfData($sessionId)) {
 
-	echo "<a href='processing/ctfreport.php?expId=$sessionId'>report &raquo;</a>\n";
+	echo "<a href='processing/ctfreport.php?expId=$sessionId'>fast report &raquo;</a>\n";
+	echo "<br>";
+	echo "<a href='processing/ctfreport_orig.php?showmore=1&expId=$sessionId'>original full report &raquo;</a>\n";
 	?>
 	<form method="POST" action="<?php echo $_SERVER['REQUEST_URI']; ?>">
 		maximum allowed CTF appion resolution (&Aring;) for phase shift graph:<input class="field" name="mres" type="text" size="5" value="<?php echo $minres; ?>">
@@ -521,6 +523,156 @@ else {
 </td>
 </tr>
 </table>
+<?php
+//
+// Imaging Summary
+//
+
+$summary = $leginondata->getSummary($expId);
+if (!empty($summary)) {
+//	$timingstats2 = $leginondata->getPresetTiming($expId);
+//	$timingstats = $leginondata->getTimingStats($expId);
+	//print_r($timingstats);
+//	$tot_time=0;
+//	foreach ((array)$timingstats as $t) {
+//		$images_time[$t['name']]=$t['time'];
+//		$images_mean[$t['name']]=$t['mean'];
+//		$images_stdev[$t['name']]=$t['stdev'];
+//		$images_min[$t['name']]=$t['min'];
+//		$images_max[$t['name']]=$t['max'];
+//		$tot_time += $t['time_in_sec'];
+//	}
+//	//echo print_r($summary);
+	$summary_fields[]="Preset<br/>label";
+	$summary_fields[]="Mag (X)";
+	$summary_fields[]="Dose<br/>(e<sup>-</sup>/&Aring;<sup>2</sup>)";
+	$summary_fields[]="Pixel<br/>size (&Aring;)";
+	$summary_fields[]="Dimensions";
+	$summary_fields[]="Binning";
+	$summary_fields[]="Image<br/>count";
+	foreach($summary_fields as $s_f) {
+		$table_head.="<th>$s_f</th>";
+	}
+	echo "<td>";
+	echo divtitle("Imaging Summary");
+	echo "<table class='paleBlueRows'>\n";
+	echo "<tr>". $table_head."</tr>";
+	$maxpresetscore = 0.0;
+	$maxpresetid = -1;
+	$maxpresetarray = array();
+	$tot_imgs = 0;
+	foreach($summary as $s) {
+		if($s['dose'] > 0) {
+			$dose = number_format($s['dose']/1e20,3);
+		} else { $dose = ""; }
+		$pixelsize = 0.0;
+		$imageinfo = $leginondata->getImageInfoFromPreset($s['presetId']);
+		//echo print_r($imageinfo);
+		//echo "<br/><br/>";
+		$pixelsize = 1e10*$imageinfo['pixelsize']*$imageinfo['binning'];
+		if ($pixelsize > 50) {
+			$apix = number_format($pixelsize,1);
+		} else {
+			$apix = number_format($pixelsize,3);
+		}
+		$dims = $imageinfo['dimx'].'x'.$imageinfo['dimy'];
+		if ($imageinfo['binning'] == 1) {
+			$presetscore = $imageinfo['dimx']*$imageinfo['dimy']*$s['nb']/$pixelsize;
+		} else { $presetscore=0; }
+		if ($presetscore > $maxpresetscore) {
+			$maxpresetscore = $presetscore;
+			$maxpresetid = $s['presetId'];
+			$maxpresetarray = $s;
+		}
+		echo formatArrayHtmlRow(
+				$s['name'],
+				$s['magnification'],
+				$dose,
+				$apix,
+				$dims,
+				$imageinfo['binning'],
+				$s['nb']
+		);
+		$tot_imgs += $s['nb'];
+	}
+	echo "</table>\n";
+
+	echo "<p><b>Total images:</b> $tot_imgs ";
+
+	$totalsecs = $leginondata->getSessionDuration($expId);
+	$totaltime = $leginondata->formatDuration($totalsecs);
+
+	echo "&nbsp;&nbsp;<b>Duration:</b> $totaltime";	
+}
+
+
+
+
+echo "<tr valign='top'><td colspan=3>";
+echo divtitle("Experimental Methods");
+
+$imageinfo = $leginondata->getImageInfoFromPreset($maxpresetid);
+$presetdata = $leginondata->getAllPresetData($maxpresetid);
+$defdata = $leginondata->getMinMaxDefocusForPreset($presetdata['name'], $expId);
+
+//echo print_r($defdata);
+//echo "<br/><br/>";
+//echo print_r($presetdata);
+
+$dunno = "<span style='font-weight: bold; color: #aa0000'>????</span>";
+$microscope = $imageinfo['scope'];
+$kv = intval($imageinfo['high tension']/1000);
+$camera = $imageinfo['camera'];
+$pixelsize = number_format($imageinfo['pixelsize']*1e10,4); ;
+$mag = number_format($presetdata['magnification'],0);
+$dosepersec = number_format($maxpresetarray['dose']/$presetdata['exposure time']/1e17, 2);
+$exposure = number_format($presetdata['exposure time']/1000,2);
+$totaldose = number_format($maxpresetarray['dose']/1e20,2);
+$frametime = number_format($presetdata['frame time']/1000,2);
+$numframes = intval(round($presetdata['exposure time']/$presetdata['frame time'],0));
+$numimages = $maxpresetarray['nb'];
+$defmin = number_format(-1e6*$defdata['maxdef'], 1);
+$defmax = number_format(-1e6*$defdata['mindef'], 1);
+
+echo opendivbubble();
+
+echo "<p style='font-size: 125%'>";
+
+echo "$microscope operated at $kv kV with a $camera imaging system collected at ${mag}X nominal magnification.
+The calibrated pixel size of $pixelsize &Aring; was used for processing.";
+
+echo "</p><br/><p style='font-size: 125%'>";
+
+echo "Movies were collected using Leginon (Suloway et al., 2005) at a dose
+rate of $dosepersec e<sup>-</sup>/&Aring;<sup>2</sup>/s with a total exposure of $exposure seconds,
+for an accumulated dose of $totaldose e<sup>-</sup>/&Aring;<sup>2</sup>. Intermediate frames were recorded
+every $frametime seconds for a total of $numframes frames per micrograph. A total of $numimages images were
+collected at a nominal defocus range of $defmin &ndash; $defmax &mu;m.";
+
+echo "</p>";
+echo "</div>";
+
+if (defined("ACKNOWLEDGEMENTS")) {
+        echo divtitle("Acknowledgements");
+
+        echo "";
+
+        echo opendivbubble();
+
+        echo '<table style="margin=50px; border=1px;" ><tr><td>
+        <p style="font-size: 125%">';
+
+        echo ACKNOWLEDGEMENTS;
+        echo '</p>
+        </td></tr></table>';
+        echo "</div>";
+
+
+        echo "<br/><br/>";
+        echo "</td></tr>";
+}
+
+?>
 <?php
 login_footer();
 ?>
