@@ -216,6 +216,10 @@ class FeiCam(ccdcamera.CCDCamera):
 			connection = fei_advscripting.get_feiadv()
 		self.instr = connection.instr
 		self.csa = connection.csa
+		try:
+			self.ef = self.instr.EnergyFilter
+		except Exception as e:
+			self.ef = None
 		# setCamera
 		this_camera = self.getCamera()
 		if this_camera is None:
@@ -953,6 +957,79 @@ class Falcon4EC(Falcon3EC):
 			return None
 		return files[-1]
 
+class Selectris(object):
+	def setup(self, ef_pointer):
+		self.ef = ef_pointer
+		if not self.ef:
+			raise ValueError('Selctris energy filter interface not initialized. Check fei.cfg')
+		self.slit = self.ef.Slit
+		self.ht_shift = self.ef.HighTensionEnergyShift
+
+	def getEnergyFiltered(self):
+		'''
+		Return True if energy filter is controlled through this.
+		'''
+		return True
+
+	def getEnergyFilter(self):
+		'''
+		Return True if controlled energy filter is enabled
+		with slit in
+		'''
+		return self.slit.IsInserted
+
+	def setEnergyFilter(self, value):
+		'''
+		Enable/Disable controled energy filter
+		by retracting the slit
+		'''
+		if self.getEnergyFilter() == value:
+			return
+		if value:
+			error = self.slit.Insert()
+		else:
+			error = self.slit.Retract()
+		if error:
+			raise RuntimeError('unable to set energy filter slit position: %s' % error)
+
+	def getEnergyFilterWidth(self):
+		'''
+		Return  energe filter slit width in eV.
+		'''
+		return self.slit.Width
+
+	def _getEnergyFilterWidthRange(self):
+		return self.slit.WidthRange.Begin, self.slit.WidthRange.End
+
+	def setEnergyFilterWidth(self, value):
+		'''
+		Set energe filter slit width in eV.
+		'''
+		value = float(value)
+		begin,end = self._getEnergyFilterWidthRange()
+		if value < begin or value > end:
+			raise RuntimeError('energy filter width %.1f out of range' % value)
+		self.slit.Width = value
+
+	def getEnergyFilterOffset(self):
+		'''
+		Return energy filter high tension offset.
+		'''
+		return self.ht_shift.EnergyShift
+
+	def _getEnergyShiftRange(self):
+		return self.ht_shift.EnergyShiftRange.Begin, self.ht_shift.EnergyShiftRange.End
+
+	def setEnergyFilterOffset(self, value):
+		'''
+		Set energe filter energy offset in eV. High tension energy shift is used.
+		'''
+		value = float(value)
+		begin,end = self._getEnergyFilterWidthRange()
+		if value < WidthRange.Begin or value > WidthRange.End:
+			raise RuntimeError('energy filter width %.1f out of range' % value)
+		slit.ht_shift = value
+
 class Falcon4ECef(Falcon4EC):
 	name = 'Falcon4EC'
 	camera_name = 'EF-Falcon'
@@ -962,3 +1039,12 @@ class Falcon4ECef(Falcon4EC):
 	base_frame_time = 0.02907 # seconds
 	physical_frame_rate = 250 # rolling shutter frames per second
 
+	def __init__(self):
+		super(Falcon4ECef, self).__init__()
+		if self.ef is None:
+			raise RuntimeError('TFS energy filter not available')
+		self.ef_control = Selectris()
+		self.ef_control.setup(self.ef)
+		for attr_name in dir(self.ef_control):
+			if attr_name.startswith('get') or attr_name.startswith('set'):
+				setattr(self,attr_name, getattr(self.ef_control,attr_name)
