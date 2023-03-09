@@ -1025,10 +1025,10 @@ class Selectris(object):
 		Set energe filter energy offset in eV. High tension energy shift is used.
 		'''
 		value = float(value)
-		begin,end = self._getEnergyFilterWidthRange()
-		if value < WidthRange.Begin or value > WidthRange.End:
-			raise RuntimeError('energy filter width %.1f out of range' % value)
-		slit.ht_shift = value
+		begin,end = self._getEnergyShiftRange()
+		if value < begin or value > end:
+			raise RuntimeError('energy filter offset %.1f out of range' % value)
+		self.ht_shift.EnergyShift = value
 
 class Falcon4ECef(Falcon4EC):
 	name = 'Falcon4EC'
@@ -1047,4 +1047,4 @@ class Falcon4ECef(Falcon4EC):
 		self.ef_control.setup(self.ef)
 		for attr_name in dir(self.ef_control):
 			if attr_name.startswith('get') or attr_name.startswith('set'):
-				setattr(self,attr_name, getattr(self.ef_control,attr_name)
+				setattr(self,attr_name, getattr(self.ef_control,attr_name))
