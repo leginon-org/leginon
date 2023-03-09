@@ -202,6 +202,16 @@ define('CRYOSPARC_PORT', "39001");
 // --- A startup message may be shown to the user --- //
 define('STARTUP_MESSAGE', "");
 
+// --- Temporary directory to store CTF data for processing--- //
+//  "/tmp/" should work in most systems, but there was trouble at the NYU Redhat8 installation
+// define('TEMP_DIR', "/usr/local/temp/");
+define('TEMP_DIR', "/tmp/");
+
+// --- command to activate a particular python for tiltgroup_wranger.py, if necessary
+// define('ACTIVATE_PYTHON', "source /usr/local/eman2-sphire-sparx/bin/activate; ");
+define('ACTIVATE_PYTHON', ""); 
+//
+
 // --- Redux server Host and Port information. --- //
 // --- define('SERVER_HOST', "redux.schools.edu"); --- //
 // --- define('SERVER_PORT', "55123"); --- //
