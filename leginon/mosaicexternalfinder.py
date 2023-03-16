@@ -285,6 +285,9 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 				sqdata = leginondata.PtolemySquareData().direct_query(sq)
 				q = leginondata.PtolemySquareStatsLinkData(stats=stats, ptolemy=sqdata)
 				q.insert()
+				# add to score history
+				q_score = leginondata.PtolemyScoreHistoryData(session=self.session, square=sqdata, score=stats['score'],set_number=1)
+				q_score.insert()
 		self.logger.info('Filtering number of blobs down number to %d' % len(good_blobs))
 		return good_blobs
 

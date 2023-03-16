@@ -1447,7 +1447,7 @@ class PtolemySquareData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('grid_id', int), #ImageListData.dbid
-			('tile_id', int), #AcquisitionImageData.dbid
+			('tile_id', int), #AcquisitionImageData.dbid of the mosaic tile
 			('square_id', int), #assigned by ptolemy
 			('center_x', int),
 			('center_y', int),
@@ -1459,6 +1459,7 @@ class PtolemyScoreHistoryData(InSessionData):
 		return InSessionData.typemap() + (
 			('square', PtolemySquareData),
 			('score', float),
+			('set_number', int),
 		)
 	typemap = classmethod(typemap)
 		

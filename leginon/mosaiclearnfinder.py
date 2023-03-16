@@ -243,7 +243,7 @@ class MosaicLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder):
 		imagedata, drow, dcol = self._mosaicToTarget(row, col)
 		# must have self.mosaicimagedata to researchSquareWithStats
 		self.confirmMosaicImage(imagedata)
-		# TODO add SquareStatsData that contains ptolemy merging list in targetdata
+		# add SquareStatsData that contains ptolemy merging list in targetdata
 		square = self.researchSquareWithStats(row, col)
 		if square is None:
 			raise ValueError('No ptolemy results to be linked to the target')
