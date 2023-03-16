@@ -675,6 +675,7 @@ function newfile(view){
 	nsortlink = "javascript:popUpSortW('sorttargets.php?id="+jsimgId+"')"
 	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft+cdwdformat+sb
 	nexportlink = "getfilenames.php?sessionId="+jsSessionId+"&pre="+selpreset
+	nactvlrnlink = "square_order.php?id="+jsimgId+"&session="+jsSessionId
 
 	if (img = document.images[eval("\"" +view+ "img\"")]) {
 		n = img.name
@@ -695,6 +696,8 @@ function newfile(view){
 		downloadlink.href = ndownloadlink
 	if (exportlink = document.getElementById("export"+view))
 		exportlink.href = nexportlink
+	if (actvlrnlink = document.getElementById("actvlrn"+view+"_bthref"))
+		actvlrnlink.href = nactvlrnlink
 
 	if (cif=eval("this."+view+"if")) {
 		iflink = jspresetscriptcur+"?vf="+jsvfile+"&id="+jsimgId+"&preset="+selpreset+pselp+nptcl
