@@ -4,20 +4,11 @@ This is a gui-free node that is good for development.
 '''
 from leginon import leginondata
 from leginon import calibrationclient
-
-class Logger(object):
-	def info(self,msg):
-		print 'INFO: %s' % msg
-	def warning(self,msg):
-		print 'WARNING: %s' % msg
-	def error(self,msg):
-		print 'ERROR: %s' % msg
-	def debug(self,msg):
-		pass
+from pyami import simplelogger
 
 class NodeSimulator(object):
 	def __init__(self, session):
-		self.logger = Logger()
+		self.logger = simplelogger.Logger()
 		self.session = session
 		self.event_input = []
 		self.event_output = []
