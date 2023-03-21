@@ -286,7 +286,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 				q = leginondata.PtolemySquareStatsLinkData(stats=stats, ptolemy=sqdata)
 				q.insert()
 				# add to score history
-				q_score = leginondata.PtolemyScoreHistoryData(session=self.session, square=sqdata, score=stats['score'],set_number=1)
+				q_score = leginondata.PtolemyScoreHistoryData(session=self.session, list=self.mosaicimagelist['targets'], square=sqdata, score=stats['score'],set_number=1)
 				q_score.insert()
 		self.logger.info('Filtering number of blobs down number to %d' % len(good_blobs))
 		return good_blobs
@@ -405,34 +405,43 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 		for i in unique_close:
 			j0 = too_close[0][i]
 			j1 = too_close[1][i]
-			values = [blob_values[j0]['area'],blob_values[j1]['area']]
-			if values[0] == values[1]:
-				first = j0
-				second = j1
+			cj0 = centers[j0]
+			cj1 = centers[j1]
+			wj0 = blob_values[j0]['area']
+			wj1 = blob_values[j1]['area']
+			new_center = tuple(((cj0*wj0+cj1*wj1)/(wj0+wj1)).tolist()) # (row, col)
+			# decide which one to remove
+			j0image, drow0, dcol0 = self._mosaicToTargetOnMosaic(cj0[0], cj0[1], self.finder_mosaic)
+			j1image, drow1, dcol1 = self._mosaicToTargetOnMosaic(cj1[0], cj1[1], self.finder_mosaic)
+			merged_image, drow, dcol = self._mosaicToTargetOnMosaic(new_center[0], new_center[1], self.finder_mosaic)
+			# keep the blob on tile where the new_center belongs to.
+			# BUG: ocassionally this still gives different tile assignment
+			# than the full-size mosaic due to rounding error, but it is close enough.
+			if j1image.dbid == merged_image.dbid:
+				j_remove = j0
+				j_keep = j1
 			else:
-				# first is the one with smaller area
-				first = [j0,j1][values.index(min(values))]
-				second = [j0,j1][values.index(max(values))]
-			to_remove.append(first)
-			b1 = blob_values[first]['brightness']
-			b2 = blob_values[second]['brightness']
-			w1 = blob_values[first]['area']
-			w2 = blob_values[second]['area']
-			c1 = centers[first]
-			c2 = centers[second]
+				j_remove = j1
+				j_keep = j0
+			to_remove.append(j_remove)
+			b1 = blob_values[j_remove]['brightness']
+			b2 = blob_values[j_keep]['brightness']
+			w1 = blob_values[j_remove]['area']
+			w2 = blob_values[j_keep]['area']
+			c1 = centers[j_remove]
+			c2 = centers[j_keep]
 			new_area = w1+w2
 			new_brightness = (b1*w1+b2*w2)/(w1+w2)
-			new_center = tuple(((c1*w1+c2*w2)/(w1+w2)).tolist())
-			new_score = max(blob_values[first]['score'],blob_values[second]['score'])
-			new_squares = list(blob_values[first]['squares'])
-			new_squares.extend(blob_values[second]['squares'])
+			new_score = max(blob_values[j_remove]['score'],blob_values[j_keep]['score'])
+			new_squares = list(blob_values[j_remove]['squares'])
+			new_squares.extend(blob_values[j_keep]['squares'])
 			# merge vertices as convex hull
 			# use union set to avoid duplicates
-			v = set(blob_values[first]['vertices'])
-			v.union(blob_values[second]['vertices'])
+			v = set(blob_values[j_remove]['vertices'])
+			v.union(blob_values[j_keep]['vertices'])
 			new_vertices = convexhull.convexHull(list(v))
 			# update
-			self.mblob_values[second].update({
+			self.mblob_values[j_keep].update({
 					'area':new_area,
 					'center':new_center,
 					'score':new_score,

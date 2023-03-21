@@ -21,12 +21,16 @@ class Panel(leginon.gui.wx.MosaicScoreTargetFinder.Panel):
 
 	def addOtherTools(self):
 		leginon.gui.wx.MosaicScoreTargetFinder.Panel.addOtherTools(self)
+		self.toolbar.InsertTool(13, leginon.gui.wx.ToolBar.ID_UPDATE_LEARNING,
+			'learning',shortHelpString='Update learning')
 
 	def onNodeInitialized(self):
 		leginon.gui.wx.MosaicScoreTargetFinder.Panel.onNodeInitialized(self)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onUpdateLearningButton,
+											id=leginon.gui.wx.ToolBar.ID_UPDATE_LEARNING)
 
-		# need this enabled for new auto region target finding
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_UPDATE_LEARNING, False)
+		self.find_square_button_clicked = False
 
 	def onImageSettings(self, evt):
 		if evt.name == 'acquisition':
@@ -42,8 +46,17 @@ class Panel(leginon.gui.wx.MosaicScoreTargetFinder.Panel):
 			dialog.ShowModal()
 			dialog.Destroy()
 	def onFindSquaresButton(self, evt):
-		xys = self.imagepanel.shapetool.fitted_shape_points
 		threading.Thread(target=self.node.updatePtolemyTargets).start()
+		self.find_square_button_clicked = True
+
+	def onUpdateLearningButton(self, evt):
+		threading.Thread(target=self.node.updateSquareTargetOrder).start()
+
+	def onTargetsSubmitted(self, evt):
+		leginon.gui.wx.MosaicScoreTargetFinder.Panel.onTargetsSubmitted(self,evt)
+		if self.find_square_button_clicked:
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_UPDATE_LEARNING, True)
+
 
 class BlobSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):

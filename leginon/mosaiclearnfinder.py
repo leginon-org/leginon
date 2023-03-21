@@ -3,16 +3,14 @@ import json
 import os
 import multiprocessing
 import time
-import math
-import numpy
 import requests
 
-from pyami import groupfun, convexhull
 from leginon import leginondata
 from leginon import mosaicexternalfinder
 from leginon import targetfinder
 from leginon import ptolemyhandler as ph
 from leginon import statssquare
+from leginon import updatetargetorder
 import gui.wx.MosaicLearnTargetFinder
 
 def revindex(value_tuple):
@@ -46,6 +44,8 @@ class MosaicLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder):
 		self.start()
 		self.p = {}
 		self.server_exists = None
+		self.target_order_updater=updatetargetorder.SquareTargetOrderUpdater(self.session,self.logger)
+		self.done_update_ptolemy_targets = False
 
 	def hasValidPtolemyService(self):
 		r = requests.get(ph.BASEURL)
@@ -301,6 +301,7 @@ class MosaicLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder):
 		self.setTargets(xys, 'acquisition')
 		self.setTargets([], 'example')
 		self.logger.info(message)
+		self.done_update_ptolemy_targets = True
 
 	def runDatabaseBlobFilter(self, finder_blobs, xytargets):
 		'''
@@ -360,3 +361,21 @@ class MosaicLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder):
 		# merge finder blobs
 		self.mergeFinderBlobs()
 		return list(self.finder_blobs)
+
+	def updateSquareTargetOrder(self):
+		if not self.targetlist:
+			self.logger.error('targetlist unknown to update order on')
+			return
+		if not self.mosaicimagelist:
+			self.logger.error('need mosaic image to update on')
+			return
+		lab = self.mosaicimagelist['targets']['label']
+		if self.done_update_ptolemy_targets:
+			self.logger.info('Reorder targets by pre-trained model score')
+			initial_score=True
+			# reset
+			self.done_update_ptolemy_targets = False
+		else:
+			self.logger.info('Reorder targets by learning model score')
+			initial_score=False
+		self.target_order_updater.updateOrder(initial_score, mosaic_name=lab)

@@ -82,6 +82,7 @@ ID_REMOTE = 10064
 ID_LIGHT_ON = 10065
 ID_LIGHT_OFF = 10066
 ID_NULL = 10067
+ID_UPDATE_LEARNING = 10068
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):

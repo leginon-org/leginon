@@ -1457,6 +1457,7 @@ class PtolemySquareData(InSessionData):
 class PtolemyScoreHistoryData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
+			('list', ImageTargetListData), #where the ptolemy square is from.
 			('square', PtolemySquareData),
 			('score', float),
 			('set_number', int),
