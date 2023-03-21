@@ -54,7 +54,7 @@ class LoopLearner(appionLoop2.AppionLoop):
 
 	#======================
 	def setupParserOptions(self):
-		self.parser.add_option("--update_interval", dest="update_interval", type="int", default=1,
+		self.parser.add_option("--interval", dest="update_interval", type="int", default=1,
 			help="Update square target order every  <update_interval> number of squares learned")
 		return
 

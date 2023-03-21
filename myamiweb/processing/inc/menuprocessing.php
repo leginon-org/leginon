@@ -349,6 +349,19 @@ if (is_numeric($expId)) {
 		'newrun' => array($nrun, $celloption),
 	);
 
+	/* LoopLearn */
+	if ($ctfruns) {
+		$action = "Ptolemy Learning";
+		$nruns=array();
+		$nruns[] = array(
+			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=looplearn'>Ptolemy Active Learner</a>",
+		);
+	
+		$data[] = array(
+			'action' => array($action, $celloption),
+			'newrun' => array($nruns, $celloption),
+		);
+	}
 	if (!HIDE_FEATURE)
 	{
 		$jobtype = 'contouranalysis';
