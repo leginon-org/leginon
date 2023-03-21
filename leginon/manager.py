@@ -947,8 +947,10 @@ class Manager(node.Node):
 			slack_inst = slack_interface.SlackInterface()
 			channel = slack_inst.getDefaultChannel()
 			slack_inst.sendMessage(channel,'%s ' % (msg))
-		except:
-			print msg
+		except Exception as e:
+			print("ERROR sending slack message [%s]", msg)
+			print(e)
+
 
 	# application methods
 
