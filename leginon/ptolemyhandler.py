@@ -13,8 +13,8 @@ def debug_print(msg):
 	if DEBUG:
 		print(msg)
 
-def initialize():
-	payload={'historical_state_paths':[]}
+def initialize(paths=[]):
+	payload={'historical_state_paths':paths}
 	debug_print("----------")
 	debug_print(payload)
 	payload = json.dumps(payload)
