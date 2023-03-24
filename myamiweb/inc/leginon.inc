@@ -1556,7 +1556,6 @@ class leginondata {
 		return $imageinfo;
 	}
 
-	#function getImageBeamTilt($imgid, $bt0) {  wjr fix php 7
 	function getImageBeamTilt($imgid) {
 		// Get beam tilt from image shift coma calibration.  Returns 0,0 if
 		// no calibration.
