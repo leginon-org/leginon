@@ -154,9 +154,16 @@ foreach ($data as $line) {
     fwrite($handle, $line);
 }
 fclose($handle);
-#var_dump('cd '.$dir.'; /usr/local/bin/tiltgroup_wrangler_cli.py '.$tmp.' -n_kmeans='.$ncluster.' -r_version='.$rversion );
-$act_py = defined("ACTIVATE_PYTHON")? ACTIVATE_PYTHON:"";
-$output = exec('cd '. $dir . ';' . $act_py .  'tiltgroup_wrangler_cli.py '.$tmp.' -n_kmeans='.$ncluster.' -r_version='.$rversion . '>& ' . $dir . 'downloadctfdatagrouped.log');
+
+// error_log("file: " . $tmp);
+// error_log("-n_kmeans: " . $ncluster);
+// error_log("-r_version: " . $rversion);
+
+// $file = file_get_contents($tmp);
+// echo $file;
+// exit(0);
+
+$output = exec('cd '.$dir.'; /usr/local/bin/tiltgroup_wrangler_cli.py '.$tmp.' -n_kmeans='.$ncluster.' -r_version='.$rversion );
 $file = file_get_contents($dir.'/tw_out.star');
 echo $file;
 ?>
