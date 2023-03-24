@@ -159,6 +159,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		was_saving_frames = bool(camdata0['save frames'])
 		was_aligning_frames = bool(camdata0['align frames'])
 		was_slit_width = float(camdata0['energy filter width']) 
+		was_slit_offset = float(camdata0['energy filter offset']) 
 		was_filtered = bool(camdata0['energy filter']) 
 		was_time = float(camdata0['exposure time'])
 		was_binning = camdata0['binning']
@@ -171,6 +172,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		#set correct energy filter params
 		camdata1['energy filter'] = filtered
 		camdata1['energy filter width'] = slit_width
+		camdata1['energy filter offset'] = 0
 		camdata1['exposure time'] = exp_time
 		for key in camdata1['binning']:
 			camdata1['binning'][key] = int(binning)
@@ -198,6 +200,7 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 			camdata0['align frames'] = was_aligning_frames
 			camdata0['energy filter'] = was_filtered
 			camdata0['energy filter width'] = was_slit_width
+			camdata0['energy filter offset'] = was_slit_offset
 			camdata0['exposure time'] = was_time
 			camdata0['binning'] = was_binning
 			self.instrument.setData(camdata0)

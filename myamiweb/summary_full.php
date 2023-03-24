@@ -146,6 +146,8 @@ foreach ((array)$timingstats as $t) {
 	$images_max[$t['name']]=$t['max'];
 	$tot_time += $t['time_in_sec'];
 }
+$presets = $leginondata->getDataTypes($expId);
+
 if (!empty($summary)) {
 	$summary_fields[]="Preset<BR>label";
 	$summary_fields[]="mag";
@@ -202,33 +204,41 @@ echo "<a href='driftreport.php?Id=$expId&maxr=50'>report &raquo;</a>";
 echo "<table border='0'>\n";
 	echo "<tr>";
 		echo "<td>";
-	echo "<a href='avgdriftgraph.php?vd=1&Id=$expId'>[data]</a>";
-	echo "<a href='avgdriftgraph.php?vs=1&Id=$expId'>[sql]</a><br>";
-	echo "<a href='avgdriftgraph.php?Id=$expId&maxr=50'>";
-	echo "<img border='0' src='avgdriftgraph.php?w=256&Id=$expId&maxr=50'>";
+		if (in_array("esn",$presets)) {
+			$graph_prefix = 'dddriftstatsgraph.php?expId='.$expId.'&preset=esn&w=512';
+		}
+		elseif (in_array("enn",$presets)) {
+			$graph_prefix = 'dddriftstatsgraph.php?expId='.$expId.'&preset=enn&w=512';
+		}
+
+		echo "<a href='".$graph_prefix."'>";
+		echo "<img border='0' src='".$graph_prefix."'>";
+	#echo "<a href='avgdriftgraph.php?vd=1&Id=$expId'>[data]</a>";
+	#echo "<a href='avgdriftgraph.php?vs=1&Id=$expId'>[sql]</a><br>";
+	#echo "<a href='avgdriftgraph.php?Id=$expId&maxr=50'>";
+	#echo "<img border='0' src='avgdriftgraph.php?w=256&Id=$expId&maxr=50'>";
 	echo "</a>";
 		echo "</td>";
 	echo "</tr>";
 echo "</table>\n";
 echo "</td>";
-echo "<td valign='top' >";
-echo divtitle("Temperature");
-$channels = "&ch0=1&ch1=1&ch2=1&ch4=1&ch5=1&ch6=1&ch7=1&opt=1";
-echo "<a href='temperaturereport.php?Id=$expId$channels'>report &raquo;</a>";
-echo "<table border='0'>\n";
-	echo "<tr>";
-		echo "<td>";
-	echo "<a href='temperaturegraph.php?vd=1&Id=$expId$channels'>[data]</a>";
-	echo "<a href='temperaturegraph.php?vs=1&Id=$expId$channels'>[sql]</a><br>";
-	echo "<a href='temperaturegraph.php?Id=$expId$channels'>";
-	echo "<img border='0' src='temperaturegraph.php?w=256&Id=$expId$channels'>";
-	echo "</a>";
-		echo "</td>";
-	echo "</tr>";
-echo "</table>\n";
-echo "</td>";
+#echo "<td valign='top' >";
+#echo divtitle("Temperature");
+#$channels = "&ch0=1&ch1=1&ch2=1&ch4=1&ch5=1&ch6=1&ch7=1&opt=1";
+#echo "<a href='temperaturereport.php?Id=$expId$channels'>report &raquo;</a>";
+#echo "<table border='0'>\n";
+	#echo "<tr>";
+		#echo "<td>";
+	#echo "<a href='temperaturegraph.php?vd=1&Id=$expId$channels'>[data]</a>";
+	#echo "<a href='temperaturegraph.php?vs=1&Id=$expId$channels'>[sql]</a><br>";
+	#echo "<a href='temperaturegraph.php?Id=$expId$channels'>";
+	#echo "<img border='0' src='temperaturegraph.php?w=256&Id=$expId$channels'>";
+	#echo "</a>";
+		#echo "</td>";
+	#echo "</tr>";
+#echo "</table>\n";
+#echo "</td>";
 echo "</tr>";
-$presets = $leginondata->getDataTypes($expId);
 	echo "<tr>";
 	echo "<td colspan='2'>";
 	echo divtitle("Image Stats");
@@ -522,7 +532,9 @@ $sessionId=$expId;
 $particle = new particledata();
 if ($particle->hasCtfData($sessionId)) {
 
-	echo "<a href='processing/ctfreport.php?expId=$sessionId'>report &raquo;</a>\n";
+	echo "<a href='processing/ctfreport.php?showmore=0&expId=$sessionId'>fast report &raquo;</a>\n";
+	echo "<br>";
+	echo "<a href='processing/ctfreport_orig.php?showmore=1&expId=$sessionId'>original full report &raquo;</a>\n";
 	?>
 	<form method="POST" action="<?php echo $_SERVER['REQUEST_URI']; ?>">
 		maximum allowed CTF appion resolution (&Aring;):<input class="field" name="mres" type="text" size="5" value="<?php echo $minres; ?>">
@@ -604,6 +616,26 @@ if ($ptcl && $particle->hasParticleData($sessionId)) {
 } 
 else {
         echo "no Particle information available";
+}
+
+if (defined("ACKNOWLEDGEMENTS")) {
+        echo divtitle("Acknowledgements");
+
+        echo "";
+
+        echo opendivbubble();
+
+        echo '<table style="margin=50px; border=1px;" ><tr><td>
+        <p style="font-size: 125%">';
+
+        echo ACKNOWLEDGEMENTS;
+        echo '</p>
+        </td></tr></table>';
+        echo "</div>";
+
+
+        echo "<br/><br/>";
+        echo "</td></tr>";
 }
 
 ?>

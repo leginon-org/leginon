@@ -35,6 +35,7 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		## optional:
 		{'name': 'EnergyFilter', 'type': 'property'},
 		{'name': 'EnergyFilterWidth', 'type': 'property'},
+		{'name': 'EnergyFilterOffset', 'type': 'property'},
 		{'name': 'FrameFlip', 'type': 'property'},
 		{'name': 'FrameRotate', 'type': 'property'},
 		{'name': 'UseCds', 'type': 'property'},

@@ -58,13 +58,21 @@ if ($relion >= 1) {
 	$pixelsize *= $imginfo['binning'];
 	$kev = $imginfo['high tension']/1000;
 	$cs = $leginon->getCsValueFromSession($expId);
+	# get IMAGE MATRIX CALIBRATION once
+	# image shift coma is not mag dependent
+	$m = $leginon->getImageMatrixCalibration($imgid, $type='image-shift coma', $mag_depend=false);
+	# if no matrix is defined, leave it as unit vector so raw image shift will be output
+	if ($m[a11] ==0 and $m[a12] ==0 and $m[a21] ==0 and $m[a22] ==0) {
+		$m[a11] = 1;
+		$m[a22] = 1;
+	}
 }
 else $data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\textra_phase_shift\tres(0.8)\tres(0.5)\tres(pkg)\tconf(30/10)\tconf(5_peak)\tconf\tconf(appion)\timage_name\n";
 //echo "</br>\n";
 
 foreach ($ctfdatas as $ctfdata) {
 	$imgid = $ctfdata['imageid'];
-	$filename = $appiondb->getImageNameFromId($imgid);
+	$filename = $ctfdata['filename']; 
 	if (!empty($preset))
 		$p = $leginon->getPresetFromImageId($imgid);
 		if ($preset != $p['name'] ) continue;
@@ -90,7 +98,7 @@ foreach ($ctfdatas as $ctfdata) {
                         $data_string .= sprintf(" %6f", $ctfbest); # add back
 		}
 		if ( $relion >= 3 ) {
-			$beamtiltdata = $leginon->getImageBeamTilt($imgid);
+			$beamtiltdata = $leginon->calcImageBeamTilt($ctfdata['is_x'],$ctfdata['is_y'],$m);
 			$data_string .= sprintf(" %.6f", $beamtiltdata['1'] * 1000); #mrad
 			$data_string .= sprintf(" %.6f", $beamtiltdata['2'] * 1000); #mrad
 		}
