@@ -67,22 +67,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 	settingsclass = leginondata.MosaicScoreTargetFinderSettingsData
 	defaultsettings = dict(targetfinder.ClickTargetFinder.defaultsettings)
 	# same as MosaicClickTargetFinder
-	mosaictarget_defaultsettings = {
-		# unlike other targetfinders, no wait is default
-		'wait for done': False,
-		#'no resubmit': True,
-		# maybe not
-		'calibration parameter': 'stage position',
-		'scale image': True,
-		'scale size': 512,
-		'create on tile change': 'all',
-		'target grouping': {
-			'total targets': 10,
-			'classes': 1,
-			'group method': 'value delta',
-		},
-		'target multiple':1,
-	}
+	mosaictarget_defaultsettings = dict(mosaictargetfinder.MosaicClickTargetFinder.mosaictarget_defaultsettings)
 	defaultsettings.update(mosaictarget_defaultsettings)
 	# autofinder part is different
 	auto_square_finder_defaultsettings = {
