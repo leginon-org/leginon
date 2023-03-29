@@ -26,3 +26,11 @@ try:
 	priority.append('fftpack')
 except:
 	pass
+
+attempted.append('pyfftw')
+try:
+	from .calc_pyfftw import PyFFTWCalculator
+	calculators['pyfftw'] = PyFFTWCalculator
+	priority.append('pyfftw')
+except:
+	pass
