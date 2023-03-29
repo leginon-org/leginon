@@ -62,7 +62,6 @@ mrcmaptype = {
 numpy2mrc = {
 	## convert these to int8
 	numpy.int8: 0,
-	numpy.bool: 0,
 	numpy.bool_: 0,
 
 	## convert these to int16
