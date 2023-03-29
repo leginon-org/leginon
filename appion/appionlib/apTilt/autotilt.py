@@ -170,7 +170,7 @@ class autoTilt(object):
 		a1 = numpy.asarray(self.currentpicks1, dtype=numpy.float32)
 		a2 = numpy.asarray(self.currentpicks2, dtype=numpy.float32)
 		numpoints = max(a1.shape[0], a2.shape[0])
-		good = numpy.zeros((numpoints), dtype=numpy.bool)
+		good = numpy.zeros((numpoints), dtype=numpy.bool_)
 		if len(a1) != len(a2):
 			good[len(a1):] = True
 			good[len(a2):] = True

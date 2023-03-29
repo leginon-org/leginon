@@ -192,7 +192,7 @@ class RefineCTFDialog(wx.Dialog):
 			not self.def2Tog.GetValue(),
 			not self.angleTog.GetValue(),
 			not self.ampconTog.GetValue(),
-			), dtype=numpy.bool)
+			), dtype=numpy.bool_)
 
 		radial_array, angle_array, normPSD = self.parent.getTwoDProfile()
 
