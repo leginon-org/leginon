@@ -240,6 +240,7 @@ camera_params = (
 	('energy filtered', bool),
 	('energy filter', bool),
 	('energy filter width', float),
+	('energy filter offset', float),
 	('nframes', int),
 	('save frames', bool),
 	('align frames', bool),
@@ -634,6 +635,7 @@ class PresetData(InSessionData):
 			('offset', dict),
 			('energy filter', bool),
 			('energy filter width', float),
+			('energy filter offset', float),
 			('pre exposure', float),
 			('alt channel', bool),
 			('save frames', bool),
@@ -2135,6 +2137,9 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('set aperture', bool),
 			('objective aperture',str),
 			('c2 aperture',str),
+			('limit image',bool),
+			('limit preset',str),
+			('limit number',int),
 		)
 	typemap = classmethod(typemap)
 

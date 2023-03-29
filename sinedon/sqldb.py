@@ -12,6 +12,8 @@ def connect(**kwargs):
 	newkwargs = kwargs.copy()
 	if 'engine' in newkwargs:
 		del newkwargs['engine']
+	if 'port' in newkwargs:
+		newkwargs['port']=int(newkwargs['port'])
 	c = pymysql.connect(**newkwargs)
 	c.autocommit(True)
 	c.kwargs = dict(kwargs)

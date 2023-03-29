@@ -1556,7 +1556,7 @@ class leginondata {
 		return $imageinfo;
 	}
 
-	function getImageBeamTilt($imgid, $bt0) {
+	function getImageBeamTilt($imgid) {
 		// Get beam tilt from image shift coma calibration.  Returns 0,0 if
 		// no calibration.
 		$imginfo = $this->getImageInfo($imgid);
@@ -1565,6 +1565,15 @@ class leginondata {
 		$matrix = matrix($m[a11],$m[a12],$m[a21],$m[a22]);
 		$is_x = $imginfo['image shift x'];
 		$is_y = $imginfo['image shift y'];
+		$vector = array($is_x,$is_y);
+		$result_vector = matrix_multiply($matrix, $vector);
+		return $result_vector;
+	}
+
+	function calcImageBeamTilt($is_x,$is_y,$m) {
+		// Calculate beam tilt from image shift coma calibration.  
+		// 
+		$matrix = matrix($m[a11],$m[a12],$m[a21],$m[a22]);
 		$vector = array($is_x,$is_y);
 		$result_vector = matrix_multiply($matrix, $vector);
 		return $result_vector;

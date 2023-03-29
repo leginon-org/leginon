@@ -46,6 +46,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 
 		self.energy_filter = True
 		self.energy_filter_width = 20.0
+		self.energy_filter_offset = 0.0
 
 		self.views = ('square', 'empty')
 		self.view = 'square'
@@ -57,6 +58,8 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 					'setEnergyFilter',
 					'getEnergyFilterWidth',
 					'setEnergyFilterWidth',
+					'getEnergyFilterOffset',
+					'setEnergyFilterOffset',
 					'alignEnergyFilterZeroLossPeak',
 			]
 		if 'simpar' in self.conf and self.conf['simpar'] and os.path.isdir(self.conf['simpar']):
@@ -311,6 +314,12 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 
 	def setEnergyFilterWidth(self, value):
 		self.energy_filter_width = float(value)
+
+	def getEnergyFilterOffset(self):
+		return self.energy_filter_offset
+
+	def setEnergyFilterOffset(self, value):
+		self.energy_filter_offset = float(value)
 
 	def alignEnergyFilterZeroLossPeak(self):
 		time.sleep(1.0)

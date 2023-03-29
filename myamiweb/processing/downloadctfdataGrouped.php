@@ -59,6 +59,12 @@ if ($relion >= 1) {
 	$pixelsize *= $imginfo['binning'];
 	$kev = $imginfo['high tension']/1000;
 	$cs = $leginon->getCsValueFromSession($expId);
+	$m = $leginon->getImageMatrixCalibration($imgid, $type='image-shift coma', $mag_depend=false);
+	# if no matrix is defined, leave it as unit vector so raw image shift will be output
+	if ($m[a11] ==0 and $m[a12] ==0 and $m[a21] ==0 and $m[a22] ==0) {
+		$m[a11] = 1;
+		$m[a22] = 1;
+	}
 }
 else $data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\textra_phase_shift\tres(0.8)\tres(0.5)\tres(pkg)\tconf(30/10)\tconf(5_peak)\tconf\tconf(appion)\timage_name\n";
 //echo "</br>\n";
@@ -91,7 +97,8 @@ foreach ($ctfdatas as $ctfdata) {
                         $data_string .= sprintf(" %6f", $ctfbest); # add back
 		}
 		if ( $relion >= 3 ) {
-			$beamtiltdata = $leginon->getImageBeamTilt($imgid);
+			$beamtiltdata = $leginon->calcImageBeamTilt($ctfdata['is_x'],$ctfdata['is_y'],$m);
+			#$beamtiltdata = $leginon->getImageBeamTilt($imgid);
 			$data_string .= sprintf(" %.6f", $beamtiltdata['1'] * 1000); #mrad
 			$data_string .= sprintf(" %.6f", $beamtiltdata['2'] * 1000); #mrad
 		}
@@ -138,14 +145,24 @@ if ($rversion == '3.1') $rversion = 'relion31';
 else $rversion = 'relion3';
 header("Content-Disposition: attachment; filename=$downname;");
 
-$dir = sys_get_temp_dir();
+#$dir = sys_get_temp_dir();
+#$dir = TEMP_DIR;
+$dir = defined("TEMP_DIR") ? TEMP_DIR:"/tmp/";
 $tmp = tempnam($dir, $downname);
 $handle = fopen($tmp, "w");
 foreach ($data as $line) {
     fwrite($handle, $line);
 }
 fclose($handle);
-#var_dump('cd '.$dir.'; /usr/local/bin/tiltgroup_wrangler_cli.py '.$tmp.' -n_kmeans='.$ncluster.' -r_version='.$rversion );
+
+// error_log("file: " . $tmp);
+// error_log("-n_kmeans: " . $ncluster);
+// error_log("-r_version: " . $rversion);
+
+// $file = file_get_contents($tmp);
+// echo $file;
+// exit(0);
+
 $output = exec('cd '.$dir.'; /usr/local/bin/tiltgroup_wrangler_cli.py '.$tmp.' -n_kmeans='.$ncluster.' -r_version='.$rversion );
 $file = file_get_contents($dir.'/tw_out.star');
 echo $file;

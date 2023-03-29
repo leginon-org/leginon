@@ -404,6 +404,30 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		return sz_aps
 
+	def createLimitImageBoxSizer(self):
+		# set widgets
+		self.widgets['limit image'] = wx.CheckBox(self, -1,
+																				'Stop when enough images taken')
+		presets = self.node.presetsclient.getPresetNames()
+		self.widgets['limit number'] = IntEntry(self, -1, chars=8)
+		self.widgets['limit preset'] = Choice(self, -1, choices=presets)
+		sblimit = wx.StaticBox(self, -1, 'Limit imaging')
+		sbszlimit = wx.StaticBoxSizer(sblimit, wx.VERTICAL)
+		# sizer to go into sbszlimit
+		szlimit = wx.GridBagSizer(5, 5)
+		szlimit.Add(self.widgets['limit image'], (0, 0), (1, 4),
+						wx.ALIGN_CENTER_VERTICAL)
+		szlimit.Add(wx.StaticText(self, -1, 'limit to '), (1, 0), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		szlimit.Add(self.widgets['limit number'], (1, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		szlimit.Add(self.widgets['limit preset'], (1, 2), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		szlimit.Add(wx.StaticText(self, -1, 'images'), (1, 3), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		sbszlimit.Add(szlimit, 0, wx.ALIGN_CENTER)
+		return sbszlimit
+
 	def addSettings(self):
 		# move type
 		szmovetype = self.createMoveTypeSizer()
@@ -429,6 +453,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szmover = self.createMoverChoiceSizer()
 		szmoveprec = self.createMovePrecisionSizer()
 		sz_target_type = self.createProcessTargetTypeSizer()
+		sz_limit_image = self.createLimitImageBoxSizer()
 
 		# 3rd column
 		szright = wx.GridBagSizer(3, 3)
@@ -452,7 +477,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		# middle with 1 column
 		sz.Add(sz_misc, (3,1), (8,1), wx.ALIGN_TOP)
 		# right
-		sz.Add(szright, (0,2),(11,1), wx.ALIGN_TOP)
+		sz.Add(szright, (0,2),(8,1), wx.ALIGN_TOP)
+		sz.Add(sz_limit_image, (9,2), (2,1), wx.ALIGN_BOTTOM)
 		return sz
 
 	def onEnterPassword(self, evt):

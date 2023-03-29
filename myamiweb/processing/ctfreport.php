@@ -116,13 +116,7 @@ if (count($ctfrundatas) != count($hidectfrundatas) && !$_GET['showHidden']) {
 }
 
 if ($ctfrundatas) {
-	if ($showmore > 0) {
-		$showmorelink = $_SERVER['PHP_SELF']."?expId=$expId&showmore=0";
-		echo "<a href='$showmorelink'>[show less statistics]</a>\n";
-	}	else {
-		$showmorelink = $_SERVER['PHP_SELF']."?expId=$expId&showmore=1";
-		echo "<a href='$showmorelink'>[show all statistics]</a>\n";
-	}
+	#echo "<a href='ctfreport_orig.php?showmore=1&expId=$expId'>[show all statistics]</a>\n";
 	echo "<br/>\n";
 	echo "<h3>Summary of confidence values from all runs</h3>\n";
 
@@ -136,7 +130,8 @@ if ($ctfrundatas) {
 		$ctfinfo = $ctf->getBestCtfInfoByResolution($expId, $minconf);
 
 		// store ctfinfo in file to speed things up
-		$ctff = "/tmp/".time().".json";
+		$temp_dir = defined("TEMP_DIR") ? TEMP_DIR:"/tmp/";
+		$ctff = $temp_dir . time().".json";
 		file_put_contents($ctff,json_encode($ctfinfo));
 
 		$numctfest = count($ctfinfo);
@@ -223,6 +218,12 @@ if ($ctfrundatas) {
 
 	echo "</td></tr>";
 
+	$confidenceOpts=array();
+	$confidenceOpts[]='resolution_50_percent';
+	$confidenceOpts[]='resolution_80_percent';
+	$confidenceOpts[]='ctffind4_resolution';
+	$confidenceOpts[]='appion_resolution';
+	$confidenceOpts[]='confidence';
 
 	// Row 0
 	echo "<tr><td>\n";
@@ -241,10 +242,11 @@ if ($ctfrundatas) {
 
 	// Row 0
 	echo "<tr><td>\n";
-		echo "<h3>Astig as percent difference from mean</h3>\n";
-		echo "<a href='autofocacegraph.php?hg=0&expId=$expId&f=difference_from_mean&preset=$preset&ctff=$ctff'>\n";
-		echo "<img border='0' width='400' height='200' src='autofocacegraph.php?"
-				."hg=0&expId=$expId&f=difference_from_mean&preset=$preset&ctff=$ctff' alt='please wait...'></a>\n";
+		echo "<h3>Astigmatism Distribution</h3>";
+		echo "<a href='ctfgraph.php?vd=1&hg=1&expId=$expId&s=1&f=astig_distribution&ctff=$ctff'>[data]</a><br>\n";
+		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&f=astig_distribution&ctff=$ctff'>\n";
+		echo "<img border='0' width='200' height='200' src='ctfgraph.php?"
+			."w=600&h=600&hg=0&expId=$expId&s=1&f=astig_distribution&ctff=$ctff' alt='please wait...'></a>\n";
 	echo "</td><td>\n";
 		echo "<h3>Angle Astigmatism</h3>";
 		echo "<a href='ctfgraph.php?vd=1&hg=1&expId=$expId&s=1&f=angle_astigmatism&ctff=$ctff'>[data]</a><br>\n";
@@ -252,79 +254,29 @@ if ($ctfrundatas) {
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 			."w=800&h=600&hg=1&expId=$expId&s=1&f=angle_astigmatism&ctff=$ctff' alt='please wait...'></a>\n";
 	echo "</td></tr><tr><td>\n";
-		echo "<h3>Astigmatism Distribution</h3>";
-		echo "<a href='ctfgraph.php?vd=1&hg=1&expId=$expId&s=1&f=astig_distribution&ctff=$ctff'>[data]</a><br>\n";
-		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&f=astig_distribution&ctff=$ctff'>\n";
-		echo "<img border='0' width='200' height='200' src='ctfgraph.php?"
-			."w=600&h=600&hg=0&expId=$expId&s=1&f=astig_distribution&ctff=$ctff' alt='please wait...'></a>\n";
+		echo "<h3>Software Package Resolution</h3>\n";
+		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&xmin=1&xmax=30&hg=1&f=ctffind4_resolution&ctff=$ctff'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&1&xmin=1&xmax=30&f=ctffind4_resolution&ctff=$ctff'></a>\n";
 	echo "</td><td>\n";
-		echo "<h3>Extra Phase Shift</h3>";
-		echo "<a href='ctfgraph.php?vd=1&hg=1&expId=$expId&s=1&f=extra_phase_shift&ctff=$ctff'>[data]</a><br>\n";
-		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=0&xmax=180&f=extra_phase_shift&ctff=$ctff'>\n";
-		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
-			."w=800&h=600&hg=0&expId=$expId&s=1&xmin=-90&xmax=90&f=extra_phase_shift&ctff=$ctff' alt='please wait...'></a>\n";
-	echo "</td></tr>";
-
-	$confidenceOpts=array();
-
-	$confidenceOpts[]='resolution_50_percent';
-	$confidenceOpts[]='resolution_80_percent';
-	$confidenceOpts[]='ctffind4_resolution';
-	$confidenceOpts[]='appion_resolution';
-
-	if ($showmore > 0) {
-	// Row 0
-	$confidenceOpts[]='confidence';
-	echo "<tr><td>\n";
-		echo "<h3>Merged Confidence</h3>";
-		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence&ctff=$ctff'>\n";
-		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
-			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence&ctff=$ctff' alt='please wait...'></a>\n";
-	$confidenceOpts[]='confidence_d';
-	echo "</td><td>\n";
-		echo "<h3>Confidence D</h3>";
-		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence_d&ctff=$ctff'>\n";
-		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
-			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence_d&ctff=$ctff' alt='please wait...'></a>\n";
-	echo "</td></tr>";
-
-	// Row 1
-	// Row 2
-	echo "<tr><td>\n";
-		echo "<h3>Resolution at 0.8</h3>";
-		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=1&xmax=50&f=resolution_80_percent&ctff=$ctff'>\n";
-		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
-			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=1&xmax=50&f=resolution_80_percent&ctff=$ctff' alt='please wait...'></a>\n";
-	echo "</td><td>\n";
-		echo "<h3>Resolution at 0.5</h3>";
+		echo "<h3>Appion Resolution at 0.5</h3>";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=1&xmax=30&f=resolution_50_percent&ctff=$ctff'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=1&xmax=30&f=resolution_50_percent&ctff=$ctff' alt='please wait...'></a>\n";
 	echo "</td></tr>";
-	// Row 3
+
+
+
 	echo "<tr><td>\n";
-		echo "<h3>Software Package Resolution</h3>\n";
-		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&xmin=1&xmax=30&f=ctffind4_resolution&ctff=$ctff'>\n";
-		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
-			."w=800&h=600&hg=1&expId=$expId&s=1&f=ctffind4_resolution&ctff=$ctff'></a>\n";
+	echo "<h3>Software Package Resolution during run</h3>\n";
+	echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&xmin=1&xmax=15&f=ctffind4_resolution&ctff=$ctff'>\n";
+	echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=0&expId=$expId&s=1&xmin=1&xmax=15&f=ctffind4_resolution&ctff=$ctff'></a>\n";
 	echo "</td><td>\n";
-	} else {
-		echo "<tr><td>\n";
-	}
-		echo "<h3>Appion Resolution during run</h3>\n";
-		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&f=resolution_appion&ctff=$ctff'>\n";
-		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
-			."w=800&h=600&hg=0&expId=$expId&s=1&f=resolution_appion&ctff=$ctff'></a>\n";
-	if ($showmore > 0) {
-		echo "</td></tr>";
-		echo "<tr><td>\n";
-	} else {
-		echo "</td><td>\n";
-	}
-		echo "<h3>Difference from Leginon settings for preset '$preset'</h3>\n";
-		echo "<a href='autofocacegraph.php?hg=0&expId=$expId&f=difference_from_nom&preset=$preset&ctff=$ctff'>\n";
-		echo "<img border='0' width='400' height='200' src='autofocacegraph.php?"
-			."hg=0&expId=$expId&f=difference_from_nom&preset=$preset&ctff=$ctff' alt='please wait...'></a>\n";
+	echo "<h3>Appion Resolution during run</h3>\n";
+	echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&xmin=1&xmax=15&f=resolution_appion&ctff=$ctff'>\n";
+	echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+		."w=800&h=600&hg=0&expId=$expId&s=1&xmin=1&xmax=15&f=resolution_appion&ctff=$ctff'></a>\n";
 	echo "</td></tr>";
 	echo "</table>";
 
@@ -378,17 +330,19 @@ if ($ctfrundatas) {
 	echo $ctfdownlink;
 
 	$ctfdownlink = "<h3>";
+	$ctfdownlink = "<h3>";
 	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&relion=2'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download star file for Relion 3 without beam tilt values'>&nbsp;download star file for Relion 3 without beam tilt values\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
 
 	$ctfdownlink = "<h3>";
+	$ctfdownlink = "<h3>";
 	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&relion=3'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download beam tilt star file for Relion 3.0'>&nbsp;download star file with expected beam tilt for Relion 3.0\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
-	
+
 	$ctfdownlink = "<h3>";
 	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download best ctf data'>&nbsp;download best ctf data\n";
@@ -418,7 +372,6 @@ if ($ctfrundatas) {
 	
 	echo "</form>\n";
 
-	
 	echo "<hr/>\n";
 
 	foreach ($ctfrundatas as $ctfrundata) {

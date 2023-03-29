@@ -231,6 +231,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 			},
 			'tem energy filter width': FloatEntry(self, -1, chars=6),
 			'energy filter width': FloatEntry(self, -1, chars=6),
+			'energy filter offset': FloatEntry(self, -1, chars=6),
 			'pre exposure': FloatEntry(self, -1, chars=6),
 		}
 
@@ -261,6 +262,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 			'ccdcamera': (
 				'energy filter',
 				'energy filter width',
+				'energy filter offset',
 				'camera parameters',
 			),
 		}
@@ -299,6 +301,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 				('probe mode', 'Probe Mode'),
     		('ccdcamera', 'Digital Camera'),
     		('energy filter width', 'Energy filter width'),
+    		('energy filter offset', 'Energy filter offset'),
     		('pre exposure', 'Pre-exposure'),
 		)
 
@@ -378,11 +381,15 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		sizer.Add(self.floats['energy filter width'], (3, 6), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		sizer.Add(self._buttons['ccdcamera']['energy filter width'], (3, 7), (1, 1), wx.ALIGN_CENTER)
 
-		sizer.Add(self.labels['pre exposure'], (4, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.floats['pre exposure'], (4, 6), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+		sizer.Add(self.labels['energy filter offset'], (4, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.floats['energy filter offset'], (4, 6), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+		sizer.Add(self._buttons['ccdcamera']['energy filter offset'], (4, 7), (1, 1), wx.ALIGN_CENTER)
 
-		sizer.Add(self.dicts['camera parameters'], (5, 5), (15, 2), wx.ALIGN_CENTER|wx.EXPAND)
-		sizer.Add(self._buttons['ccdcamera']['camera parameters'], (5, 7), (15, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.labels['pre exposure'], (5, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.floats['pre exposure'], (5, 6), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+
+		sizer.Add(self.dicts['camera parameters'], (6, 5), (15, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		sizer.Add(self._buttons['ccdcamera']['camera parameters'], (6, 7), (15, 1), wx.ALIGN_CENTER)
 
 
 		self.setParameters(parameters)
@@ -554,6 +561,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 			'intensity',
 			'tem energy filter width',
 			'energy filter width',
+			'energy filter offset',
 			'pre exposure',
 		)
 		for key in keys:
@@ -629,6 +637,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 			'intensity',
 			'tem energy filter width',
 			'energy filter width',
+			'energy filter offset',
 			'pre exposure',
 		]
 		for key in keys:
@@ -1789,6 +1798,7 @@ class Parameters(wx.StaticBoxSizer):
 			('tem energy filter width', 'Energy filter width:'),
 			('energy filter', 'Energy filtered:'),
 			('energy filter width', 'Energy filter width:'),
+			('energy filter offset', 'Energy filter offset:'),
 			('dimension', 'Dimension:'),
 			('offset', 'Offset:'),
 			('binning', 'Binning:'),
@@ -1837,20 +1847,22 @@ class Parameters(wx.StaticBoxSizer):
 		sz.Add(self.values['energy filter'], (2, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		sz.Add(self.labels['energy filter width'], (3, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.values['energy filter width'], (3, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.labels['dimension'], (4, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.values['dimension'], (4, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.labels['offset'], (5, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.values['offset'], (5, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.labels['binning'], (6, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.values['binning'], (6, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.labels['exposure time'], (7, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.values['exposure time'], (7, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.labels['pre exposure'], (8, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.values['pre exposure'], (8, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.labels['dose'], (9, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.values['dose'], (9, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.labels['save frames'], (10, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.values['save frames'], (10, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['energy filter offset'], (4, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['energy filter offset'], (4, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['dimension'], (5, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['dimension'], (5, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['offset'], (6, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['offset'], (6, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['binning'], (7, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['binning'], (7, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['exposure time'], (8, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['exposure time'], (8, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['pre exposure'], (9, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['pre exposure'], (9, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['dose'], (10, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['dose'], (10, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['save frames'], (11, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['save frames'], (11, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		sz.AddGrowableCol(1)
 		sz.AddGrowableCol(5)
@@ -1885,6 +1897,7 @@ class Parameters(wx.StaticBoxSizer):
 				'intensity',
 				'tem energy filter width',
 				'energy filter width',
+				'energy filter offset',
 				'exposure time',
 				'pre exposure',
 			]
@@ -2006,6 +2019,7 @@ class SelectParameters(Parameters):
 		selected['tem energy filter width'] = self.lbltemenergyfilterwidth.GetValue()
 		selected['energy filter'] = self.lblenergyfilter.GetValue()
 		selected['energy filter width'] = self.lblenergyfilterwidth.GetValue()
+		selected['energy filter offset'] = self.lblenergyfilteroffset.GetValue()
 		selected['dimension'] = self.lbldimension.GetValue()
 		selected['offset'] = self.lbloffset.GetValue()
 		selected['binning'] = self.lblbinning.GetValue()
@@ -2027,6 +2041,7 @@ class SelectParameters(Parameters):
 		self.lbltemenergyfilterwidth.SetValue(parameters is None or 'tem energy filter width' in parameters)
 		self.lblenergyfilter.SetValue(parameters is None or 'energy filter' in parameters)
 		self.lblenergyfilterwidth.SetValue(parameters is None or 'energy filter width' in parameters)
+		self.lblenergyfilteroffset.SetValue(parameters is None or 'energy filter offset' in parameters)
 		self.lbldimension.SetValue(parameters is None or 'dimension' in parameters)
 		self.lbloffset.SetValue(parameters is None or 'offset' in parameters)
 		self.lblbinning.SetValue(parameters is None or 'binning' in parameters)
@@ -2150,6 +2165,7 @@ if __name__ == '__main__':
 				'tem energy filter width': 0.0,
 				'energy filter': True,
 				'energy filter width': 0.0,
+				'energy filter offset': 0.0,
 				'aperture size': {
 					'condenser': 100e-6,
 					'objective': 20e-6,

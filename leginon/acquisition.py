@@ -184,6 +184,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'set aperture': False,
 		'objective aperture': 'open',
 		'c2 aperture': '150',
+		'limit image': False,
+		'limit number': 10000,
+		'limit preset': None,
 	})
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
