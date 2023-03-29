@@ -69,6 +69,8 @@ class project {
 	}
 
 	function getGridInfo($gridId){
+		// deprecated
+		return false;
 		$q='select g.gridId, label as "label", '
 			.'date_format(g.prepdate,"%m/%e/%Y") as prepdate, '
 			.'g.specimenId, '

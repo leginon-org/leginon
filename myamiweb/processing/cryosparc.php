@@ -237,12 +237,14 @@ function display($id) {
 	    echo "<p style='text-align:center'><a href='../proxy.php?csurl=http://".$job[0][IP].":39000/download_result_file/".$job[0][projectId]."/".$job[0][jobId].".volume.map'>Download Map</a></p>";
 	    echo "</td><td><img src='../proxy.php?csurl=http://".$job[0][IP].":39000/file/".$fcs->imgfiles[0]->fileid."'>";
 	    echo "</td></tr></table>";
+        error_log("= cs (fcs) :: img src=../proxy.php?csurl=http://".$job[0][IP].":39000/file/".$fcs->imgfiles[0]->fileid);
 	    $return_array = array("fsc.png"=>"http://".$job[0][IP].":39000/file/".$fcs->imgfiles[0]->fileid);
 	    echo "<h1>CryoSPARC Output</h1>";
 	    echo $out_text;
 	    
     }
     elseif ($classes) {
+        error_log("= cs (classes) :: src=../proxy.php?csurl=http://".$job[0][IP].":39000/file/".$classes->imgfiles[0]->fileid);
     	echo "<table border=1 CLASS=tableborder CELLPADDING=15>
 	        <tr><td>";
     	echo "<img width='100%' src='../proxy.php?csurl=http://".$job[0][IP].":39000/file/".$classes->imgfiles[0]->fileid."'>";
@@ -261,6 +263,7 @@ function display($id) {
             echo $result->text.'<br>';
             if (property_exists($result, 'imgfiles')){
                 echo "<img width='100%' src='../proxy.php?csurl=http://".$job[0][IP].":39000/file/".$result->imgfiles[0]->fileid."'>".'<br>';
+                error_log("= cs (else) :: src='../proxy.php?csurl=http://".$job[0][IP].":39000/file/".$result->imgfiles[0]->fileid);
             }
         }
     }
