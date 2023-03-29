@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3 
 
 '''
 This script will run in the background, checking for new images in the
@@ -205,7 +205,7 @@ class ReduxThread(threading.Thread):
 				continue
 
 			# create session directory
-			outfile = list(still_missing.values())[0]
+			outfile = still_missing.values()[0]
 			dirname = os.path.dirname(outfile)
 			pyami.fileutil.mkdirs(dirname)
 
@@ -226,7 +226,7 @@ class ReduxThread(threading.Thread):
 				kwargs['initial_input'] = image1
 				jpg = self.reduxclient.process_kwargs(**kwargs)
 				# save jpeg
-				f = open(still_missing['jpg'], 'wb')
+				f = open(still_missing['jpg'], 'w')
 				f.write(jpg)
 				f.close()
 				print ('done', still_missing['jpg'])
@@ -239,7 +239,7 @@ class ReduxThread(threading.Thread):
 				kwargs['initial_input'] = image1
 				pow = self.reduxclient.process_kwargs(**kwargs)
 				# save pow jpeg
-				f = open(still_missing['pow'], 'wb')
+				f = open(still_missing['pow'], 'w')
 				f.write(pow)
 				f.close()
 				print ('done', still_missing['pow'])
@@ -259,7 +259,7 @@ def run():
 	# main thread should run as long as other threads are alive
 	while True:
 		time.sleep(5)
-		if not (querythread.is_alive() and reduxthread.is_alive()):
+		if not (querythread.isAlive() and reduxthread.isAlive()):
 			break
 
 if __name__ == '__main__':

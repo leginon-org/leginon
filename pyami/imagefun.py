@@ -1,11 +1,3 @@
-
-
-
-from builtins import map
-from builtins import range
-from builtins import object
-from past.utils import old_div
-import functools
 #
 # COPYRIGHT:
 #			 The Leginon software is Copyright under
@@ -13,16 +5,17 @@ import functools
 #			 For terms of the license agreement
 #			 see	http://leginon.org
 #
+from builtins import map
+from builtins import range
+from builtins import object
+import functools
 
 import numpy
 from pyami import quietscipy
 import scipy.ndimage
 from pyami import fftengine
 import sys
-try:
-	import numextension
-except:
-	pass
+import numextension
 import math
 from pyami import arraystats
 from scipy import stats
@@ -90,7 +83,7 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 		output = numpy.where(input>maxfrom, maxto, minto)
 	else:
 		rangeto = maxto - minto
-		scale = old_div(float(rangeto), rangefrom)
+		scale = float(rangeto)/rangefrom
 		offset = minfrom * scale
 		output = input * scale - offset
 
@@ -143,7 +136,7 @@ def filled_sphere(shape, radius, center=None):
 	r2 = radius*radius
 	if center is None:
 		### set to center of array
-		center = old_div((shape[0]-1),2.0),old_div((shape[1]-1),2.0),old_div((shape[2]-1),2.0)
+		center = ((shape[0]-1)/2.0),((shape[1]-1)/2.0),((shape[2]-1)/2.0)
 	def func(i0, i1, i2):
 		ii0 = i0 - center[0]
 		ii1 = i1 - center[1]
@@ -160,11 +153,11 @@ def filled_circle(shape, radius=None, center=None):
 	with value of 0 inside the circle and 1 outside the circle
 	"""
 	if radius is None:
-		radius = old_div(min(shape),2)
+		radius = (min(shape)//2)
 	r2 = radius*radius
 	if center is None:
 		### set to center of array
-		center = old_div((shape[0]-1),2.0),old_div((shape[1]-1),2.0)
+		center = ((shape[0]-1)/2.0),((shape[1]-1)/2.0)
 	def func(i0, i1):
 		ii0 = i0 - center[0]
 		ii1 = i1 - center[1]
@@ -174,8 +167,8 @@ def filled_circle(shape, radius=None, center=None):
 	return numpy.fromfunction(func, shape)
 
 def fromRadialFunction(funcrad, shape, **kwargs):
-	center_r = old_div((shape[0] - 1),2.0)
-	center_c = old_div((shape[1] - 1),2.0)
+	center_r = ((shape[0] - 1)/2.0)
+	center_c = ((shape[1] - 1)/2.0)
 	def funcrc(r, c, **kwargs):
 		rr = r - center_r
 		cc = c - center_c
@@ -185,8 +178,8 @@ def fromRadialFunction(funcrad, shape, **kwargs):
 	return result
 
 def fromPolarBinFunction(funcpolar, shape, **kwargs):
-	center_r = old_div((shape[0] - 1),2.0)
-	center_c = old_div((shape[1] - 1),2.0)
+	center_r = ((shape[0] - 1)/2.0)
+	center_c = ((shape[1] - 1)/2.0)
 	def funcrc(r, c, **kwargs):
 		rr = r - center_r
 		cc = c - center_c
@@ -200,18 +193,18 @@ def center_mask(a, mask_radius, copy=False):
 	if copy:
 		a = numpy.array(a)
 	shape = a.shape
-	center = old_div(shape[0],2), old_div(shape[1],2)
+	center = (shape[0]//2), (shape[1]//2)
 	center_square = a[center[0]-mask_radius:center[0]+mask_radius, center[1]-mask_radius:center[1]+mask_radius]
 	cs_shape = center_square.shape
-	cs_center = old_div(cs_shape[0],2), old_div(cs_shape[1],2)
+	cs_center = (cs_shape[0]//2), (cs_shape[1]//2)
 	circ = filled_circle(cs_shape,mask_radius)
 	center_square[:] = center_square * circ.astype(center_square.dtype)
 	if copy:
 		return a
 
 def swap_quadrants(a):
-	shift0 = old_div(a.shape[0],2)
-	shift1 = old_div(a.shape[1],2)
+	shift0 = (a.shape[0]//2)
+	shift1 = (a.shape[1]//2)
 	a = numpy.roll(a, shift0, 0)
 	a = numpy.roll(a, shift1, 1)
 	return a
@@ -283,7 +276,7 @@ def near_center(shape, blobs, n):
 	'''
 
 	# create distance mapping
-	imcenter = old_div(shape[0],2), old_div(shape[1],2)
+	imcenter = (shape[0]//2), (shape[1]//2)
 	distmap = {}
 	for blob in blobs:
 		center = blob.stats['center']
@@ -523,10 +516,10 @@ def bin2(a, factor):
 	binning factor in both dimensions.
 	'''
 	oldshape = a.shape
-	newshape = old_div(numpy.asarray(oldshape),factor).astype(int)
+	newshape = (numpy.asarray(oldshape)//factor).astype(int)
 	tmpshape = (newshape[0], factor, newshape[1], factor)
 	f = factor * factor
-	binned = old_div(numpy.sum(numpy.sum(numpy.reshape(a, tmpshape), 1), 2), f)
+	binned = numpy.sum(numpy.sum(numpy.reshape(a, tmpshape), 1), 2)/ float(f)
 	return binned
 
 def bin2m(a, factor):
@@ -534,7 +527,7 @@ def bin2m(a, factor):
 	Median instead of mean for bin2
 	'''
 	oldshape = a.shape
-	newshape = old_div(numpy.asarray(oldshape),factor)
+	newshape = (numpy.asarray(oldshape)//factor)
 	tmpshape = (newshape[0], factor, newshape[1], factor)
 	binned = stats.median(stats.median(numpy.reshape(a, tmpshape), 1), 2)
 	return binned
@@ -545,15 +538,15 @@ def bin2f(a, factor):
 	'''
 	fft = ffteng.transform(a)
 	fft = numpy.fft.fftshift(fft)
-	xstart = int( fft.shape[0]/2 * (1 - old_div(1.0,factor)))
-	xend   = int( fft.shape[0]/2 * (1 + old_div(1.0,factor)))
-	ystart = int( fft.shape[1]/2 * (1 - old_div(1.0,factor)))
-	yend   = int( fft.shape[1]/2 * (1 + old_div(1.0,factor)))
+	xstart = int( fft.shape[0]/2 * (1 - (1.0/factor)))
+	xend   = int( fft.shape[0]/2 * (1 + (1.0/factor)))
+	ystart = int( fft.shape[1]/2 * (1 - (1.0/factor)))
+	yend   = int( fft.shape[1]/2 * (1 + (1.0/factor)))
 	#print("%d:%d  ,  %d:%d\n"%(xstart,xend,ystart,yend,))
 	cutfft = fft[xstart:xend, ystart:yend]
 	cutfft = numpy.fft.fftshift(cutfft)
 	#print(cutfft.shape, fft.shape)
-	binned = old_div(ffteng.itransform(cutfft),float(factor**2))
+	binned = (ffteng.itransform(cutfft)/float(factor**2))
 	return binned
 
 def fourier_scale(a, boxsize):
@@ -565,16 +558,16 @@ def fourier_scale(a, boxsize):
 	initboxsize = max(a.shape)
 	if initboxsize == boxsize:
 		return a
-	factor = old_div(initboxsize,float(boxsize))
-	xstart = int( old_div(fft.shape[0],2) - old_div(boxsize,2) )
-	xend   = int( old_div(fft.shape[0],2) + old_div(boxsize,2) )
-	ystart = int( old_div(fft.shape[1],2) - old_div(boxsize,2) )
-	yend   = int( old_div(fft.shape[1],2) + old_div(boxsize,2) )
+	factor = (initboxsize/float(boxsize))
+	xstart = int( (fft.shape[0]//2) - (boxsize//2) )
+	xend   = int( (fft.shape[0]//2) + (boxsize//2) )
+	ystart = int( (fft.shape[1]//2) - (boxsize//2) )
+	yend   = int( (fft.shape[1]//2) + (boxsize//2) )
 	#print("%d:%d  ,  %d:%d\n"%(xstart,xend,ystart,yend,))
 	cutfft = fft[xstart:xend, ystart:yend]
 	cutfft = numpy.fft.fftshift(cutfft)
 	#print(cutfft.shape, fft.shape)
-	binned = old_div(ffteng.itransform(cutfft),float(factor**2))
+	binned = (ffteng.itransform(cutfft)/float(factor**2))
 	return binned
 
 def bin3(a, factor):
@@ -584,10 +577,10 @@ def bin3(a, factor):
 	binning factor in both dimensions.
 	'''
 	oldshape = a.shape
-	newshape = old_div(numpy.asarray(oldshape),factor)
+	newshape = (numpy.asarray(oldshape)/factor)
 	tmpshape = (newshape[0], factor, newshape[1], factor, newshape[2], factor)
 	f = factor * factor * factor
-	binned = old_div(numpy.sum(numpy.sum(numpy.sum(numpy.reshape(a, tmpshape), 1), 2), 3), f)
+	binned = (numpy.sum(numpy.sum(numpy.sum(numpy.reshape(a, tmpshape), 1), 2), 3)/ f)
 	#binned = stats.median(stats.median(numpy.reshape(a, tmpshape), 1), 2)
 	return binned
 
@@ -597,19 +590,19 @@ def bin3f(a, factor):
 	'''
 	fft = ffteng.transform(a)
 	fft = numpy.fft.fftshift(fft)
-	xstart = int( fft.shape[0]/2 * (1 - old_div(1.0,factor)))
-	xend   = int( fft.shape[0]/2 * (1 + old_div(1.0,factor)))
-	ystart = int( fft.shape[1]/2 * (1 - old_div(1.0,factor)))
-	yend   = int( fft.shape[1]/2 * (1 + old_div(1.0,factor)))
-	zstart = int( fft.shape[2]/2 * (1 - old_div(1.0,factor)))
-	zend   = int( fft.shape[2]/2 * (1 + old_div(1.0,factor)))
+	xstart = int( fft.shape[0]/2 * (1 - (1.0/factor)))
+	xend   = int( fft.shape[0]/2 * (1 + (1.0/factor)))
+	ystart = int( fft.shape[1]/2 * (1 - (1.0/factor)))
+	yend   = int( fft.shape[1]/2 * (1 + (1.0/factor)))
+	zstart = int( fft.shape[2]/2 * (1 - (1.0/factor)))
+	zend   = int( fft.shape[2]/2 * (1 + (1.0/factor)))
 	cutfft = fft[
 		xstart:xend,
 		ystart:yend,
 		zstart:zend,
 	]
 	cutfft = numpy.fft.fftshift(cutfft)
-	binned = old_div(ffteng.itransform(cutfft),float(factor**3))
+	binned = (ffteng.itransform(cutfft)/float(factor**3))
 	return binned
 
 def shrink_factor(shape):
@@ -653,8 +646,8 @@ def crop_at(im, center, shape, mode='wrap', cval=None):
 	if shape[0]>im.shape[0] or shape[1]>im.shape[1]:
 		raise ValueError('crop_at: crop shape %s must not be larger than image shape %s' % (shape, im.shape))
 	if center == 'center':
-		center = old_div(im.shape[0],2.0) - 0.5, old_div(im.shape[1],2.0) - 0.5
-	croppedcenter = old_div(shape[0],2.0) - 0.5, old_div(shape[1],2.0) - 0.5
+		center = (im.shape[0]/2.0) - 0.5, (im.shape[1]/2.0) - 0.5
+	croppedcenter = (shape[0]/2.0) - 0.5, (shape[1]/2.0) - 0.5
 	shift = croppedcenter[0]-center[0], croppedcenter[1]-center[1]
 	if mode == 'constant':
 		shifted = scipy.ndimage.shift(im, shift, mode=mode, cval=cval, order=1)
@@ -778,10 +771,10 @@ def taper(im, boundary):
 	'''
 	in place taper of image boundary
 	'''
-	im[0] = old_div((im[0] + im[-1]), 2.0)
+	im[0] = ((im[0] + im[-1])/ 2.0)
 	im[-1] = im[0]
 
-	im[:,0] = old_div((im[:,0] + im[:,-1]), 2.0)
+	im[:,0] = ((im[:,0] + im[:,-1])/ 2.0)
 	im[:,-1] = im[:,0]
 
 	for sign in (-1,1):
@@ -804,22 +797,22 @@ Returns:  (bins, r_centers, t_centers)
 	'''
 	## Full radial range (result will have empty bins):
 	r_min = 0.0
-	r_max = numpy.hypot(old_div(input.shape[0], 2.0), old_div(input.shape[1], 2.0))
+	r_max = numpy.hypot((input.shape[0]/ 2.0), (input.shape[1]/ 2.0))
 
 	r_bins,r_inc = numpy.linspace(r_min, r_max, num=nbins_r+1, retstep=True)
 	# excluding r_min
-	r_centers = r_bins[1:] - old_div(r_inc,2.0)
+	r_centers = r_bins[1:] - (r_inc/2.0)
 
 	## Full angular range from -pi to pi
 	t_min = -numpy.pi
 	t_max = numpy.pi
 	t_bins,t_inc = numpy.linspace(t_min, t_max, num=nbins_t+1, retstep=True)
-	t_centers = t_bins[1:] - old_div(t_inc,2.0)
+	t_centers = t_bins[1:] - (t_inc/2.0)
 
 	## Determine coordinates on center
 	indices = numpy.indices(input.shape)
-	center_row = int(old_div((input.shape[0]+1), 2) ) # integer division intended
-	center_col = int(old_div((input.shape[1]+1), 2) ) # integer division intended
+	center_row = int(((input.shape[0]+1)// 2) ) # integer division intended
+	center_col = int(((input.shape[1]+1)// 2) ) # integer division intended
 	indices[0][:] -= center_row
 	indices[:][1] -= center_col
 
@@ -932,7 +925,7 @@ def edgeStats(imagearray):
 
 def normalizeImageArray(rawarray, darkarray, normarray, darkscale=1, badrowlist=None, badcolumnlist=None):
 	if darkscale != 1:
-		darkarray=old_div(darkarray,darkscale)
+		darkarray=(darkarray/darkscale)
 	diff = rawarray - darkarray
 	r = diff * normarray
 	## remove nan and inf
@@ -943,11 +936,11 @@ def normalizeImageArray(rawarray, darkarray, normarray, darkscale=1, badrowlist=
 
 def normalizeFromDarkAndBright(rawarray, darkarray, brightarray, scale=1, badrowlist=None, badcolumnlist=None, border=None):
 	if scale != 1:
-		darkarray=old_div(darkarray,scale)
-		brightarray=old_div(brightarray,scale)
+		darkarray=(darkarray/scale)
+		brightarray=(brightarray/scale)
 	bminusd=(brightarray-darkarray)
 	m=bminusd.mean()
-	gain=old_div(m,bminusd)
+	gain=(m/bminusd)
 	correctedarray=(rawarray-darkarray)*gain
 	## remove nan and inf
 	correctedarray = numpy.where(numpy.isfinite(correctedarray), correctedarray, 0)
@@ -973,11 +966,11 @@ def replaceBadRowsAndColumns(imagearray,badrowlist=[], badcolumnlist=[]):
 		return (lowerneighbor,higherneighbor)
 	for badrow in badrowlist:
 		lowerneighbor,higherneighbor=_getGoodNeighbors(badrow,badrowlist,imagearray.shape[1])
-		newrow=old_div((imagearray[lowerneighbor,:] + imagearray[higherneighbor,:]),2)
+		newrow=((imagearray[lowerneighbor,:] + imagearray[higherneighbor,:])//2)
 		imagearray[badrow,:]=newrow
 	for badcol in badcolumnlist:
 		lowerneighbor,higherneighbor=_getGoodNeighbors(badcol,badcolumnlist,imagearray.shape[0])
-		newcol=old_div((imagearray[:,lowerneighbor] + imagearray[:,higherneighbor]),2)
+		newcol=((imagearray[:,lowerneighbor] + imagearray[:,higherneighbor])//2)
 		imagearray[:,badcol]=newcol
 	return imagearray
 

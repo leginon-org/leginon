@@ -24,7 +24,6 @@ from builtins import zip
 from builtins import map
 from builtins import str
 from builtins import range
-from past.utils import old_div
 
 import numpy
 import sys
@@ -352,7 +351,7 @@ def parseHeader(headerbytes):
 					newheader[name] = full_string
 		else:
 			length = 4
-			word = old_div(pos,4)
+			word = pos//4
 			newheader[name] = headerarray[ftype][word]
 		pos += length
 
@@ -447,9 +446,9 @@ def updateHeaderUsingArray(header, a, calc_stats=True, reset_origin=True, mz=Non
 		header['nystart'] = 0
 		header['nzstart'] = 0
 	else:
-		header['nxstart'] = old_div(nx, -2)
-		header['nystart'] = old_div(ny, -2)
-		header['nzstart'] = old_div(nz, -2)
+		header['nxstart'] = (nx// -2)
+		header['nystart'] = (ny// -2)
+		header['nzstart'] = (nz// -2)
 
 int32dtype = numpy.dtype('int32')
 uint16dtype = numpy.dtype('uint16')
@@ -602,7 +601,7 @@ def mainStackHeader(oneheader, z):
 	newheader['mz'] = 1
 	newheader['ispg'] = 0
 	newheader['zlen'] = z
-	newheader['zorigin'] = old_div(z,2.0)
+	newheader['zorigin'] = z/2.0
 	newheader['nsymbt'] = z * 88
 	newheader['exttype'] = 'IMOD'
 	newheader['nintegers'] = 0
@@ -682,7 +681,7 @@ def appendArray(a, f):
 	## windows to a samba share will fail if image is too large.
 	smallersize = 16 * 1024 * 1024
 	b = a.ravel()
-	items_per_write = int(old_div(smallersize, a.itemsize))
+	items_per_write = int(smallersize/a.itemsize)
 	for start in range(0, b.size, items_per_write):
 		end = start + items_per_write
 		b[start:end].tofile(f)
@@ -884,10 +883,9 @@ def averageStack(filename,dtype=numpy.float32):
 	for i in range(nslices):
 		if i == 0:
 			a = read(filename,i)
-			a.astype(dtype)
 		else:
-			a = old_div((a * i + read(filename,i)), (i+1))
-	return a
+			a = (a * i + read(filename,i))/ (i+1)
+	return a.astype(dtype)
 
 def saveAverageStack(filename,outfile,dtype=numpy.float32):
 	a = averageStack(filename,dtype)
@@ -927,7 +925,7 @@ def readFilePixelSize(filename):
 	for axis in keys:
 		naxis = 'n%s' % (axis)
 		axislen = '%slen' % (axis)
-		pixeldict[axis] = old_div(h[axislen], float(h[naxis]))
+		pixeldict[axis] = h[axislen]/float(h[naxis])
 	return pixeldict
 
 def testWrite():
