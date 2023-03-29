@@ -119,7 +119,7 @@ def powerseries(image, pixelsize, fieldsize=None, mask_radius=0.5, msg=True):
 			count += 1
 			x1 = xsize-f
 			x2 = xsize
-			y1 = f*j/2
+			y1 = int(f*j/2)
 			y2 = y1 + f
 			if y2 > ysize:
 				continue
@@ -127,13 +127,14 @@ def powerseries(image, pixelsize, fieldsize=None, mask_radius=0.5, msg=True):
 				print("%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2))
 			elif msg is True:
 				sys.stderr.write(".")
+			print(image.shape, x1, x2, y1,y2)
 			cutout = image[x1:x2, y1:y2]
 			powerspec = imagefun.power(cutout*envelop, mask_radius)
 			psdlist.append(powerspec)
 	if ysize%fieldsize > fieldsize*0.1:
 		for i in range(xnumstep):
 			count += 1
-			x1 = f*i/2
+			x1 = int(f*i/2)
 			x2 = x1 + f
 			if x2 > xsize:
 				continue

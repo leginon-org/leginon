@@ -724,9 +724,9 @@ def peakExtender(raddata, rotdata, extrema, extrematype="below"):
 			continue
 
 		values = rotdata[eindex1:eindex2]
-		if extrematype is "below":
+		if extrematype == "below":
 			value = values.min()
-		elif extrematype is "above":
+		elif extrematype == "above":
 			value = values.max()
 
 		maxx = eindex
@@ -735,20 +735,20 @@ def peakExtender(raddata, rotdata, extrema, extrematype="below"):
 
 	if len(xdata) < 2:
 		#not enough indices
-		if extrematype is "below":
+		if extrematype == "below":
 			return numpy.zeros(raddata.shape)
 		elif extrematype is "above":
 			return numpy.ones(raddata.shape)
 
 	func = scipy.interpolate.interp1d(xdata, ydata, kind='linear')
 	extremedata = func(raddatasq[minx:maxx])
-	if extrematype is "below":
+	if extrematype == "below":
 		if minx < 3:
 			startvalue = 0.0
 		else:
 			startvalue = rotdata[int(minx*0.5):minx].min()
 		endvalue = rotdata[maxx:].min()
-	elif extrematype is "above":
+	elif extrematype == "above":
 		if minx < 3:
 			startvalue = 1.0
 		else:
