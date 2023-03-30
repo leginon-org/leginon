@@ -72,7 +72,7 @@ def surfaceWeightByIfs(footprint):
 	Calculate the surface area weight for a given footprint	
 	"""
 	### conversion is the slowest step
-	nfootprint = numpy.array(footprint, dtype=numpy.bool)
+	nfootprint = numpy.array(footprint, dtype=numpy.bool_)
 
 	### return empty voxels
 	if nfootprint[3] == 0:

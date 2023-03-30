@@ -1091,7 +1091,7 @@ class PickerApp(wx.App):
 		a1 = self.getArray1()
 		a2 = self.getArray2()
 		numpoints = max(a1.shape[0], a2.shape[0])
-		good = numpy.zeros((numpoints), dtype=numpy.bool)
+		good = numpy.zeros((numpoints), dtype=numpy.bool_)
 		if len(a1) != len(a2):
 			good[len(a1):] = True
 			good[len(a2):] = True

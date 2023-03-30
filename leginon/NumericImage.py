@@ -20,11 +20,11 @@ Image = numpil.Image2
 ntype_itype = {
 	(numpy.uint8,1) : ('L','L'),
 	(numpy.int16,2) : ('I','I;16NS'),
-	(numpy.int,2) : ('I','I;16NS'),
-	(numpy.int,4) : ('I','I;32NS'),
+	(numpy.int_,2) : ('I','I;16NS'),
+	(numpy.int_,4) : ('I','I;32NS'),
 	(numpy.int32,4) : ('I','I;32NS'),
-	(numpy.float,4) : ('F','F;32NF'),
-	(numpy.float,8) : ('F','F;64NF'),
+	(numpy.float_,4) : ('F','F;32NF'),
+	(numpy.float_,8) : ('F','F;64NF'),
 	(numpy.float32,4) : ('F','F;32NF'),
 	(numpy.float64,8) : ('F','F;64NF')
 	}
@@ -199,7 +199,7 @@ class NumericImage:
 
 if __name__ == '__main__':
 
-	a = numpy.array([5,6,7,8,9], numpy.float)
+	a = numpy.array([5,6,7,8,9], numpy.float32)
 	print 'a', a
 	b = imagefun.linearscale(a, (None,None), (0,1))
 	print 'b', b

@@ -63,10 +63,10 @@ def non_maximal_edge_suppresion(mag, orient, minEdgeRadius=20, maxEdgeRadius=Non
 
 	offsets = ((1,0), (1,1), (0,1), (-1,1))
 
-	edge_map = numpy.zeros(mag.shape, dtype='bool')
+	edge_map = numpy.zeros(mag.shape, dtype=numpy.bool_)
 	for a in range(4):
 		di, dj = offsets[a]
-		footprint = numpy.zeros((3,3), dtype="int")
+		footprint = numpy.zeros((3,3), dtype=numpy.int8)
 		footprint[1,1] = 0
 		footprint[1+di,1+dj] = 1
 		footprint[1-di,1-dj] = 1
@@ -134,7 +134,7 @@ def canny_edges(image, minedges=5000, maxedges=15000, low_thresh=50, minEdgeRadi
 			print high_thresh
 			print maxs[:3], maxs[-3:]
 			print maxs[0], ">", high_thresh, "=", maxs[0] > high_thresh
-			good_label = numpy.zeros((numlabels+1,), dtype=numpy.bool)
+			good_label = numpy.zeros((numlabels+1,), dtype=numpy.bool_)
 			good_label[1:] = maxs > high_thresh
 			print good_label[:3], good_label[-3:]
 			time.sleep(10)

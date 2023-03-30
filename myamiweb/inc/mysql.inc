@@ -43,7 +43,12 @@ class mysql {
 		$host = (empty($host)) ? $this->db_host : $host;
 		$link = @mysqli_connect($host, $this->db_user, $this->db_pass);
 		if (!$link || empty($link)) {
-         $this->mysqlerror = "Connect Error: " . mysqli_connect_errno();
+			$this->mysqlerror = "= Connect Error: mysql.inc::connect_db - " . mysqli_connect_errno();
+			error_log($this->mysqlerror);
+			error_log(" host: " . $this->db_host);
+			error_log(" user: " . $this->db_user);
+			error_log(" pass: " . $this->db_pass);
+			error_log("... =");
 			return false;
 		}
 
@@ -260,35 +265,55 @@ class mysql {
 		return $numrows;
 	}
 
+	function _backtrace() {
+		ob_start();
+		debug_print_backtrace();
+		$trace = ob_get_contents();
+		ob_end_clean();
+		return $trace;
+	}
+
 	function SQLQuery($query, $insert=false) {
-		$this->sqlquery = $query;
-		$link = $this->db_link;
-		// if the link is defined and connection is live do not attempt connection
-		if (!(isset($link) && $link->ping())) {
-			$link = $this->connect_db($this->db_host);
+		// this method is not meant to be called without a provided db at object
+		// construction time - see connect_db(). there is still functionality
+		// calling it this way, which likely hasn't worked in a long time, and
+		// it just fails *after* a connection is established.  fail early instead.
+		if(empty($this->db)) {
+			return false;
 		}
-        if (!$link) {
-        	error_log("DB Connect Error. Trying again...");
-      	  	gc_collect_cycles();
-      	  	$link = $this->connect_db($this->db_host);
-      	  	if (!$link) {
-	        	$this->mysqlerror = "Connect Error: " . mysqli_connect_errno();
-	        	error_log($this->mysqlerror);
-	         	return False;
-      	  	}
-        }
-		$result = mysqli_query($link, $query); 
-		if (!$result) {
-			$this->mysqlerror = "Error: ".mysqli_error($link);
-			$this->mysqlerrornb = mysqli_errno($link);
+
+		$this->sqlquery = $query;
+
+		// a private - to this function - $link to avoid it getting
+		// trampled - see connect_db() - by the lack of interface and allow
+		// for reuse.
+		if (empty($this->__SQLQuery_link)) {
+			$this->__SQLQuery_link = $this->connect_db($this->db_host);
+		}
+
+		// connection failed
+		$link = $this->__SQLQuery_link;
+		if (!$link) {
 			return False;
 		}
-		if ($insert)
-			$res = mysqli_insert_id($link);
-		else
-			$res = $result;
-		//$this->close_db();
-		return $res;
+		mysqli_query($link, "SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
+
+		$result = mysqli_query($link, $query); 
+		if (!$result) {
+			$this->mysqlerror = "= Error: mysql.inc::SQLQuery - " . mysqli_error($link);
+			$this->mysqlerrornb = mysqli_errno($link);
+			// error_log($this->mysqlerror);
+			// error_log("  query: " . $query);
+			// error_log("  trace: " . $this->_backtrace());
+			// error_log("... =");
+			return False;
+		}
+
+		if ($insert) {
+			return mysqli_insert_id($link);
+		}
+
+		return $result;
 	}
 
 	function getSQLResult($query, $fetch=MYSQLI_ASSOC) {
