@@ -197,16 +197,16 @@ class ValueScaleBitmap(wx.StaticBitmap):
         arraytype = None
         for t in types:
           if issubclass(t, float) or issubclass(t, numpy.floating):
-            arraytype = numpy.float
+            arraytype = numpy.float_
             break
         if arraytype is None:
           for t in types:
             if t is int or t is long or issubclass(t, numpy.integer):
-              arraytype = numpy.int
+              arraytype = numpy.int_
               break
         if arraytype is None:
             raise TypeError
-        array = numpy.arange(width, dtype=numpy.float)
+        array = numpy.arange(width, dtype=numpy.float_)
         array.shape=(1, width)
         array *= float(self.extrema[1] - self.extrema[0])/(width - 1)
         array += self.extrema[0]
@@ -291,12 +291,12 @@ class ValueScaler(wx.Panel):
             self.type = None
             for t in types:
               if issubclass(t, float) or issubclass(t, numpy.floating):
-                self.type = numpy.float
+                self.type = numpy.float_
                 break
             if self.type is None:
               for t in types:
                 if t is int or t is long or issubclass(t, numpy.integer):
-                  self.type = numpy.int
+                  self.type = numpy.int_
                   break
             if self.type is None:
                 raise TypeError

@@ -365,7 +365,7 @@ def equiPhaseAverage(image, ellipratio,
 		print("pre-edit xdataint", xdataint[:5], "..", xdataint[-5:]) 
 		imagestat.printImageInfo(xdataint)
 
-	bigshape = numpy.array(numpy.array(image.shape)*math.sqrt(2)/2., dtype=numpy.int)*2
+	bigshape = numpy.array(numpy.array(image.shape)*math.sqrt(2)/2., dtype=numpy.int32)*2
 	if full is False:
 		### trims any edge artifacts from rotational average
 		outercutsize = int((bigshape[0]/2-2)/ringwidth*math.sqrt(2)/2.)

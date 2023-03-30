@@ -15,7 +15,7 @@ def gradient(image):
 	'''
 	m, n = image.shape
 
-	J = numpy.zeros((m+2, n+2), numpy.float)
+	J = numpy.zeros((m+2, n+2), numpy.float32)
 	J[0, 0] = image[0, 0]
 	J[0, 1:n + 1] = image[0]
 	J[0, n + 1] = image[0, n - 1]
@@ -26,12 +26,12 @@ def gradient(image):
 	J[m + 1, 1:n + 1] = image[m - 1]
 	J[m + 1, n + 1] = image[m - 1, n - 1]
 
-	Ix = numpy.zeros(J.shape, numpy.float)
+	Ix = numpy.zeros(J.shape, numpy.float32)
 	Ix[0:m+2,1:n+1] = (J[0:m+2,2:n+2] - J[0:m+2,0:n]) * 0.5
 	Ix[0:m+2, 0] = Ix[0:m+2, 1]
 	Ix[0:m+2, n+1] = Ix[0:m+2, n]
 
-	Iy = numpy.zeros(J.shape, numpy.float)
+	Iy = numpy.zeros(J.shape, numpy.float32)
 	Iy[1:m+1,0:n+2] = (J[2:m+2,0:n+2] - J[0:m,0:n+2]) * 0.5
 	Iy[0, 0:n+2] = Iy[1, 0:n+2]
 	Iy[m+1, 0:n+2] = Iy[m, 0:n+2]
@@ -60,7 +60,7 @@ def bresenhamCirclePoints(radius):
 	return pointlist 
 
 def period(image):
-	fftimage = numpy.zeros(image.shape, numpy.float)
+	fftimage = numpy.zeros(image.shape, numpy.float32)
 	m = image.shape[0]
 	for j in range(image.shape[1]):
 		fft = scipy.fftpack.fft(image[:, j]).real
@@ -106,8 +106,8 @@ def houghLine(image, threshold):
 	icos = numpy.matrixmultiply(i, cos)
 	jsin = numpy.matrixmultiply(j, sin)
 
-#	i = numpy.transpose(numpy.array([numpy.arange(n)]*m)).astype(numpy.float)
-#	j = numpy.array([numpy.arange(m)]*n).astype(numpy.float)
+#	i = numpy.transpose(numpy.array([numpy.arange(n)]*m)).astype(numpy.float32)
+#	j = numpy.array([numpy.arange(m)]*n).astype(numpy.float32)
 #
 #	i *= numpy.cos(theta)
 #	j *= numpy.sin(theta)

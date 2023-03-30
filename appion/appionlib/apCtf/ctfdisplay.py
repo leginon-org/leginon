@@ -349,7 +349,7 @@ class CtfDisplay(object):
 			apDisplay.printColor("Using %d sections for %d points (index %d to %d), %d points per section"
 				%(numSections, noiseNumPoints, firstvalleyindex, len(raddata), noiseNumPoints/numSections), "cyan")
 
-		indexData = numpy.arange(0, len(raddata), dtype=numpy.float)
+		indexData = numpy.arange(0, len(raddata), dtype=numpy.float64)
 		numSections, noiseStartIndexes, noiseEndIndexes, mergeIndexes = self.createSections(numSections, fvi, indexData, pixelrdata, valley)
 
 		if not numSections:
@@ -508,7 +508,7 @@ class CtfDisplay(object):
 
 		#fitpeakdata = ctfnoise.peakExtender(raddata, expnormlogrotdata, peakradii, "above")
 
-		indexData = numpy.arange(0, len(raddata), dtype=numpy.float)
+		indexData = numpy.arange(0, len(raddata), dtype=numpy.float32)
 		numSections, envelopStartIndexes, envelopEndIndexes, mergeIndexes = self.createSections(numSections, fpi, indexData, pixelrdata, peak)
 
 		### fit the envelope in each section
@@ -1151,7 +1151,7 @@ class CtfDisplay(object):
 		###
 		### PART 9: DRAW THE 2D POWERSPEC IMAGE
 		###
-		center = numpy.array(powerspec.shape, dtype=numpy.float)/2.0
+		center = numpy.array(powerspec.shape, dtype=numpy.float64)/2.0
 		foundzeros = min(len(radii1), len(radii2))
 		"""
 		pyplot.clf()
@@ -1177,7 +1177,7 @@ class CtfDisplay(object):
 		###
 		apDisplay.printColor("PART 9: DRAW THE 2D POWERSPEC IMAGE", "magenta")
 
-		center = numpy.array(powerspec.shape, dtype=numpy.float)/2.0
+		center = numpy.array(powerspec.shape, dtype=numpy.float64)/2.0
 		originalimage = imagefile.arrayToImage(powerspec)
 		originalimage = originalimage.convert("RGB")
 		pilimage = originalimage.copy()

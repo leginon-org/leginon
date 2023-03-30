@@ -127,27 +127,27 @@ def findRotationScaleTranslation(image1, image2, window=None, highpass=None):
 	return rotation, scale, peak, rsvalue, value
 
 def getMatrices(rotation, scale):
-	mrotation = numpy.identity(2, numpy.float)
+	mrotation = numpy.identity(2, numpy.float32)
 	mrotation[0, 0] = math.cos(math.radians(rotation))
 	mrotation[0, 1] = math.sin(math.radians(rotation))
 	mrotation[1, 0] = -math.sin(math.radians(rotation))
 	mrotation[1, 1] = math.cos(math.radians(rotation))
 
-	mscale = numpy.identity(2, numpy.float)
+	mscale = numpy.identity(2, numpy.float32)
 	mscale[0, 0] = scale
 	mscale[1, 1] = scale
 
-	m = numpy.identity(2, numpy.float)
+	m = numpy.identity(2, numpy.float32)
 	m = numpy.dot(mrotation, m)
 	m = numpy.dot(mscale, m)
 
 	imrotation = numpy.transpose(mrotation)
 
-	imscale = numpy.identity(2, numpy.float)
+	imscale = numpy.identity(2, numpy.float32)
 	imscale[0, 0] = 1.0/mscale[0, 0]
 	imscale[1, 1] = 1.0/mscale[1, 1]
 
-	im = numpy.identity(2, numpy.float)
+	im = numpy.identity(2, numpy.float32)
 	im = numpy.dot(imscale, im)
 	im = numpy.dot(imrotation, im)
 
@@ -159,7 +159,7 @@ def rotateScaleOffset(image, rotation, scale, offset, shape=None):
 	if shape is None:
 		shape = image.shape
 
-	o = numpy.zeros((2,), numpy.float)
+	o = numpy.zeros((2,), numpy.float32)
 	o = (offset[0] - image.shape[0]/2.0, offset[1] - image.shape[1]/2.0)
 	o = numpy.dot(im, o)
 	o = (-(o[0] + shape[0]/2.0), -(o[1] + shape[1]/2.0))

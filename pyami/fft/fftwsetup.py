@@ -12,14 +12,14 @@ timing = {'create':[], 'plan':[], 'init':[], 'run':[]}
 def create(shape):
 	global timing
 	t0 = time.time()
-	a = numpy.empty(shape, numpy.float)
+	a = numpy.empty(shape, numpy.float_)
 	timing['create'].append(time.time() - t0)
 	return a
 
 def make_plan(image_array, rigor):
 	global timing
 	t0 = time.time()
-	input_array = numpy.empty(image_array.shape, numpy.float)
+	input_array = numpy.empty(image_array.shape, numpy.float_)
 	fftshape = image_array.shape[0], image_array.shape[1]/2+1
 	fft_array = numpy.empty(fftshape, dtype=complex)
 	plan_kwargs = dict(pyami.fft.calc_fftw3.global_plan_kwargs)

@@ -88,7 +88,7 @@ class Correlator(object):
 		newimagedata['camera']=camdata
 		# numpy 2.0 does not allow inplace assignment involving different kinds
 		# convert to float first
-		image = image.astype(numpy.float)
+		image = image.astype(numpy.float32)
 		mean = image.mean()
 		image -= mean
 
