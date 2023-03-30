@@ -805,6 +805,20 @@ class Falcon3(FeiCam):
 		ms = self.dosefrac_frame_time * 1000.0
 		return ms
 
+	def makeNextRawFramesName(self):
+		self.frames_name_set_by_leginon=True
+		return self._makeNextRawFramesName()
+
+	def _makeNextRawFramesName(self):
+		sub_frame_dir = self.frameconfig.getBaseFramePath()
+		# use createFramePath because some attributes need to be set
+		self.frameconfig.createFramePath(sub_frame_dir)
+		self.frames_name = self.frameconfig.getFrameDirName()
+		return self.frames_name
+
+	def unsetNextRawFramesName(self):
+		self.frames_name_set_by_leginon=False
+
 	def getPreviousRawFramesName(self):
 		return self.frames_name
 
@@ -826,6 +840,11 @@ class Falcon3(FeiCam):
 			self.camera_settings.AlignImage = self.align_frames
 		frame_time_second = self.dosefrac_frame_time
 		if self.save_frames:
+			if not self.frames_name_set_by_leginon:
+				self._makeNextRawFramesName() # this sets self.rawframesname
+			else:
+				# use rawframesname already set
+				pass
 			# EER only works in counting mode
 			if self.frame_format == 'eer' and self.electron_counting:
 				self.camera_settings.EER = True
@@ -833,8 +852,6 @@ class Falcon3(FeiCam):
 				rangelist = []
 				# EER is handled as if sampled at physical_frame_rate
 				self.dosefrac_frame_time = 1.0 / self.physical_frame_rate
-				sub_frame_dir = self.frameconfig.getBaseFramePath()
-				self.frameconfig.createFramePath(sub_frame_dir)
 			else:
 				# non-electron_counting can not be saved as EER.
 				if self.frame_format == 'eer':
@@ -853,7 +870,6 @@ class Falcon3(FeiCam):
 					self.dosefrac_frame_time = movie_exposure_second / len(rangelist)
 			self.frames_pattern = self.frameconfig.getSubPathFramePattern()
 			self.camera_settings.SubPathPattern = self.frames_pattern
-			self.frames_name = self.frameconfig.getFrameDirName()
 		else:
 			if self.frame_format == 'eer':
 				# make sure EER is not set at camera

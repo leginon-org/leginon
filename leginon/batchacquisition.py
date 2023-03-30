@@ -32,9 +32,6 @@ from pyami import arraystats, imagefun, ordereddict, moduleconfig
 import smtplib
 import emailnotification
 import leginonconfig
-import gridlabeler
-import itertools
-import re       # wjr for getting rid of gr in filename
 
 debug = False
 
@@ -69,11 +66,18 @@ class BatchAcquisition(acquisition.Acquisition):
 	abberation without reset in between targets.  Pause/abort within
 	the targetlist is not allowed. Only one preset can be in preset order.
 	'''
+
+	def __init__(self, id, session, managerlocation, **kwargs):
+		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
+		# first fake array for publishThread
+		self.image_array = numpy.ones((8,8),dtype=numpy.uint8)
+
 	def batchMoveAndPreset0(self):
 		# send preset to get 0 state
 		# batchacquire only allow to have 1 preset
 		presetname = self.settings['preset order'][0]
 		presetdata = self.presetsclient.getPresetByName(presetname)
+		self.batch_preset = presetdata
 		self.setPresetMagProbeMode(presetdata,None)
 		self.setComaStig0()
 		self.defoc0 = presetdata['defocus']
@@ -112,6 +116,20 @@ class BatchAcquisition(acquisition.Acquisition):
 		t.start()
 		self.waitPositionCameraDone()
 		self.stopTimer('position camera')
+		self.channel = 0
+		scopedict = {'high tension': self.instrument.tem.HighTension,'tem':self.batch_preset['tem']}
+		cameradict = dict(self.batch_preset)
+		cameradict['ccdcamera'] = self.batch_preset['ccdcamera']
+		cameradict['gain index'] = None
+		self.norm = self.retrieveCorrectorImageData('norm', scopedict, cameradict, self.channel)
+		if self.norm:
+			self.bright = self.norm['bright']
+			self.dark = self.norm['dark']
+		else:
+			self.bright = None
+			self.dark = None
+		plan, plandata = self.retrieveCorrectorPlan(cameradict)
+		self.plan = plandata
 
 	def processTargetList(self, newdata):
 		if self.settings['limit image']:
@@ -208,7 +226,7 @@ class BatchAcquisition(acquisition.Acquisition):
 			self.setStatus('processing')
 			# pause but not stop
 			state = self.pauseCheck('paused after fix alignment')
-			# This will bright z to the value before reference targets and alignment
+			# This will bring z to the value before reference targets and alignment
 			# fixing.
 			self.logger.info('Setting z to original z of %.2f um' % (original_position['z']*1e6))
 			try:
@@ -330,6 +348,9 @@ class BatchAcquisition(acquisition.Acquisition):
 					# restart Leginon
 					pass
 				# end of target repeat loop
+		if not self.is_firstimage:
+			self.acquire_thread.join()
+		self.instrument.ccdcamera.unsetNextRawFramesName()
 		# TODO reset coma correction at the end of good targets
 		is_failed = self.resetComaCorrection()
 		return targetliststatus
@@ -352,12 +373,23 @@ class BatchAcquisition(acquisition.Acquisition):
 		except InvalidStagePosition as e:
 			raise
 		presetdata = self.presetsclient.getPresetByName(newpresetname)
-		### acquire CCD
-		self.startTimer('acquire')
-		ret = self.acquire(presetdata, emtarget, attempt=attempt, target=targetdata)
-		self.stopTimer('acquire')
+		status = self.moveAndPreset(presetdata, emtarget)
+		if not self.is_firstimage:
+			self.acquire_thread.join()
+		if presetdata['save frames']:
+			self.instrument.ccdcamera.makeNextRawFramesName()
+		### make acquire CCD a thread and continue with publishThread
+		self.clearCameraEvents()
+		args = (presetdata, emtarget)
+		self.acquire_thread = threading.Thread(target=self.acquireThread, args=args)
+		self.acquire_thread.start()
+		ret = self.publishThread(presetdata, emtarget, attempt=attempt, target=targetdata)
 		self.reportStatus('processing', 'Processing complete')
 		return ret
+
+		if status == 'error':
+			self.logger.warning('Move failed. skipping acquisition at this target')
+			return status
 
 	def moveAndPreset(self, presetdata, emtarget):
 			'''
@@ -419,17 +451,69 @@ class BatchAcquisition(acquisition.Acquisition):
 		defaultchannel = int(presetdata['alt channel'])
 		return defaultchannel
 
-	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
-		reduce_pause = self.onTarget
-		status = self.moveAndPreset(presetdata, emtarget)
-		if status == 'error':
-			self.logger.warning('Move failed. skipping acquisition at this target')
-			return status
-
-		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
-		args = (presetdata, emtarget, defaultchannel)
+	def publishThread(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
+		targetdata = emtarget['target']
+		scopeclass = leginondata.ScopeEMData
+		cameraclass = leginondata.CameraEMData
+		scopedata = self.instrument.getData(scopeclass)
+		cameradata = self.instrument.getData(cameraclass)
+		print(cameradata['frames name'])
+		imagedata = leginondata.AcquisitionImageData(
+					session=self.session,
+					scope=scopedata,
+					camera=cameradata,
+					bright=self.bright,
+					norm=self.norm,
+					dark=self.dark,
+					#....
+		)
+		imagedata['corrector plan']=self.plan
+		imagedata['correction channel']=self.channel
+		dim = imagedata['camera']['dimension']
+		pixels = dim['x'] * dim['y']
+		# Use last image array to publish
+		imagedata['image'] = self.image_array
 		try:
-			self.acquirePublishDisplayWait(*args)
+			pixeltype = str(imagedata['image'].dtype)
 		except:
-			raise
-		return status
+			self.logger.error('array not returned from camera')
+			is_failed = self.resetComaCorrection()
+			if is_failed:
+				raise BadImageAcquirePause('Failed reset coma correction. Not safe to continue automatically')
+			return
+		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=self.imagelistdata, emtarget=emtarget, pixels=pixels, pixeltype=pixeltype)
+		imagedata['phase plate'] = self.pp_used
+		imagedata['version'] = 0
+		## store EMData to DB to prevent referencing errors
+		self.publish(imagedata['scope'], database=True)
+		self.publish(imagedata['camera'], database=True)
+		# grid info
+		targetdata = emtarget['target']
+		if targetdata is not None:
+			if 'grid' in targetdata and targetdata['grid'] is not None:
+				imagedata['grid'] = targetdata['grid']
+			if 'spotmap' in targetdata:
+				# if in targetdata, get spotmap from it
+				imagedata['spotmap'] = targetdata['spotmap']
+			if not targetdata['spotmap']:
+				if targetdata['image']:
+					# get spotmap from parent image
+					imagedata['spotmap'] = targetdata['image']['spotmap']
+		else:
+			if self.grid:
+				imagedata['grid'] = self.grid
+		self.publishDisplayWait(imagedata)
+
+	def acquireThread(self, presetdata, emtarget=None):
+		# Do image acquire without publishing.
+		channel = 0
+		reduce_pause = self.onTarget
+		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
+		imagedata = self.acquireCameraImageData()
+		## convert float to uint16
+		if self.settings['save integer']:
+			imagedata['image'] = numpy.clip(imagedata['image'], 0, 2**16-1)
+			imagedata['image'] = numpy.asarray(imagedata['image'], numpy.uint16)
+		# self.image_array can be used for display and for next image saving.
+		self.image_array=imagedata['image']
+		return
