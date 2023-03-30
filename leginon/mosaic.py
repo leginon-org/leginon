@@ -101,7 +101,7 @@ class Mosaic(object):
 		if self.tiles:
 			numtype = self.tiles[0].image.dtype
 		if make_edge:
-			numtype = numpy.bool
+			numtype = numpy.bool_
 		mosaicimage = numpy.zeros(imageshape, numtype)
 		### scale and insert tiles
 		for tile in self.tiles:
@@ -128,7 +128,7 @@ class Mosaic(object):
 			mosaicimage[shape[0]-1,:]=0
 			mosaicimage = scipy.ndimage.generic_gradient_magnitude(mosaicimage, derivative=scipy.ndimage.sobel)
 			# convert to boolean to save space
-			mosaicimage = mosaicimage.astype(numpy.bool)
+			mosaicimage = mosaicimage.astype(numpy.bool_)
 		return mosaicimage
 
 	def addTile(self, image, neighbors):
@@ -490,7 +490,7 @@ class EMMosaic(object):
 
 		### create mosaic image
 		if make_edge:
-			numtype = numpy.bool
+			numtype = numpy.bool_
 		mosaicimage = numpy.zeros(mshape, numtype)
 
 		### scale and insert tiles
@@ -517,7 +517,7 @@ class EMMosaic(object):
 			# edge finding
 			mosaicimage = scipy.ndimage.generic_gradient_magnitude(mosaicimage, derivative=scipy.ndimage.sobel)
 			# convert to boolean to save space
-			mosaicimage = mosaicimage.astype(numpy.bool)
+			mosaicimage = mosaicimage.astype(numpy.bool_)
 		return mosaicimage
 
 	def getEdgeMosaicImage(self, maxdimension=None, width=None):
