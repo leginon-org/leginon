@@ -274,7 +274,7 @@ def draw_ellipse_to_file(jpgfile, imgarray, major, minor, angle, center=None,
 	angle is positive toward y-axis
 	"""
 	if center is None:
-		center = numpy.array(imgarray.shape, dtype=numpy.float)/2.0
+		center = numpy.array(imgarray.shape, dtype=numpy.float64)/2.0
 
 	points = ellipse.generate_ellipse(major, minor, angle, center, numpoints, None, "step", True)
 	x = points[:,0]
@@ -408,8 +408,8 @@ def unEllipticalAverage(xdata, ydata, ellipratio, ellipangle, shape):
 	radial = radial/math.sqrt(ellipratio)
 	#image = imagefun.fromRadialFunction(funcrad, shape, xdata=xdata, ydata=ydata)
 	def funcrc(r, c, radial, **kwargs):
-		rr = numpy.array(numpy.floor(r), dtype=numpy.int)
-		cc = numpy.array(numpy.floor(c), dtype=numpy.int)
+		rr = numpy.array(numpy.floor(r), dtype=numpy.int32)
+		cc = numpy.array(numpy.floor(c), dtype=numpy.int32)
 		rad = radial[rr,cc]
 		return funcrad(rad, **kwargs)
 	result = numpy.fromfunction(funcrc, shape, radial=radial, 
@@ -430,7 +430,7 @@ def getEllipticalDistanceArray(ellipratio, ellipangle, shape):
 	if debug is True:
 		apDisplay.printColor("ellipangle = %.3f"%(ellipangle), "cyan")
 
-	bigshape = numpy.array(numpy.array(shape)*math.sqrt(2)/2., dtype=numpy.int)*2
+	bigshape = numpy.array(numpy.array(shape)*math.sqrt(2)/2., dtype=numpy.int32)*2
 	xhalfshape = bigshape[0]/2.0
 	x = numpy.arange(-xhalfshape, xhalfshape, 1) + 0.5
 	yhalfshape = bigshape[1]/2.0
@@ -472,7 +472,7 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=2.0, innercutradi
 	if debug is True:
 		print "ring width %.2f pixels"%(ringwidth)
 
-	bigshape = numpy.array(numpy.array(image.shape)*math.sqrt(2)/2., dtype=numpy.int)*2
+	bigshape = numpy.array(numpy.array(image.shape)*math.sqrt(2)/2., dtype=numpy.int32)*2
 	radial = getEllipticalDistanceArray(ellipratio, ellipangle, image.shape)
 	
 	## need to convert to integers for scipy
@@ -551,7 +551,7 @@ def ellipticalArray(image, ellipratio, ellipangle):
 	       True  -- rotational average out to corners of image
 	"""
 
-	#bigshape = numpy.array(numpy.array(image.shape)*math.sqrt(2)/2., dtype=numpy.int)*2
+	#bigshape = numpy.array(numpy.array(image.shape)*math.sqrt(2)/2., dtype=numpy.int32)*2
 	radial = getEllipticalDistanceArray(ellipratio, ellipangle, image.shape)
 	
 	xdata = numpy.ravel(radial)/math.sqrt(ellipratio)

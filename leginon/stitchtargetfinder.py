@@ -37,7 +37,7 @@ class StitchTargetFinder(targetfinder.TargetFinder):
 	def readImage(self, filename):
 		# convert to float
 		image2 = mrc.read(filename)
-		image = numpy.asarray(image2,dtype=numpy.float)
+		image = numpy.asarray(image2,dtype=numpy.float32)
 		
 		if image.any():
 			self.setImage(image, 'Image')
@@ -79,7 +79,7 @@ class StitchTargetFinder(targetfinder.TargetFinder):
 	def findTargets(self, imdata, targetlist):
 		# convert to float
 		image2 = imdata['image']
-		image = numpy.asarray(image2,dtype=numpy.float)
+		image = numpy.asarray(image2,dtype=numpy.float32)
 		
 		self.setImage(image, 'Image')
 

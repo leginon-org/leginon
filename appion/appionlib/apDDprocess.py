@@ -866,7 +866,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 #				mask = self.makeVarianceMaskArray()
 				self.mask = mask
 				if save_jpg and mask.max() > mask.min():
-					numpil.write(mask.astype(numpy.int)*255,'%s_mask.jpg' % ddtype,'jpeg')
+					numpil.write(mask.astype(numpy.int8)*255,'%s_mask.jpg' % ddtype,'jpeg')
 			else:
 				mask = self.mask
 
@@ -961,7 +961,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		mask=ndimage.gaussian_filter(oneframe,sigma)
 		#mrc.write(mask,'filtered.mrc')
 		mask = numpy.where(mask<=thresh,True,False)
-		#mrc.write(mask.astype(numpy.int),'maska.mrc')
+		#mrc.write(mask.astype(numpy.int8),'maska.mrc')
 		last_clabels = 100
 		clabels = 99 # fake label count to start
 		apDisplay.printMsg('..Dilating segamented mask until stable')
@@ -977,7 +977,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			apDisplay.printWarning('No debris found to be masked')
 		else:
 			apDisplay.printMsg('    %d mask segment(s) found' % clabels)
-		#mrc.write(mask.astype(numpy.int),'maskb.mrc')
+		#mrc.write(mask.astype(numpy.int8),'maskb.mrc')
 		return mask
 
 	def makeLowVarianceMask(self,var_map,thresh=10):

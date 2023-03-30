@@ -87,7 +87,7 @@ class FFTW3Calculator(calc_base.Calculator):
 		return plan
 
 	def _forward(self, image_array):
-		input_array = numpy.empty(image_array.shape, numpy.float)
+		input_array = numpy.empty(image_array.shape, numpy.float_)
 		fftshape = image_array.shape[0], image_array.shape[1]/2+1
 		fft_array = numpy.empty(fftshape, dtype=complex)
 		newplan = self.plan(input_array, fft_array, direction='forward')
@@ -97,7 +97,7 @@ class FFTW3Calculator(calc_base.Calculator):
 
 	def _reverse(self, fft_array):
 		imageshape = fft_array.shape[0], 2*(fft_array.shape[1]-1)
-		image_array = numpy.empty(imageshape, dtype=numpy.float)
+		image_array = numpy.empty(imageshape, dtype=numpy.float_)
 		input_array = numpy.empty(fft_array.shape, dtype=numpy.complex)
 		newplan = self.plan(input_array, image_array, direction='backward')
 		input_array[:] = fft_array

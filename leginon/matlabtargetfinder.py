@@ -46,7 +46,7 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 	def readImage(self, filename):
 		# convert to float
 		image2 = mrc.read(filename)
-		image = numpy.asarray(image2,dtype=numpy.float)
+		image = numpy.asarray(image2,dtype=numpy.float32)
 		
 		if image.any():
 			self.setImage(image, 'Image')
@@ -84,7 +84,7 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 
 		# convert to float
 		image2 = imdata['image']
-		image = numpy.asarray(image2,dtype=numpy.float)
+		image = numpy.asarray(image2,dtype=numpy.float32)
 		
 		self.setImage(image, 'Image')
 
@@ -117,7 +117,7 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 		
 		try:
 			image2 = mrc.read(filename)		
-			image = numpy.asarray(image2,dtype=numpy.float)
+			image = numpy.asarray(image2,dtype=numpy.float32)
 			
 		except:
 			self.logger.error('Failed to load test image')

@@ -59,7 +59,7 @@ def drawEllipse(shape, angleinc, center, a, b, alpha):
 	convention note: ellipse points are x,y coordinates, so alpha
 		is measured as positive values towards the y-axis
 	'''
-	result = numpy.zeros(shape, numpy.int)
+	result = numpy.zeros(shape, numpy.int_)
 	points = ellipsePoints(angleinc, center, a, b, alpha)
 	for point in points:
 		point = map(int, point)
@@ -144,10 +144,10 @@ def solveEllipseB2AC(points):
 	convention note: ellipse points are x,y coordinates, so alpha
 		is measured as positive values towards the y-axis
 	'''
-	X = numpy.array(points, numpy.float)
+	X = numpy.array(points, numpy.float_)
 	D = numpy.column_stack((X[:,0]**2, X[:,0]*X[:,1], X[:,1]**2, X[:,0], X[:,1], numpy.ones(X.shape[0])))
 	S = numpy.dot(D.transpose(), D)
-	C = numpy.zeros((6,6), numpy.float)
+	C = numpy.zeros((6,6), numpy.float_)
 	C[0,2] = -2
 	C[1,1] = 1
 	C[2,0] = -2
@@ -335,7 +335,7 @@ def solveEllipseOLS(points, center=(0,0)):
 	"""
 
 	### power twos
-	X = numpy.array(points, numpy.float) - numpy.array(center, numpy.float)
+	X = numpy.array(points, numpy.float_) - numpy.array(center, numpy.float_)
 
 	### power twos
 	p2 = numpy.power(X, 2.0)
@@ -414,7 +414,7 @@ def generate_ellipse(a, b, alpha, center=(0,0), numpoints=3, noise=None,
 
 	## use only integers
 	if integers is True:
-		points = numpy.array(numpy.around(points, 0), dtype=numpy.int)
+		points = numpy.array(numpy.around(points, 0), dtype=numpy.int_)
 	#print points[0]
 	#print points[:5,:]
 
@@ -453,7 +453,7 @@ if __name__ == '__main__':
 	ydim = numrow = 16
 	shape = (numrow,numcol)
 	alpha = random.random()*math.pi - math.pi/2
-	center = numpy.array((numrow, numcol), dtype=numpy.float)/2.0
+	center = numpy.array((numrow, numcol), dtype=numpy.float_)/2.0
 	majormax = min( abs(numrow/math.cos(alpha)) , abs(numcol/math.sin(alpha)) )/3.0 - 1
 	minormax = min( abs(numrow/math.sin(alpha)) , abs(numcol/math.cos(alpha)) )/3.0 - 1
 	print alpha, majormax, minormax
@@ -468,8 +468,8 @@ if __name__ == '__main__':
 	points = generate_ellipse(major, minor, alpha, center, numpoints, 
 		noise, method="step", integers=False)
 	params = {'center':center, 'a':major, 'b':minor, 'alpha':alpha}
-	grid = numpy.zeros(shape, dtype=numpy.int)
-	intpoints = numpy.array(points, dtype=numpy.int)
+	grid = numpy.zeros(shape, dtype=numpy.int_)
+	intpoints = numpy.array(points, dtype=numpy.int_)
 	print intpoints
 	grid[intpoints[:,0], intpoints[:,1]] = 1
 	#for point in points:
