@@ -1387,7 +1387,7 @@ class HoleStatsData(InSessionData):
 		return InSessionData.typemap() + (
 			('finder-type', str),
 			('prefs', HoleFinderPrefsData),
-			('score_prefs', ScoreTargetFinderPrefsData),
+			('score-prefs', ScoreTargetFinderPrefsData),
 			('row', int),
 			('column', int),
 			('mean', float),

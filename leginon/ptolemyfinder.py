@@ -98,7 +98,7 @@ class PtolemyMmTargetFinder(scorefinder.ScoreTargetFinder):
 			holestats = leginondata.HoleStatsData(session=self.session)
 			holestats['finder-type'] = 'score'
 			holestats['score'] = stats[self.settings['score key']]
-			holestats['score_prefs'] = score_prefs
+			holestats['score-prefs'] = score_prefs
 			# IceTargetFinder HoleStats
 			holestats['row'] = stats['center'][0] * self.shrink_factor + self.shrink_offset[0]
 			holestats['column'] = stats['center'][1] * self.shrink_factor + self.shrink_offset[1]
@@ -121,14 +121,14 @@ class PtolemyMmTargetFinder(scorefinder.ScoreTargetFinder):
 			return None
 		pref_q = leginondata.ScoreTargetFinderPrefsData(image=imagedata)
 		q = leginondata.HoleStatsData(column=col, row=row)
-		q['score_prefs']=pref_q
+		q['score-prefs']=pref_q
 		results = q.query(results=1)
 		if not results:
 			return self.findNearestHole(pref_q, row, col)
 		return results[0]['ptolemy']
 
 	def findNearestHole(self, prefdata, row, col):
-		stats = leginondata.HoleStatsData(score_prefs=prefdata).query()
+		stats = leginondata.HoleStatsData(score-prefs=prefdata).query()
 		if not stats:
 			self.logger.error('no holes found by Ptolemy')
 			return None

@@ -83,7 +83,7 @@ class ScoreTargetFinder(icetargetfinder.IceTargetFinder):
 			holestats = leginondata.HoleStatsData(session=self.session)
 			holestats['finder-type'] = 'score'
 			holestats['score'] = stats[self.settings['score key']]
-			holestats['score_prefs'] = score_prefs
+			holestats['score-prefs'] = score_prefs
 			# IceTargetFinder HoleStats
 			holestats['row'] = stats['center'][0] * self.shrink_factor + self.shrink_offset[0]
 			holestats['column'] = stats['center'][1] * self.shrink_factor + self.shrink_offset[1]
