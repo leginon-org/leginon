@@ -745,9 +745,9 @@ class Falcon3(FeiCam):
 	def getSaveRawFrames(self):
 		'''Save or Discard'''
 		return self.save_frames
+
 	def setSaveRawFrames(self, value):
 		'''True: save frames, False: discard frames'''
-
 		self.save_frames = bool(value)
 
 	def getEerRenderDefault(self):
@@ -773,6 +773,9 @@ class Falcon3(FeiCam):
 			if self.frame_format == 'mrc':
 				return self.frameconfig.getNumberOfFrameBins()
 			if self.frame_format == 'eer':
+				# set camera settings so we can get the calculated value
+				# before the real getImage
+				self.camera_settings.EER = True
 				rendered_nframes = self.camera_settings.CalculateNumberOfFrames()
 				return rendered_nframes*self.getEerRenderDefault()
 		else:
