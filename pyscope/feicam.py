@@ -17,7 +17,7 @@ try:
 except ImportError:
 	USE_SAFEARRAY_AS_NDARRAY = False
 
-SIMULATION = False
+SIMULATION = True
 if SIMULATION:
 	import simscripting
 	connection = simscripting.connection
@@ -164,6 +164,7 @@ class FeiCam(ccdcamera.CCDCamera):
 				config_eer = self.getFeiConfig('camera','save_eer')
 				if config_eer is True:
 					fformat = 'eer'
+					self.camera_settings.EER = True
 		except:
 			pass
 		self.frame_format = fformat
@@ -746,6 +747,7 @@ class Falcon3(FeiCam):
 		return self.save_frames
 	def setSaveRawFrames(self, value):
 		'''True: save frames, False: discard frames'''
+
 		self.save_frames = bool(value)
 
 	def getEerRenderDefault(self):
@@ -802,8 +804,12 @@ class Falcon3(FeiCam):
 
 	def getFrameTime(self):
 		# TO DO: Find out if need fractional millisecond.
-		# custom_setup may modify this if bins are not even.
-		ms = self.dosefrac_frame_time * 1000.0
+		if self.frame_format == 'eer' and self.electron_counting:
+			# EER is handled as if sampled at physical_frame_rate
+			ms = 1000.0 / self.physical_frame_rate
+		else:
+			# custom_setup may modify this if bins are not even.
+			ms = self.dosefrac_frame_time * 1000.0
 		return ms
 
 	def makeNextRawFramesName(self):
@@ -937,6 +943,12 @@ class Falcon4EC(Falcon3EC):
 	intensity_averaged = False
 	base_frame_time = 0.02907 # seconds
 	physical_frame_rate = 250 # rolling shutter frames per second
+
+	def setExposureTime(self,ms):
+		self.exposure = float(ms)
+		self.calculateMovieExposure()
+		movie_exposure_second = self.movie_exposure/1000.0
+		self.camera_settings.ExposureTime = movie_exposure_second
 
 	def setUseCameraQueue(self):
 		use_queue = False
