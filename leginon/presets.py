@@ -300,6 +300,7 @@ class PresetsManager(node.Node):
 		self.selectedpreset = None
 		self.presets = ordereddict.OrderedDict()
 		self.selectedsessionpresets = None
+		self.last_preset_id = None
 
 		# HACK: fix me
 		self.last_value = None
@@ -679,9 +680,10 @@ class PresetsManager(node.Node):
 
 		try:
 			self.instrument.setData(scopedata)
-			if cameradata is not None:
+			if cameradata is not None and presetdata.dbid != self.last_preset_id:
 				self.instrument.setData(cameradata)
-		except Exception, e:
+				self.last_preset_id = presetdata.dbid
+		except Exception as e:
 			self.logger.error(e)
 			message = 'Preset change failed: unable to set instrument'
 			self.logger.error(message)
@@ -1705,14 +1707,17 @@ class PresetsManager(node.Node):
 			self.logger.error(message)
 			raise PresetChangeError(message)
 		# camera
-		try:
-			self.instrument.setData(cameradata)
-			self.logger.info('cameradata set')
-		except Exception, e:
-			self.logger.error(e)
-			message = 'Move to target failed: unable to set camera'
-			self.logger.error(message)
-			raise PresetChangeError(message)
+		if newpreset.dbid != self.last_preset_id:
+			try:
+				self.instrument.setData(cameradata)
+				self.logger.info('cameradata set')
+			except Exception as e:
+				self.logger.error(e)
+				message = 'Move to target failed: unable to set camera'
+				self.logger.error(message)
+				raise PresetChangeError(message)
+		else:
+			self.logger.info('same preset for camera, skip setting camera')
 		newstage = self.instrument.tem.StagePosition
 		msg = '%s targetToScope %.6f' % (newpresetname,newstage['z'])
 		self.testprint('Presetmanager:' + msg)

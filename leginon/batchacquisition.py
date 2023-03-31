@@ -376,14 +376,21 @@ class BatchAcquisition(acquisition.Acquisition):
 		status = self.moveAndPreset(presetdata, emtarget)
 		if not self.is_firstimage:
 			self.acquire_thread.join()
+		# make frames name to use during acquire
 		if presetdata['save frames']:
 			self.instrument.ccdcamera.makeNextRawFramesName()
+		# get scope and camera state before acquiring because Falcon camera locks get properties
+		# during acquiring
+		scopeclass = leginondata.ScopeEMData
+		cameraclass = leginondata.CameraEMData
+		scopedata = self.instrument.getData(scopeclass)
+		cameradata = self.instrument.getData(cameraclass)
 		### make acquire CCD a thread and continue with publishThread
 		self.clearCameraEvents()
 		args = (presetdata, emtarget)
 		self.acquire_thread = threading.Thread(target=self.acquireThread, args=args)
 		self.acquire_thread.start()
-		ret = self.publishThread(presetdata, emtarget, attempt=attempt, target=targetdata)
+		ret = self.publishThread(presetdata, scopedata, cameradata, emtarget=emtarget, attempt=attempt, target=targetdata)
 		self.reportStatus('processing', 'Processing complete')
 		return ret
 
@@ -451,13 +458,12 @@ class BatchAcquisition(acquisition.Acquisition):
 		defaultchannel = int(presetdata['alt channel'])
 		return defaultchannel
 
-	def publishThread(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
+	def publishThread(self, presetdata, scopedata, cameradata, emtarget=None, attempt=None, target=None, channel=None):
+		'''
+		Publish AcquisitionImageData while acquiring thread is running.  Use the previous image array
+		as place holder.  Most of these are copied from acquisition.py
+		'''
 		targetdata = emtarget['target']
-		scopeclass = leginondata.ScopeEMData
-		cameraclass = leginondata.CameraEMData
-		scopedata = self.instrument.getData(scopeclass)
-		cameradata = self.instrument.getData(cameraclass)
-		print(cameradata['frames name'])
 		imagedata = leginondata.AcquisitionImageData(
 					session=self.session,
 					scope=scopedata,
@@ -505,7 +511,9 @@ class BatchAcquisition(acquisition.Acquisition):
 		self.publishDisplayWait(imagedata)
 
 	def acquireThread(self, presetdata, emtarget=None):
-		# Do image acquire without publishing.
+		'''
+		Do image acquire without publishing.
+		'''
 		channel = 0
 		reduce_pause = self.onTarget
 		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
