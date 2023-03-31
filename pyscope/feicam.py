@@ -66,6 +66,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		ccdcamera.CCDCamera.__init__(self)
 		self.save_frames = False
 		self.batch = False
+		self.frames_name_set_by_leginon=False
 		self._connectToFEIAdvScripting()
 		# set binning first so we can use it
 		self.setCameraBinnings()
