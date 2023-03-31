@@ -8,7 +8,7 @@
  */
 
 require_once "inc/leginon.inc";
-require_once "inc/graph.inc";
+//require_once "inc/graph.inc";
 
 ?>
 <html>
@@ -43,9 +43,10 @@ echo "<hr>";
 $tlist = $targets[0]['tlist'];	
 $all_scores = $leginondata->getSquareTargetScores($sessionId, $tile_imageId);
 $all_data = $leginondata->getTargetNumberByOrderOnTileImage($sessionId, $tile_imageId);
+$no_score = (count($all_scores) == 0); # older data is hard to get score. igore for now.
 // offset is needed if there are targets first manually selected since no scores were saved then..
 $offset= count($all_data)-count($all_scores);
-$offset= ($offset > 0) ? $offset:0;
+$offset= ($offset > 0 && !$no_score) ? $offset:0;
 if (true) {
 	echo "<table><tr><th>time</th>";
 	echo "<tr>";
@@ -62,30 +63,35 @@ if (true) {
 			$n = $d[$i]; # target_number
 			// score data from target at target_number n
 			$t_data = $scores[$n];
-			if ($t_data == null) continue;
-			//	
-			$set_number = $scores['set_number'];
-			$targetId = $t_data['tId'];
-			//Skip if the best score for this target is a ptolemy square on another
-			//parent tile image.
-			$squares = $leginondata->getTargetPtolemySquares($sessionId, $targetId);
-			if (is_array($squares) && count($squares)> 1) {
-				$best_score = -1.0;
-				$best_tile_id = 0;
-				foreach ($squares as $sq) {
-					$my_sqId = $sq['ptolemy_square_id'];
-					$my_score = $leginondata-> getPtolemyScoreHistoryData($sessionId, null, $my_sqId, $n, $set_number)[0];
-					if ($my_score['score'] > $best_score) {
-						$best_score = $my_score['score'];
-						$best_tile_id = $my_score['tile_id'];
+			if ($t_data == null && !$no_score) continue;
+			//
+			if (!$no_score) {
+				// show scores
+				$set_number = $scores['set_number'];
+				$targetId = $t_data['tId'];
+				//Skip if the best score for this target is a ptolemy square on another
+				//parent tile image.
+				$squares = $leginondata->getTargetPtolemySquares($sessionId, $targetId);
+				if (is_array($squares) && count($squares)> 1) {
+					$best_score = -1.0;
+					$best_tile_id = 0;
+					foreach ($squares as $sq) {
+						$my_sqId = $sq['ptolemy_square_id'];
+						$my_score = $leginondata-> getPtolemyScoreHistoryData($sessionId, null, $my_sqId, $n, $set_number)[0];
+						if ($my_score['score'] > $best_score) {
+							$best_score = $my_score['score'];
+							$best_tile_id = $my_score['tile_id'];
+						}
 					}
+					if ($best_tile_id != $tile_imageId) continue;
+				} else {
+					// one ptolemy square per target;
+					$best_score = $t_data['score'];
 				}
-				if ($best_tile_id != $tile_imageId) continue;	
+				$best_score = sprintf('-%.5f', $best_score)+0.0;
 			} else {
-				// one ptolemy square per target;
-				$best_score = $t_data['score'];
+				$best_score = '';
 			}
-			$best_score = sprintf('%.5f', $best_score)+0.0;
 			// add border if done
 			$status = $leginondata->getTargetStatus($tlist, $n);
 			$border_color= ($status=='done') ? 'red': 'white';
@@ -93,7 +99,7 @@ if (true) {
 			echo '<table><tr><td style="border:3px;border-style:solid;border-color:'.$border_color.';">';
 			echo '<img src="jpg_crop.php?imageId='.$tile_imageId.'&size=120&tnumber='.$n.'" width=64 heigh=64>';
 			echo "</td></tr>";
-			echo "<tr><td>".$n."-".$best_score."</td>";
+			echo "<tr><td>".$n.$best_score."</td>";
 			echo "</td></tr></table>";
 			echo "</td>";
 		}
