@@ -17,7 +17,7 @@ try:
 except ImportError:
 	USE_SAFEARRAY_AS_NDARRAY = False
 
-SIMULATION = True
+SIMULATION = False
 if SIMULATION:
 	import simscripting
 	connection = simscripting.connection
