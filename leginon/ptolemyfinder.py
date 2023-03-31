@@ -128,7 +128,8 @@ class PtolemyMmTargetFinder(scorefinder.ScoreTargetFinder):
 		return results[0]['ptolemy']
 
 	def findNearestHole(self, prefdata, row, col):
-		stats = leginondata.HoleStatsData(score-prefs=prefdata).query()
+		stats = leginondata.HoleStatsData()
+		stats['score-prefs'].query()
 		if not stats:
 			self.logger.error('no holes found by Ptolemy')
 			return None
