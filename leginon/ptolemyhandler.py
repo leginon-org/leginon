@@ -1,13 +1,27 @@
 import requests
 import json
-from pyami import mrc
+from pyami import mrc, moduleconfig
 from leginon import leginondata
 import time
 import io
 import csv
 
-BASEURL = 'http://127.0.0.1:8000'
-DEBUG = False
+configs = moduleconfig.getConfigured(config_file='ptolemy.cfg', package='leginon', combine=False)
+if 'baseurl' in configs:
+	try:
+		port = configs['baseurl']['port']
+	except:
+		port = 80
+	try:
+		BASEURL = configs['baseurl']['url']+':%d' % port
+	except:
+		BASEURL = 'http://127.0.0.1'+'%d' % port
+if 'logger' in configs:
+	try:
+		level = int(configs['logger']['verbosity'])
+	except:
+		level = 0
+DEBUG = level > 0
 
 def debug_print(msg):
 	if DEBUG:
