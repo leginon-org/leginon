@@ -405,7 +405,6 @@ class BatchAcquisition(acquisition.Acquisition):
 		self.acquire_thread = threading.Thread(target=self.acquireThread, args=args)
 		self.acquire_thread.start()
 		self.tp0 = time.time()
-		print 'got tp0', self.is_firstimage
 		if self.is_firstimage:
 			# wait for thread to complete so it has self.image_array
 			self.acquire_thread.join()
