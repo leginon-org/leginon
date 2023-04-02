@@ -6,9 +6,8 @@
 #       see  http://leginon.org
 #
 '''
-BatchAcquire node is a TargetWatcher, so it receives either an ImageTargetData
-or an ImageTargetListData.  The method processTargetData is called on each
-ImageTargetData.
+BatchAcquisition node is a subclass of Acquisition.
+The method processTargetData is called on each ImageTargetData.
 '''
 import targetwatcher
 import acquisition
@@ -21,17 +20,10 @@ import copy
 import threading
 import node
 import instrument
-import gui.wx.Acquisition
-import gui.wx.Presets
-import navigator
-import appclient
+import gui.wx.BatchAcquisition
 import numpy
-import numpy.linalg
 import math
-from pyami import arraystats, imagefun, ordereddict, moduleconfig
-import smtplib
-import emailnotification
-import leginonconfig
+from pyami import arraystats, imagefun
 
 debug = False
 
@@ -44,16 +36,7 @@ class InvalidPresetsSequence(targetwatcher.PauseRepeatException):
 class InvalidSettings(targetwatcher.PauseRepeatException):
 	pass
 
-class BadImageStatsPause(targetwatcher.PauseRepeatException):
-	pass
-
 class BadImageAcquirePause(targetwatcher.PauseRestartException):
-	pass
-
-class BadImageAcquireBypass(targetwatcher.BypassException):
-	pass
-
-class BadImageStatsAbort(Exception):
 	pass
 
 class InvalidStagePosition(targetwatcher.BypassWarningException):
@@ -66,6 +49,11 @@ class BatchAcquisition(acquisition.Acquisition):
 	abberation without reset in between targets.  Pause/abort within
 	the targetlist is not allowed. Only one preset can be in preset order.
 	'''
+	panelclass = gui.wx.BatchAcquisition.Panel
+	settingsclass = leginondata.BatchAcquisitionSettingsData
+	# maybe not a class attribute
+	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
+	defaultsettings['shutter delay'] = 0.0
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
@@ -82,6 +70,12 @@ class BatchAcquisition(acquisition.Acquisition):
 		self.setComaStig0()
 		self.defoc0 = presetdata['defocus']
 	
+	def validatePresets(self):
+		super(BatchAcquisition, self).validatePresets()
+		presetorder = self.settings['preset order']
+		if len(presetorder) > 1:
+			raise InvalidPresetsSequence('this node can only acquire with one preset')
+
 	def validateTarget(self, targetdata):
 		# validate any bad settings that requires aborting now.
 		try:
@@ -111,6 +105,9 @@ class BatchAcquisition(acquisition.Acquisition):
 		z = self.moveToLastFocusedStageZ(targetdata)
 		self.targetlist_z = z
 		self.testprint('preset manager moved to LastFocusedStageZ %s' % (z,))
+		self._setCameraAndCorrection()
+
+	def _setCameraAndCorrection(self):
 		self.startTimer('position camera')
 		t = threading.Thread(target=self.positionCamera)
 		t.start()
@@ -355,6 +352,14 @@ class BatchAcquisition(acquisition.Acquisition):
 		is_failed = self.resetComaCorrection()
 		return targetliststatus
 
+	def simulateTarget(self):
+		self.setStatus('processing')
+		# need follow firstimage rule so it does not multi-thread.
+		self.is_firstimage = True
+		self.batchMoveAndPreset0()
+		self._setCameraAndCorrection()
+		return self._simulateTarget()
+
 	def processTargetData(self, targetdata, attempt=None):
 		'''
 		This is called by TargetWatcher.processData when targets available
@@ -373,9 +378,18 @@ class BatchAcquisition(acquisition.Acquisition):
 		except InvalidStagePosition as e:
 			raise
 		presetdata = self.presetsclient.getPresetByName(newpresetname)
+		if not self.is_firstimage:
+			delta_time = time.time()-self.tp0
+			pause_time = self.settings['pause time']
+			min_acquire_time = presetdata['exposure time']/1000.0+pause_time+self.settings['shutter delay']
+			if delta_time < min_acquire_time:
+				extra_wait = min_acquire_time-delta_time
+				self.logger.info('wait for %.2f seconds for camera shutter before new move' % extra_wait)
+				time.sleep(extra_wait)
 		status = self.moveAndPreset(presetdata, emtarget)
 		if not self.is_firstimage:
 			self.acquire_thread.join()
+			self.logger.info('image acquired from last target')
 		# make frames name to use during acquire
 		if presetdata['save frames']:
 			self.instrument.ccdcamera.makeNextRawFramesName()
@@ -390,6 +404,11 @@ class BatchAcquisition(acquisition.Acquisition):
 		args = (presetdata, emtarget)
 		self.acquire_thread = threading.Thread(target=self.acquireThread, args=args)
 		self.acquire_thread.start()
+		self.tp0 = time.time()
+		print 'got tp0', self.is_firstimage
+		if self.is_firstimage:
+			# wait for thread to complete so it has self.image_array
+			self.acquire_thread.join()
 		ret = self.publishThread(presetdata, scopedata, cameradata, emtarget=emtarget, attempt=attempt, target=targetdata)
 		self.reportStatus('processing', 'Processing complete')
 		return ret
@@ -426,7 +445,7 @@ class BatchAcquisition(acquisition.Acquisition):
 			except:
 				self.intended_defocus = self.instrument.tem.Defocus
 			self.setDefocus0()
-			self.correctImageShiftAbberations()
+			self.correctImageShiftAbberations(presetdata['ccdcamera'])
 			self.adjustTiltExposure(presetdata)
 			self.setStatus('processing')
 			return status
@@ -525,3 +544,6 @@ class BatchAcquisition(acquisition.Acquisition):
 		# self.image_array can be used for display and for next image saving.
 		self.image_array=imagedata['image']
 		return
+
+	def getMoveTypes(self):
+		return ['image shift', 'image-beam shift']

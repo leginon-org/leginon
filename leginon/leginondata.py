@@ -2321,6 +2321,13 @@ class DefocusSequenceSettingsData(AcquisitionSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class BatchAcquisitionSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('shutter delay', float),  #seconds
+		)
+	typemap = classmethod(typemap)
+
 class CalibratorSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (

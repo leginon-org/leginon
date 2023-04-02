@@ -779,12 +779,15 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		self.defoc0 = self.instrument.tem.getDefocus()
 
-	def correctImageShiftAbberations(self):
+	def correctImageShiftAbberations(self, cam=None):
 		if self.settings['correct image shift coma']:
 			## beam tilt correction induced by image shift
 			beamtiltclient = self.calclients['beam tilt']
 			tem = self.instrument.getTEMData()
-			cam = self.instrument.getCCDCameraData()
+			# avoid retrieving ccacamera InstrumentData in case it is locked
+			# from acquiring image.
+			if not cam:
+				cam = self.instrument.getCCDCameraData()
 			ht = self.instrument.tem.HighTension
 			mag = self.instrument.tem.Magnification
 			imageshift = self.instrument.tem.getImageShift()
@@ -871,7 +874,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			# at this point all scope parameters from the preset is applied
 			self.setComaStig0()
 			self.setDefocus0()
-			self.correctImageShiftAbberations()
+			self.correctImageShiftAbberations(presetdata['ccdcamera'])
 			self.adjustTiltExposure(presetdata)
 			self.onTarget = True
 			self.setStatus('processing')
@@ -1436,6 +1439,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.setStatus('processing')
 		# no need to pause longer for simulateTarget
 		self.is_firstimage = False
+		return self._simulateTarget()
+
+	def _simulateTarget(self):
 		# current preset is used to create a target for this node.
 		currentpreset = self.presetsclient.getCurrentPreset()
 		if currentpreset is None:
