@@ -11,7 +11,7 @@
 
 import leginon.version
 
-print 'Leginon version: ', leginon.version.getVersion()
+print('Leginon version: ', leginon.version.getVersion())
 
 def leginonInstalled():
 	'''print info about if Leginon is already installed'''
@@ -181,20 +181,20 @@ else:
 ######################################################################
 ## numextension
 ######################################################################
-print '--------------------------------------------------------------'
-print 'numextension:'
-print '    importing numextension module...'
+print('--------------------------------------------------------------')
+print('numextension:')
+print('    importing numextension module...')
 try:
 	import numextension
 except ImportError:
-	print '    *** Failed to import numextension.  Install and Build numextension first'
+	print('    *** Failed to import numextension.  Install and Build numextension first')
 else:
 	try:
-		print '      testing for minmax function...'
+		print('      testing for minmax function...')
 		numextension.minmax
-		print '       OK'
+		print('       OK')
 	except:
-		print '        *** FAILED: could not find minmax.'
+		print('        *** FAILED: could not find minmax.')
 
 
 ######################################################################
@@ -265,6 +265,7 @@ else:
 			app = MyApp(0)
 			app.MainLoop()
 		except:
+			raise
 			print('        Failed to start wx application.  This is usually because you do not have display permission')
 		print('    wxPython test successful')
 
