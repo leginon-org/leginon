@@ -316,6 +316,13 @@ class FeiCam(ccdcamera.CCDCamera):
 		'''
 		pass
 
+	def waitForCameraReady(self):
+		'''
+		Wait for acquisition set blocking asynchronous process to finish
+		'''
+		while self.csa.IsActive:
+			time.sleep(0.1)
+
 	def getImage(self):
 		# The following is copied from ccdcamera.CCDCamera since
 		# super (or self.as_super as used in de.py) does not work in proxy call

@@ -245,6 +245,12 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 		print 'REGISTER', name, callback, time.time()
 		self.callbacks[name] = callback
 
+	def waitForCameraReady(self):
+		'''
+		Wait for acquisition set blocking asynchronous process to finish
+		'''
+		pass
+
 	def getImage(self):
 		if self.readoutcallback:
 			name = str(time.time())
