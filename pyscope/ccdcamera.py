@@ -32,6 +32,7 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		## methods:
 		{'name': 'startMovie', 'type': 'method'},
 		{'name': 'stopMovie', 'type': 'method'},
+		{'name': 'waitForCameraReady', 'type': 'method'},
 		## optional:
 		{'name': 'EnergyFilter', 'type': 'property'},
 		{'name': 'EnergyFilterWidth', 'type': 'property'},
