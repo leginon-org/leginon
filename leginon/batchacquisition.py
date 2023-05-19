@@ -106,6 +106,9 @@ class BatchAcquisition(acquisition.Acquisition):
 		self.targetlist_z = z
 		self.testprint('preset manager moved to LastFocusedStageZ %s' % (z,))
 		self._setCameraAndCorrection()
+		self.logger.info('setting first target camera state with preset %s:%d' % (self.batch_preset['name'],self.batch_preset.dbid))
+		self.instrument.setData(self.batch_preset['ccdcamera'])
+		self.logger.info('first good target mag and stage and camera set done')
 
 	def _setCameraAndCorrection(self):
 		self.startTimer('position camera')
@@ -188,7 +191,7 @@ class BatchAcquisition(acquisition.Acquisition):
 					self.fixCondition()
 					self.setStatus('processing')
 					condition_status = 'success'
-				except PauseRepeatException, e:
+				except targetwatcher.PauseRepeatException as e:
 					self.player.pause()
 					self.logger.error(str(e) + '... Fix it, then press play to repeat target')
 					condition_status = 'repeat'
