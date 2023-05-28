@@ -325,6 +325,14 @@ class Proxy(object):
 			self.setData(instance['scope'], temname=temname)
 			self.setData(instance['camera'], ccdcameraname=ccdcameraname)
 			return
+		elif isinstance(instance, leginondata.InstrumentData):
+			# just set instrument not parameters
+			name = instance['name']
+			if instance['cs'] is None:
+				self.setCCDCamera(name)
+			else:
+				self.setTEM(name)
+			return
 		if proxy is None:
 			raise ValueError('no proxy selected for this data instance')
 		keys = []

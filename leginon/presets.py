@@ -1711,6 +1711,7 @@ class PresetsManager(node.Node):
 			try:
 				self.instrument.setData(cameradata)
 				self.logger.info('cameradata set')
+				self.last_preset_id = newpreset.dbid
 			except Exception as e:
 				self.logger.error(e)
 				message = 'Move to target failed: unable to set camera'
