@@ -129,16 +129,20 @@ class HoleSampler(Configurer):
 		return sorted(holes, key=lambda x: x.stats[cat], reverse=False)
 
 	def _samplingInClass(self, holes_in_bins, n_class, total_targets_need):
-		# get a list at least as long as total_targets_need
-		sampling_order = range(n_class)*int(math.ceil(total_targets_need/float(n_class)))
-		# truncate the list
-		sampling_order = sampling_order[:total_targets_need]
 		samples = []
-		for s in sampling_order:
-			# random sample without replacement
-			pick = random.sample(range(len(holes_in_bins[s])),1)[0]
-			hole = holes_in_bins[s].pop(pick)
-			samples.append(hole)
+		if n_class == 2 and total_targets_need == 2: #special case: only 2 targets wanted, take least and greatest
+			samples.append(holes_in_bins[0][0])  # reverse sort had been done so group 0 is highest
+			samples.append(holes_in_bins[1][-1]) # group 1 is lowest, take last
+		else:
+			# get a list at least as long as total_targets_need
+			sampling_order = range(n_class)*int(math.ceil(total_targets_need/float(n_class)))
+			# truncate the list
+			sampling_order = sampling_order[:total_targets_need]
+			for s in sampling_order:
+				# random sample without replacement
+				pick = random.sample(range(len(holes_in_bins[s])),1)[0]
+				hole = holes_in_bins[s].pop(pick)
+				samples.append(hole)
 		return samples
 
 	def _groupHoles(self, holes, n_class, category):
