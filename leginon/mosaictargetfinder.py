@@ -61,6 +61,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			'total targets': 10,
 			'classes': 1,
 			'group method': 'value delta',
+			'randomize blobs': True,
 		},
 		'target multiple':1,
 	}
@@ -91,7 +92,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 	eventoutputs = targetfinder.ClickTargetFinder.eventoutputs + [
 			event.MosaicDoneEvent]
 	targetnames = ['acquisition','focus','preview','reference','done','Blobs', 'example']
-	target_group_methods = ['value delta','target count']
+	target_group_methods = ['value delta','target count','jenks']
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.mosaicselections = {}
@@ -1407,7 +1408,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		value_max = self.settings['blobs']['max filter size']
 		return value_min, value_max
 
-	def _setSampler(self, grouper, total_target_need):
+	def _setSampler(self, grouper, total_target_need,randomize_blobs):
 		return groupfun.BlobRandomSizeSampler(grouper, total_target_need, self.logger)
 
 	def sampleBlobs(self, blobs, total_targets_need):
@@ -1418,16 +1419,19 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			return blobs
 		n_class = self.settings['target grouping']['classes']
 		group_method = self.settings['target grouping']['group method']
+		randomize_blobs = self.settings['target grouping']['randomize blobs']
 		stats_key = self._getBlobStatsKeyForGrouping()
 		try:
 			if group_method == 'value delta':
 				grouper = groupfun.EqualValueDeltaIndexGrouper(blobs, n_class, stats_key)
 				value_min, value_max = self._getGrouperValueMinMax()
 				grouper.setValueMinMax(value_min, value_max)
-			else:
+			elif group_method == 'target count':
 				grouper = groupfun.EqualCountBlobIndexGrouper(blobs, n_class, stats_key)
+			elif group_method == 'jenks':
+				grouper = groupfun.JenksIndexGrouper(blobs, n_class, stats_key)
 			grouper.groupBlobIndex()
-			sampler = self._setSampler(grouper, total_targets_need)
+			sampler = self._setSampler(grouper, total_targets_need,randomize_blobs)
 			return sampler.sampleBlobs()
 		except Exception as e:
 			self.logger.error('sampling error: %s' % e)

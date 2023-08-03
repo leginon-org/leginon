@@ -8,6 +8,7 @@ import wx
 import wx.lib.filebrowsebutton as filebrowse
 
 from leginon.gui.wx.Entry import Entry, FloatEntry
+from leginon.gui.wx.Choice import Choice
 import leginon.gui.wx.Settings
 import leginon.gui.wx.MosaicClickTargetFinder
 import leginon.gui.wx.ToolBar
@@ -76,7 +77,7 @@ class ThresholdScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb2 = wx.StaticBox(self, -1, 'Blob Filtering (Set by example targets)')
 		sbsz2 = wx.StaticBoxSizer(sb2, wx.VERTICAL)
-		self.widgets['filter-key'] = Entry(self, -1, chars=10)
+		self.widgets['filter-key'] = Choice(self, -1, choices=['Size','Signal','Score','Mean'])
 		self.widgets['filter-min'] = FloatEntry(self, -1, chars=6)
 		self.widgets['filter-max'] = FloatEntry(self, -1, chars=6)
 

@@ -4,6 +4,10 @@ Collection of functions to help group items in a list.
 """
 import math
 import random
+try:
+	from jenks import jenks
+except:
+	print('Jenks sorting not installed')
 
 def calculateIndexRangesInClassEvenDistribution(total, n_class):
 	'''
@@ -63,6 +67,33 @@ def calculateIndexRangesInClassValue(all_codes, n_class, min_val, max_val):
 				range_list[c] = (start, total)
 				last_end = total
 	return range_list
+
+def calculateIndexRangesInClassJenksDistribution(all_codes, n_class):
+	'''
+	Return an index ranage list of (start, end) groups after running Jenks classificaiton.
+	'''
+	values = map((lambda x: int(x.split('@')[0])), all_codes)
+	try:
+		cutoffs = jenks(values,n_class)
+	except:
+		print('Jenks sorting not installed or had error, no targets found')
+		return []
+	print ("Class 1 has minimum value %d" %(cutoffs[0]))
+	for i in range(1,len(cutoffs)):
+		print("Class %d has maximum value %d"%(i,cutoffs[i]))
+        breaks=[]
+        range_list=[]
+        for j in range(1,len(cutoffs)):
+                for i in range(len(values)):
+                        if abs(values[i]-cutoffs[j]) < 0.01: #jenks returns different precision than original codes data
+                                breaks.append(i)
+                                break
+        start=0
+        for i in range(0,len(breaks)):
+                range_list.append((start,breaks[i]+1))
+                start = breaks[i]+1
+        return range_list
+
 
 class BlobIndexGrouper(object):
 	group_method = 'target count'
@@ -138,12 +169,22 @@ class EqualCountBlobIndexGrouper(BlobIndexGrouper):
 		total_blobs = len(codes)
 		return calculateIndexRangesInClassEvenDistribution(total_blobs, self.n_class)
 
+class JenksIndexGrouper(BlobIndexGrouper):
+	'''
+	Group blobs by Jenks algorithm, which is a 1-dimensional k-means algorithm
+	Jenks minimizes the variances within groups. Unlike k-means it finds the global minimum.
+	Requires cython
+	'''
+	group_method = 'jenks'
+	def _getIndexRange(self, codes):
+		return calculateIndexRangesInClassJenksDistribution(codes, self.n_class)
+
 class BlobSampler(object):
 	'''
 	Sample blobs already have group assignment. Get the blobs and grouping from
 	the Grouper. Group method does affect the sampling algorithm.
 	'''
-	def __init__(self, grouper_obj, total_targets, logger):
+	def __init__(self, grouper_obj, total_targets, logger,randomize_blobs=True):
 		self.blobs = grouper_obj.blobs
 		self.index_groups = grouper_obj.index_groups
 		self.statskey = grouper_obj.statskey
@@ -151,6 +192,7 @@ class BlobSampler(object):
 		self.logger = logger
 		self.n_class = grouper_obj.n_class
 		self.total_targets = total_targets
+		self.randomize_blobs = randomize_blobs
 
 	def _sampling(self, indices, n_class_sample, current_class):
 		raise NotImplemented
@@ -164,7 +206,7 @@ class BlobSampler(object):
 		range_list = calculateIndexRangesInClassEvenDistribution(self.total_targets, self.n_class)
 		# number_of_samples_in_classes
 		nsample_in_classes = list(map((lambda x: x[1]-x[0]), range_list))
-		if self.group_method == 'value delta':
+		if self.group_method == 'value delta' or self.group_method == 'jenks':
 			# o.k. to have more samples than number of targets in class.
 			return nsample_in_classes
 		elif self.group_method == 'target count':
@@ -235,6 +277,9 @@ class BlobTopScoreSampler(BlobSampler):
 		keys = blob_indices_at_score_in_class.keys()
 		keys.sort()
 		keys.reverse()
+		if self.randomize_blobs:
+			random.shuffle(keys)  # randomize, do not want sorted actually
+			print "randomized blob scores"
 		sample_blobs_in_class = []
 		sample_indices = []
 		for j, score in enumerate(keys):
