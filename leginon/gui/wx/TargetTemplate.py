@@ -202,7 +202,7 @@ class AutoFillTargets(wx.Dialog):
 
 		self.targetname = targetname
 		self.numtargets = IntEntry(self, -1, chars=4, value='4')
-		self.radius = IntEntry(self, -1, chars=4, value='100')
+		self.radius = IntEntry(self, -1, chars=4, value='180')
 		self.angleoffset = IntEntry(self, -1, chars=4, value='0')
 		self.targets = []
 
@@ -236,7 +236,7 @@ class AutoFillTargets(wx.Dialog):
 
 	def onOK(self, evt):
 		numtargets = float(self.numtargets.GetValue())
-		if numtargets > 7:
+		if numtargets > 14:  # change from 7
 				self.Close()
 				dialog = wx.MessageDialog(self, "Too many targets:\n'%d' is greater than 7" % numtargets, 'Error', wx.OK|wx.ICON_ERROR)
 				dialog.ShowModal()
