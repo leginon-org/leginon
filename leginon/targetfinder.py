@@ -845,6 +845,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 				target['stats']['Std. Dev.'] = blob.stats['stddev']
 			if 'score' in blob.stats.keys():
 				target['stats']['Score'] = blob.stats['score']
+			if 'signal' in blob.stats.keys():
+				target['stats']['Signal'] = blob.stats['signal']
 			targets.append(target)
 		return targets
 
