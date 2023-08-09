@@ -316,7 +316,7 @@ class ToolTipPlugin(Plugin):
         if not image.HasAlpha():
             image.InitAlpha()
         size = self.rect.width*self.rect.height
-        image.SetAlpha(chr(127)*size)
+        image.SetAlpha(bytes(127)*size)
         self.bitmap = image.ConvertToBitmap()
 
     def onUpdateClientRegion(self, clientregion):
@@ -412,7 +412,7 @@ class MagnifierPlugin(Plugin):
         if not image.HasAlpha():
             image.InitAlpha()
         size = self.rect.width*self.rect.height
-        image.SetAlpha(chr(self.alpha)*size)
+        image.SetAlpha(bytes(self.alpha)*size)
         self.bitmap = image.ConvertToBitmap()
 
     def onUpdateClientRegion(self, clientregion):
