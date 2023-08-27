@@ -99,8 +99,12 @@ class SettingsJsonLoader(DataJsonLoader):
 		for settings in self.alldata:
 			classname = settings.keys()[0]
 			print 'inserting %s' % classname
-			q = self.makequery(classname, settings[classname])
-			self._insertQuery(q)
+			try:
+				q = self.makequery(classname, settings[classname])
+				self._insertQuery(q)
+			except Exception as e:
+				print('Error in ',classname, settings[classname],q)
+				raise
 
 	def _insertQuery(self, q):
 			if 'session' in q.keys():
