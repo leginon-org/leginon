@@ -349,10 +349,53 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		if self.settings['filter ice on convolved']:
 			self._makeConvolvedHoles2('acquisition','holes',self.focus_hole)
 			self.iceOnConvolved() # results in holes2
+			if len(self.settings['acquisition template']) >1:  # if more than 1 target check if center is good in case others are bad
+				self.hf.filter_good('holes','holes3') # wjr results of unconvolved into holes3
+				self._addholes('holes2','holes3') # add back holes3 to holes 2 if there is no convolutated target wjr
+
 		else:
 			self.hf.filter_good('holes')
 			self._makeConvolvedHoles2('acquisition','holes2',self.focus_hole)
 		return
+
+	def _addholes(self,oldholes='holes2',newholes='holes3'):
+		''' 
+		adds a list of newholes to oldholes if a given new hole is not within <limit> of any old hole
+		limit caclulated as maximum distance of target list, plus 3 for floating point safety
+		wjr
+		'''
+		conv_vect = self.settings['acquisition template'] # list of (del_c,del_r)s
+		distancelist = []
+		for p in conv_vect:
+			distancelist.append(math.hypot(p[0],p[1]))
+		limit = max(distancelist)+3  # add 3 for safety, if center point is within this distance of a convolved point, center point is removed
+		oldholes_list = list(self.hf.get_result(oldholes))
+		newholes_list = list(self.hf.get_result(newholes))
+		oldcenters = map((lambda x: x.stats['center']),oldholes_list)
+		newcenters = map((lambda x: x.stats['center']),newholes_list)
+		remove_points=[]
+		for i, p1 in enumerate(newcenters):
+			r1,c1 = p1
+			delpoint = False
+			for j, p2 in enumerate(oldcenters):
+				r2,c2=p2
+				dist = math.hypot(r1-r2,c1-c2)
+				if dist < limit:
+					delpoint=True
+					break
+			if delpoint:
+		#		print "marked for deletion i=%d"%i
+				remove_points.append(i)
+				oldcenters.pop(j)  # can also delete this good point since the center near it has been removed
+		remove_points.reverse()
+		for i in remove_points:
+			newholes_list.pop(i)
+		oldholes_list.extend(newholes_list)
+		n_holes_added=len(newholes_list)
+		self.logger.info('Center targets added: %d' % n_holes_added)
+		self.hf.update_result(oldholes, []) # wjr is clearing necessary??
+		self.hf.update_result(oldholes, oldholes_list)
+
 
 	def _getStatsKeys(self):
 		'''
