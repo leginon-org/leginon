@@ -510,6 +510,8 @@ class TransformManager(node.Node, TargetTransformer):
 
 	def handleTransformTargetEvent(self, ev):
 		self.setStatus('processing')
+		currentpreset = self.presetsclient.getCurrentPreset()
+                park_presetname = currentpreset['name']
 		oldtarget = ev['target']
 		level = ev['level']
 		use_parent_mover = ev['use parent mover']
@@ -530,7 +532,12 @@ class TransformManager(node.Node, TargetTransformer):
 		evt = event.TransformTargetDoneEvent()
 		evt['target'] = newtarget
 		evt['destination'] = requestingnode
-		self.outputEvent(evt)
+		# wjr add pause block
+                self.logger.info('sending the scope to original preset %s' % (park_presetname,))
+                self.presetsclient.toScope(park_presetname, None, False)
+                self.logger.info('wait %d seconds to stabilize' %(self.settings['pause time']))
+                time.sleep(self.settings['pause time'])
+		self.outputEvent(evt)   # put AFTER the pause!!
 		self.setStatus('idle')
 
 	## much of the following method was stolen from acquisition.py
