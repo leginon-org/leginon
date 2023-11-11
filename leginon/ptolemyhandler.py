@@ -75,7 +75,7 @@ def _read_csv_row(r):
 	k = 'GP_probs'
 	if k in r.keys():
 		data[k] = float(r[k])
-		data['score'] = data[k]
+		data['score'] = data['prior_score']*data[k]
 	else:
 		data[k] = None
 		data['score'] = data['prior_score']
