@@ -115,6 +115,9 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True)
 
+	def _enable_on_tile_loaded(self):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
+
 	def onTilesButton(self, evt):
 		choices = self.node.getMosaicNames()
 		dialog = TilesDialog(self, choices)
@@ -124,7 +127,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 			if selection:
 				self.node.setMosaicName(selection)
 				self.node.loadMosaicTiles(selection)
-				self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
+				self._enable_on_tile_loaded()
 		elif result == wx.ID_RESET:
 			self.node.clearTiles()
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)

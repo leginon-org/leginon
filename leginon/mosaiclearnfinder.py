@@ -122,7 +122,7 @@ class MosaicLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder):
 		try:
 			blob_dicts=ph.current_lm_state()
 			if not blob_dicts:
-				raise RuntimeError('get current_lm_state failed')
+				raise RuntimeError('get current_lm_state failed from ptolemy server error. Not recoverable.')
 		except Exception as e:
 			# probably access error
 			self.logger.error("Square finder read error: %s" % e)

@@ -18,11 +18,16 @@ def getCurrentSession(hostname):
 		raise ValueError('no session using this tem host')
 
 def getMosaicLabel(session,mosaic_name=None):
+	'''
+	return mosaic label. Maybe an empty label, or named label.
+	it returns False if no match found.
+	'''
 	if mosaic_name is None:
 		# set to use the most recent label
 		r = leginondata.ImageTargetListData(session=session, mosaic=True).query(results=1)
 		if not r:
-			return
+			# handle image target list not found from bad workflow.
+			return False
 		mosaic_name = r[0]['label']
 	return mosaic_name
 
@@ -61,6 +66,9 @@ class SquareTargetOrderUpdater(object):
 			# just order by current score first
 			blob_dicts=ph.current_lm_state()
 		mosaic_label = getMosaicLabel(self.session,mosaic_name)
+		if mosaic_label == False:
+			self.logger.error('no atlas target list with label "%s"' % mosaic_label)
+			return
 		ordering_scores = []
 		target_numbers = []
 		# specify which mosaic label is used.
@@ -73,6 +81,9 @@ class SquareTargetOrderUpdater(object):
 		desired_imagelists = list(map((lambda x:x.dbid), desired_imagelists))
 		self.logger.debug('imagelist dbids of label "%s": %s' % (mosaic_label,desired_imagelists))
 		blob_dicts = filter((lambda x: x['grid_id'] in desired_imagelists),blob_dicts)
+		if len(blob_dicts) == 0:
+				self.logger.error('Error mapping blobs to any atlas target list')
+				return
 		for n, b in enumerate(blob_dicts):
 			#ptolemy write its coordinates in (x,y) modify them first. we want
 			# them in (row, col)

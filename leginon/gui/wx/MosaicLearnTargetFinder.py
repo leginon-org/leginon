@@ -45,9 +45,14 @@ class Panel(leginon.gui.wx.MosaicScoreTargetFinder.Panel):
 			dialog = ThresholdSettingsDialog(self)
 			dialog.ShowModal()
 			dialog.Destroy()
+
 	def onFindSquaresButton(self, evt):
 		threading.Thread(target=self.node.updatePtolemyTargets).start()
 		self.find_square_button_clicked = True
+
+	def _enable_on_tile_loaded(self):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_UPDATE_LEARNING, True)
 
 	def onUpdateLearningButton(self, evt):
 		threading.Thread(target=self.node.updateSquareTargetOrder).start()

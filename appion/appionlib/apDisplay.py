@@ -446,7 +446,7 @@ class LeginonLogger(object):
 	def warning(self,msg):
 		printWarning(msg)
 	def error(self,msg):
-		printWarning('Leginon ERROR: ',msg)
+		printWarning('Leginon ERROR: %s' % msg)
 
 ####
 # This is a low-level file with NO database connections
