@@ -60,7 +60,7 @@ $rootPath = realpath($path);
 
 // Initialize archive object
 $zip = new ZipArchive();
-$zipfile = '/usr/local/temp/' . $sessionId . '.zip';
+$zipfile = $dir . $sessionId . '.zip';
 $zip->open($zipfile, ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
 // Initialize empty "delete list"
