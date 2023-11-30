@@ -1975,6 +1975,7 @@ class TargetGroupingSettingsData(SettingsData):
 			('total targets', int),
 			('classes', int),
 			('group method', str),
+			('randomize blobs', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -2027,6 +2028,7 @@ class MosaicScoreTargetFinderSettingsData(ClickTargetFinderSettingsData,
 			('scale size', int),
 			('create on tile change', str),
 			('autofinder', bool),
+			('simpleblobmerge', bool),
 		)
 		return typemap
 	typemap = classmethod(typemap)
@@ -2318,6 +2320,13 @@ class DefocusSequenceSettingsData(AcquisitionSettingsData):
 		return AcquisitionSettingsData.typemap() + (
 			('step size', float),  #meter
 			('nsteps', int),
+		)
+	typemap = classmethod(typemap)
+
+class BatchAcquisitionSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('shutter delay', float),  #seconds
 		)
 	typemap = classmethod(typemap)
 

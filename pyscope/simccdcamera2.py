@@ -41,8 +41,9 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		self.binning = {'x': 1, 'y': 1}
 		self.offset = {'x': 0, 'y': 0}
 		self.dimension = copy.copy(self.getCameraSize())
-		self.exposure_time = 0.2
+		self.exposure_time = 0.2 #second
 		self.exposure_type = 'normal'
+		self.frames_name_set_by_leginon=False
 
 		self.energy_filter = True
 		self.energy_filter_width = 20.0
@@ -388,7 +389,7 @@ class SimFrameCamera(SimCCDCamera):
 	name = 'SimFrameCamera'
 	def __init__(self):
 		super(SimFrameCamera,self).__init__()
-		self.frame_time = 200
+		self.frame_time = 0.200 # in seconds
 		self.save_frames = False
 		self.alignframes = False
 		self.alignfilter = 'None'
@@ -498,8 +499,11 @@ class SimFrameCamera(SimCCDCamera):
 
 		self.debug_print( 'SAVERAWFRAMES %s' % (self.save_frames,))
 		if self.save_frames:
-			self.rawframesname = time.strftime('frames_%Y%m%d_%H%M%S')
-			self.rawframesname += '_%02d' % (idcounter.next(),)
+			if not self.frames_name_set_by_leginon:
+				self._makeNextRawFramesName() # this sets self.rawframesname
+			else:
+				# use rawframesname already set
+				pass
 		else:
 			return self.getSimImage(shape)
 		# won't be here if not saving frames
@@ -581,8 +585,17 @@ class SimFrameCamera(SimCCDCamera):
 		else:
 			self.alignfilter = 'None'
 
-	def setNextRawFramesName(self, value):
-		self.rawframesname = value
+	def makeNextRawFramesName(self):
+		self.frames_name_set_by_leginon=True
+		return self._makeNextRawFramesName()
+
+	def _makeNextRawFramesName(self):
+		self.rawframesname = time.strftime('frames_%Y%m%d_%H%M%S')
+		self.rawframesname += '_%02d' % (idcounter.next(),)
+		return self.rawframesname
+
+	def unsetNextRawFramesName(self):
+		self.frames_name_set_by_leginon=False
 
 	def getNextRawFramesName(self):
 		return self.rawframesname
@@ -605,6 +618,9 @@ class SimFrameCamera(SimCCDCamera):
 		return False
 
 class SimFalconFrameCamera(SimFrameCamera):
+	"""
+	This simulates tia.TIA_Falcon that is used for Falcon I and II
+	"""
 	name = 'SimFalconFrameCamera'
 	def __init__(self):
 		super(SimFalconFrameCamera,self).__init__()
@@ -697,6 +713,11 @@ class SimFalconFrameCamera(SimFrameCamera):
 		ms = self.movie_exposure / self.getNumberOfFrames()
 		return ms
 
+	def _makeNextRawFramesName(self):
+		self.frameconfig.createFramePath(self.frameconfig.getBaseFramePath())
+		self.rawframesname = self.getPreviousRawFramesName()
+		return self.rawframesname
+
 	def getPreviousRawFramesName(self):
 		return self.frameconfig.getFrameDirName()
 
@@ -704,6 +725,11 @@ class SimFalconFrameCamera(SimFrameCamera):
 		self.calculateMovieExposure()
 		movie_exposure_second = self.movie_exposure/1000.0
 		if self.save_frames:
+			if not self.frames_name_set_by_leginon:
+				self._makeNextRawFramesName() # this sets self.rawframesname
+			else:
+				# use rawframesname already set
+				pass
 			self.frameconfig.makeRealConfigFromExposureTime(movie_exposure_second,self.equal_distr_frame_number,self.start_frame_number)
 		else:
 			self.frameconfig.makeDummyConfig(movie_exposure_second)
@@ -849,11 +875,9 @@ class SimK3Camera(SimFrameCamera):
 			endx = self.dimension['x'] + startx
 			endy = self.dimension['y'] + starty
 			image = image[starty:endy,startx:endx]
-			print 'cropped', image.shape
 		return image
 
 	def _modifyImageShape(self, image):
-		print 'recieved', image.shape
 		# TODO: Found image shape returned incorrectly in simulation.
 		# Leave this here for now.
 		if self.acqparams['width']*self.acqparams['height'] != image.shape[0]*image.shape[1]:

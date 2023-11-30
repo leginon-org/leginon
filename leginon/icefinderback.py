@@ -49,6 +49,7 @@ class IceFinder(object):
 			'original': None,
 			'holes': None,
 			'holes2': None, #good holes to use, including convolved
+			'holes3': None, #original unconvolved holes, to be later added to holes2
 		}
 
 		## This defines which dependent results should be cleared
@@ -59,6 +60,7 @@ class IceFinder(object):
 			'original': ('holes','holes2'),
 			'holes': ('holes2',),
 			'holes2': (),
+			'holes3': (),
 		}
 
 	def setComponents(self):
@@ -190,14 +192,14 @@ class IceFinder(object):
 		holes = self.holestats.calc_stats(holes)
 		self.update_result(input_name, holes)
 
-	def filter_good(self, input_name='holes2'):
+	def filter_good(self, input_name='holes2',output_name='holes2'):  #wjr add output name
 		'''
 		This filter holes with good is True.  Note: Need to copy this in
 		subclasses since self.__results are not accessible in the subclass.
 		'''
 		holes = list(self.get_result(input_name))
 		holes = self.good.filter_good(holes)
-		self.update_result('holes2', holes)
+		self.update_result(output_name, holes)   #wjr replace holes2 with output_name for holes3 case
 
 	def calc_center_holestats(self, coord, im, r):
 		'''

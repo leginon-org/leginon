@@ -72,10 +72,11 @@ class StatsBlob(object):
 		score = info_dict['score']
 		center = info_dict['center'][0],info_dict['center'][1]
 		vertices = info_dict['vertices']
+		signal = size * mean  
 		self.center_modified = False
 		# n in blob is the same as size from Ptolemy. Need n for displaying stats
 		# in gui.
-		self.stats = {"label_index": index, "center":center, "n":size, "size":size, "mean":mean, "score":score}
+		self.stats = {"label_index": index, "center":center, "n":size, "size":size, "mean":mean, "score":score, "signal":signal} 
 		self.vertices = vertices
 		self.info_dict = info_dict
 
@@ -84,22 +85,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 	settingsclass = leginondata.MosaicScoreTargetFinderSettingsData
 	defaultsettings = dict(targetfinder.ClickTargetFinder.defaultsettings)
 	# same as MosaicClickTargetFinder
-	mosaictarget_defaultsettings = {
-		# unlike other targetfinders, no wait is default
-		'wait for done': False,
-		#'no resubmit': True,
-		# maybe not
-		'calibration parameter': 'stage position',
-		'scale image': True,
-		'scale size': 512,
-		'create on tile change': 'all',
-		'target grouping': {
-			'total targets': 10,
-			'classes': 1,
-			'group method': 'value delta',
-		},
-		'target multiple':1,
-	}
+	mosaictarget_defaultsettings = dict(mosaictargetfinder.MosaicClickTargetFinder.mosaictarget_defaultsettings)
 	defaultsettings.update(mosaictarget_defaultsettings)
 	# autofinder part is different
 	auto_square_finder_defaultsettings = {
@@ -294,8 +280,8 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		value_max = self.settings['filter-max']
 		return value_min, value_max
 
-	def _setSampler(self, grouper, total_target_need):
-		return groupfun.BlobTopScoreSampler(grouper, total_target_need, self.logger)
+	def _setSampler(self, grouper, total_target_need,randomize_blobs):
+		return groupfun.BlobTopScoreSampler(grouper, total_target_need, self.logger,randomize_blobs)
 
 	def _getBlobStatsKeyForGrouping(self):
 		return self.settings['filter-key'].lower()
@@ -400,30 +386,38 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 		for i in unique_close:
 			first = too_close[0][i]
 			second = too_close[1][i]
-			to_remove.append(first)
 			b1 = blob_values[first]['brightness']
 			b2 = blob_values[second]['brightness']
 			w1 = blob_values[first]['area']
 			w2 = blob_values[second]['area']
 			c1 = centers[first]
 			c2 = centers[second]
-			new_area = w1+w2
-			new_brightness = (b1*w1+b2*w2)/(w1+w2)
-			new_center = tuple(((c1*w1+c2*w2)/(w1+w2)).tolist())
-			new_score = max(blob_values[first]['score'],blob_values[second]['score'])
-			# merge vertices as convex hull
-			# use union set to avoid duplicates
-			v = set(blob_values[first]['vertices'])
-			v.union(blob_values[second]['vertices'])
-			new_vertices = convexhull.convexHull(list(v))
-			# update
-			self.mblob_values[second].update({
-					'area':new_area,
-					'center':new_center,
-					'score':new_score,
-					'brightness':new_brightness,
-					'vertices':new_vertices
-			})
+			if self.settings['simpleblobmerge']: #just keep the one with the larger area * brightness
+				signal1 = b1 * w1
+				signal2 = b2 * w2
+				if (signal1 < signal2):
+					to_remove.append(first)
+				else:
+					to_remove.append(second)
+			else:
+				to_remove.append(first)
+				new_area = w1+w2
+				new_brightness = (b1*w1+b2*w2)/(w1+w2)
+				new_center = tuple(((c1*w1+c2*w2)/(w1+w2)).tolist())
+				new_score = max(blob_values[first]['score'],blob_values[second]['score'])
+				# merge vertices as convex hull
+				# use union set to avoid duplicates
+				v = set(blob_values[first]['vertices'])
+				v.union(blob_values[second]['vertices'])
+				new_vertices = convexhull.convexHull(list(v))
+				# update
+				self.mblob_values[second].update({
+						'area':new_area,
+						'center':new_center,
+						'score':new_score,
+						'brightness':new_brightness,
+						'vertices':new_vertices
+				})
 		# pop merged
 		to_remove = list(set(to_remove))
 		to_remove.sort()
@@ -461,6 +455,7 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 			# center of the blob on finder_mosaic coordinate
 			# _tile2MosaicPosition standard is (row, col)
 			new_info_dict['center'] = r,c
+			new_info_dict['signal'] = new_info_dict['area'] * new_info_dict['brightness']  
 			self.mblob_values.append(new_info_dict)
 
 	def findSquareBlobs(self):

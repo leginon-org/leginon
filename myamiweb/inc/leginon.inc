@@ -547,6 +547,14 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function getSessionName($sessionId) {
+		$q="select "
+			."name from SessionData "
+			."WHERE DEF_id ='$sessionId' ";
+		$results = $this->mysql->getSQLResult($q);
+		return $results[0]['name'];
+	}
+
 	function updateSessionPurpose($sessionId, $comment) {
 		// update Session description without changing timestamp
 		if ($sessionId ) {

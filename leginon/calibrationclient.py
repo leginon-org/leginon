@@ -935,7 +935,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		f1, f2 are two defoci used to measure displacement d (row,col)
 		'''
 		a = (f2-f1) * F
-		b = numpy.array(d, numpy.float)
+		b = numpy.array(d, numpy.float64)
 		tiltx,tilty = numpy.linalg.solve(a,b)
 		return tiltx,tilty
 
@@ -948,7 +948,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		  parameters - value of microscope parameters causing shifts
 		  beam_tilt - value of the induced beam tilt
 		'''
-		shift = numpy.zeros((2,), numpy.float)
+		shift = numpy.zeros((2,), numpy.float64)
 		shift[0] = shifts[1]['row'] - shifts[0]['row']
 		shift[1] = shifts[1]['col'] - shifts[0]['col']
 
@@ -1067,7 +1067,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			## return to original beam tilt
 			self.setBeamTilt(btorig)
 
-		matrix = numpy.zeros((2,2), numpy.float32)
+		matrix = numpy.zeros((2,2), numpy.float64)
 		if m!=0:
 			matrix[:,0] = numpy.divide(numpy.subtract(diffs['x'][-1], diffs['x'][1]), 2 * m * t)
 			matrix[:,1] = numpy.divide(numpy.subtract(diffs['y'][-1], diffs['y'][1]), 2 * m * t)
@@ -1343,7 +1343,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		xcol = measurement['x']['col']
 		yrow = measurement['y']['row']
 		ycol = measurement['y']['col']
-		matrix = numpy.array([[xrow,yrow],[xcol,ycol]],numpy.float)
+		matrix = numpy.array([[xrow,yrow],[xcol,ycol]],numpy.float64)
 		matrix = numpy.linalg.inv(matrix)
 		return matrix
 
