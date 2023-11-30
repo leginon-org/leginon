@@ -66,6 +66,7 @@ class FeiCam(ccdcamera.CCDCamera):
 		ccdcamera.CCDCamera.__init__(self)
 		self.save_frames = False
 		self.batch = False
+		self.frames_name_set_by_leginon=False
 		self._connectToFEIAdvScripting()
 		# set binning first so we can use it
 		self.setCameraBinnings()
@@ -163,6 +164,7 @@ class FeiCam(ccdcamera.CCDCamera):
 				config_eer = self.getFeiConfig('camera','save_eer')
 				if config_eer is True:
 					fformat = 'eer'
+					self.camera_settings.EER = True
 		except:
 			pass
 		self.frame_format = fformat
@@ -313,6 +315,13 @@ class FeiCam(ccdcamera.CCDCamera):
 		Camrea specific setup
 		'''
 		pass
+
+	def waitForCameraReady(self):
+		'''
+		Wait for acquisition set blocking asynchronous process to finish
+		'''
+		while self.csa.IsActive:
+			time.sleep(0.1)
 
 	def getImage(self):
 		# The following is copied from ccdcamera.CCDCamera since
@@ -743,6 +752,7 @@ class Falcon3(FeiCam):
 	def getSaveRawFrames(self):
 		'''Save or Discard'''
 		return self.save_frames
+
 	def setSaveRawFrames(self, value):
 		'''True: save frames, False: discard frames'''
 		self.save_frames = bool(value)
@@ -770,6 +780,9 @@ class Falcon3(FeiCam):
 			if self.frame_format == 'mrc':
 				return self.frameconfig.getNumberOfFrameBins()
 			if self.frame_format == 'eer':
+				# set camera settings so we can get the calculated value
+				# before the real getImage
+				self.camera_settings.EER = True
 				rendered_nframes = self.camera_settings.CalculateNumberOfFrames()
 				return rendered_nframes*self.getEerRenderDefault()
 		else:
@@ -801,9 +814,27 @@ class Falcon3(FeiCam):
 
 	def getFrameTime(self):
 		# TO DO: Find out if need fractional millisecond.
-		# custom_setup may modify this if bins are not even.
-		ms = self.dosefrac_frame_time * 1000.0
+		if self.frame_format == 'eer' and self.electron_counting:
+			# EER is handled as if sampled at physical_frame_rate
+			ms = 1000.0 / self.physical_frame_rate
+		else:
+			# custom_setup may modify this if bins are not even.
+			ms = self.dosefrac_frame_time * 1000.0
 		return ms
+
+	def makeNextRawFramesName(self):
+		self.frames_name_set_by_leginon=True
+		return self._makeNextRawFramesName()
+
+	def _makeNextRawFramesName(self):
+		sub_frame_dir = self.frameconfig.getBaseFramePath()
+		# use createFramePath because some attributes need to be set
+		self.frameconfig.createFramePath(sub_frame_dir)
+		self.frames_name = self.frameconfig.getFrameDirName()
+		return self.frames_name
+
+	def unsetNextRawFramesName(self):
+		self.frames_name_set_by_leginon=False
 
 	def getPreviousRawFramesName(self):
 		return self.frames_name
@@ -826,6 +857,11 @@ class Falcon3(FeiCam):
 			self.camera_settings.AlignImage = self.align_frames
 		frame_time_second = self.dosefrac_frame_time
 		if self.save_frames:
+			if not self.frames_name_set_by_leginon:
+				self._makeNextRawFramesName() # this sets self.rawframesname
+			else:
+				# use rawframesname already set
+				pass
 			# EER only works in counting mode
 			if self.frame_format == 'eer' and self.electron_counting:
 				self.camera_settings.EER = True
@@ -833,8 +869,6 @@ class Falcon3(FeiCam):
 				rangelist = []
 				# EER is handled as if sampled at physical_frame_rate
 				self.dosefrac_frame_time = 1.0 / self.physical_frame_rate
-				sub_frame_dir = self.frameconfig.getBaseFramePath()
-				self.frameconfig.createFramePath(sub_frame_dir)
 			else:
 				# non-electron_counting can not be saved as EER.
 				if self.frame_format == 'eer':
@@ -853,7 +887,6 @@ class Falcon3(FeiCam):
 					self.dosefrac_frame_time = movie_exposure_second / len(rangelist)
 			self.frames_pattern = self.frameconfig.getSubPathFramePattern()
 			self.camera_settings.SubPathPattern = self.frames_pattern
-			self.frames_name = self.frameconfig.getFrameDirName()
 		else:
 			if self.frame_format == 'eer':
 				# make sure EER is not set at camera
@@ -920,6 +953,12 @@ class Falcon4EC(Falcon3EC):
 	intensity_averaged = False
 	base_frame_time = 0.02907 # seconds
 	physical_frame_rate = 250 # rolling shutter frames per second
+
+	def setExposureTime(self,ms):
+		self.exposure = float(ms)
+		self.calculateMovieExposure()
+		movie_exposure_second = self.movie_exposure/1000.0
+		self.camera_settings.ExposureTime = movie_exposure_second
 
 	def setUseCameraQueue(self):
 		use_queue = False
