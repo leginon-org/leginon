@@ -467,7 +467,7 @@ class PresetsManager(node.Node):
 		for name, preset in pdict.items():
 			if not name:
 				continue
-			newp = leginondata.PresetData(initializer=preset, session=self.session)
+			newp = leginondata.PresetData(initializer=preset, session=self.session, tem=self.instrument.getTEMData(), ccdcamera=self.instrument.getCCDCameraData())
 			## for safety, disable random defocus range by default
 			if not self.settings['import random']:
 				newp['defocus range min'] = newp['defocus range max'] = None
