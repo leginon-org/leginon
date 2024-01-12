@@ -45,6 +45,7 @@ class HoleFinder(scorefinderback.HoleFinder):
 			'original': None, # original image
 			'holes': None,  # holes found by holefinder
 			'holes2': None, # good holes to use after convolution, ice filtering etc.
+			'holes3': None, #original unconvolved holes, to be later added to holes2
 		}
 
 		## This defines which dependent results should be cleared
@@ -55,6 +56,7 @@ class HoleFinder(scorefinderback.HoleFinder):
 			'original': ('holes',),
 			'holes': ('holes2',),
 			'holes2': (),
+			'holes3': (),
 		}
 		self.setComponents()
 		self.setDefaults()
