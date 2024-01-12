@@ -200,13 +200,18 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		self.setTargets(focus_points, 'focus', block=True)
 		self.logger.info('Acquisition Targets: %s' % (len(acq_points),))
 		self.logger.info('Focus Targets: %s' % (len(focus_points),))
+		self.saveHolePrefsStats()
 
+	def saveHolePrefsStats(self):
+		'''
+		Save hole info in database.
+		'''
 		# save to database
 		if type(self.currentimagedata) == type(leginondata.AcquisitionImageData()):
 			hfprefs = self.storeHoleFinderPrefsData(self.currentimagedata)
 			# this saves stats of the points before convolution
 			self.storeHoleStatsData(hfprefs,'holes')
-			# this saves stats of the points after convolution
+			# this saves stats of the points after convolution and sampling
 			self.storeHoleStatsData(hfprefs,'holes2')
 
 	def randomizeIce(self, input_name='holes'):

@@ -13,6 +13,7 @@ import leginon.projectdata
 import leginon.leginonconfig
 import leginon.project
 import leginon.ddinfo
+import ptolemyhandler as ph
 
 projectdata = leginon.project.ProjectData()
 
@@ -65,6 +66,12 @@ class Reservation(object):
 		## make new reservation
 		sessionres = leginon.leginondata.SessionReservationData(name=name, reserved=True)
 		sessionres.insert(force=True)
+		# TODO: Find a better place to initialize. This one initialize if the last wizard was
+		# set to create new session
+		#try:
+		#	ph.initialize()
+		#except Exception as e:
+		#	print(e)
 		return True
 
 	def cancel(self):

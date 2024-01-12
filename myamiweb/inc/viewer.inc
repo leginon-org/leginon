@@ -633,6 +633,8 @@ class view {
 		$this->btsort = new button('sort'.$this->name, 'sort');
 		$this->btdd = new toggleButton($this->name.'dd', 'drift');
 		$this->btdd->onToggle($this->name.'btddaction');
+		$this->btactvlrn = new button('actvlrn'.$this->name, 'actvlrn');
+		$this->btactvlrn->setLink('square_order.php','actvlrn');
 	}
 
 	function __setDefaultDisplays() {
@@ -650,6 +652,7 @@ class view {
 		$this->displaydeqicon = false;
 		$this->displaysorticon = false;
 		$this->displayddicon = false;
+		$this->displayactvlrnicon = false;
 		$this->displaycloseicon = true;
 		$this->displayadjustlink = true;
 		$this->displayexportlink = true;
@@ -946,6 +949,10 @@ class view {
 		$this->displayddicon = $state;
 	}
 
+	function displayActvLrnIcon($state) {
+		$this->displayactvlrnicon = $state;
+	}
+
 	function displayDeqIcon($state) {
 		$this->displaydeqicon = $state;
 	}
@@ -1046,6 +1053,7 @@ class view {
 			.$this->btsort->getJavascript()
 			.$this->btdd->getJavascript()
 			.$this->btclose->getJavascript()
+			.$this->btactvlrn->getJavascript()
 			.$this->crlf;
 
 		$javascript .= 'function '.$name.'btaceaction() { '.$this->crlf
@@ -1254,6 +1262,12 @@ class view {
 			.'
 			</td>
 		';
+		if ($this->displayactvlrnicon) {
+		$htmlframe .= '
+			<td width="15">'
+			.$this->btactvlrn->display().$this->crlf
+			.'</td> ';
+		}
 		if ($this->displayddicon) {
 		$htmlframe .= '
 			<td width="15">'
@@ -1591,6 +1605,7 @@ class fileview extends view
 		$this->displaygradient = false;
 		$this->displayimage = false;
 		$this->displaypresetinfo = false;
+		$this->displayactvlrnicon = false;
 	}
 }
 

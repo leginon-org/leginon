@@ -1067,6 +1067,8 @@ class AcquisitionImageTargetData(ImageTargetData):
 			# target mapping to a well on the prep plate if applicable
 			('spotmap', SpotWellMapData),
 			('last_focused', ImageTargetListData),
+			('square', SquareStatsData), # one target may be on multiple ptolemy squares
+			('ptolemy_hole', PtolemyHoleData), # multiple target may be from on ptolemy hole
 		)
 	typemap = classmethod(typemap)
 
@@ -1396,6 +1398,7 @@ class HoleStatsData(InSessionData):
 			('score', float),
 			('hole-number', int),
 			('convolved', bool),
+			('ptolemy', PtolemyHoleData),
 		)
 	typemap = classmethod(typemap)
 
@@ -1440,11 +1443,44 @@ class ScoreSquareFinderPrefsData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class PtolemySquareData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('grid_id', int), #ImageListData.dbid
+			('tile_id', int), #AcquisitionImageData.dbid of the mosaic tile
+			('square_id', int), #assigned by ptolemy
+			('center_x', int),
+			('center_y', int),
+		)
+	typemap = classmethod(typemap)
+
+class PtolemyScoreHistoryData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('list', ImageTargetListData), #where the ptolemy square is from.
+			('square', PtolemySquareData),
+			('score', float),
+			('set_number', int),
+		)
+	typemap = classmethod(typemap)
+		
+class PtolemyHoleData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('square', PtolemySquareData),
+			('image', AcquisitionImageData),
+			('hole_id', int), #
+			('center_x', int),
+			('center_y', int),
+		)
+	typemap = classmethod(typemap)
+
 class SquareStatsData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('prefs', SquareFinderPrefsData),
 			('score_prefs', ScoreSquareFinderPrefsData),
+			('tile_image', AcquisitionImageData),
 			('row', int),
 			('column', int),
 			('size', float),
@@ -1453,6 +1489,14 @@ class SquareStatsData(InSessionData):
 			('score', float),
 			('good', bool),
 			('on_edge', bool),
+		)
+	typemap = classmethod(typemap)
+
+class PtolemySquareStatsLinkData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('ptolemy', PtolemySquareData),
+			('stats', SquareStatsData),
 		)
 	typemap = classmethod(typemap)
 
@@ -1757,6 +1801,14 @@ class IceTargetFinderSettingsData(TargetFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class PtolemyMmTargetFinderSettingsData(IceTargetFinderSettingsData):
+	def typemap(cls):
+		return IceTargetFinderSettingsData.typemap() + (
+			('score key', str),
+			('score threshold', float),
+		)
+	typemap = classmethod(typemap)
+
 class ScoreTargetFinderSettingsData(IceTargetFinderSettingsData):
 	def typemap(cls):
 		return IceTargetFinderSettingsData.typemap() + (
@@ -1993,7 +2045,6 @@ class SquareFinderSettingsData(SettingsData):
 class TopScoreFinderSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
-			('scoring script', str),
 			('target grouping', TargetGroupingSettingsData),
 			('target multiple', int),
 			('filter-min', float),
@@ -2023,6 +2074,7 @@ class MosaicScoreTargetFinderSettingsData(ClickTargetFinderSettingsData,
 		typemap = ClickTargetFinderSettingsData.typemap()
 		typemap += TopScoreFinderSettingsData.typemap()
 		typemap += (
+			('scoring script', str),
 			('calibration parameter', str),
 			('scale image', bool),
 			('scale size', int),
@@ -2033,6 +2085,20 @@ class MosaicScoreTargetFinderSettingsData(ClickTargetFinderSettingsData,
 		return typemap
 	typemap = classmethod(typemap)
 
+class MosaicLearnTargetFinderSettingsData(ClickTargetFinderSettingsData,
+																					TopScoreFinderSettingsData):
+	def typemap(cls):
+		typemap = ClickTargetFinderSettingsData.typemap()
+		typemap += TopScoreFinderSettingsData.typemap()
+		typemap += (
+			('calibration parameter', str),
+			('scale image', bool),
+			('scale size', int),
+			('create on tile change', str),
+			('autofinder', bool),
+		)
+		return typemap
+	typemap = classmethod(typemap)
 class MosaicSpotFinderSettingsData(ClickTargetFinderSettingsData,
 																					SquareFinderSettingsData):
 	def typemap(cls):
