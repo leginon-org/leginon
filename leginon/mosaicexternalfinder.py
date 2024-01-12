@@ -418,7 +418,7 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 				else:
 					j_remove = j1
 					j_keep = j0
-                    self.logger.debug('keep merged center on %d' % j0image.dbid)
+					self.logger.debug('keep merged center on %d' % j0image.dbid)
 				to_remove.append(j_remove)
 				b1 = blob_values[j_remove]['brightness']
 				b2 = blob_values[j_keep]['brightness']
