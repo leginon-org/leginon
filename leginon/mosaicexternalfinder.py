@@ -179,6 +179,7 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 			b['center'] = _revindex(b['center'])
 			b['vertices'] = list(map((lambda x: _revindex(x)),b['vertices']))
 			b['tile_image'] = self._getTileImage(label)
+			b['squares'] = []
 			blobs.append(statssquare.StatsBlob(b, n)) # (row, col)
 		self.ext_blobs[label] = blobs
 
