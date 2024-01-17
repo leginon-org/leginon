@@ -333,9 +333,8 @@ class FeiCam(ccdcamera.CCDCamera):
 			self.batch = True
 		else:
 			self.batch = False
-		if not self.batch:
-			while self.csa.IsActive:
-				time.sleep(0.1)
+		while self.csa.IsActive:
+			time.sleep(0.1)
 		if self.readoutcallback:
 			name = str(time.time())
 			self.registerCallback(name, self.readoutcallback)
