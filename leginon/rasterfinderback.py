@@ -54,6 +54,7 @@ class HoleFinder(icefinderback.IceFinder):
 			'markedholes': None,
 			'holes2': None, # good holes to use after convolution, ice filtering etc.
 			'markedholes2': None,
+			'holes3': None, # center holes to use after convolution, in case holes2 is empty after ice filtering
 		}
 
 		## This defines which dependent results should be cleared
@@ -65,10 +66,11 @@ class HoleFinder(icefinderback.IceFinder):
 			'vector': (),
 			'raster': ('polygon',),
 			'polygon': ('holes',),
-			'holes': ('holes2','markedholes'),
+			'holes': ('holes2','markedholes','holes3'),
 			'markedholes': (),
-			'holes2': ('markedholes2',),
+			'holes2': ('markedholes2','holes3'),
 			'markedholes2': (),
+			'holes3':(),
 		}
 
 	def setComponents(self):
