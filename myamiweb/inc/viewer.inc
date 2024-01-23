@@ -133,6 +133,12 @@ class viewer {
 	}
 
 	function addScopeSelector($scopes=array()) {
+		if (defined("SHOW_ALL_MICROSCOPES_DROPDOWN")) {
+			if (SHOW_ALL_MICROSCOPES_DROPDOWN == false) {
+				return;
+			}
+		}
+
 		if (is_array($scopes) && count($scopes) > 2) {
 			$selector = '<select name="scopeId" onchange="newexp()">'.$this->crlf;
 			foreach ((array)$scopes as $scope) {
