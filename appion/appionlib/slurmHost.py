@@ -36,25 +36,16 @@ class SlurmHost(processingHost.ProcessingHost):
                
              
 		#Every Shell Script starts by indicating shell type
-		header = "#!/usr/bin/sh\n"
-		#header = "#!" + self.getShell() + "\n"
-                #header += "source /usr/share/Modules/init/tcsh;\n"
-                #header += "source /panfs/storage.local/imb/stagg/software/etc/myamidev.csh;\n"
+		header = "#!" + self.getShell() + "\n"
 			   
 		#add job attribute headers
 		if currentJob.getWalltime():
-			# header += self.scriptPrefix +" -t " + str(currentJob.getWalltime())+":00:00\n"
-                        header += self.scriptPrefix +" -t 2:00:00\n"
+			header += self.scriptPrefix +" -t " + str(currentJob.getWalltime())+":00:00\n"
                         
 		if currentJob.getNodes():
 			header += self.scriptPrefix +" -N " + str(currentJob.getNodes())
-			#if currentJob.getPPN():
-			#	header += ":ppn=" + str(currentJob.getPPN())
 			header += "\n"
 		
-		#if currentJob.getCpuTime():
-			# header += self.scriptPrefix +" -l cput=" + str(currentJob.getCpuTime()) + ":00:00\n"
-			
 		if currentJob.getMem():
 			header += self.scriptPrefix +" --mem=" + str(currentJob.getMem()) + 'gb\n'
 		
@@ -64,8 +55,8 @@ class SlurmHost(processingHost.ProcessingHost):
 		if currentJob.getQueue():
 			header += self.scriptPrefix +" -p " + currentJob.getQueue() + "\n"
 			
-		#if currentJob.getAccount():
-		#	header += self.scriptPrefix +" -A " + currentJob.getAccount()+ "\n"
+		if currentJob.getAccount():
+			header += self.scriptPrefix +" -A " + currentJob.getAccount()+ "\n"
 			
 		#Add any custom headers for this processing host.
 		for line in self.getAdditionalHeaders():
