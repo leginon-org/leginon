@@ -558,6 +558,14 @@ function getMaxNumberOfProcsPerNode( $processingHost )
 	return $ppn;
 }
 
+function getWalltime( $processingHost ) 
+{
+	$cluster = new Cluster( $processingHost );
+	$walltime = $cluster->getWallTimeDef();
+	
+	return $walltime;
+}
+
 function getNumberOfRequiredNodes($nproc, $ppn) 
 {
 	if ($nproc < $ppn) {
@@ -712,7 +720,8 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 			return "<B>ERROR:</B> Enter a user name and password";
 		}
 
-		$errors = submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg, False, False, $nproc, $ppn, $nodes);
+		$walltime = getWalltime($processhost);
+		$errors = submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg, False, False, $nproc, $ppn, $nodes, $walltime);
 		
 		// if errors:
 		if ($errors) {
