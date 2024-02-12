@@ -302,7 +302,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 		deltabt = None
 		# auto coma correction loop
 		while self.auto_count < count_limit:
-			self._simulateTarget()
+			self._parentSimulateTarget()
 			c21, deltabt = self.calculateAxialComa()
 			if deltabt is None:
 				self.logger.error('No correction to correct')
@@ -322,12 +322,14 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 
 	def simulateTarget(self):
 		if not self.settings['do auto coma']:
-			self._simulateTarget()
+			self._parentSimulateTarget()
 			return
 		else:
 			self.autoComaCorrection()
 
-	def _simulateTarget(self):
+	def _parentSimulateTarget(self):
+		# Doing the parent simulateTarget action.
+		# See redmine issue #16176
 		return super(BeamTiltImager,self).simulateTarget()
 
 	def alreadyAcquired(self, targetdata, presetname):
