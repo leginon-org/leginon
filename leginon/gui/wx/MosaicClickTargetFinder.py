@@ -115,6 +115,9 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True)
 
+	def _enable_on_tile_loaded(self):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
+
 	def onTilesButton(self, evt):
 		choices = self.node.getMosaicNames()
 		dialog = TilesDialog(self, choices)
@@ -124,7 +127,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 			if selection:
 				self.node.setMosaicName(selection)
 				self.node.loadMosaicTiles(selection)
-				self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
+				self._enable_on_tile_loaded()
 		elif result == wx.ID_RESET:
 			self.node.clearTiles()
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
@@ -410,6 +413,7 @@ class TargetScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['target grouping']['total targets'] = IntEntry(self, -1, min=0, chars=6)
 		self.widgets['target grouping']['classes'] = IntEntry(self, -1, min=1, chars=6)
 		self.widgets['target multiple'] = IntEntry(self, -1, min=1, max=9, chars=6)
+		self.widgets['target grouping']['randomize blobs'] = wx.CheckBox(self, -1, 'Randomize blob selection within groups')
 		# row sizers
 		sz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Max. number of targets:')
@@ -431,6 +435,7 @@ class TargetScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'targets')
 		tm_sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(tm_sz, (3, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		tm_sz.Add(self.widgets['target grouping']['randomize blobs'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		# finalize
 		sz.AddGrowableCol(1)
 		sbsz1.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
@@ -440,7 +445,7 @@ class TargetScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		groupmethods = self.node.getGroupMethodChoices()
 		self.widgets['target grouping']['group method'] = Choice(self, -1, choices=groupmethods)
 		szgroupmethod = wx.GridBagSizer(5, 5)
-		szgroupmethod.Add(wx.StaticText(self, -1, 'Each group has equal'),
+		szgroupmethod.Add(wx.StaticText(self, -1, 'Grouping method: '),
 										(0, 0), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL)
 		szgroupmethod.Add(self.widgets['target grouping']['group method'],
@@ -479,6 +484,12 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 										wx.ALIGN_CENTER_VERTICAL)
 		return szcheckmethod
 
+	def createSimpleBlobMergeSizer(self):
+		sz = wx.GridBagSizer(5, 5)
+		self.widgets['simpleblobmerge'] = wx.CheckBox(self, -1, 'Simple blob merging')
+		sz.Add(self.widgets['simpleblobmerge'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return sz
+
 	def createSortTargetSizer(self):
 		sz = wx.GridBagSizer(5, 5)
 		self.widgets['sort target'] = wx.CheckBox(self, -1, 'Sort targets by shortest path')
@@ -489,12 +500,15 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sortsz = self.createSortTargetSizer()
 		autosz = self.createAutoFinderSizer()
 		checkmethodsz = self.createCheckMethodSizer()
+		simpleblobmergesz = self.createSimpleBlobMergeSizer()
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(sortsz, (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(autosz, (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(checkmethodsz, (2, 0), (1, 1),
+		sz.Add(simpleblobmergesz, (2, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(checkmethodsz, (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHOICE, self.onChooseCheckMethod, self.widgets['check method'])
 		return sz

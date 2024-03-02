@@ -109,7 +109,7 @@ class ViewerTableCreater(object):
 				KEY `DEF_timestamp` (`DEF_timestamp`),
 				KEY `REF|SessionData|session` (`REF|SessionData|session`),
 				KEY `REF|AcquisitionImageData|image` (`REF|AcquisitionImageData|image`),
-				KEY `comment` (`comment`)
+				KEY `comment` (`comment`(128))
 			) ENGINE=%s DEFAULT CHARSET=latin1;
 			""" % (self.db_engine)
 		directq.complexMysqlQuery('leginondata',query)

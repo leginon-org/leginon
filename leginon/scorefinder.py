@@ -96,6 +96,9 @@ class ScoreTargetFinder(icetargetfinder.IceTargetFinder):
 			holestats['convolved'] = stats['convolved']
 			self.publish(holestats, database=True)
 
+	def _getScriptPref(self):
+		return self.settings['script']
+
 	def storeHoleFinderPrefsData(self, imagedata):
 		hfprefs = leginondata.ScoreTargetFinderPrefsData()
 		hfprefs.update({
@@ -115,7 +118,7 @@ class ScoreTargetFinder(icetargetfinder.IceTargetFinder):
 			'template-on': self.settings['target template'],
 			'template-focus': self.settings['focus template'],
 			'template-acquisition': self.settings['acquisition template'],
-			'script': self.settings['script'],
+			'script': self._getScriptPref(),
 			'score-key': self.settings['score key'],
 			'score-threshold':self.settings['score threshold'],
 			'filter-ice-on-convolved-on': self.settings['filter ice on convolved'],

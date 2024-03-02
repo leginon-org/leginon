@@ -450,6 +450,7 @@ class TargetHandler(object):
 			self.logger.error('getting scopedata failed: %s' % (e))
 			raise
 		self.targetlist_reset_tilt = scopedata['stage position']['a']
+		self.targetlist_z = scopedata['stage position']['z']
 		scopedata.friendly_update(preset)
 		lastnumber = self.lastTargetNumber(session=self.session, type='simulated')
 		nextnumber = lastnumber + 1

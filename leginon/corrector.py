@@ -103,7 +103,7 @@ class Corrector(imagewatcher.ImageWatcher):
 			# catch error but not raise so it can be initialized.
 			# most cases there is no plan anyway.
 			self.logger.error(e)
-			return formatCorrectorPlan(None)
+			return self.formatCorrectorPlan(None)
 
 	def changeScreenPosition(self,state):
 		try:

@@ -1056,5 +1056,8 @@ var help = {
 		'device' : 'Positive integers for GPU id, set to -1 to force CPU (default: 0).',
 		'earlyreturn':'Sum and gain correct frames before denoising.', 
 	},
+	'looplearn' : {
+		'interval' : 'While the loop is running, auto-update leginon square target order after this number of squares are processed by retrieving current ptolemy state. Currently ice thickness and ctf fit resolution are used by Ptolemy to evaluate the score of the square.',
+	}
 }
 

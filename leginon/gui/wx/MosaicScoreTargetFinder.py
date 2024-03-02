@@ -8,9 +8,11 @@ import wx
 import wx.lib.filebrowsebutton as filebrowse
 
 from leginon.gui.wx.Entry import Entry, FloatEntry
+from leginon.gui.wx.Choice import Choice
 import leginon.gui.wx.Settings
 import leginon.gui.wx.MosaicClickTargetFinder
 import leginon.gui.wx.ToolBar
+import threading
 
 class Panel(leginon.gui.wx.MosaicClickTargetFinder.Panel):
 	icon = 'atlastarget'
@@ -47,6 +49,11 @@ class Panel(leginon.gui.wx.MosaicClickTargetFinder.Panel):
 			dialog.ShowModal()
 			dialog.Destroy()
 
+	def onFindSquaresButton(self, evt):
+		xys = self.imagepanel.shapetool.fitted_shape_points
+		threading.Thread(target=self.node.guiTargetMask, args=[xys,]).start()
+		threading.Thread(target=self.node.autoTargetFinder).start()
+
 class BlobSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return BlobsScrolledSettings(self,self.scrsize,False)
@@ -76,7 +83,7 @@ class ThresholdScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb2 = wx.StaticBox(self, -1, 'Blob Filtering (Set by example targets)')
 		sbsz2 = wx.StaticBoxSizer(sb2, wx.VERTICAL)
-		self.widgets['filter-key'] = Entry(self, -1, chars=10)
+		self.widgets['filter-key'] = Choice(self, -1, choices=['Size','Signal','Score','Mean'])
 		self.widgets['filter-min'] = FloatEntry(self, -1, chars=6)
 		self.widgets['filter-max'] = FloatEntry(self, -1, chars=6)
 
