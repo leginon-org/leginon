@@ -68,10 +68,11 @@ class Reservation(object):
 		sessionres.insert(force=True)
 		# TODO: Find a better place to initialize. This one initialize if the last wizard was
 		# set to create new session
-		#try:
-		#	ph.initialize()
-		#except Exception as e:
-		#	print(e)
+		if ph.BASEURL:
+			try:
+				ph.initialize()
+			except Exception as e:
+				print(e)
 		return True
 
 	def cancel(self):

@@ -6,7 +6,11 @@ import time
 import io
 import csv
 
-configs = moduleconfig.getConfigured(config_file='ptolemy.cfg', package='leginon', combine=False)
+try:
+	configs = moduleconfig.getConfigured(config_file='ptolemy.cfg', package='leginon', combine=False)
+except:
+	configs = {}
+
 if 'baseurl' in configs:
 	try:
 		port = configs['baseurl']['port']
@@ -16,11 +20,16 @@ if 'baseurl' in configs:
 		BASEURL = configs['baseurl']['url']+':%d' % port
 	except:
 		BASEURL = 'http://127.0.0.1'+'%d' % port
+else:
+	BASEURL = None
+
 if 'logger' in configs:
 	try:
 		level = int(configs['logger']['verbosity'])
 	except:
 		level = 0
+else:
+	level = 0
 DEBUG = level > 0
 
 def debug_print(msg):
