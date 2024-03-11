@@ -147,7 +147,8 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 					donetime = conditiondone.timestamp
 					diff = donetime.now() - donetime
 					self.logger.info('since last  %s check, it has been %d seconds ' % (ctype,diff.seconds))
-					objth['vacuum intensity'] += objth['vacuum intensity'] * self.settings['cfeg_slope'] * diff.seconds  + self.settings['cfeg_intercept'] 	
+					#objth['vacuum intensity'] += objth['vacuum intensity'] * self.settings['cfeg_slope'] * diff.seconds  + self.settings['cfeg_intercept'] 	
+					objth['vacuum intensity'] =  self.settings['cfeg_slope'] * diff.seconds  + self.settings['cfeg_intercept'] 	
 					self.logger.info('Using adjusted vacuum intensity %f' %(objth['vacuum intensity']))
 			objth['mfp'] = self.settings['obj mean free path']
 			if self.settings['use_best_quart_stats'] :
