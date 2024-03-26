@@ -119,7 +119,7 @@ class SettingsDialog(leginon.gui.wx.MosaicScoreTargetFinder.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(leginon.gui.wx.MosaicScoreTargetFinder.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.MosaicScoreTargetFinder.ScrolledSettings):
 	pass
 
 if __name__ == '__main__':

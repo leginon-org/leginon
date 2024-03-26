@@ -19,6 +19,9 @@ class Panel(leginon.gui.wx.MosaicClickTargetFinder.Panel):
 	def initialize(self):
 		leginon.gui.wx.MosaicClickTargetFinder.Panel.initialize(self)
 
+	def _settingsDialog(self):
+		return SettingsDialog
+
 	def addOtherTools(self):
 		self.toolbar.InsertSeparator(10)
 		self.toolbar.InsertTool(11, leginon.gui.wx.ToolBar.ID_ALIGN,
@@ -115,8 +118,14 @@ class SettingsDialog(leginon.gui.wx.MosaicClickTargetFinder.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(leginon.gui.wx.MosaicClickTargetFinder.ScrolledDialog):
-	def addSettings(self):
+class ScrolledSettings(leginon.gui.wx.MosaicClickTargetFinder.ScrolledSettings):
+	def createSimpleBlobMergeSizer(self):
+		sz = wx.GridBagSizer(5, 5)
+		self.widgets['simpleblobmerge'] = wx.CheckBox(self, -1, 'Simple blob merging')
+		sz.Add(self.widgets['simpleblobmerge'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return sz
+
+	def _addSettings(self):
 		sortsz = self.createSortTargetSizer()
 		autosz = self.createAutoFinderSizer()
 		checkmethodsz = self.createCheckMethodSizer()
