@@ -506,9 +506,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(autosz, (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(simpleblobmergesz, (2, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(checkmethodsz, (3, 0), (1, 1),
+		sz.Add(checkmethodsz, (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHOICE, self.onChooseCheckMethod, self.widgets['check method'])
 		return sz

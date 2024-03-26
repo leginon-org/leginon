@@ -115,6 +115,13 @@ class ThresholdScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		return [sbsz2]
 
+class SettingsDialog(leginon.gui.wx.MosaicScoreTargetFinder.SettingsDialog):
+	def initialize(self):
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(leginon.gui.wx.MosaicScoreTargetFinder.ScrolledDialog):
+	pass
+
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):

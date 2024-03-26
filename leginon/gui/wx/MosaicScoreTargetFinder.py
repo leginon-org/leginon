@@ -111,6 +111,28 @@ class ThresholdScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		return [sbsz2]
 
+class SettingsDialog(leginon.gui.wx.MosaicClickTargetFinder.SettingsDialog):
+	def initialize(self):
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(leginon.gui.wx.MosaicClickTargetFinder.ScrolledDialog):
+	def addSettings(self):
+		sortsz = self.createSortTargetSizer()
+		autosz = self.createAutoFinderSizer()
+		checkmethodsz = self.createCheckMethodSizer()
+		simpleblobmergesz = self.createSimpleBlobMergeSizer()
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(sortsz, (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(autosz, (1, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(simpleblobmergesz, (2, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(checkmethodsz, (3, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		self.Bind(wx.EVT_CHOICE, self.onChooseCheckMethod, self.widgets['check method'])
+		return sz
+
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
