@@ -2096,6 +2096,7 @@ class MosaicLearnTargetFinderSettingsData(ClickTargetFinderSettingsData,
 			('scale size', int),
 			('create on tile change', str),
 			('autofinder', bool),
+			('simpleblobmerge', bool),
 		)
 		return typemap
 	typemap = classmethod(typemap)
