@@ -2,7 +2,8 @@
 database-oriented data acquisition and preprocessing
 
 Mirrored repository of https://emg.nysbc.org/git/myami
-For earlier project roadmap/issues, please visit https://emg.nysbc.org/redmine/projects/leginon
+For earlier project issues, pleasse see read-only https://github.com/leginon-org/leginon-redmine-archive
+For documentation, please visit https://emg.nysbc.org/redmine/projects/leginon
 
 Future development will be released here.
 
