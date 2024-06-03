@@ -27,7 +27,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 	icon = 'atlastarget'
 	def initialize(self):
 		leginon.gui.wx.ClickTargetFinder.Panel.initialize(self)
-		self.SettingsDialog = SettingsDialog
+		self.SettingsDialog = self._settingsDialog()
 		self.imagepanel.selectiontool.setEnableSettings('acquisition', True)
 		self.imagepanel.selectiontool.setDisplayed('focus', False)
 		self.imagepanel.selectiontool.setEnableSettings('focus', False)
@@ -47,6 +47,9 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 			'currentposition', shortHelpString='Show Position')
 		self.addOtherTools()
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
+
+	def _settingsDialog(self):
+		return SettingsDialog
 
 	def addTargetTools(self):
 		# add example target at top
@@ -462,7 +465,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'General Mosaic Click Target Finder Settings ')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sz = self.addSettings()
+		sz = self._addSettings()
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
 		return [sbsz]
 
@@ -496,19 +499,16 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(self.widgets['sort target'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return sz
 
-	def addSettings(self):
+	def _addSettings(self):
 		sortsz = self.createSortTargetSizer()
 		autosz = self.createAutoFinderSizer()
 		checkmethodsz = self.createCheckMethodSizer()
-		simpleblobmergesz = self.createSimpleBlobMergeSizer()
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(sortsz, (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(autosz, (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(simpleblobmergesz, (2, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(checkmethodsz, (3, 0), (1, 1),
+		sz.Add(checkmethodsz, (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHOICE, self.onChooseCheckMethod, self.widgets['check method'])
 		return sz
