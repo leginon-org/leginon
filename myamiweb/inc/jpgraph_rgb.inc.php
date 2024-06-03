@@ -6,7 +6,7 @@
 // Created:     2001-01-08 (Refactored to separate file 2008-08-01)
 // Ver:         $Id: jpgraph_rgb.inc.php 1893 2009-10-02 23:15:25Z ljp $
 //
-// Copyright (c) Aditus Consulting. All rights reserved.
+// Copyright (c) Asial Corporation. All rights reserved.
 //========================================================================
 
 
@@ -559,7 +559,7 @@ class RGB {
         if( $aAlpha < 0 || $aAlpha > 1 ) {
             JpGraphError::RaiseL(25080);//('Alpha parameter for color must be between 0.0 and 1.0');
         }
-        return imagecolorresolvealpha($this->img, $r, $g, $b, round($aAlpha * 127));
+        return imagecolorresolvealpha($this->img, (int)$r, (int)$g, (int)$b, (int)round($aAlpha * 127));
     }
 
     // Try to convert an array with three valid numbers to the corresponding hex array
