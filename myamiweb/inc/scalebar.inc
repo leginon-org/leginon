@@ -47,7 +47,7 @@ class ScaleBar {
 	var $offsetbarX=10;
 	var $offsetbarY=20;
 
-	function ScaleBar($img, $size, $value, $imgheight=0, $is_diffraction=false) {
+	function __construct($img, $size, $value, $imgheight=0, $is_diffraction=false) {
 		// --- value should be in meter --- //
 		if ($imgheight==0) $imgheight=$size;
 		$this->img = $img;

@@ -15,7 +15,7 @@ class xmldata {
 	var $xmlvalues = array();
 	var $xmltags = array();
 
-	function xmldata($inputdata) {
+	function __construct($inputdata) {
 	// --- try to read a XML file or a XML string
 	$data = (@is_file($inputdata)) ? implode("",file($inputdata)) : $inputdata;
 	$parser = xml_parser_create();
@@ -124,7 +124,8 @@ class xmldata {
 	}
 
 	function getLastFilenameId() {
-		return end(array_keys($this->getFilenames()));
+        $keys = array_keys($this->getFilenames());
+		return end($keys);
 	}
 
 	function getSessionId() {

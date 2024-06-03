@@ -32,7 +32,7 @@ class dbemGraph {
 	var $manualscale=false;
 	var $scaletype='linlin';
 
-	function dbemGraph($data, $xname, $yname) {
+	function __construct($data, $xname, $yname) {
 		$this->data=&$data;
 		$this->xname=$this->xaxistitle=$xname;
 		$this->yname=$this->yaxistitle=$yname;
@@ -109,7 +109,7 @@ class dbemGraph {
 		$graph = new Graph($this->width, $this->height,"auto");    
 		if ($this->histogram) {
 			$histogram = new histogram($this->datay);
-			$bars_number = intval(sqrt(count($rdata['x']))) + 10;
+			$bars_number = intval(sqrt(count($this->datax))) + 10;
 			$histogram->setBarsNumber($bars_number);
 			$rdata = $histogram->getData();
 			$rdatax = $rdata['x'];

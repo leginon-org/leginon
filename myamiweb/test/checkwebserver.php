@@ -88,7 +88,7 @@ echo "<p>";
 $minPhpVersion = "5.3.0";
 
 // upper bound, exclusive. If it must be 5.2.x but not 5.3.x, the maxPhpVersion is 5.3.
-$maxPhpVersion = "8.0.0";
+$maxPhpVersion = "8.3.0";
 
 try
 {

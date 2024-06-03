@@ -7,29 +7,27 @@ require_once "inc/jpgraph.php";
 require_once "inc/jpgraph_line.php";
 require_once "inc/jpgraph_scatter.php";
 require_once "inc/jpgraph_bar.php";
-require_once "inc/histogram.inc";
+//require_once "inc/histogram.inc";
+require_once('config.php');
+require_once('inc/mysql.inc');
 require_once "inc/image.inc";
 
 $defaultId=1;
-$id= ($_GET['id']) ? $_GET['id'] : $defaultId;
-$histogram = ($_GET['hg']==1) ? true : false;
-$maxrate = $_GET['maxr'];
-$minrate = $_GET['minr'];
-$minrate = ($minrate=="NaN") ? null : $minrate;
-$maxrate = ($maxrate=="NaN") ? null : $maxrate;
-$viewdata = $_GET['vd'];
-$viewsql = $_GET['vs'];
-$cumulative = empty($_GET['cu']) ? false : true;
-$type = $_GET['type'];
+$id= (array_key_exists('id',$_GET) && $_GET['id']) ? $_GET['id'] : $defaultId;
+$histogram = (array_key_exists('hg',$_GET) && $_GET['hg']==1) ? true : false;
+$viewdata = (array_key_exists('vd',$_GET)) ? $_GET['vd']: false;
+$viewsql = (array_key_exists('vs',$_GET)) ? $_GET['vs']: false;
+$cumulative = (!array_key_exists('cu',$_GET) || empty($_GET['cu'])) ? false : true;
+$type = (array_key_exists('type',$_GET)) ? $_GET['type']: '';
 
-$start = $_GET['st'];
-$points = $_GET['pt'];
+$start = (array_key_exists('st',$_GET)) ? $_GET['st']: false;
+$points = (array_key_exists('pt',$_GET)) ? $_GET['pt']: false;
 
 $gwidth=800;
 $gheight=400;
 
-$width = $_GET['w'];
-$height = $_GET['h'];
+$width = (array_key_exists('w',$_GET)) ? $_GET['w']: false;
+$height = (array_key_exists('h',$_GET)) ? $_GET['h']: false;
 
 // determine appropriate timegroup
 $sql = "select DEF_id, year (DEF_timestamp) year from projectexperiments";
@@ -46,6 +44,8 @@ if (empty($timegroup)) {
 $alltimekeys = array('year','month','date');
 $timekeys = array_slice($alltimekeys, 0, array_search($timegroup, $alltimekeys)+1);
 
+$datax = array();
+$datay = array();
 
 if ($type=="r") {
 	$alias="njobs";
@@ -156,6 +156,7 @@ if ($type=="r") {
 	$gtitle="Number of Images";
 	$gtitle .= ($cumulative) ? " (cumulative)" : " (every ".$timegroup.")";
 	$yaxistitle="#images";
+	$limit='';
 	$sql="select "
 		."count(DEF_id) as $alias, "
 		."".$timegroup."(DEF_timestamp) ".$timegroup." "
@@ -185,7 +186,6 @@ if ($viewdata) {
 function TimeCallback($aVal) {
     return $aVal;
 }
-
 if ($nimagedata){
 	//suppress the last data, (not the whole 3 month data).
 	unset($nimagedata[count($nimagedata)-1]);
@@ -196,18 +196,22 @@ if ($nimagedata){
 			$datax[] = $d['year'];
 		}
 		if(!$cumulative){
-			$datay[] = $d[$alias];
+			$datay[] = (int) $d[$alias];
 		}
-		else{
-			$index = count($datay)-1;
-			$datay[] = $datay[$index] + $d[$alias];
+		else {
+            if (count($datay) > 0) {
+			    $index = count($datay)-1;
+			    $datay[] = $datay[$index] + (int) $d[$alias];
+            } else {
+			    $datay[] = (int) $d[$alias];
+            }
+
 		}
 	}
 }
+graphData($datax, $datay, $gwidth, $gheight, $histogram, $gtitle, $yaxistitle);
 
-graphData($datax, $datay, $gwidth, $gheight, $histogram, $gtitle);
-
-function graphData($datax, $datay, $width, $height, $histogram, $title) 
+function graphData($datax, $datay, $width, $height, $histogram, $title, $yaxistitle='')
 {
 	if (!$datax && !$datay) {
 		$width = 12;
@@ -230,13 +234,15 @@ function graphData($datax, $datay, $width, $height, $histogram, $title)
 			$graph->title->Set("Images");
 			$graph->xaxis->title->Set("Images");
 			$graph->yaxis->title->Set("Frequency");
-	
+
 		} else {
-	
-	//		$graph->title->SetFont(FF_COURIER,FS_BOLD,12);
+
+			$graph->title->SetFont(FF_FONT2,FS_BOLD,12);
 			$graph->title->Set($title);
 			$graph->SetAlphaBlending();
-			$graph->SetScale("intlin",0,"auto");
+			$graph->SetScale("intlin");
+			$graph->xaxis->scale->SetAutoMin(0);
+			$graph->yaxis->scale->SetAutoMin(0);
 			$graph->xaxis->SetLabelFormatCallback('TimeCallback');
 			$graph->xaxis->SetLabelAngle(90);
 			$graph->xaxis->SetTitlemargin(30);
@@ -244,7 +250,7 @@ function graphData($datax, $datay, $width, $height, $histogram, $title)
 			$graph->yaxis->SetTitlemargin(50);
 			$graph->yaxis->title->Set($yaxistitle);
 			$graph->yaxis->title->SetFont(FF_FONT2,FS_BOLD);
-	
+
 			$sp1 = new ScatterPlot($datay,$datax);
 			$sp1->value->SetFormat( "%0.0f");
 			$sp1->value->SetMargin(10);
@@ -254,10 +260,10 @@ function graphData($datax, $datay, $width, $height, $histogram, $title)
 			$sp1->mark->SetType(MARK_UTRIANGLE);
 			$sp1->value->SetFont( FF_FONT1, FS_BOLD);
 			$graph->Add($sp1);
+
 			$p1 = new LinePlot($datay,$datax);
 			$p1->SetColor("blue");
 			$graph->Add($p1);
-	
 		}
 		$source = $graph->Stroke(_IMG_HANDLER);
 	}

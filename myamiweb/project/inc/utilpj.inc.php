@@ -58,6 +58,7 @@ function data2table($data, $columns=array(), $display_header=false, $tableoption
 		$html .= "<tr>\n";
 		foreach ($fields as $k=>$v) {
 			$field = is_numeric($k) ? $v : $k;
+            if (!array_key_exists($field,$row)) $row[$field]=null;
 			if (is_array($row[$field])) {
 				$l=$row[$field][0];
 				$option=" ".$row[$field][1]." ";

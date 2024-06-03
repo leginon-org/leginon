@@ -20,6 +20,7 @@ function getSessionByImage($imageId) {
 
 function getDeQueuedTargetListIdsByImage($imageId) {
 	global $leginondata;
+    if (!$leginondata->mysql->isTable('QueueData')) return;
 	$q="SELECT "
 		."dqlist.`REF|ImageTargetListData|list` as doneid "
 		."FROM "
@@ -87,7 +88,8 @@ function getDriftedImage($imgId,$direction) {
 		$from = 'old';
 		$to = 'new';
 	}
- 	global $leginondata;
+	global $leginondata;
+	if (!$leginondata->mysql->isTable('AcquisitionImageDriftData')) return;
 	$q = " select "
 		."`REF|AcquisitionImageData|".$from." image` as nextId "
 		."from AcquisitionImageDriftData "
@@ -159,10 +161,10 @@ function createData() {
 		exit;
 	}
 
-	$preset=$_GET[preset];
+	$preset=$_GET['preset'];
 	// --- find image
 	$newimage = $leginondata->findImage($imgId, $preset);
-	$parentimageId = $newimage[id];
+	$parentimageId = $newimage['id'];
 	
 	$sessionId = getSessionByImage($parentimageId);
 	if (!checkExptAdminPrivilege($sessionId)) {

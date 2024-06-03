@@ -6,6 +6,7 @@ require_once "inc/menu.inc.php";
 require_once "inc/util.inc";
 require_once "inc/xmlapplicationimport.inc";
 
+
 function menu($privilege=1) {
 	$link = new iconlink();
 	$link->align = 'center';
@@ -14,7 +15,7 @@ function menu($privilege=1) {
 	$link->offimg = "_off.png";
 	$link->setImagePath('img/');
 	$link->addlink('project.php','View Projects','', 'folder', '');
-	if (!TRACK_SAMPLE)
+	if (defined('TRACK_SAMPLE') && !TRACK_SAMPLE)
 		$link->addlink('gridtray.php','Grid Tray','', 'preparation', '');
 	$link->addlink('projectstat.php','Project Status','', '', '');
 	//$link->addlink('statistics.php','DB statistics','', '', '');
@@ -24,10 +25,12 @@ function menu($privilege=1) {
 
 function project_header($title="", $javascript="") {
 	global $_SERVER, $projectauth;
+	global $dbemauth;
 
 		if (!preg_match('%login.php%', $_SERVER['PHP_SELF'])) {
 		}
-	$username = $login_check[0];
+	$login_check = $dbemauth->is_logged();
+	$username = is_array($login_check) ? $login_check[0]: null;
 	$privilege = privilege('users');
 	$onload = (empty($javascript)) ? '' : 'onload="'.$javascript.'"';
 	$url = "ln=".urlencode($_SERVER['REQUEST_URI']);
@@ -40,7 +43,7 @@ function project_header($title="", $javascript="") {
 			<link rel="StyleSheet" type="text/css" href="css/project.css" >
 	';
 	if (!empty($title))
-		 	echo '<title>',$title,'</title>';
+		echo '<title>',$title,'</title>';
 	echo '
 	</head>
 	<body alink="#00CCCC" vlink="#006699" link="#006699" '.$onload.' >
@@ -84,13 +87,13 @@ function project_header($title="", $javascript="") {
 	</div>
 	</td>
 
-	        <td>
+		<td>
 	';
 }
 
 function project_footer() {
 	echo '
-	        </td>
+		</td>
 	</tr>
 	</table>
 	</body>
@@ -122,8 +125,9 @@ class project {
 				 "short_description_empty"=>"Short Description can't be empty.",
 				 "db_error"=>"Databases does not exist. Project did not get updated."
 				);
+	var $mysql;
 				 
-	function project($mysql="") {
+	function __construct($mysql="") {
 		$this->mysql = ($mysql) ? $mysql : new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 		if (!$this->mysql->checkDBConnection())
 			$this->mysql->dbError();
@@ -164,8 +168,8 @@ class project {
 		// this means there is already ahve a project with same name.
 
 		if(($id != $projectId) && (!empty($id)))
-			return $this->error['projectname_exists'];		
-		
+			return $this->error['projectname_exists'];
+
 		$table='projects';
 		$data['name']=$name;
 		$data['short_description']=$short_description;
@@ -405,7 +409,7 @@ class project {
 
 	function addProjectOwner($userId,$projectId) {
 		$q = "INSERT INTO projectowners "
-	    ."(`REF|projects|project`, `REF|leginondata|UserData|user`) "
+		."(`REF|projects|project`, `REF|leginondata|UserData|user`) "
 	    ."values "
 	    ."(".$projectId.", ".$userId.")";
 		$this->mysql->SQLQuery($q, true);
@@ -459,11 +463,10 @@ class project {
 	
 	function getExperimentProcessingRunCount( $processingdb, $sessionId ) {
 		// Save the current database settings for this connection
-		$originalDB = $this->mysql->getSQLHost();
+		$originalDB = $this->mysql->getDBName();
 				
 		// Switch to the processing database
 		$this->mysql->setSQLHost( array('db'=>$processingdb) );
-		
 		// Count all apAppionJobData Entries for this session
 		$q = "select count(DEF_id) from ApAppionJobData where `REF|leginondata|SessionData|session` = $sessionId";
 		list($r) = $this->mysql->getSQLResult($q);
@@ -471,13 +474,12 @@ class project {
 		
 		// Switch the processing database back to the original
 		$this->mysql->setSQLHost( array('db'=>$originalDB) );
-		
 		return $runCount;
 	}
 	
 	function getLastExperimentProcessingRunDate( $processingdb, $sessionId ) {
 		// Save the current database settings for this connection
-		$originalDB = $this->mysql->getSQLHost();
+		$originalDB = $this->mysql->getDBName();
 				
 		// Switch to the processing database
 		$this->mysql->setSQLHost( array('db'=>$processingdb) );
@@ -495,7 +497,7 @@ class project {
 	
 	function getExperimentReconCount( $processingdb, $sessionId, $showHidden=false ) {
 		// Save the current database settings for this connection
-		$originalDB = $this->mysql->getSQLHost();
+		$originalDB = $this->mysql->getDBName();
 				
 		// Switch to the processing database
 		$this->mysql->setSQLHost( array('db'=>$processingdb) );

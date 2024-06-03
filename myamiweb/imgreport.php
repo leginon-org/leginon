@@ -33,7 +33,7 @@ $imgId = $newimage['id'];
 
 $imageinfo = $leginondata->getImageInfo($imgId);
 if (!$imageinfo) $imageinfo = $leginondata->getMinimalImageInfo($imgId);
-$sessionId = $imageinfo[sessionId];
+$sessionId = $imageinfo['sessionId'];
 $_GET['expId'] = $sessionId;
 require_once "inc/project.inc";
 
@@ -179,9 +179,9 @@ echo divtitle("General");
 echo "<table border='0'>";
 echo formatHtmlRow('Filename', $filename);
 echo formatHtmlRow('Size', $filesize);
-echo formatHtmlRow('Acquired', $imageinfo[timestamp]);
+echo formatHtmlRow('Acquired', $imageinfo['timestamp']);
 echo formatHtmlRow('Path', $path);
-echo formatHtmlRow('Session', "$sessioninfo[Name] - $sessioninfo[Purpose]");
+echo formatHtmlRow('Session', $sessioninfo['Name']." - ".$sessioninfo['Purpose']);
 echo formatHtmlRow('Instrument', $imageinfo['scope'].' - '.$imageinfo['camera']);
 echo formatHtmlRow('Scope Host', $sessioninfo['Scope Host']);
 echo "</table>";
@@ -268,14 +268,14 @@ if (is_object($fileinfo)) {
 	<td>
 
 <?php
-if (is_array($imageinfo) && $id=$imageinfo[parentId]) {
+if (is_array($imageinfo) && $id=$imageinfo['parentId']) {
 	$parentlinks = array ('parentId', 'parentimage');
 	echo divtitle("Parent Image Information");
 	echo "<table border='0'>";
 	foreach($parentimageinfokeys as $k) {
 		if (in_array($k, $parentlinks))
 			$v = '<a class="header" href="'
-			.$_SERVER['PHP_SELF'].'?id='.$id.'&preset='.$imageinfo[parentpreset].'">'
+			.$_SERVER['PHP_SELF'].'?id='.$id.'&preset='.$imageinfo['parentpreset'].'">'
 			.$imageinfo[$k].'</a>';
 		else
 			$v = $imageinfo[$k];
@@ -292,14 +292,14 @@ $datatypes = $leginondata->getDataTypes($sessionId);
 echo "<table border='0'>";
 if (is_array($datatypes))
 	foreach ($datatypes as $datatype) {
-		if ($imageinfo[preset]==$datatype)
+		if ($imageinfo['preset']==$datatype)
 			continue;
 		$rel = $leginondata->findImage($imgId, $datatype);
 		if ($rel) {
-			$relId = $rel[id];
+			$relId = $rel['id'];
 			$relfilename = $leginondata->getFilenameFromId($relId);
-			echo formatHtmlRow($rel[preset], '<a class="header" href="'
-                                .$_SERVER['PHP_SELF'].'?id='.$relId.'&preset='.$rel[preset].'">'
+			echo formatHtmlRow($rel['preset'], '<a class="header" href="'
+                                .$_SERVER['PHP_SELF'].'?id='.$relId.'&preset='.$rel['preset'].'">'
                                 .$relfilename.'</a>');
 		} else break;
 	}
@@ -361,7 +361,7 @@ if (!empty($ctfdata)) {
 			if (preg_match('%defocus%i', $k))
 				$display = format_micro_number($v);
 			elseif ($v-floor($v)) 
-				$display = format_sci_number($v,4,2);
+				$display = format_sci_number($v,4,true);
 			elseif ($k=='path') {
 				$graphpath = $v.'/opimages';
 				$scale = 0.4;
@@ -409,10 +409,10 @@ foreach ($types as $type) {
 	$m = $leginondata->getImageMatrixCalibration($imgId, $t, $is_magd);
 	if (!$m) continue;
 	$matrix = displayMatrix(matrix(
-			$leginondata->formatMatrixValue($m[a11]),
-			$leginondata->formatMatrixValue($m[a12]),
-			$leginondata->formatMatrixValue($m[a21]),
-			$leginondata->formatMatrixValue($m[a22]))
+			$leginondata->formatMatrixValue($m['a11']),
+			$leginondata->formatMatrixValue($m['a12']),
+			$leginondata->formatMatrixValue($m['a21']),
+			$leginondata->formatMatrixValue($m['a22']))
 		);
 	echo "<span class='datafield0'>$t</span><br> $matrix";
 }

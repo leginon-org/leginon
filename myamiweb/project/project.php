@@ -10,14 +10,13 @@ if (privilege('projects')) {
 	$redirect=$_SERVER['PHP_SELF'];
 	redirect(BASE_URL.'login.php?ln='.$redirect);
 }
-
 $project = new project();
 $userdata = new user();
 
-if ($_GET['cp']) {
+if (array_key_exists('cp',$_GET) && $_GET['cp']) {
 	$selectedprojectId=$_GET['cp'];
 }
-if ($_POST['currentproject']) {
+if (array_key_exists('currentproject',$_POST) && $_POST['currentproject']) {
 	$selectedprojectId=$_POST['currentproject'];
 }
 $projects = $project->getProjects("order",privilege('projects'));
@@ -40,16 +39,19 @@ foreach ((array)$projects as $k=>$proj) {
 	if (is_array($experimentIds)) {
 		$nb=count($experimentIds);
 		$last=current($experimentIds);
-	}
-	$info = $leginondata->getSessionInfo($last['leginonId']);
-	$expId = $info['SessionId'];
-	$last_str =  ($last) ? "last: <a class='header' href='".SUMMARY_URL.$expId."'>".$last['name']."</a>" : "";
+    }
+    if ($last) {
+	    $info = $leginondata->getSessionInfo($last['leginonId']);
+	    $expId = $info['SessionId'];
+	    $last_str =  ($last) ? "last: <a class='header' href='".SUMMARY_URL.$expId."'>".$last['name']."</a>" : "";
+    } else {
+        $last_str = "";
+    }
 	$exp_str = "experiment";
 	if ($nb>1)
-		$exp_str .="s";
+	    $exp_str .="s";
 	$projects[$k]['experiment']=$nb." ".$exp_str."<br>".$last_str;
 	$projects[$k]['name']="<a href='getproject.php?projectId=$projectId'>".$proj['name']."</a>";
-	
 }
 }
 project_header($title);

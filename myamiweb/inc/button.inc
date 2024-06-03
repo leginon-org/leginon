@@ -4,8 +4,11 @@ class button {
 	var $crlf="\n";
 	var $path='img/';
 	var $link=false;
+	var $name="";
+	var $type="";
+	var $target="";
 
-	function button($name,$type) {
+	function __construct($name,$type) {
 		$this->name = $name."_bt";
 		$this->type = $type."_bt";
 	}
@@ -64,7 +67,7 @@ class togglebutton {
 	var $link=false;
 	var $defaultstate = 'false';
 
-	function togglebutton($name, $imgoff, $imgon="") {
+	function __construct($name, $imgoff, $imgon="") {
 		$this->name = $name."_bt";
 		$this->imgoff = $imgoff."_bt";
 		$this->imgon = ($imgon) ? $imgon."_bt" : $this->imgoff;

@@ -67,12 +67,12 @@ function wizard_footer() {
 }
 
 function mysql2UnixTime($mysqltime) {
-	$year = substr($mysqltime, 0,4);
+	$year = (int) substr($mysqltime, 0,4);
 	$month  = substr($mysqltime, 4,2);
-	$day = substr($mysqltime, 6,2);
+	$day = (int) substr($mysqltime, 6,2);
 	$hour = substr($mysqltime, 8,2);
 	$minute = substr($mysqltime, 10,2);
-	$second = substr($mysqltime, 12,2);
+	$second = (int) substr($mysqltime, 12,2);
 	return mktime($hour, $minute, $second, $month, $day, $year);
 }
 

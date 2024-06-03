@@ -6,9 +6,15 @@
  *	For terms of the license agreement
  *	see  http://leginon.org
  */
+//initialization
+$HTTP_USER_AGENT = $_SERVER["HTTP_USER_AGENT"];
+$BName = '';
+$BVersion = '';
+$BPlatform = '';
 
 define('USR_BROWSER_AGENT', trim(browser('b')));
 define('USR_PLATFORM_AGENT', trim(browser('p')));
+
 //--- Detect Browser, Platform
 function browser($n) 
 /* {{{ */

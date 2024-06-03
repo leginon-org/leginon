@@ -11,11 +11,6 @@
 require_once 'inc/leginon.inc';
 require_once 'inc/image.inc';
 
-class get
-
-
-
-
 $g=true;
 if (!$filename=trim($_GET['id'])) {
 	$g=false;
@@ -63,7 +58,7 @@ if ($g) {
 		'ptcl' => urldecode($displayparticle)
 	);
 
-	$img = getImageFile($filename, $params);
+	$img = getImageFromFile($filename, $params);
 
 	Header( "Content-type: $type ");
 	Header( "Content-Disposition: inline; filename=".$filename);
@@ -78,7 +73,7 @@ if ($g) {
 	imagedestroy($blkimg);
 }
 
-function getImageFile($filename, $params = array()) {
+function getImageFromFile($filename, $params = array()) {
 
 	$p = array (
 		'size'=> '',
@@ -109,64 +104,14 @@ function getImageFile($filename, $params = array()) {
 		$p['scalebar']=false;
 	}
 
+    $imagerequest = new imageRequester();
 	$pic = $filename;
+    $infoarray = array();
 	if (@is_file($pic)) {
-		$info = mrcinfo($pic);
-		$dimx = $imginfo['nx'];
-		if ($binning=='auto') {
-			$binning = 1;
-		}
-
-		if ($p['autoscale']) {
-			list($type,$arg1, $arg2)=explode(";", $p['autoscale']);
-			
-			$densitymax = MAX_PIXEL_VAL;
-			if ($type=="c") {
-				$mrcimg = mrcread($pic);
-				list($p['minpix'], $p['maxpix'])=mrccdfscale($mrcimg, $densitymax, $arg1, $arg2);
-				mrcdestroy($mrcimg);
-			} else {
-				$mrcimg = mrcread($pic);
-				mrcupdateheader($mrcimg);
-				mrcdestroy($mrcimg);
-				$minval = $info['amin'];
-				$minval = $info['amin'];
-				$maxval = $info['amax'];
-				$meanval = $info['amean'];
-				$stdev = $info['rms'];
-		
-				if ($meanval && $stdev && $maxval-$minval) {
-					$p['minpix'] = (($meanval - 3*$stdev)-$minval)*$densitymax/($maxval-$minval);
-					$p['maxpix'] = (($meanval + 3*$stdev)-$minval)*$densitymax/($maxval-$minval);
-				}
-			}
-		}
-				
-		if ($p['loadtime'])
-			$begin=getmicrotime();
-
-		if ($p['mrc']) {
-			$imgmrc = mrcread($pic);
-			mrcbinning($imgmrc, $binning);
-			return $imgmrc;
-		}
-		if ($p['fft']) {
-			$img = getfft($pic, $p['minpix'], $p['maxpix'], $binning, $p['autoscale'],$p['fftbin']);
-		}
-
-		else if (function_exists($p['filter']))
-			$img = $p['filter']($pic, $p['minpix'], $p['maxpix'], $binning);
-
-		else {
-			$img = getdefault($pic, $p['minpix'], $p['maxpix'], $binning);
-		}
-
-
-		$scalefactor=1;
-		if ($size) {
-#			$scalefactor = (imagesx($img)) ? $size/imagesx($img) : 1;
-#			myimagescale($img, $scalefactor);
-		}
+	    $info = $imagerequest->requestInfo($pic);
+	    $infoarray['dimx']=$info->nx;
+	    $infoarray['dimy']=$info->ny;
+        $img = getImageFromRequester($pic,$infoarray,$p);
 
 	} else {
 		$img = blankimage();

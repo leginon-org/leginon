@@ -41,7 +41,7 @@ class ScaleRing {
 	var $offsetbarX=10;
 	var $offsetbarY=20;
 
-	function ScaleRing($img, $size, $value) {
+	function __construct($img, $size, $value) {
 		// --- value is pixelsize should be in 1/meter --- //
 		$this->img = $img;
 		$this->size = $size;

@@ -500,8 +500,8 @@ function getTargetLocation ($leginondata,$imageId,$imginfo,$parentimginfo,$targe
 	$parentcal = $leginondata->getImageMatrixCalibration($imageId, $type);
 	$truedim=$targetinfo['targetdim'];
 	#$msg .= 'target=('.$target[x].','.$target[y].'), parenttarget=('.$parent['targetx'].','.$parent['targety'].') ';
-	if (abs($target[x]-$parentimginfo['targetx'])<5
-		&& abs($target[y]-$parentimginfo['targety'])<5 ){
+	if (abs($target['x']-$parentimginfo['targetx'])<5
+		&& abs($target['y']-$parentimginfo['targety'])<5 ){
 		$child_shown = true;
 	} else {
 		$child_shown = false;

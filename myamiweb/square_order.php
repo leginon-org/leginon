@@ -19,10 +19,10 @@ require_once "inc/leginon.inc";
 <body>
 <?php
 
-$defaultId= 430;
-$default_tile_imageId=7510;
-$sessionId= ($_GET[session]) ? $_GET[session] : $defaultId;
-$tile_imageId = ($_GET[id]) ? $_GET[id] : $default_tile_imageId;
+$defaultId= 2;
+$default_tile_imageId=1;
+$sessionId= (array_key_exists('session',$_GET)) ? $_GET['session'] : $defaultId;
+$tile_imageId = (array_key_exists('id',$_GET) && $_GET['id']) ? $_GET['id'] : $default_tile_imageId;
 
 $info=$leginondata->getImageInfo($tile_imageId);
 if ($info['parentpreset']) {

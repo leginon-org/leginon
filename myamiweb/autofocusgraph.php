@@ -42,25 +42,31 @@ function TimeCallback($aVal) {
     return Date('H:i',$aVal);
 }
 $scale = 1e6;
+$data1x = array();
+$data1y = array();
 if ($data1)
 foreach ($data1 as $foc) {
-	if ($foc['defocus']) {
+	if (is_numeric($foc['defocus'])) {
 		$data1x[] = $foc['unix_timestamp'];
 		$data1y[] = $foc['defocus']*$scale;
 	}
 }
 
+$data2x = array();
+$data2y = array();
 if ($data2)
 foreach ($data2 as $foc) {
-	if ($foc['defocus']) {
+	if (is_numeric($foc['defocus'])) {
 		$data2x[] = $foc['unix_timestamp'];
 		$data2y[] = $foc['defocus']*$scale;
 	}
 }
 
+$data3x = array();
+$data3y = array();
 if ($data3)
 foreach ($data3 as $foc) {
-	if ($foc['defocus']) {
+	if (is_numeric($foc['defocus'])) {
 		$data3x[] = $foc['unix_timestamp']-0.01;
 		$data3y[] = 0.0;
 		$data3x[] = $foc['unix_timestamp'];
