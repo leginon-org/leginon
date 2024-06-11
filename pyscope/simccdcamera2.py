@@ -59,8 +59,10 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 					'setEnergyFilter',
 					'getEnergyFilterWidth',
 					'setEnergyFilterWidth',
+					'getEnergyFilterWidthRange',
 					'getEnergyFilterOffset',
 					'setEnergyFilterOffset',
+					'setEnergyShiftRange',
 					'alignEnergyFilterZeroLossPeak',
 			]
 		if 'simpar' in self.conf and self.conf['simpar'] and os.path.isdir(self.conf['simpar']):
@@ -227,7 +229,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		Return images saved in advanced according to sim tem parameters.
 		The jpg images should be use full camera with binning identified
 		in the filename such as 'bin4_0.jpg'. '_0' identify the first of
-    the number of images the function pulled from iteratively. 
+		the number of images the function pulled from iteratively. 
 		'''
 		all_simpar = self.getAllSimPar()
 		if not all_simpar:
@@ -316,11 +318,17 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 	def setEnergyFilterWidth(self, value):
 		self.energy_filter_width = float(value)
 
+	def getEnergyFilterWidthRange(self):
+		return 0, 100.0
+
 	def getEnergyFilterOffset(self):
 		return self.energy_filter_offset
 
 	def setEnergyFilterOffset(self, value):
 		self.energy_filter_offset = float(value)
+
+	def getEnergyShiftRange(self):
+		return -50.0,250.0
 
 	def alignEnergyFilterZeroLossPeak(self):
 		time.sleep(1.0)
