@@ -1032,7 +1032,7 @@ class Selectris(object):
 		'''
 		return self.slit.Width
 
-	def _getEnergyFilterWidthRange(self):
+	def getEnergyFilterWidthRange(self):
 		return self.slit.WidthRange.Begin, self.slit.WidthRange.End
 
 	def setEnergyFilterWidth(self, value):
@@ -1040,7 +1040,7 @@ class Selectris(object):
 		Set energe filter slit width in eV.
 		'''
 		value = float(value)
-		begin,end = self._getEnergyFilterWidthRange()
+		begin,end = self.getEnergyFilterWidthRange()
 		if value < begin or value > end:
 			raise RuntimeError('energy filter width %.1f out of range' % value)
 		self.slit.Width = value
@@ -1051,7 +1051,7 @@ class Selectris(object):
 		'''
 		return self.ht_shift.EnergyShift
 
-	def _getEnergyShiftRange(self):
+	def getEnergyShiftRange(self):
 		return self.ht_shift.EnergyShiftRange.Begin, self.ht_shift.EnergyShiftRange.End
 
 	def setEnergyFilterOffset(self, value):
@@ -1059,7 +1059,7 @@ class Selectris(object):
 		Set energe filter energy offset in eV. High tension energy shift is used.
 		'''
 		value = float(value)
-		begin,end = self._getEnergyShiftRange()
+		begin,end = self.getEnergyShiftRange()
 		if value < begin or value > end:
 			raise RuntimeError('energy filter offset %.1f out of range' % value)
 		self.ht_shift.EnergyShift = value
