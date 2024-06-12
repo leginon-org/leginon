@@ -438,8 +438,8 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 		# Fastsave saves a small image arrary for frame camera to reduce handling time.
 		pass
  
-   def getEnergyFilterWidthRange(self):
-        return 0.0,1000.0
+	def getEnergyFilterWidthRange(self):
+		return 0.0,1000.0
 
-    def getEnergyShiftRange(self):
-        return 0.0,1.0
+	def getEnergyShiftRange(self):
+		return 0.0,1.0
