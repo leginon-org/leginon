@@ -85,6 +85,10 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 	# same as MosaicClickTargetFinder
 	mosaictarget_defaultsettings = dict(mosaictargetfinder.MosaicClickTargetFinder.mosaictarget_defaultsettings)
 	defaultsettings.update(mosaictarget_defaultsettings)
+	defaultsettings.update({
+                    'scoring script':'',
+                    'simpleblobmerge':False,
+	})
 	# autofinder part is different
 	auto_square_finder_defaultsettings = {
 			'scoring script':'sq_finding.sh',
@@ -401,7 +405,7 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 			cj1 = centers[j1]
 			wj0 = blob_values[j0]['area']
 			wj1 = blob_values[j1]['area']
-			if self.settings['simpleblobmerge']: #just keep the one with the larger area * brightness
+			if 'simpleblobmerge' in self.settings.keys() and self.settings['simpleblobmerge']: #just keep the one with the larger area * brightness
 				signal1 = bj0 * wj0
 				signal2 = bj1 * wj1
 				if (signal1 < signal2):
