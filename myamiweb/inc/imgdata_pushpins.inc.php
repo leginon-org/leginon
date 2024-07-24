@@ -20,6 +20,7 @@ class ImgData_PushPins extends ImgData {
     protected $imgdata_large, $imgdata_small ;
 
     function __construct() {
+        parent::__construct();
 
         // The anchor should be where the needle "hits" the paper
         // (bottom left corner)

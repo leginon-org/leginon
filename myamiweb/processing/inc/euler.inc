@@ -157,7 +157,7 @@ class Statistics {
 	var $myData = array();
 	var $eulers1 = array();
 	var $eulers2 = array();
-	function Statistics($recon,$iter1,$iter2,$mean,$std,$min,$max,$data,$e1,$e2) {
+	function __construct($recon,$iter1,$iter2,$mean,$std,$min,$max,$data,$e1,$e2) {
 		$this->myReconId= $recon;
 		$this->myIterId1= $iter1;
 		$this->myIterId2= $iter2;

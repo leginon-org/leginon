@@ -1,7 +1,7 @@
 <?php
 class ViewerPreference{
 
-	function ViewerPreference() {
+	function __construct() {
 		$this->mysql = new mysql(DB_HOST, DB_USER, DB_PASS, DB);
 	}
 

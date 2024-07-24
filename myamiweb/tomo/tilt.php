@@ -80,7 +80,7 @@ foreach($results as $result) {
     );
 }
 $delimiter = chr(9);
-$context = stream_context_create($data);
+$context = stream_context_create();
 $handle = fopen('php://memory', "w");
 foreach ($data as $line) {
 	fputcsv($handle, $line, $delimiter);

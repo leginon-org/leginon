@@ -20,6 +20,7 @@ class ImgData_Diamonds extends ImgData {
     protected $imgdata ;
 
     function __construct() {
+        parent::__construct();
         //==========================================================
         // File: diam_red.png
         //==========================================================

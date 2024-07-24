@@ -71,6 +71,7 @@ class ImgData_Balls extends ImgData {
     }
 
     function __construct() {
+        parent::__construct();
 
         //==========================================================
         // File: bl_red.png

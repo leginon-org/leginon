@@ -235,7 +235,7 @@ class dropdown {
 	var $width=80;
 	var $closeval="x";
 
-	function dropdown($menuname, $id="") {
+	function __construct($menuname, $id="") {
 		$this->menuname=$menuname;
 		$this->menunameid=($id) ? $id : md5($menuname);
 	}

@@ -5,7 +5,7 @@ class setLeginonDefaultValues {
 	var $sessionId;
 	var $mysqld;	// make sure this is using the leginon database
 	
-	function setLeginonDefaultValues($mysqld, $userId=null){
+	function __construct($mysqld, $userId=null){
 		
 		$this->mysqld = $mysqld;
 		

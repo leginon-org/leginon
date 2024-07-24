@@ -645,7 +645,7 @@ class Mosaic {
 	var $framecolor = 0x00FF00;
 	var $params = array('scalebar'=>false);
 
-	function Mosaic() {
+	function __construct() {
 		
 	}
 

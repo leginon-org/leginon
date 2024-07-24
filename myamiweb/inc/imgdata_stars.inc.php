@@ -20,6 +20,7 @@ class ImgData_Stars extends ImgData {
     protected $imgdata ;
 
     function __construct() {
+        parent::__construct();
         //==========================================================
         // File: bstar_green_001.png
         //==========================================================

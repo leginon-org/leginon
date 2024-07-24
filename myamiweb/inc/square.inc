@@ -1,7 +1,7 @@
 <?php
 class square {
 
-	function square($cx,$cy, $dim) {
+	function __construct($cx,$cy, $dim) {
 		$this->cx=$cx;
 		$this->cy=$cy;
 		$this->points = $this->getSquarePoints($cx,$cy, $dim);
