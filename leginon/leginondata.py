@@ -3028,14 +3028,6 @@ class ImageCommentData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
-class ImageStatusData(InSessionData):
-	def typemap(cls):
-		return InSessionData.typemap() + (
-			('image', AcquisitionImageData),
-			('status', str),
-		)
-	typemap = classmethod(typemap)
-
 class ImageBackup(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
