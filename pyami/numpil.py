@@ -80,10 +80,9 @@ def readInfo(imfile):
 	extrema = im.getextrema()
 	number_of_bands = len(im.getbands())
 	if number_of_bands > 1:
-		print(number_of_bands)
 		# multibands, use the most extreme value. Don't know what to do.
-		info['amin'] = min(list(map((lambda x:x[0],extrema))))
-		info['amax'] = min(list(map((lambda x:x[1],extrema))))
+		info['amin'] = min(list(map((lambda x:x[0]),extrema)))
+		info['amax'] = min(list(map((lambda x:x[1]),extrema)))
 	else:
 		info['amin'] = extrema[0]
 		info['amax'] = extrema[1]
