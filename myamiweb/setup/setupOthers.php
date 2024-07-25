@@ -249,7 +249,7 @@ require_once('../inc/formValidator.php');
 		<input type="text" size=10 name="def_processing_prefix" 
 		<?php 
 			if($_POST){
-				($_POST['processing'] == 'true') ? print("value='".$_POST['def_processing_prefix']."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value='ap'")
+				($_POST['processing'] == 'true') ? print("value='".$_POST['def_processing_prefix']."'") : print("readOnly='true' style='background:#eeeeee' value='ap'");
 			}else{
 				($update && (defined("PROCESSING") && PROCESSING === true)) ? print("value='".DEF_PROCESSING_PREFIX."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value='ap'");
 			}

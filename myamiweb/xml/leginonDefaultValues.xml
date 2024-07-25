@@ -40,12 +40,11 @@
     <sqltable name="InstrumentData" >
 			<field name="name" >AppionTEM</field>
 			<field name="hostname" >appion</field>
-			<field name="type" >TEM</field>
+			<field name="cs" >2.0</field>
     </sqltable>
     <sqltable name="InstrumentData" >
 			<field name="name" >AppionCamera</field>
 			<field name="hostname" >appion</field>
-			<field name="type" >CCDCamera</field>
     </sqltable>
  </data>
 </defaulttables>

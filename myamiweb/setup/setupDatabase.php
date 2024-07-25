@@ -12,7 +12,7 @@ require_once('../inc/formValidator.php');
 	}
 
 	if($_POST){
-
+var_dump($_POST);
 		$validator = new formValidator();
 		
 		$validator->addValidation("db_host", $_POST['db_host'], "req");
