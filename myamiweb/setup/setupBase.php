@@ -10,7 +10,6 @@ require_once('../inc/formValidator.php');
 		require_once(CONFIG_FILE);
 		$update = true;
 	}
-
 	if($_POST){
 		
 		$validator = new formValidator();
@@ -32,19 +31,17 @@ require_once('../inc/formValidator.php');
 	
 	$utils = new setupUtils();
 	$utils->setBasePath($_SERVER['PHP_SELF']);
-	
+
 	$template->wizardHeader("Step 1: Define web tools base variables", SETUP_CONFIG);
-	
 ?>
 
 	<!-- <form name='wizard_form' method='POST' action='setupEmail.php'> -->
 	<form name='wizard_form' method='POST' action='<?php echo $_SERVER['PHP_SELF']; ?>'>
-	
-		<input type="hidden" name="project_name" value="<?php echo PROJECT_NAME; ?>" />
+        <!-- these are automatically setup and not validated afterward -->
+		<input type="hidden" name="project_name" value="<?php echo defined('PROJECT_NAME') ? PROJECT_NAME: 'myamiweb'; ?>" />
 		<input type="hidden" name="base_path" value="<?php echo $utils->basePath; ?>" />
 		<input type="hidden" name="base_url" value="<?php echo $utils->baseURL; ?>" />
 		<input type="hidden" name="project_url" value=<?php echo $utils->projectURL; ?> />
-		
 		<h3>Enter a title for your Appion and Leginon tools web pages:</h3><br />
 		<p>This title will appear on all the tools web pages.</p>	
 		<p>example: Appion and Leginon DB Tools</p><br />
