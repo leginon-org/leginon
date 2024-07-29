@@ -156,9 +156,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['high mean'] = FloatEntry(self, -1, chars=4)
 		sz_evaluate = wx.BoxSizer(wx.HORIZONTAL)
 		sz_evaluate.Add(wx.StaticText(self, -1, 'between'))
-		sz_evaluate.Add(self.widgets['low mean'])
+		sz_evaluate.Add(self.widgets['low mean'],0,wx.FIXED_MINSIZE)
 		sz_evaluate.Add(wx.StaticText(self, -1, 'and'))
-		sz_evaluate.Add(self.widgets['high mean'])
+		sz_evaluate.Add(self.widgets['high mean'],0,wx.FIXED_MINSIZE)
 		return sz_evaluate
 
 	def createBadRangeSizer(self):
@@ -187,7 +187,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'Wait for')
 		sz_recheck.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz_recheck.Add(self.widgets['recheck pause time'], (0, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'secs before reacquiring')
 		sz_recheck.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return sz_recheck
@@ -237,9 +237,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		# make sizer
 		sz_offset = wx.BoxSizer(wx.HORIZONTAL)
 		sz_offset.Add(wx.StaticText(self, -1, 'offset target x:'))
-		sz_offset.Add(self.widgets['target offset col'])
+		sz_offset.Add(self.widgets['target offset col'],0,wx.FIXED_MINSIZE)
 		sz_offset.Add(wx.StaticText(self, -1, 'y:'))
-		sz_offset.Add(self.widgets['target offset row'])
+		sz_offset.Add(self.widgets['target offset row'],0,wx.FIXED_MINSIZE)
 		return sz_offset
 
 	def createMiscSizer(self):
@@ -397,11 +397,11 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label1 = wx.StaticText(self, -1, 'condenser:')
 		sz_aps.Add(label1, (1, 0), (1, 1),wx.ALIGN_RIGHT)
 		sz_aps.Add(self.widgets['c2 aperture'], (1, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label2 = wx.StaticText(self, -1, 'objective:')
 		sz_aps.Add(label2, (2, 0), (1, 1),wx.ALIGN_RIGHT)
 		sz_aps.Add(self.widgets['objective aperture'], (2, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		return sz_aps
 
 	def createLimitImageBoxSizer(self):
@@ -420,7 +420,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szlimit.Add(wx.StaticText(self, -1, 'limit to '), (1, 0), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL)
 		szlimit.Add(self.widgets['limit number'], (1, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL)
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		szlimit.Add(self.widgets['limit preset'], (1, 2), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL)
 		szlimit.Add(wx.StaticText(self, -1, 'images'), (1, 3), (1, 1),
