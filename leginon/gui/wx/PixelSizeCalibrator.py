@@ -107,7 +107,7 @@ class MeasureScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'deg')
 		sz.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		sblsz.Add(sz, 0, wx.ALIGN_CENTER_VERTICAL)
+		sblsz.Add(sz, 0, wx.ALIGN_CENTER_HORIZONTAL)
 
 		sz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Between Index h:')
@@ -123,7 +123,7 @@ class MeasureScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['k2'], (1, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_CENTER)
 		sbmsz.Add(sz, 0, wx.ALIGN_CENTER)
-		sbmsz.AddSpacer((20,20))
+		sbmsz.AddSpacer(20)
 		sz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Measured Distance on Power Spectrum:')
 		sz.Add(label, (0, 0), (2, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
@@ -135,14 +135,14 @@ class MeasureScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		label = ' need image to find saved pixel size'
 		self.currentimagepixelsize = wx.StaticText(self, -1, label)
-		sbpsz.Add(self.currentimagepixelsize, 0, wx.ALIGN_CENTER|wx.EXPAND)
+		sbpsz.Add(self.currentimagepixelsize, 0, wx.ALIGN_CENTER)
 		sbpsz.SetItemMinSize(self.measurements, self.measurements.getBestSize())
 		sbpsz.Add(self.measurements, 1, wx.EXPAND)
 		sbpsz.Add(self.save, 0, wx.ALIGN_CENTER)
 
-		sbsz.Add(sblsz, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-		sbsz.Add(sbmsz, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-		sbsz.Add(sbpsz, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		sbsz.Add(sblsz, 0, wx.EXPAND)
+		sbsz.Add(sbmsz, 0, wx.EXPAND)
+		sbsz.Add(sbpsz, 1, wx.EXPAND)
 
 		self.Bind(wx.EVT_BUTTON, self.onCalculateButton, self.calculate)
 		self.Bind(wx.EVT_BUTTON, self.onSaveButton, self.save)

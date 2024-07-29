@@ -88,7 +88,7 @@ class MeasureScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'Angstrum')
 		sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
 
-		sblsz.Add(sz, 0, wx.ALIGN_CENTER_VERTICAL)
+		sblsz.Add(sz, 0, wx.ALIGN_CENTER_HORIZONTAL)
 
 		sz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Measured Powder Ring Diameter on Diffraction Image:')
@@ -101,14 +101,14 @@ class MeasureScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		label = ' need image to find saved camera lengths'
 		self.currentimage_camera_length = wx.StaticText(self, -1, label)
-		sbpsz.Add(self.currentimage_camera_length, 0, wx.ALIGN_CENTER|wx.EXPAND)
+		sbpsz.Add(self.currentimage_camera_length, 0, wx.ALIGN_CENTER)
 		sbpsz.SetItemMinSize(self.measurements, self.measurements.getBestSize())
 		sbpsz.Add(self.measurements, 1, wx.EXPAND)
 		sbpsz.Add(self.save, 0, wx.ALIGN_CENTER)
 
-		sbsz.Add(sblsz, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-		sbsz.Add(sbmsz, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-		sbsz.Add(sbpsz, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		sbsz.Add(sblsz, 0, wx.ALIGN_CENTER_HORIZONTAL)
+		sbsz.Add(sbmsz, 0, wx.EXPAND)
+		sbsz.Add(sbpsz, 1, wx.EXPAND)
 
 		self.Bind(wx.EVT_BUTTON, self.onCalculateButton, self.calculate)
 		self.Bind(wx.EVT_BUTTON, self.onSaveButton, self.save)
