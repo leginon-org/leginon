@@ -261,6 +261,8 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 		v1 = (scale[0]*(imagevectors['x'][0]/2+imagevectors['y'][0]/2), scale[1]*(imagevectors['x'][1]/2+imagevectors['y'][1]/2))
 		# vector2 (+,-) corner
 		v2 = (scale[0]*(imagevectors['x'][0]/2-imagevectors['y'][0]/2), scale[1]*(imagevectors['x'][1]/2-imagevectors['y'][1]/2))
+		v1 = (int(v1[0]),int(v1[1]))
+		v2 = (int(v2[0]),int(v2[1]))
 		for p1 in scaledpoints:
 			p1 = self.image2view(p1)
 			dc.DrawLine(p1[0]-v1[0], p1[1]-v1[1], p1[0]-v2[0], p1[1]-v2[1])
