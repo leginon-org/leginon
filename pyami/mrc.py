@@ -85,13 +85,19 @@ numpy2mrc = {
 	numpy.uint64: 2,
 
 	## convert these to complex64
-	numpy.complex_: 4,
 	numpy.complex64: 4,
 	numpy.complex128: 4,
 
 	## convert these to uint16
 	numpy.uint16: 6,
 }
+try:
+	# numpy 2.0 deprecated data type
+	numpy2mrc.update(
+		{numpy.complex_: 4,}
+	)
+except:
+	pass
 
 ## structure of the image 2000 MRC header
 ## This is a sequence of fields where each field is defined by a sequence:
