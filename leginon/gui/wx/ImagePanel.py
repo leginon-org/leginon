@@ -225,16 +225,16 @@ class ImagePanel(wx.Panel):
 		if self.colormap is None:
 			normarray = normarray.astype(numpy.uint8)
 			h, w = normarray.shape[:2]
-			imagedata = Image.fromstring("L", (w, h), normarray.tostring())
+			imagedata = Image.frombuffer("L", (w, h), normarray.tostring())
 		else:
 			valarray = normarray*6.0
 			valarray = valarray.astype(numpy.uint16)
 			remapColor = numpy.array(self.colormap)
 			rgbarray = remapColor[valarray].astype(numpy.uint8)
 			h, w = normarray.shape[:2]
-			r = Image.fromstring("L", (w, h), rgbarray[:,:,0].tostring())
-			g = Image.fromstring("L", (w, h), rgbarray[:,:,1].tostring())
-			b = Image.fromstring("L", (w, h), rgbarray[:,:,2].tostring())
+			r = Image.frombuffer("L", (w, h), rgbarray[:,:,0].tostring())
+			g = Image.frombuffer("L", (w, h), rgbarray[:,:,1].tostring())
+			b = Image.frombuffer("L", (w, h), rgbarray[:,:,2].tostring())
 			imagedata = Image.merge("RGB", (r,g,b))
 
 		wximage.SetData(numpil.pil_image_tostring(imagedata.convert('RGB')))

@@ -85,7 +85,7 @@ def numpy_to_Image(numarray, clip, outputsize=None):
 	nstr = final.tostring()
 	stride = 0
 	orientation = 1
-	image = Image.fromstring(immode, imsize, nstr, 'raw', rawmode, stride, orientation)
+	image = Image.frombuffer(immode, imsize, nstr, 'raw', rawmode, stride, orientation)
 	if outputsize is not None:
 		image = resize(image, outputsize)
 	return image
