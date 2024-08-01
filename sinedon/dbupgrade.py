@@ -3,7 +3,7 @@
 import os
 import sys
 import time
-import dbconfig
+from sinedon import dbconfig
 import sinedon.sqldb
 
 messaging = {

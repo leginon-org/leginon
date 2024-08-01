@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import updatelib
+from . import updatelib
 from sinedon import dbupgrade
 
 project_dbupgrade = dbupgrade.DBUpgradeTools('projectdata', drop=True)
@@ -15,6 +15,6 @@ if __name__ == "__main__":
 		if updatelib_inst.allowVersionLog(commit_count):
 			updatelib_inst.updateDatabaseRevision(commit_count)
 			updatelib_inst.deleteDatabaseReset()
-			print "\033[35mRevision Updated in the database\033[0m"
+			print("\033[35mRevision Updated in the database\033[0m")
 	else:
-		print "\033[35mUnknown Revision, nothing to do\033[0m"
+		print("\033[35mUnknown Revision, nothing to do\033[0m")

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import baseSchemaClass
+from . import baseSchemaClass
 from sinedon import directq
 from appionlib import appiondata
 from appionlib import apDDResult
@@ -43,7 +43,7 @@ class SchemaUpdate(baseSchemaClass.SchemaUpdate):
 		for pairdata in appiondata.ApDDAlignImagePairData().query():
 			status = self.saveImageDDAlignStats(pairdata['result'])
 			if status:
-				print 'image frame align stats saved for %s' % (pairdata['result']['filename'])
+				print(('image frame align stats saved for %s' % (pairdata['result']['filename'])))
 	#######################################################################
 	#
 	# Custom functions

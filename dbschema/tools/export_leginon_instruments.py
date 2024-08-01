@@ -17,14 +17,14 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 		self.interactive = interactive
 		try:
 			self.validateInput(params)
-		except ValueError, e:
-			print "Error: %s" % e.message
+		except ValueError as e:
+			print("Error: %s" % e)
 			self.close(1)
 
 	def validateInput(self, params):
 		if len(params) < 2:
-			print "Usage export_leginon_instruments.py source_database_hostname <hostname1,hostname2>"
-			print "(hostname1, hostname2 etc are specific instrument hostname to export. default will export all)"
+			print("Usage export_leginon_instruments.py source_database_hostname <hostname1,hostname2>")
+			print("(hostname1, hostname2 etc are specific instrument hostname to export. default will export all)")
 			self.close(1)
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:
@@ -36,6 +36,7 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 			include_sim = params[3] # boolean
 		else:
 			include_sim = False
+		self.exclude_sim = not include_sim
 		self.instruments = self.getSourceInstrumentData(exclude_sim=not include_sim)
 
 	def getSourceInstrumentData(self, exclude_sim=False):
@@ -51,7 +52,7 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 					# specific name if have specification
 					real_instruments.append(r)
 		if not real_instruments:
-			print "ERROR: ...."
+			print("ERROR: ....")
 			raise ValueError("  No real instrument found")
 			sys.exit()
 		real_instruments.reverse()
@@ -59,24 +60,24 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 
 	def getClients(self, interactive=False):
 		# simulated instrument is never a leginon client
-		real_instruments = self.getSourceInstrumentData(exclude_sim=True)
+		real_instruments = self.getSourceInstrumentData(exclude_sim=self.exclude_sim)
 		clients = []
-		possible_clients = map((lambda x: x['hostname']), real_instruments)
+		possible_clients = list(map((lambda x: x['hostname']), real_instruments))
 		possible_clients = list(set(possible_clients))
 		possible_clients.sort()
 		print('Here are the possible client names.')
 		for c in possible_clients:
-			print('\t'+c)
+			print(('\t'+c))
 		if self.interactive:
 			return interactiveDeleteClients(possible_clients)
 		print('You can modify the resulting instrument_clients.json to clean this up.')
 		return possible_clients
 
 	def interactiveDeleteClients(self, possible_clients):
-		answer = raw_input('Do you want to remove some of them ? (Y/y or N/n)')
+		answer = eval(input('Do you want to remove some of them ? (Y/y or N/n)'))
 		if answer.lower() in 'y':
 			for c in possible_clients:
-				answer = raw_input('Is this a good host %s ? (Y/y or N/n)' % (c,))
+				answer = eval(input('Is this a good host %s ? (Y/y or N/n)' % (c,)))
 				if answer.lower() in 'y':
 					clients.append(c)
 		else:
@@ -84,22 +85,22 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 		return clients
 
 	def publishInstruments(self):
-		print 'Adding Instruments'
+		print('Adding Instruments')
 		self.publish(self.instruments)
 
 	def publishMagnifications(self, tem):
 		results = leginondata.MagnificationsData(instrument=tem).query(results=1)
 		if results:
-			print 'Adding Magnifications'
+			print('Adding Magnifications')
 		self.publish(results)
 	
 	def publishClients(self, clients):
 		#CameraSensitivity
 		results = leginondata.ConnectToClientsData().query(results=1)
 		if results:
-			print 'Adding Clients'
+			print('Adding Clients')
 		else:
-			print 'No client connection entry found'
+			print('No client connection entry found')
 			self.close(1)
 		q = leginondata.ConnectToClientsData(initializer=results[0])
 		q['clients'] = clients
@@ -124,10 +125,10 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 
 	def close(self, status=0):
 		if status:
-			print "Exit with Error"
+			print("Exit with Error")
 			sys.exit(1)
 		if self.interactive:
-			raw_input('hit enter when ready to quit')
+			eval(input('hit enter when ready to quit'))
 
 if __name__=='__main__':
 	app = InstrumentJsonMaker(sys.argv, interactive=False)

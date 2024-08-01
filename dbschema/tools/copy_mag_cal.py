@@ -6,7 +6,7 @@ class Copier(object):
 	def __init__(self, hostname, camname, ht, commit=0):
 		results = leginondata.InstrumentData(hostname=hostname,name=camname).query(results=1)
 		if not results:
-			print "ERROR: incorrect hostname-camera pair...."
+			print("ERROR: incorrect hostname-camera pair....")
 			sys.exit()
 
 		self.commit = commit
@@ -30,7 +30,7 @@ class Copier(object):
 		else:
 			if bits[0] == '':
 				bits.pop(0)
-			self.excluded_mags = map((lambda x: int(x)),bits)
+			self.excluded_mags = list(map((lambda x: int(x)),bits))
 		for m in self.excluded_mags:
 			if m not in self.mags:
 				raise ValueError('%d not found in magnifications on this TEM' % m)
@@ -38,7 +38,7 @@ class Copier(object):
 	def run(self):
 		caldata = self.getCalibration(self.ref_mag,'MatrixCalibrationData',{'type':self.cal_type})
 		if not caldata:
-			print 'no data found'
+			print('no data found')
 			return
 		for mag in self.mags:
 			if mag > self.ref_mag and mag not in self.excluded_mags:
@@ -57,11 +57,11 @@ class Copier(object):
 	def getCalibration(self, mag, attr_name,maps={}):
 		q = getattr(leginondata,attr_name)(tem=self.temdata, ccdcamera=self.sourcecam)
 		q['magnification'] = mag
-		for k in maps.keys():
+		for k in list(maps.keys()):
 			q[k]=maps[k]
 		results = q.query(results=1)
 		if not results:
-			print 'no calibration found'
+			print('no calibration found')
 			return
 		else:
 			caldata = results[0]
@@ -70,32 +70,32 @@ class Copier(object):
 	def copyMagDependentCalibration(self, from_mag, to_mag, from_caldata,key_to_scale):
 		attr_name = from_caldata.__class__.__name__
 		newdata = getattr(leginondata,attr_name)(initializer=from_caldata)
-		if 'magnification' not in newdata.keys():
+		if 'magnification' not in list(newdata.keys()):
 			return
-		if key_to_scale not in newdata.keys():
+		if key_to_scale not in list(newdata.keys()):
 			return
-		print 'From', newdata['magnification'],newdata[key_to_scale]
+		print(('From', newdata['magnification'],newdata[key_to_scale]))
 		newdata['magnification'] = to_mag
 		newdata[key_to_scale] = newdata[key_to_scale]*from_mag/to_mag
-		print 'To', newdata['magnification'],newdata[key_to_scale]
+		print(('To', newdata['magnification'],newdata[key_to_scale]))
 		self.insertDest(newdata)
 
 
 	def insertDest(self, newdata):
 		if self.commit == 1:
 			newdata.insert()
-			print "Inserted into leginon database"
+			print("Inserted into leginon database")
 		else:
-			print "Rerun the script with extra option of 1 at the end to insert to database"
-		print ""
+			print("Rerun the script with extra option of 1 at the end to insert to database")
+		print("")
 		return
 
 if __name__ == '__main__':
 	if len(sys.argv) < 4:
-		print "This program copies existing matrix and stage model calibrations from one mag to another"
-		print "Usage copy_mag_cal.py camera_hostname camera_name high_tension <commit>"
-		print "high tension is an integer in volts, i.e., 200000"
-		print "commit flag, if set to 1 will insert the result to database"
+		print("This program copies existing matrix and stage model calibrations from one mag to another")
+		print("Usage copy_mag_cal.py camera_hostname camera_name high_tension <commit>")
+		print("high tension is an integer in volts, i.e., 200000")
+		print("commit flag, if set to 1 will insert the result to database")
 		sys.exit()
 
 	hostname = sys.argv[1]
@@ -107,12 +107,12 @@ if __name__ == '__main__':
 		commit = 0
 
 	app = Copier(hostname, camname, high_tension, commit)
-	cal_type = raw_input('Enter matrix type [Default: stage position]:')
+	cal_type = eval(input('Enter matrix type [Default: stage position]:'))
 	app.setMatrixType(cal_type)
-	ref_mag = raw_input('Use the matrix at this mag to scale all magnification above it: ')
+	ref_mag = eval(input('Use the matrix at this mag to scale all magnification above it: '))
 	app.setReferenceMagnification(ref_mag)
-	exclude_mags = raw_input('List mags to exclude the insert, separate by ","')
+	exclude_mags = eval(input('List mags to exclude the insert, separate by ","'))
 	app.setExcludedMagnifications(exclude_mags)
 	app.run()
-	raw_input('hit enter when ready to quit') 
+	eval(input('hit enter when ready to quit')) 
 

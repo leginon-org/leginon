@@ -13,7 +13,7 @@ class Logger(object):
 	def info(self,msg):
 		print(msg)
 	def warning(self,msg):
-		print('WARNING:',msg)
+		print(('WARNING:',msg))
 	def error(self,msg):
 		raise ValueError(msg)
 
@@ -41,7 +41,7 @@ class Exporter(object):
 		'''
 		try:
 			resultlist = datainstance.query(results=results, readimages=readimages, timelimit=timelimit)
-		except (IOError, OSError), e:
+		except (IOError, OSError) as e:
 			raise ResearchError(e)
 		return resultlist
 
@@ -207,7 +207,7 @@ class TargetExporter(Exporter):
 		while (img and img['target'] and img['target']['image'] and img['target']['preset']):
 			target0 = self.getZeroVersionTarget(img['target'])
 			parent_preset = target0['image']['preset']['name']
-			if parent_preset not in self.targetlist.keys():
+			if parent_preset not in list(self.targetlist.keys()):
 				self.targetlist[parent_preset] = []
 			if target0.dbid not in self.targetlist[parent_preset]:
 				parentdim = target0['image']['camera']['dimension']
@@ -230,8 +230,8 @@ class TargetExporter(Exporter):
 			mrc.write(target0['image']['image'], mrc_path)
 
 if __name__=='__main__':
-	session_name = raw_input('Which session ? ')
-	base_path = raw_input('Where to save under ? (default: ./%s) ' % session_name)
+	session_name = eval(input('Which session ? '))
+	base_path = eval(input('Where to save under ? (default: ./%s) ' % session_name))
 	if not base_path:
 		base_path = './%s' % session_name
 	app = TargetExporter(session_name, base_path)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import baseSchemaClass
+from . import baseSchemaClass
 from leginon import leginondata
 
 class SchemaUpdate18000(baseSchemaClass.SchemaUpdate):
@@ -43,7 +43,7 @@ class SchemaUpdate18000(baseSchemaClass.SchemaUpdate):
 			if t_results and n_results:
 				hasbindings = self.hasTransformManagerNavigatorBindings(appdata,t_results[0],n_results[0])
 				if not hasbindings:
-					print appdata['name'], appdata['version'], appdata['hide']
+					print((appdata['name'], appdata['version'], appdata['hide']))
 					q = "UPDATE `ApplicationData` SET `hide` = '1' WHERE `DEF_id` =%d" % appdata.dbid
 					self.leginon_dbupgrade.executeCustomSQL(q)
 

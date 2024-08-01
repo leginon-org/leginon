@@ -9,7 +9,7 @@ from leginon import projectdata, leginondata
 def activateAutoIncrement(database):
 	q = 'Show Tables;'
 	r = database.returnCustomSQL(q)
-	print r
+	print(r)
 	for tablenametuple in r:
 		tablename = tablenametuple[0]
 		if database.columnExists(tablename, 'DEF_id'):

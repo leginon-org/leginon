@@ -28,29 +28,29 @@ class ClientJsonLoader(jsonfun.DataJsonLoader):
 
 	def insertAllData(self, force=True):
 		for datadict in self.alldata:
-			classname = datadict.keys()[0]
+			classname = list(datadict.keys())[0]
 			kwargs = datadict[classname]
 			q = self.makequery(classname,kwargs)
-			if 'ccdcamera' in q.keys():
+			if 'ccdcamera' in list(q.keys()):
 				q['ccdcamera'] = self.cameradata
-			if 'tem' in q.keys():
+			if 'tem' in list(q.keys()):
 				q['tem'] = self.temdata
 			# MagnificationsData
-			if 'instrument' in q.keys():
+			if 'instrument' in list(q.keys()):
 				q['instrument'] = self.temdata
 			checkq = q.copy()
-			if 'session' in q.keys():
+			if 'session' in list(q.keys()):
 				q['session'] = self.session
-			if 'vectors' in q.keys():
+			if 'vectors' in list(q.keys()):
 				# convert 2 1-D array to list of list
 				q['vectors'] = (q['vectors'][0].tolist(),q['vectors'][1].tolist())
 			# This may be a forced insert so it is the most recent record
 			q.insert(force=force)
-			print 'insert %s dbid=%d' % (classname, q.dbid)
+			print(('insert %s dbid=%d' % (classname, q.dbid)))
 
 	def validateInput(self, params):
 		if len(params) != 2:
-			print "Usage import_leginon_instruments.py database_hostname"
+			print("Usage import_leginon_instruments.py database_hostname")
 			self.close(1)
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:
@@ -68,7 +68,7 @@ class ClientJsonLoader(jsonfun.DataJsonLoader):
 			admin_user = ur[0]
 		else:
 			# do not process without administrator.
-			print " Need administrator user to import"
+			print(" Need administrator user to import")
 			self.close(True)
 		q = leginondata.SessionData(user=admin_user)
 		r = q.query(results=1)
@@ -91,10 +91,10 @@ class ClientJsonLoader(jsonfun.DataJsonLoader):
 			raise ValueError('%s on %s is not in the database' % (temname, hostname))
 		self.readJsonFile(filename)
 		self.temdata = results[0]
-		print results[0].dbid, hostname, temname
+		print((results[0].dbid, hostname, temname))
 
 	def printQuery(self, q):
-		print q
+		print(q)
 		return
 
 	def run(self):
@@ -108,7 +108,7 @@ class ClientJsonLoader(jsonfun.DataJsonLoader):
 
 	def close(self, status):
 		if status:
-			print "Exit with Error"
+			print("Exit with Error")
 			sys.exit(1)
 
 if __name__=='__main__':

@@ -20,7 +20,7 @@ class DataJsonMaker(object):
 		'''
 		underline_exceptions = ['process_obj_thickness',]
 		q = getattr(leginondata,classname)()
-		for key in kwargs.keys():
+		for key in list(kwargs.keys()):
 			if key not in underline_exceptions:
 				# leginondata keys almost never contains '_'
 				realkey = key.replace('_',' ')
@@ -56,14 +56,14 @@ class DataJsonMaker(object):
 		def _makeDataDict(r):
 			classname = r.__class__.__name__
 			data = {}
-			for k in r.keys():
+			for k in list(r.keys()):
 				if k not in self.ignorelist:
 					if hasattr(r[k],'dbid'):
 						if r[k].__class__.__name__=='CameraSettingsData':
-							print("ignore %s" % k)
+							print(("ignore %s" % k))
 							continue
 						data[k] = _makeDataDict(r[k])
-						print("child data: %s" % k)
+						print(("child data: %s" % k))
 					else:
 						data[k] = r[k]
 			return data
@@ -138,7 +138,7 @@ class SettingsJsonMaker(DataJsonMaker):
 
 	def exportFocusSequenceSettings(self, allalias, node_classname):
 		print('checking Focus Sequence Settings....')
-		if node_classname not in allalias.keys():
+		if node_classname not in list(allalias.keys()):
 			return
 		sequence_names = []
 		focuser_aliases = allalias[node_classname]
@@ -162,7 +162,7 @@ class SettingsJsonMaker(DataJsonMaker):
 				self.publish(results)
 
 	def exportSettingsByClassAndAlias(self,allalias):
-		aliaskeys = allalias.keys()
+		aliaskeys = list(allalias.keys())
 		aliaskeys.sort()
 		focuser_alias ={}
 		for classname in aliaskeys:
@@ -170,7 +170,7 @@ class SettingsJsonMaker(DataJsonMaker):
 			if not settingsname:
 				continue
 			if classname in aliaskeys:
-				print('checking %s Settings....' % (classname,))
+				print(('checking %s Settings....' % (classname,)))
 				if 'Focuser' in classname:
 					focuser_alias[classname] = allalias[classname]
 				# allalias[classname] may have duplicates
@@ -181,11 +181,11 @@ class SettingsJsonMaker(DataJsonMaker):
 						results = self.researchSettings(settingsname,name=node_name)
 					except:
 						if classname not in self.bad_settings_class:
-							print('ERROR: %s class node %s settings query failed' % (classname,node_name))
+							print(('ERROR: %s class node %s settings query failed' % (classname,node_name)))
 							self.bad_settings_class.append(classname)
 					self.publish(results)
 		# FocusSequence and FocusSettings needs a different importing method
-		for classname in focuser_alias.keys():
+		for classname in list(focuser_alias.keys()):
 			self.exportFocusSequenceSettings(allalias, classname)
 
 	def exportSettings(self,appname=None):
@@ -197,14 +197,14 @@ class SettingsJsonMaker(DataJsonMaker):
 		launched_apps = self.research(q)
 		allalias = {}
 		for appdata in map((lambda x: x['application']), launched_apps):
-			print(appdata['name'])
+			print((appdata['name']))
 			if appname is not None and appname not in appdata['name']:
 				# only export specified application name
 				continue
 			q = leginondata.NodeSpecData(application=appdata)
 			results = self.research(q)
 			for r in results:
-				if r['class string'] not in allalias.keys():
+				if r['class string'] not in list(allalias.keys()):
 					# initialize
 					allalias[r['class string']] = []
 				if r['alias'] not in allalias[r['class string']]:
@@ -216,15 +216,15 @@ class SettingsJsonMaker(DataJsonMaker):
 	def run(self, appname=None):
 		source_session = self.getSession()
 		session_name = source_session['name']
-		print("****Session %s ****" % (session_name))
+		print(("****Session %s ****" % (session_name)))
 		self.exportSettings(appname)
-		print("%d settings are found with app=%s and node-prefix=%s" % (len(self.alldata), appname, self.node_name_prefix))
+		print(("%d settings are found with app=%s and node-prefix=%s" % (len(self.alldata), appname, self.node_name_prefix)))
 		if appname:
 			jsonfilename = '%s+%s.json' % (session_name,appname)
 		else:
 			jsonfilename = '%s.json' % (session_name)
 		self.writeJsonFile(jsonfilename)
-		print('saved to %s' % (jsonfilename))
+		print(('saved to %s' % (jsonfilename)))
 
 if __name__ == '__main__':
 	import sys

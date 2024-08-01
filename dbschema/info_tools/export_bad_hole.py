@@ -46,7 +46,7 @@ class BadHoleExporter(export_targets.Exporter):
 					continue
 			# write once per targetlist
 			parent_preset = target0['image']['preset']['name']
-			if parent_preset not in self.targetlist.keys():
+			if parent_preset not in list(self.targetlist.keys()):
 				self.targetlist[parent_preset] = []
 			if target0['list'].dbid not in self.targetlist[parent_preset]:
 
@@ -63,8 +63,8 @@ class BadHoleExporter(export_targets.Exporter):
 		self.result_title ='ChildImageId\tImageId_StatNumber\tYCoord\tXCoord\tmean(I)\tstdev(I)\tI0\tmean(Thickness)\tstdev(Thickness)\tTimeStamp\tLeginonImageFilename'
 
 if __name__=='__main__':
-	session_name = raw_input('Which session ? ')
-	base_path = raw_input('Where to save under ? (default: ./%s) ' % session_name)
+	session_name = eval(input('Which session ? '))
+	base_path = eval(input('Where to save under ? (default: ./%s) ' % session_name))
 	if not base_path:
 		base_path = './%s' % session_name
 	app = BadHoleExporter(session_name, base_path)

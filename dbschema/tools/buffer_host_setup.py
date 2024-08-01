@@ -28,8 +28,8 @@ class BufferHostSetter(scriptrun.ScriptRun):
 		self.cameras = leginondata.InstrumentData(hostname=camera_hostname).query()
 		if not self.cameras:
 			apDisplay.printError('No camera on this host')
-		cnames = map((lambda x: x['name']), self.cameras)
-		print('Host %s contains %d cameras: %s' % (camera_hostname, len(self.cameras), ','.join(cnames)))
+		cnames = list(map((lambda x: x['name']), self.cameras))
+		print(('Host %s contains %d cameras: %s' % (camera_hostname, len(self.cameras), ','.join(cnames))))
 
 	def run(self):
 		buffer_hostname = self.params['buffer_host']
@@ -48,7 +48,7 @@ class BufferHostSetter(scriptrun.ScriptRun):
 				q['disabled']= not last_status
 				q['append full head']=prepend_to_full_path
 				q.insert(force=True)
-				print('Camera %s is paired to Bufer host %s to be saved under %s' % (c['name'],buffer_hostname, buffer_base_path))
+				print(('Camera %s is paired to Bufer host %s to be saved under %s' % (c['name'],buffer_hostname, buffer_base_path)))
 				continue
 			else:
 				r = results[0]
@@ -73,7 +73,7 @@ class BufferHostSetter(scriptrun.ScriptRun):
 					enable_str = 'disabled'
 			last_status = r['disabled']
 			if self.params['change_status']:
-				print('Buffer/Camera pair is already correct as DEF_id=%d of leginondb.BufferHostData.\n  It is curently %s' % (r.dbid, enable_str))
+				print(('Buffer/Camera pair is already correct as DEF_id=%d of leginondb.BufferHostData.\n  It is curently %s' % (r.dbid, enable_str)))
 				q = "update BufferHostData set `disabled`='%d' where `DEF_id`=%d;" % (int(not last_status), r.dbid)
 				directq.complexMysqlQuery('leginondata',q)
 				print('Status changed')

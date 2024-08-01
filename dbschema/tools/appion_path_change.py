@@ -24,7 +24,7 @@ class AppionPathChange(object):
 
 		import sinedon
 		apdbname = sinedon.getConfig('appiondata')['db']
-		print('Change apPath in database %s' % apdbname)
+		print(('Change apPath in database %s' % apdbname))
 
 		# update
 		query = "update %s.`ApPathData` set `path` = '%s' where %s.`ApPathData`.`path` like '%s'" % (apdbname,self.new_path, apdbname,self.old_path)
@@ -32,7 +32,7 @@ class AppionPathChange(object):
 		print(query)
 		# send the query to the database linked to sinedon module named appiondata
 		directq.complexMysqlQuery('appiondata',query)
-		print('Path changed from %s to %s' % (self.old_path, self.new_path))
+		print(('Path changed from %s to %s' % (self.old_path, self.new_path)))
 
 if __name__ == '__main__':
 	if len(sys.argv) != 4:
@@ -49,5 +49,5 @@ if __name__ == '__main__':
 	try:
 		app = AppionPathChange(sessionname, old_path, new_path)
 		app.run()
-	except ValueError, e:
-		print 'Value Error: %s' % (e.message)
+	except ValueError as e:
+		print(('Value Error: %s' % (e.message)))

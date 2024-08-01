@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import baseSchemaClass
+from . import baseSchemaClass
 import leginon.leginondata
 import sys,os
 
@@ -29,11 +29,11 @@ class SchemaUpdate16182(baseSchemaClass.SchemaUpdate):
 			if cam['frames name']:
 				oldrawpath = os.path.join(sessiondata['image path'],'rawframes',cam['frames name'])
 				if os.path.isdir(oldrawpath):
-					print oldrawpath
+					print(oldrawpath)
 					qimage = leginon.leginondata.AcquisitionImageData(camera=cam)
 					rimages = qimage.query()
 					if rimages and len(rimages) > 1:
-						print 'Error ',cam.dbid, 'belongs to  %d images' % len(rimage)
+						print(('Error ',cam.dbid, 'belongs to  %d images' % len(rimage)))
 						sys.exit(1)
 					newrawpath = os.path.join(sessiondata['image path'],rimages[0]['filename']+'.frames')
 					try:
@@ -49,7 +49,7 @@ class SchemaUpdate16182(baseSchemaClass.SchemaUpdate):
 			badsession = self.moveDDRawImages(sessionid[0])
 			if badsession:
 				badimagepaths.append(badsession['image path'])
-		print badimagepaths
+		print(badimagepaths)
 
 if __name__ == "__main__":
 	update = SchemaUpdate16182()

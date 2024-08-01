@@ -108,7 +108,7 @@ class SchemaUpdate(object):
 		elif project_dbupgrade.columnExists('processingdb', 'db'):
 			colname = 'db'
 		else:
-			print "could not find appion tables"
+			print("could not find appion tables")
 			return []
 
 		selectq = "SELECT DISTINCT "+colname+" FROM processingdb ORDER BY `REF|projects|project` ASC"
@@ -136,7 +136,7 @@ class SchemaUpdate(object):
 		appiondb_unique_list = list(set(appiondblist))
 		for appiondbname in appiondb_unique_list:
 			if not self.project_dbupgrade.databaseExists(appiondbname):
-				print "\033[31merror database %s does not exist\033[0m"%(appiondbname)
+				print(("\033[31merror database %s does not exist\033[0m"%(appiondbname)))
 				time.sleep(1)
 				continue
 			appion_dbupgrade = dbupgrade.DBUpgradeTools('appiondata', appiondbname, drop=True)
@@ -151,9 +151,9 @@ class SchemaUpdate(object):
 		if not self.force:
 			self.updatelib.updateDatabaseReset(self.updatelib.db_revision)
 			self.updatelib.updateDatabaseRevision(self.schemaNumber)
-			print "\033[35mUpdated install table reset and schema number\033[0m"
+			print("\033[35mUpdated install table reset and schema number\033[0m")
 		else:
-			print "\033[35mForced Update does not update install table reset and schema number\033[0m"
+			print("\033[35mForced Update does not update install table reset and schema number\033[0m")
 
 	def addUpdateToSchemaTable(self):
 		updateq = projectdata.schemaupdates()
@@ -176,37 +176,37 @@ class SchemaUpdate(object):
 		divider = "-------------------------------------------"
 		if self.modifyLeginonDB is True:
 			# leginon part
-			print divider
+			print(divider)
 			if self.backup:
 				self.leginon_dbupgrade.backupDatabase("leginondb"+self.makeTimestamp()+".sql", data=True)
-			print "\033[35mUpgrading %s\033[0m" % (self.leginon_dbupgrade.getDatabaseName())
+			print(("\033[35mUpgrading %s\033[0m" % (self.leginon_dbupgrade.getDatabaseName())))
 			self.upgradeLeginonDB()
 		if self.modifyProjectDB is True:
 			# project part
-			print divider
+			print(divider)
 			if self.backup:
 				self.leginon_dbupgrade.backupDatabase("projectdb"+self.makeTimestamp()+".sql", data=True)
-			print "\033[35mUpgrading %s\033[0m" % (self.project_dbupgrade.getDatabaseName())
+			print(("\033[35mUpgrading %s\033[0m" % (self.project_dbupgrade.getDatabaseName())))
 			self.upgradeProjectDB()
 		if self.modifyAppionDB is True:
 			# appion part
-			print divider
+			print(divider)
 			appiondblist = self.getAppionDatabases(self.project_dbupgrade)
 			if self.backup:
 				self.appionbackup(appiondblist)
 			for appiondbname in appiondblist:
 				if self.inExcluded_AppionDBList(appiondbname):
-					print "\033[31mSkipping database %s\033[0m"%(appiondbname)
+					print(("\033[31mSkipping database %s\033[0m"%(appiondbname)))
 					time.sleep(1)
 					continue
 				if not self.project_dbupgrade.databaseExists(appiondbname):
-					print "\033[31merror database %s does not exist\033[0m"%(appiondbname)
+					print(("\033[31merror database %s does not exist\033[0m"%(appiondbname)))
 					time.sleep(1)
 					continue
 				self.appion_dbupgrade = dbupgrade.DBUpgradeTools('appiondata', appiondbname, drop=True)
-				print "\033[35mUpgrading %s\033[0m" % (self.appion_dbupgrade.getDatabaseName())
+				print(("\033[35mUpgrading %s\033[0m" % (self.appion_dbupgrade.getDatabaseName())))
 				self.upgradeAppionDB()
-		print divider
+		print(divider)
 		return
 
 	def run(self):
@@ -218,7 +218,7 @@ class SchemaUpdate(object):
 			print ("\033[31mUpdate not needed\033[0m")
 			sys.exit(0)
 		self.runUpdates()
-		print "\033[35mSuccessful Update\033[0m"
+		print("\033[35mSuccessful Update\033[0m")
 		self.commitUpdate()
 
 	def getUpgradeDB(self, sinedon_module_name):

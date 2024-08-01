@@ -22,7 +22,7 @@ class ScanDB(object):
 		elif project_dbtools.columnExists('processingdb', 'db'):
 			colname = 'db'
 		else:
-			print "could not find appion tables"
+			print("could not find appion tables")
 			return []
 
 		selectq = "SELECT DISTINCT "+colname+" FROM processingdb ORDER BY `REF|projects|project` ASC"
@@ -54,22 +54,22 @@ class ScanDB(object):
 	def run(self):
 		divider = "-------------------------------------------"
 		try:
-			print divider
+			print(divider)
 			self.scanLeginonDB()
-			print divider
+			print(divider)
 			self.scanProjectDB()
 			# appion part
-			print divider
+			print(divider)
 			appiondblist = self.getAppionDatabases(self.project_dbtools)
 			for appiondbname in appiondblist:
 				if not self.project_dbtools.databaseExists(appiondbname):
-					print "\033[31merror database %s does not exist\033[0m"%(appiondbname)
+					print(("\033[31merror database %s does not exist\033[0m"%(appiondbname)))
 					time.sleep(1)
 					continue
 				self.appion_dbtools = dbupgrade.DBUpgradeTools('appiondata', appiondbname, drop=True)
 				self.scanAppionDB()
 		except:
-			print "\033[31mUpdate failed\033[0m"
+			print("\033[31mUpdate failed\033[0m")
 			raise
 
 class SearchPath(ScanDB):
@@ -97,7 +97,7 @@ class SearchPath(ScanDB):
 		The proper database is connected in self.appion_dbtools
 		'''
 		q = "select path from ApPathData where path like '%"+self.searchdrive+"%';"
-		print q
+		print(q)
 		paths = self.appion_dbtools.returnCustomSQL(q)
 		if paths:
 			self.appion_paths.append(paths)
@@ -107,8 +107,8 @@ class SearchPath(ScanDB):
 		self.appion_paths = []
 		super(SearchPath,self).run()
 		for sessionname in self.leginon_sessions:
-			print sessionname
-		print ''
+			print(sessionname)
+		print('')
 		for aprundirs in self.appion_paths:
 			# multiple records may be found by the query in one database
 			for rundirs in aprundirs:
@@ -120,7 +120,7 @@ class SearchPath(ScanDB):
 				sessionname = bits[1]
 				# runname is typically the last part of the rundir
 				runname = bits[-1]
-				print sessionname,runname
+				print((sessionname,runname))
 
 if __name__ == "__main__":
 	update = SearchPath('/archive/17/')

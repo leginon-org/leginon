@@ -21,7 +21,7 @@ def convertStringToSQL(value):
 class BufferHostJsonLoader(jsonfun.DataJsonLoader):
 	def __init__(self,params):
 		cam_hostname, camera_name = self.validateInput(params)
-		print cam_hostname, camera_name
+		print((cam_hostname, camera_name))
 		super(BufferHostJsonLoader,self).__init__(leginondata)
 		self.data = {}
 		self.setSessionData()
@@ -29,7 +29,7 @@ class BufferHostJsonLoader(jsonfun.DataJsonLoader):
 		self.data['buffer host'] = None
 
 	def addKnownData(self, q):
-		if 'ccdcamera' in q.keys():
+		if 'ccdcamera' in list(q.keys()):
 			q['ccdcamera'] = self.ccddata
 		q['session'] = self.session
 		return q
@@ -48,7 +48,7 @@ class BufferHostJsonLoader(jsonfun.DataJsonLoader):
 
 	def validateInput(self, params):
 		if len(params) != 3:
-			print "Usage import_leginon_bufferhost.py database_hostname camera_bufferhost_json_file"
+			print("Usage import_leginon_bufferhost.py database_hostname camera_bufferhost_json_file")
 			self.close(1)
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:
@@ -63,12 +63,12 @@ class BufferHostJsonLoader(jsonfun.DataJsonLoader):
 	def getCameraInstrumentData(self, hostname,camname):
 		results = leginondata.InstrumentData(hostname=hostname,name=camname).query(results=1)
 		if not results:
-			print "ERROR: incorrect hostname...."
+			print("ERROR: incorrect hostname....")
 			r = leginondata.InstrumentData(name=camname).query(results=1)
 			if r:
-				print "  Try rename the json file to %s+%s.json instead to match camera host" % (r[0]['hostname'], camname)
+				print(("  Try rename the json file to %s+%s.json instead to match camera host" % (r[0]['hostname'], camname)))
 			else:
-				print "  No %s camera found" % camname
+				print(("  No %s camera found" % camname))
 			sys.exit()
 
 		cam = results[0]
@@ -81,7 +81,7 @@ class BufferHostJsonLoader(jsonfun.DataJsonLoader):
 			admin_user = ur[0]
 		else:
 			# do not process without administrator.
-			print " Need administrator user to import"
+			print(" Need administrator user to import")
 			self.close(True)
 		q = leginondata.SessionData(user=admin_user)
 		r = q.query(results=1)
@@ -97,7 +97,7 @@ class BufferHostJsonLoader(jsonfun.DataJsonLoader):
 			self.session = q
 
 	def printQuery(self, q):
-		print q
+		print(q)
 		return
 
 	def run(self):
@@ -105,9 +105,9 @@ class BufferHostJsonLoader(jsonfun.DataJsonLoader):
 		self.insertAllData()
 
 	def close(self, status):
-		raw_input('hit enter when ready to quit')
+		eval(input('hit enter when ready to quit'))
 		if status:
-			print "Exit with Error"
+			print("Exit with Error")
 			sys.exit(1)
 
 if __name__=='__main__':

@@ -15,7 +15,7 @@ def getBadIndexName(dbmodule, table):
 	query += table
 	query +=" where key_name like 'REF%\_%'"
 	results = directq.complexMysqlQuery(dbmodule,query)
-	names = map((lambda x: x['Key_name']),results)
+	names = list(map((lambda x: x['Key_name']),results))
 	for name in names:
 		# Only if the last bits are numeric
 		bits = name.split('_')
@@ -27,15 +27,15 @@ def getBadIndexName(dbmodule, table):
 
 def dropIndex(dbmodule, table, index_name):
 	query = "DROP INDEX `%s` ON %s" % (index_name, table)
-	print query
+	print(query)
 	results = directq.complexMysqlQuery(dbmodule,query)
 
 def getAllTables(dbmodule):
 	query = "SHOW TABLES"
 	results = directq.complexMysqlQuery(dbmodule,query)
 	if results:
-		key = results[0].keys()[0]
-	tables = map((lambda x: x[key]),results)
+		key = list(results[0].keys())[0]
+	tables = list(map((lambda x: x[key]),results))
 	return tables
 
 for dbmodule in ('projectdata','leginondata'):
@@ -43,6 +43,6 @@ for dbmodule in ('projectdata','leginondata'):
 	for table in tables:
 		bads = getBadIndexName(dbmodule,table)
 		if bads:
-			print('Have %d duplicated index in %s table %s' % (len(bads), dbmodule, table) )
+			print(('Have %d duplicated index in %s table %s' % (len(bads), dbmodule, table) ))
 		for index_name in bads:
 			dropIndex(dbmodule,table, index_name)

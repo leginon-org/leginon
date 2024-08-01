@@ -25,7 +25,7 @@ class DataJsonLoader(object):
 		'''
 		underline_exceptions = ['process_obj_thickness',]
 		q = getattr(leginondata,classname)()
-		for key in kwargs.keys():
+		for key in list(kwargs.keys()):
 			if key not in underline_exceptions:
 				# leginondata keys almost never contains '_'
 				realkey = key.replace('_',' ')
@@ -35,15 +35,15 @@ class DataJsonLoader(object):
 				if len(kwargs[key]) > 0:
 					if type(kwargs[key][0]) == type([]):
 						# json export saves coordinate tuple as list.  Need to change back in import
-						kwargs[key] = map((lambda x: tuple(x)),kwargs[key])
-			if realkey not in q.keys():
-				print 'missing key %s' % (realkey)
+						kwargs[key] = list(map((lambda x: tuple(x)),kwargs[key]))
+			if realkey not in list(q.keys()):
+				print(('missing key %s' % (realkey)))
 				continue
-			if key in ref_class_alias_dict.keys():
+			if key in list(ref_class_alias_dict.keys()):
 				ref_class = ref_class_alias_dict[realkey]
 				values = self._insertQuery(self.makequery(ref_class.__name__,kwargs[key]))
 			elif key in ignored_refs:
-				print('ignore %s' % key)
+				print(('ignore %s' % key))
 				continue
 			else:
 				values = kwargs[key]
@@ -67,7 +67,7 @@ class SettingsJsonLoader(DataJsonLoader):
 		try:
 			return leginondata.UserData(username='administrator').query()[0]
 		except:
-			print "Can not find administrator user, Aborting"
+			print("Can not find administrator user, Aborting")
 			sys.exit(1)
 
 	def setNewSession(self,applicationname):
@@ -92,28 +92,28 @@ class SettingsJsonLoader(DataJsonLoader):
 		leginondir = version.getInstalledLocation()
 		jsonpath = os.path.join(leginondir,'applications',applicationname+'_Settings.json')
 		while not os.path.isfile(jsonpath):
-			jsonpath = raw_input("Can not find the file from default path, Please specify: ")
+			jsonpath = eval(input("Can not find the file from default path, Please specify: "))
 		self.jsonfile = jsonpath
 
 	def importSettings(self):
 		for settings in self.alldata:
-			classname = settings.keys()[0]
-			print 'inserting %s' % classname
+			classname = list(settings.keys())[0]
+			print(('inserting %s' % classname))
 			try:
 				q = self.makequery(classname, settings[classname])
 				self._insertQuery(q)
 			except Exception as e:
-				print('Error in ',classname, settings[classname],q)
+				print(('Error in ',classname, settings[classname],q))
 				raise
 
 	def _insertQuery(self, q):
-			if 'session' in q.keys():
+			if 'session' in list(q.keys()):
 				session = self.getSession()
 				q['session'] = session
-			if 'template filename' in q.keys():
+			if 'template filename' in list(q.keys()):
 				q['template filename'] = ''
 			# need to be the administrator default
-			if 'isdefault' in q.keys():
+			if 'isdefault' in list(q.keys()):
 				q['isdefault'] = True
 			# force to become the current default settings
 			q.insert(force=True)
@@ -125,7 +125,7 @@ class SettingsJsonLoader(DataJsonLoader):
 
 if  __name__ == '__main__':
 	if len(sys.argv) != 2:
-		print "Usage: python import_leginon_settings.py <applicationname or json filepath>"
+		print("Usage: python import_leginon_settings.py <applicationname or json filepath>")
 		sys.exit()
 
 	applicationname = sys.argv[1]

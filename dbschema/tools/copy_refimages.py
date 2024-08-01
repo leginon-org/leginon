@@ -13,7 +13,7 @@ class ImageCopier(object):
 		# output_base_path is the parent path of the session where the reference
 		# images is to be copied
 		if not os.path.isdir(output_base_path) or not os.access(output_base_path,os.W_OK):
-			print '%s must exist and writable' % (output_base_path)
+			print(('%s must exist and writable' % (output_base_path)))
 			sys.exit(1)
 		self.output_base_path = output_base_path
 
@@ -29,7 +29,7 @@ class ImageCopier(object):
 		filename = datainst['filename']+'.mrc'
 		source = os.path.join(old_image_path,filename)
 		destination = os.path.join(new_image_path,filename)
-		print 'copy to ', destination
+		print(('copy to ', destination))
 		shutil.copy(source,destination)
 
 class SessionReferenceCopier(object):
@@ -56,7 +56,7 @@ class SessionReferenceCopier(object):
 		if r:
 			self.session = r[0]
 		else:
-			print 'No session named %s' % (sessionname,)
+			print(('No session named %s' % (sessionname,)))
 			sys.exit(1)
 
 	def getSession(self):
@@ -92,7 +92,7 @@ class SessionReferenceCopier(object):
 		return brightdata
 
 	def getReferenceIds(self):
-		print "Finding References...."
+		print("Finding References....")
 		q = leginondata.AcquisitionImageData(session=self.session)
 		images = q.query()
 
@@ -128,11 +128,11 @@ class SessionReferenceCopier(object):
 	def run(self):
 		image_sessiondata = self.getSession()
 
-		print "****Session %s ****" % (image_sessiondata['name'])
+		print(("****Session %s ****" % (image_sessiondata['name'])))
 		if self.hasImagesInSession():
 			self.getReferenceIds()
 			self.copyRefImages()
-		print ''
+		print('')
 
 def copyProjectReferences(projectid,destination_base_path):
 	'''
@@ -156,9 +156,9 @@ def copyProjectReferences(projectid,destination_base_path):
 if __name__ == '__main__':
 	import sys
 	if len(sys.argv) != 3:
-		print "Usage: python copy_project_references.py <project id number> <destination base path"
-		print " destination base path is the path before dividing by sessionname"
-		print " For example, '/archive/leginon/'"
+		print("Usage: python copy_project_references.py <project id number> <destination base path")
+		print(" destination base path is the path before dividing by sessionname")
+		print(" For example, '/archive/leginon/'")
 		sys.exit()
 	projectid = int(sys.argv[1])
 	dest_path = sys.argv[2]
