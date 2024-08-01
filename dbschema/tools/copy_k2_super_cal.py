@@ -93,4 +93,4 @@ for mag in magsdata['magnifications']:
 			print(('MatrixCalibrationData', newdata['type'],newdata['magnification'],newdata['matrix'][0,0]))
 			insertDest(newdata)
 
-eval(input('hit enter when ready to quit')) 
+input('hit enter when ready to quit')

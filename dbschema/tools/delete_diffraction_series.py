@@ -4,9 +4,9 @@ import os, shutil
 from leginon import leginondata
 from sinedon import directq
 
-session_name = eval(input('Session name= '))
-image_name = eval(input('Give image name of one of the image in the series = '))
-keep_one_answer = eval(input('Keep this image and delete the rest ? (Y/N/y/n) '))
+session_name = input('Session name= ')
+image_name = input('Give image name of one of the image in the series = ')
+keep_one_answer = input('Keep this image and delete the rest ? (Y/N/y/n) ')
 keep_one = keep_one_answer.lower() == 'y'
 
 if image_name.endswith('.mrc'):
@@ -47,7 +47,7 @@ def setupSeries(exemplar_image, keep_one=False):
 		except ValueError:
 			print('Error: Exemplar image not in the list.  This should never happen')
 			raise RuntimeError('Aborted')
-	answer = eval(input('There are %d images to delete.  Are you sure ? (Y/y/N/n)' % (len(namelist))))
+	answer = input('There are %d images to delete.  Are you sure ? (Y/y/N/n)' % (len(namelist)))
 	if answer.lower() != 'y':
 		raise RuntimeError('Aborted')
 	series_name = getSeriesName(exemplar_image['filename'])
@@ -102,7 +102,7 @@ def removeMrcFiles(session, namelist):
 # Main process 
 session = getSessionData(session_name)
 image = getImageData(session, image_name)
-answer = eval(input('Are you ready delete images from the same target as %s ? (Y/y/N/n)' % (image['filename']+'.mrc')))
+answer = input('Are you ready delete images from the same target as %s ? (Y/y/N/n)' % (image['filename']+'.mrc'))
 if answer.lower() == 'y':
 	series_name = getSeriesName(image['filename'])
 	mrclist = setupSeries(image, keep_one)

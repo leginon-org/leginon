@@ -92,7 +92,7 @@ class SettingsJsonLoader(DataJsonLoader):
 		leginondir = version.getInstalledLocation()
 		jsonpath = os.path.join(leginondir,'applications',applicationname+'_Settings.json')
 		while not os.path.isfile(jsonpath):
-			jsonpath = eval(input("Can not find the file from default path, Please specify: "))
+			jsonpath = input("Can not find the file from default path, Please specify: ")
 		self.jsonfile = jsonpath
 
 	def importSettings(self):

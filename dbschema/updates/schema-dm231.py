@@ -17,7 +17,7 @@ class SchemaUpdateDM231(baseSchemaClass.SchemaUpdate):
 		
 		while True:
 			while True:
-				sessionname = eval(input('Enter the name of the first session of which\n   frames are saved with Gatan K2 Summit under DM 2.31\n   (Press RETURN if none): '))
+				sessionname = input('Enter the name of the first session of which\n   frames are saved with Gatan K2 Summit under DM 2.31\n   (Press RETURN if none): ')
 				if not sessionname:
 					return
 				results = leginondata.SessionData(name=sessionname).query()
@@ -42,7 +42,7 @@ class SchemaUpdateDM231(baseSchemaClass.SchemaUpdate):
 				k2cameras = self.getRelatedFrameCameras(camdata)
 				self.saveFrameOrientation(k2cameras,first_image)
 				break
-			answer = eval(input('Another K2 camera ? (Y/N)'))
+			answer = input('Another K2 camera ? (Y/N)')
 			if answer.upper() =='N':
 				return
 

@@ -74,10 +74,10 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 		return possible_clients
 
 	def interactiveDeleteClients(self, possible_clients):
-		answer = eval(input('Do you want to remove some of them ? (Y/y or N/n)'))
+		answer = input('Do you want to remove some of them ? (Y/y or N/n)')
 		if answer.lower() in 'y':
 			for c in possible_clients:
-				answer = eval(input('Is this a good host %s ? (Y/y or N/n)' % (c,)))
+				answer = input('Is this a good host %s ? (Y/y or N/n)' % (c,))
 				if answer.lower() in 'y':
 					clients.append(c)
 		else:
@@ -128,7 +128,7 @@ class InstrumentJsonMaker(jsonfun.DataJsonMaker):
 			print("Exit with Error")
 			sys.exit(1)
 		if self.interactive:
-			eval(input('hit enter when ready to quit'))
+			input('hit enter when ready to quit')
 
 if __name__=='__main__':
 	app = InstrumentJsonMaker(sys.argv, interactive=False)

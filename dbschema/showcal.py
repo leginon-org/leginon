@@ -103,7 +103,7 @@ class ShowCalibrationQuery(object):
 		self.printStageModelCalibrationQueries(mags)
 		self.printMatrixCalibrationQueries(mags)
 
-		eval(input('hit enter when ready to quit'))
+		input('hit enter when ready to quit')
 
 	def close(self, status):
 		if status:

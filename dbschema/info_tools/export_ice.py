@@ -91,8 +91,8 @@ class IceThicknessExporter(export_targets.Exporter):
 		self.result_title ='ChildImageId\tTargetId_TargetNumber\tALS_Thickness\tALS_I\tALS_I0\tALS_MFP\tZL_Thickness\tZL_I\tZL_I0\thl_Thickness\thl_I\thl_I0'
 
 if __name__=='__main__':
-	session_name = eval(input('Which session ? '))
-	base_path = eval(input('Where to save under ? (default: ./%s) ' % session_name))
+	session_name = input('Which session ? ')
+	base_path = input('Where to save under ? (default: ./%s) ' % session_name)
 	if not base_path:
 		base_path = './%s' % session_name
 	app = IceThicknessExporter(session_name, base_path)

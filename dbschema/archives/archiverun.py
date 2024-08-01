@@ -25,14 +25,14 @@ class ArchiveRun(object):
 		self.projectids = [1,]
 
 	def setDatabases(self):
-		self.old_projectdb = eval(input('Enter project database name with data to be used to make the archive:'))
-		self.old_leginondb = eval(input('Enter leginon database name with data to be used to make the archive:'))
-		self.new_projectdb = eval(input('Enter project database name where the archive will go to:'))
-		self.new_leginondb = eval(input('Enter leginon database name where the archive will go to:'))
+		self.old_projectdb = input('Enter project database name with data to be used to make the archive:')
+		self.old_leginondb = input('Enter leginon database name with data to be used to make the archive:')
+		self.new_projectdb = input('Enter project database name where the archive will go to:')
+		self.new_leginondb = input('Enter leginon database name where the archive will go to:')
 
 	def setDbCopySinedonPath(self):
 		while True:
-			self.dbcopy_sinedon_path = eval(input('Enter myami-dbcopy sinedon path'))
+			self.dbcopy_sinedon_path = input('Enter myami-dbcopy sinedon path')
 			if os.path.isdir(self.dbcopy_sinedon_path) and 'sinedon' in self.dbcopy_sinedon_path[-9:]:
 				break
 			print('Not an existing directory, try again')

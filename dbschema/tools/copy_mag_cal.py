@@ -107,12 +107,12 @@ if __name__ == '__main__':
 		commit = 0
 
 	app = Copier(hostname, camname, high_tension, commit)
-	cal_type = eval(input('Enter matrix type [Default: stage position]:'))
+	cal_type = input('Enter matrix type [Default: stage position]:')
 	app.setMatrixType(cal_type)
-	ref_mag = eval(input('Use the matrix at this mag to scale all magnification above it: '))
+	ref_mag = input('Use the matrix at this mag to scale all magnification above it: ')
 	app.setReferenceMagnification(ref_mag)
-	exclude_mags = eval(input('List mags to exclude the insert, separate by ","'))
+	exclude_mags = input('List mags to exclude the insert, separate by ","')
 	app.setExcludedMagnifications(exclude_mags)
 	app.run()
-	eval(input('hit enter when ready to quit')) 
+	input('hit enter when ready to quit')
 

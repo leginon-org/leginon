@@ -6,8 +6,8 @@ from dbschema.info_tools import export_child_paths
 from dbschema.info_tools import export_frame_drift
 
 if __name__=='__main__':
-	session_name = eval(input('Which session ? '))
-	base_path = eval(input('Where to save under ? (default: ./%s) ' % session_name))
+	session_name = input('Which session ? ')
+	base_path = input('Where to save under ? (default: ./%s) ' % session_name)
 	if not base_path:
 		base_path = './%s' % session_name
 	app_target = export_targets.TargetExporter(session_name, base_path)

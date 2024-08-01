@@ -157,7 +157,7 @@ class ReferenceJsonLoader(jsonfun.DataJsonLoader):
 		ptemid = None # tem with pixel calibration is checked first.
 		if r:
 			t = r[0]['tem']
-			answer = eval(input(' Is %s %s the tem to import ? Y/y/N/n ' % (t['hostname'], t['name'])))
+			answer = input(' Is %s %s the tem to import ? Y/y/N/n ' % (t['hostname'], t['name']))
 			if answer.lower() == 'y':
 				return t
 			ptemid = t.dbid
@@ -169,7 +169,7 @@ class ReferenceJsonLoader(jsonfun.DataJsonLoader):
 		if len(other_tems) == 1:
 			return other_tems[0]
 		for t in other_tems:
-			answer = eval(input(' Is %s %s the tem to import ? Y/y/N/n ' % (t['hostname'], t['name'])))
+			answer = (input(' Is %s %s the tem to import ? Y/y/N/n ' % (t['hostname'], t['name']))
 			if answer.lower() == 'y':
 				return t
 		print("  No tem found")
@@ -200,7 +200,7 @@ class ReferenceJsonLoader(jsonfun.DataJsonLoader):
 		self.insertAllData()
 
 	def close(self, status):
-		eval(input('hit enter when ready to quit'))
+		input('hit enter when ready to quit')
 		if status:
 			print("Exit with Error")
 			sys.exit(1)

@@ -87,7 +87,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 				if r['cs']:
 					tems.append(r)
 			for t in tems:
-				answer = eval(input(' Is %s %s the tem to import calibration ? Y/y/N/n' % (t['hostname'], t['name'])))
+				answer = input(' Is %s %s the tem to import calibration ? Y/y/N/n' % (t['hostname'], t['name']))
 				if answer.lower() == 'y':
 					return t
 			print("  No tem found")
@@ -138,7 +138,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		self.insertAllData()
 
 	def close(self, status):
-		eval(input('hit enter when ready to quit'))
+		input('hit enter when ready to quit')
 		if status:
 			print("Exit with Error")
 			sys.exit(1)

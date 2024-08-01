@@ -15,7 +15,7 @@ def confirmDBHost():
 	db_params = sinedon.getConfig('leginondata')
 	db_host = db_params['host']
 	db_name = db_params['db']
-	answer=eval(input('Are you ready to import to %s: %s? (Y/y/N/n)' % (db_host, db_name)))
+	answer=input('Are you ready to import to %s: %s? (Y/y/N/n)' % (db_host, db_name))
 	if answer.lower() != 'y':
 		sys.exit()
 
@@ -265,7 +265,7 @@ def mysqlReminder():
 		msg = 'mysql -h %s -u %s -p%s %s < ./tables/%s.sql' % (p['host'],p['user'],p['passwd'],p['db'], name)
 		print(msg)
 	print('---------------')
-	answer=eval(input('Did you import with the above mysql commands ? (Y/y/N/n) '))
+	answer=input('Did you import with the above mysql commands ? (Y/y/N/n) ')
 	if answer.lower() != 'y':
 		sys.exit(0)
 

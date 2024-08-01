@@ -21,7 +21,7 @@ def msgExit(msg=''):
 
 def format_input(msg=''):
 	print('')
-	return eval(input(msg))
+	return input(msg)
 
 jeolcom_classname = format_input('Enter scope classname in instruments.cfg (Case sensitive): ')
 scopes = leginondata.InstrumentData(name=jeolcom_classname).query()

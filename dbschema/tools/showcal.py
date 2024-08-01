@@ -34,12 +34,12 @@ class ShowCalibrationQuery(object):
 		Tem, Cam and session ids to put in the insertion query.  This means that a session must
 		be created first on the same instrument in the new db before this script is run.
 		'''
-		answer = eval(input("You need to create a session with the new database where these calibrations\n are inserted into.\n Press Y/y if ready."))
+		answer = input("You need to create a session with the new database where these calibrations\n are inserted into.\n Press Y/y if ready.")
 		if answer not in ('Y','y'):
 			self.close(1)
-		self.new_temid = int(eval(input('TEM instrument Id ?')))
-		self.new_camid = int(eval(input('Digital Camera instrument Id ?')))
-		self.new_sessionid = int(eval(input('Session Id ?')))
+		self.new_temid = int(input('TEM instrument Id ?'))
+		self.new_camid = int(input('Digital Camera instrument Id ?'))
+		self.new_sessionid = int(input('Session Id ?'))
 
 	def getSourceCameraInstrumentData(self, from_hostname,from_camname):
 		results = leginondata.InstrumentData(hostname=from_hostname,name=from_camname).query(results=1)
@@ -114,7 +114,7 @@ class ShowCalibrationQuery(object):
 		for p in ('micro','nano'):
 			self.printMatrixCalibrationQueries(mags,p)
 
-		eval(input('hit enter when ready to quit'))
+		input('hit enter when ready to quit')
 
 	def close(self, status):
 		if status:

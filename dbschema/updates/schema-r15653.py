@@ -22,14 +22,14 @@ class SchemaUpdate15653(baseSchemaClass.SchemaUpdate):
 					print("Cs value must be a reasonable number in mm, try again")
 			except ValueError:
 				print("Cs value must be a number in mm, try again")
-			answer = eval(input('(default=%.3f): ' % cs_mm))
+			answer = input('(default=%.3f): ' % cs_mm)
 		return answer
  
 	def upgradeLeginonDB(self):
 		print("\n This schema upgrade requires knowledge of microscopy.")
 		print("If you don't know what Spherical Aberration Constant is,")
 		print("you should get help.")
-		answer = eval(input('Are you ready?(Y/N):'))
+		answer = input('Are you ready?(Y/N):')
 		if not answer.lower().startswith('y'):
 			sys.exit()
 		# create column if not exist
@@ -53,7 +53,7 @@ class SchemaUpdate15653(baseSchemaClass.SchemaUpdate):
 			else:
 				cs_mm = 2.0
 				print(("\n TEM %s on host %s has no Cs value. Enter a value if you know it. hit return will default it to 2.0 mm" % (temdata['name'],temdata['hostname'])))
-			answer = eval(input('(default=%.3f): ' % cs_mm))
+			answer = input('(default=%.3f): ' % cs_mm)
 			new_cs_mm = self.validateCsValue(answer,cs_mm)
 			self.leginon_dbupgrade.updateColumn('InstrumentData','cs',new_cs_mm*1e-3,'`DEF_id`=%d' % temid, timestamp=False)
 

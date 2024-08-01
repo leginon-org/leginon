@@ -15,7 +15,7 @@ def activateAutoIncrement(database):
 		return
 	if r[0] == 'AcquisitionFFTData':
 		print("Acting on original data. STOP!!!!!")
-		eval(input('kill this!!!!'))
+		input('kill this!!!!')
 		return
 	for tablenametuple in r:
 		tablename = tablenametuple[0]

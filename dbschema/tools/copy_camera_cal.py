@@ -18,8 +18,8 @@ class CopyCameraCal(object):
 		self.commit = value
 
 	def readCameras(self):
-		cam1 = eval(input('Enter camera name to import from: '))
-		cam2 = eval(input('Enter camera name to export to: '))
+		cam1 = input('Enter camera name to import from: ')
+		cam2 = input('Enter camera name to export to: ')
 		if not cam1 or not cam2:
 			raise ValueError('Missing a camera name')
 		return cam1, cam2
@@ -51,7 +51,7 @@ class CopyCameraCal(object):
 			return
 
 	def confirmTEM(self, temdata):
-		answer = eval(input('Is %s the tem hostname coupled with the cameras (y/n) ?' % (temdata['hostname'])))
+		answer = input('Is %s the tem hostname coupled with the cameras (y/n) ?' % (temdata['hostname']))
 		if answer in 'nN':
 			raise ValueError('Wrong tem chosen')
 
@@ -117,7 +117,7 @@ class CopyCameraCal(object):
 					self.insertDest(newdata)
 
 	def confirmInsert(self):
-		answer = eval(input('Ready to insert ? (y/n/Y/N) '))
+		answer = input('Ready to insert ? (y/n/Y/N) ')
 		if answer in 'y/Y':
 			return True
 		else:

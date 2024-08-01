@@ -80,7 +80,7 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 				temdata = tem
 			else:
 				# more than one possibility
-				answer = eval(input('Gather calibration associated with tem  %s on host %s ? (Y/y or N/n)' % (tem['name'], tem['hostname'])))
+				answer = input('Gather calibration associated with tem  %s on host %s ? (Y/y or N/n)' % (tem['name'], tem['hostname']))
 				if answer.lower() in 'y':
 					temdata = tem
 					break
@@ -249,7 +249,7 @@ class CalibrationJsonMaker(jsonfun.DataJsonMaker):
 			print("Exit with Error")
 			sys.exit(1)
 		if self.interactive:
-			eval(input('hit enter when ready to quit'))
+			input('hit enter when ready to quit')
 
 if __name__=='__main__':
 	app = CalibrationJsonMaker(sys.argv, interactive=False)

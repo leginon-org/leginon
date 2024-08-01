@@ -424,7 +424,7 @@ if __name__ == "__main__":
 	projectdb = dbupgrade.DBUpgradeTools('projectdata', drop=True)
 	leginondb = dbupgrade.DBUpgradeTools('leginondata', drop=False)
 	print("\nWould you like to back up the database to local file before upgrading?")
-	answer = eval(input('Yes/No (default=Yes): '))
+	answer = input('Yes/No (default=Yes): ')
 	if answer.lower().startswith('n'):
 		backup = False
 	else:

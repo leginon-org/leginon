@@ -39,7 +39,7 @@ if warn_user:
   you do not wish to clutter up with these scripts.
 
   Are you sure you want to continue? (y/n): ''' % (warn_user, len(binfiles))
-	answer = eval(input(message))
+	answer = input(message)
 	if answer != 'y':
 		print('Installation aborted.')
 		sys.exit()

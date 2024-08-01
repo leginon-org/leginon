@@ -47,8 +47,8 @@ class ChildImagePathExporter(export_targets.Exporter):
 		self.result_title ='ChildImageId\tTargetId_TargetNumber\tChildImagePath'
 
 if __name__=='__main__':
-	session_name = eval(input('Which session ? '))
-	base_path = eval(input('Where to save under ? (default: ./%s) ' % session_name))
+	session_name = input('Which session ? ')
+	base_path = (input('Where to save under ? (default: ./%s) ' % session_name)
 	if not base_path:
 		base_path = './%s' % session_name
 	app = ChildImagePathExporter(session_name, base_path)
