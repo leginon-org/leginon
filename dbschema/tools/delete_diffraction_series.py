@@ -4,9 +4,9 @@ import os, shutil
 from leginon import leginondata
 from sinedon import directq
 
-session_name = raw_input('Session name= ')
-image_name = raw_input('Give image name of one of the image in the series = ')
-keep_one_answer = raw_input('Keep this image and delete the rest ? (Y/N/y/n) ')
+session_name = eval(input('Session name= '))
+image_name = eval(input('Give image name of one of the image in the series = '))
+keep_one_answer = eval(input('Keep this image and delete the rest ? (Y/N/y/n) '))
 keep_one = keep_one_answer.lower() == 'y'
 
 if image_name.endswith('.mrc'):
@@ -39,15 +39,15 @@ def setupSeries(exemplar_image, keep_one=False):
 		raise ValueError('image is not from a target')
 	namelist = []
 	images = leginondata.AcquisitionImageData(target=exemplar_image['target']).query()
-	namelist = map((lambda x: x['filename']+'.mrc'), images)
+	namelist = list(map((lambda x: x['filename']+'.mrc'), images))
 	if keep_one:
 		try:
 			namelist.remove(exemplar_image['filename']+'.mrc')
-			print('Leave out %s.mrc' % (exemplar_image['filename']))
+			print(('Leave out %s.mrc' % (exemplar_image['filename'])))
 		except ValueError:
 			print('Error: Exemplar image not in the list.  This should never happen')
 			raise RuntimeError('Aborted')
-	answer = raw_input('There are %d images to delete.  Are you sure ? (Y/y/N/n)' % (len(namelist)))
+	answer = eval(input('There are %d images to delete.  Are you sure ? (Y/y/N/n)' % (len(namelist))))
 	if answer.lower() != 'y':
 		raise RuntimeError('Aborted')
 	series_name = getSeriesName(exemplar_image['filename'])
@@ -88,21 +88,21 @@ def deleteSeriesInDB(exemplar_image, keep_one=False):
 def removeDiffrFiles(session, series_name):
 	diffraction_path = os.path.join(session['image path'].replace('rawdata','diffraction'),series_name)
 	bin_path = os.path.join(session['image path'].replace('rawdata','diffraction_raw'),series_name)
-	print('Removing tree of %s' % diffraction_path)
+	print(('Removing tree of %s' % diffraction_path))
 	shutil.rmtree(diffraction_path)
-	print('Removing tree of %s' % bin_path)
+	print(('Removing tree of %s' % bin_path))
 	shutil.rmtree(bin_path)
 
 def removeMrcFiles(session, namelist):
 	for mrcfile in namelist:
 		mrc_path = os.path.join(session['image path'], mrcfile)
-		print('Removing file of %s' % mrc_path)
+		print(('Removing file of %s' % mrc_path))
 		os.remove(mrc_path)
 
 # Main process 
 session = getSessionData(session_name)
 image = getImageData(session, image_name)
-answer = raw_input('Are you ready delete images from the same target as %s ? (Y/y/N/n)' % (image['filename']+'.mrc'))
+answer = eval(input('Are you ready delete images from the same target as %s ? (Y/y/N/n)' % (image['filename']+'.mrc')))
 if answer.lower() == 'y':
 	series_name = getSeriesName(image['filename'])
 	mrclist = setupSeries(image, keep_one)

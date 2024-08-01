@@ -22,7 +22,7 @@ class ShowCalibrationQuery(object):
 
 	def validateInput(self, params):
 		if len(params) != 4:
-			print "Usage showcal.py source_database_hostname source_camera_hosthame camera_name"
+			print("Usage showcal.py source_database_hostname source_camera_hosthame camera_name")
 			self.close(1)
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:
@@ -34,35 +34,35 @@ class ShowCalibrationQuery(object):
 		Tem, Cam and session ids to put in the insertion query.  This means that a session must
 		be created first on the same instrument in the new db before this script is run.
 		'''
-		answer = raw_input("You need to create a session with the new database where these calibrations\n are inserted into.\n Press Y/y if ready.")
+		answer = eval(input("You need to create a session with the new database where these calibrations\n are inserted into.\n Press Y/y if ready."))
 		if answer not in ('Y','y'):
 			self.close(1)
-		self.new_temid = int(raw_input('TEM instrument Id ?'))
-		self.new_camid = int(raw_input('Digital Camera instrument Id ?'))
-		self.new_sessionid = int(raw_input('Session Id ?'))
+		self.new_temid = int(eval(input('TEM instrument Id ?')))
+		self.new_camid = int(eval(input('Digital Camera instrument Id ?')))
+		self.new_sessionid = int(eval(input('Session Id ?')))
 
 	def getSourceCameraInstrumentData(self, from_hostname,from_camname):
 		results = leginondata.InstrumentData(hostname=from_hostname,name=from_camname).query(results=1)
 		if not results:
-			print "ERROR: incorrect hostname...."
+			print("ERROR: incorrect hostname....")
 			r = leginondata.InstrumentData(name=from_camname).query(results=1)
 			if r:
-				print "  Try %s instead" % r[0]['hostname']
+				print(("  Try %s instead" % r[0]['hostname']))
 			else:
-				print "  No %s camera found" % from_camname
+				print(("  No %s camera found" % from_camname))
 			sys.exit()
 
 		sourcecam = results[0]
 		return sourcecam
 
 	def printQuery(self, q):
-		print q
+		print(q)
 		return
 
 	def getMags(self):
 		onecaldata = leginondata.MatrixCalibrationData(ccdcamera=self.sourcecam).query(results=1)[0]
 		temdata = onecaldata['tem']
-		print temdata.dbid, temdata
+		print((temdata.dbid, temdata))
 		magsdata = leginondata.MagnificationsData(instrument=temdata).query(results=1)[0]
 		return magsdata['magnifications']
 
@@ -114,11 +114,11 @@ class ShowCalibrationQuery(object):
 		for p in ('micro','nano'):
 			self.printMatrixCalibrationQueries(mags,p)
 
-		raw_input('hit enter when ready to quit')
+		eval(input('hit enter when ready to quit'))
 
 	def close(self, status):
 		if status:
-			print "Exit with Error"
+			print("Exit with Error")
 			sys.exit(1)
 
 if __name__=='__main__':

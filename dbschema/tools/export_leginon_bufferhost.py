@@ -10,13 +10,13 @@ class BufferHostJsonMaker(jsonfun.DataJsonMaker):
 		super(BufferHostJsonMaker,self).__init__(leginondata)
 		try:
 			self.validateInput(params)
-		except ValueError, e:
-			print "Error: %s" % e.message
+		except ValueError as e:
+			print(("Error: %s" % e.message))
 			self.close(1)
 
 	def validateInput(self, params):
 		if len(params) < 4:
-			print "Usage export_leginon_bufferhost.py source_database_hostname source_camera_hosthame camera_name"
+			print("Usage export_leginon_bufferhost.py source_database_hostname source_camera_hosthame camera_name")
 			self.close(1)
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:
@@ -29,7 +29,7 @@ class BufferHostJsonMaker(jsonfun.DataJsonMaker):
 		q = self.makequery('InstrumentData',kwargs)
 		result = self.research(q,True)
 		if not result:
-			print "ERROR: incorrect hostname...."
+			print("ERROR: incorrect hostname....")
 			r = leginondata.InstrumentData(name=from_camname).query(results=1)
 			if r:
 				raise ValueError("Try %s instead" % r[0]['hostname'])
@@ -60,7 +60,7 @@ class BufferHostJsonMaker(jsonfun.DataJsonMaker):
 
 	def close(self, status=0):
 		if status:
-			print "Exit with Error"
+			print("Exit with Error")
 			sys.exit(1)
 
 if __name__=='__main__':

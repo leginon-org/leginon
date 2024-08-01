@@ -14,11 +14,11 @@ def checkSinedon():
 	try:
 		destination_dbinfo = dbconfig.getConfig('importdata')
 	except KeyError:
-		print "Please define impordata module in sinedon.cfg"
+		print("Please define impordata module in sinedon.cfg")
 		sys.exit(1)
 	if not hasattr(sinedon.dbdatakeeper.DBDataKeeper,'initImported'):
-		print "sinedon must be imported from myami-dbcopy branch"
-		print "currently from %s",sinedon.__file__
+		print("sinedon must be imported from myami-dbcopy branch")
+		print(("currently from %s",sinedon.__file__))
 		sys.exit(1)
 
 class Archiver(object):
@@ -36,7 +36,7 @@ class Archiver(object):
 		return self.status
 
 	def escape(self,msg=''):
-		print msg
+		print(msg)
 		self.reset()
 		self.status = False
 
@@ -74,7 +74,7 @@ class Archiver(object):
 		self.reset()
 
 	def replaceItem(self,data,key,value):
-		if data.has_key(key):
+		if key in data:
 			data.__setitem__(key, value, force=True)
 
 	def avoidExcludedImage(self,fulllist):
@@ -118,7 +118,7 @@ class Archiver(object):
 		Make SQL query of projectdata from class name and keyword arguments.
 		'''
 		q = getattr(projectdata,classname)()
-		for key in kwargs.keys():
+		for key in list(kwargs.keys()):
 			# projectdata keys never contains '_'
 			realkey = key.replace('_',' ')
 			q[realkey] = kwargs[key]
@@ -168,7 +168,7 @@ class ProjectArchiver(Archiver):
 
 	def importProjectValueDependentData(self,dataclassname,value,search_alias):
 		sinedon.setConfig('projectdata', db=self.source_dbname)
-		print "Importing %s...." % (dataclassname)
+		print(("Importing %s...." % (dataclassname)))
 		q = getattr(projectdata,dataclassname)()
 		q[search_alias] = value
 		results = self.research(q)
@@ -180,7 +180,7 @@ class ProjectArchiver(Archiver):
 		return self.importProjectValueDependentData(dataclassname,source_project,'project')
 
 	def importProject(self):
-		print "Importing project...."
+		print("Importing project....")
 		projectdata = self.getSourceProject()
 
 		sinedon.setConfig('projectdata', db=self.destination_dbname)
@@ -192,7 +192,7 @@ class ProjectArchiver(Archiver):
 			return
 
 	def importPrivileges(self):
-		print "Importing privileges...."
+		print("Importing privileges....")
 		q	= projectdata.privileges()
 		results = self.research(q)
 		self.publish(results)
@@ -203,7 +203,7 @@ class ProjectArchiver(Archiver):
 		# There are cases without session alias
 		for p in projectexperiments:
 			if p['session'] is None:
-				print ' projectexperiment id %d has no session reference' % p.dbid
+				print((' projectexperiment id %d has no session reference' % p.dbid))
 				continue
 			sessionids.append(p['session'].dbid)
 		self.importShareExperiments(sessionids)
@@ -220,11 +220,11 @@ class ProjectArchiver(Archiver):
 		# Work around leginondata can not be map properly when projectdata is queried for import
 		q = getattr(leginondata,leginon_classname)()
 		results = self.research(q)
-		leginon_ids = map((lambda x: x.dbid),results)
+		leginon_ids = list(map((lambda x: x.dbid),results))
 		self.importLeginonValueDependentData(project_classname, leginon_ids, leginon_alias)
 
 	def importLeginonValueDependentData(self,project_classname, leginon_ids, leginon_alias):
-		print "Importing %s...." % (project_classname)
+		print(("Importing %s...." % (project_classname)))
 		q = getattr(projectdata,project_classname)()
 		results = self.research(q)
 		for r in results:
@@ -242,7 +242,7 @@ class ProjectArchiver(Archiver):
 		self.importLeginonValueDependentData('shareexperiments',expids,'experiment')
 
 	def importInstall(self):
-		print "Importing Installation Log...."
+		print("Importing Installation Log....")
 		source_dbinfo = dbconfig.getConfig('projectdata')
 		destination_dbinfo = dbconfig.getConfig('importdata')
 		q = 'select * from install where 1;'
@@ -262,8 +262,8 @@ class ProjectArchiver(Archiver):
 		imported_results = directq.complexMysqlQuery('importdata',q)
 
 		for row in results:
-			keys = row.keys()
-			values = map((lambda x: row[x]),keys)
+			keys = list(row.keys())
+			values = list(map((lambda x: row[x]),keys))
 			if not imported_results:
 				keystring = '`'+'`,`'.join(keys)+'`'
 				valuestring = "'"+"','".join(values)+"'"
@@ -286,16 +286,16 @@ class ProjectArchiver(Archiver):
 		self.importUserDetails()
 		self.importInstall()
 		self.reset()
-		print ''
+		print('')
 
 if __name__ == '__main__':
 	import sys
 	if len(sys.argv) != 2:
-		print "Usage: python archive_projectdb.py <project id number>"
-		print ""
-		print "sinedon.cfg should include a module"
-		print "[importdata]"
-		print "db: writable_archive_database for projectdb"
+		print("Usage: python archive_projectdb.py <project id number>")
+		print("")
+		print("sinedon.cfg should include a module")
+		print("[importdata]")
+		print("db: writable_archive_database for projectdb")
 		
 		sys.exit()
 	projectid = int(sys.argv[1])

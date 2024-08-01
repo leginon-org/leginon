@@ -24,11 +24,11 @@ def checkSinedon():
 	try:
 		destination_dbinfo = dbconfig.getConfig('importdata')
 	except KeyError:
-		print "Please define impordata module in sinedon.cfg"
+		print("Please define impordata module in sinedon.cfg")
 		sys.exit(1)
 	if not hasattr(sinedon.dbdatakeeper.DBDataKeeper,'initImported'):
-		print "sinedon must be imported from myami-dbcopy branch"
-		print "currently from %s",sinedon.__file__
+		print("sinedon must be imported from myami-dbcopy branch")
+		print("currently from %s",sinedon.__file__)
 		sys.exit(1)
 
 class Archiver(object):
@@ -47,7 +47,7 @@ class Archiver(object):
 		return self.status
 
 	def escape(self,msg=''):
-		print msg
+		print(msg)
 		self.reset()
 		self.status = False
 
@@ -85,7 +85,7 @@ class Archiver(object):
 		self.reset()
 
 	def replaceItem(self,data,key,value):
-		if data.has_key(key):
+		if key in data:
 			data.__setitem__(key, value, force=True)
 
 	def avoidExcludedImage(self,fulllist):
@@ -129,7 +129,7 @@ class Archiver(object):
 		Make SQL query of leginondata from class name and keyword arguments.
 		'''
 		q = getattr(leginondata,classname)()
-		for key in kwargs.keys():
+		for key in list(kwargs.keys()):
 			# leginondata keys never contains '_'
 			realkey = key.replace('_',' ')
 			q[realkey] = kwargs[key]
@@ -156,7 +156,7 @@ class UserArchiver(Archiver):
 			f = open(useridfile,'r')
 			lines = f.readlines()
 			f.close()
-			return map((lambda x: int(x)),lines)
+			return list(map((lambda x: int(x)),lines))
 		else:
 			return []
 
@@ -164,7 +164,7 @@ class UserArchiver(Archiver):
 		userids = self.getEssentialUsers()
 		for id in userids:
 			sinedon.setConfig('leginondata', db=self.source_dbname)
-			print 'querying user %d' % id
+			print('querying user %d' % id)
 			userdata = leginondata.UserData().direct_query(id)
 			self.publish([userdata,])
 
@@ -283,7 +283,7 @@ class SessionArchiver(Archiver):
 		return self.destination_session
 
 	def importSession(self, comment=''):
-		print "Importing session...."
+		print("Importing session....")
 		session = self.getSourceSession()
 		source_sessionid = session.dbid
 		# change session description if needed
@@ -302,13 +302,13 @@ class SessionArchiver(Archiver):
 
 	def importSessionDependentData(self,dataclassname):
 		source_session = self.getSourceSession()
-		print "Importing %s...." % (dataclassname[:-4])
+		print("Importing %s...." % (dataclassname[:-4]))
 		q = getattr(leginondata,dataclassname)(session=source_session)
 		results = self.research(q)
 		self.publish(results)
 
 	def importInstrument(self):
-		print "Importing instrument...."
+		print("Importing instrument....")
 		self.is_upload = False
 		# guess instrument from the last image
 		sinedon.setConfig('leginondata', db=self.source_dbname)
@@ -367,7 +367,7 @@ class SessionArchiver(Archiver):
 		return tems, cams
 
 	def importGainReferences(self):
-		print "Importing GainReferences...."
+		print("Importing GainReferences....")
 		q = leginondata.AcquisitionImageData(session=self.getSourceSession())
 		images = self.research(q,False)
 		c_client = correctorclient.CorrectorClient()
@@ -392,7 +392,7 @@ class SessionArchiver(Archiver):
 					norm['dark'].insert(archive=True)
 
 	def importCalibrations(self, source_cam, source_tem,high_tension):
-		print "Importing calibrations...."
+		print("Importing calibrations....")
 
 		simumags = [50,100,500,1000,5000,25000,50000]
 		matrixtypes = ('image shift','stage position','defocus','stigx','stigy','beam shift','beam-tilt coma','image-shift coma')
@@ -495,7 +495,7 @@ class SessionArchiver(Archiver):
 
 	def importQueue(self):
 		source_session = self.getSourceSession()
-		print "Importing queuing...."
+		print("Importing queuing....")
 		sinedon.setConfig('leginondata', db=self.source_dbname)
 		q = leginondata.QueueData(session=source_session)
 		r = q.query()
@@ -508,7 +508,7 @@ class SessionArchiver(Archiver):
 	def importDeQueue(self):
 		source_session = self.getSourceSession()
 		# ImageTargetLists that have no targets on will also be imported in this function
-		print "Importing dequeuing...."
+		print("Importing dequeuing....")
 		sinedon.setConfig('leginondata', db=self.source_dbname)
 		q = leginondata.DequeuedImageTargetListData(session=source_session)
 		r = q.query()
@@ -523,7 +523,7 @@ class SessionArchiver(Archiver):
 		Import DDInfoData based on imported image list.
 		This must be done after images are imported.
 		'''
-		print "Importing image ddinfo...."
+		print("Importing image ddinfo....")
 		#source_session = self.getSourceSession()
 		for imageid in self.imageids:
 			sinedon.setConfig('leginondata', db=self.source_dbname)
@@ -534,7 +534,7 @@ class SessionArchiver(Archiver):
 
 	def importImageStats(self):
 		source_session = self.getSourceSession()
-		print "Importing image stats...."
+		print("Importing image stats....")
 		q = leginondata.AcquisitionImageStatsData(session=source_session)
 		results = self.research(q)
 		results = self.avoidExcludedImage(results)
@@ -542,7 +542,7 @@ class SessionArchiver(Archiver):
 
 	def importMosaicTiles(self):
 		source_session = self.getSourceSession()
-		print "Importing mosaic tiles...."
+		print("Importing mosaic tiles....")
 		sinedon.setConfig('leginondata', db=self.source_dbname)
 		q = leginondata.MosaicTileData(session=source_session)
 		results = self.research(q)
@@ -550,7 +550,7 @@ class SessionArchiver(Archiver):
 
 	def importDrifts(self):
 		source_session = self.getSourceSession()
-		print "Importing drift...."
+		print("Importing drift....")
 		sinedon.setConfig('leginondata', db=self.source_dbname)
 		q = leginondata.DriftData(session=source_session)
 		drifts = q.query()
@@ -575,7 +575,7 @@ class SessionArchiver(Archiver):
 		Import Focuser Results
 		'''
 		source_session = self.getSourceSession()
-		print "Importing focus results...."
+		print("Importing focus results....")
 		sinedon.setConfig('leginondata', db=self.source_dbname)
 		qfocus = leginondata.FocuserResultData(session=source_session)
 		focii = qfocus.query()
@@ -591,7 +591,7 @@ class SessionArchiver(Archiver):
 		This is needed for older data since BrightImageData was
 		not linked to AcquisitionImages previously.
 		'''
-		print "Importing old BrightImages...."
+		print("Importing old BrightImages....")
 		destination_session = self.getDestinationSession()
 		sinedon.setConfig('leginondata', db=self.destination_dbname)
 		q = leginondata.NormImageData(session=destination_session)
@@ -611,7 +611,7 @@ class SessionArchiver(Archiver):
 		images = q.query()
 		images.reverse()
 
-		print 'number of images in the session = %d' % len(images)
+		print('number of images in the session = %d' % len(images))
 		targetlist = {}
 		for image in images:
 			q = leginondata.ImageTargetListData(image=image)
@@ -621,9 +621,9 @@ class SessionArchiver(Archiver):
 		skipped = 0
 		for i,image in enumerate(images):
 			if not (i+1) % 20:
-				print ""
+				print("")
 			else:
-				print ".",
+				print(".", end=' ')
 			if image['label'] in exclude_preset_list:
 				skipped += 1
 				continue
@@ -631,11 +631,11 @@ class SessionArchiver(Archiver):
 			image.insert(archive=True)
 			if targetlist[imageid]:
 				targetlist[imageid].insert(archive=True)
-		print '\nimported %d images' % (len(images) - skipped)
+		print('\nimported %d images' % (len(images) - skipped))
 
 	def importFocusSequenceSettings(self, allalias):
-		print 'importing Focus Sequence Settings....'
-		if 'Focuser' not in allalias.keys():
+		print('importing Focus Sequence Settings....')
+		if 'Focuser' not in list(allalias.keys()):
 			return
 		sequence_names = []
 		for node_name in (allalias['Focuser']):
@@ -660,27 +660,27 @@ class SessionArchiver(Archiver):
 				'EM':None,
 				'FileNames':'ImageProcessorSettingsData',
 		}
-		for classname in allalias.keys():
+		for classname in list(allalias.keys()):
 			settingsname = classname+'SettingsData'
-			if classname in unusual_settingsnames.keys():
+			if classname in list(unusual_settingsnames.keys()):
 				settingsname = unusual_settingsnames[classname]
 			if not settingsname:
 				continue
-			if classname in allalias.keys():
-				print 'importing %s Settings....' % (classname,)
+			if classname in list(allalias.keys()):
+				print('importing %s Settings....' % (classname,))
 				for node_name in (allalias[classname]):
 					try:
 						results = self.researchSettings(settingsname,name=node_name)
 						self.publish(results)
 					except:
 						if classname not in self.bad_settings_class:
-							print 'ERROR: %s class node %s settings query failed' % (classname,node_name)
+							print('ERROR: %s class node %s settings query failed' % (classname,node_name))
 							self.bad_settings_class.append(classname)
 		# FocusSequence and FocusSettings needs a different importing method
 		self.importFocusSequenceSettings(allalias)
 
 	def importLaunchedApplications(self):
-		print 'importing Applications....'
+		print('importing Applications....')
 		source_session = self.getSourceSession()
 		q = leginondata.LaunchedApplicationData(session=source_session)
 		launched_apps = self.research(q)
@@ -707,7 +707,7 @@ class SessionArchiver(Archiver):
 			q = leginondata.NodeSpecData(application=appdata)
 			results = self.research(q)
 			for r in results:
-				if r['class string'] not in allalias.keys():
+				if r['class string'] not in list(allalias.keys()):
 					allalias[r['class string']] = []
 				allalias[r['class string']].append(r['alias'])
 		# import settings
@@ -715,7 +715,7 @@ class SessionArchiver(Archiver):
 
 	def importLastPresets(self):
 		# some presets such as fa and fc is never used in image acquisition
-		print 'importing all last version of presets....'
+		print('importing all last version of presets....')
 		source_session = self.getSourceSession()
 		q = leginondata.PresetData(session=source_session)
 		allpresets = self.research(q)
@@ -723,11 +723,11 @@ class SessionArchiver(Archiver):
 		for p in allpresets:
 			if p['name'] not in lastpresets:
 				lastpresets[p['name']] = p
-		lastpreset_list = map((lambda x: lastpresets[x]),lastpresets.keys())
+		lastpreset_list = list(map((lambda x: lastpresets[x]),list(lastpresets.keys())))
 		self.publish(lastpreset_list)
 
 	def importViewerImageStatus(self):
-		print "Importing ViewerImageStatus...."
+		print("Importing ViewerImageStatus....")
 		source_session = self.getSourceSession()
 		q = leginondata.ViewerImageStatus(session=source_session)
 		results = self.research(q)
@@ -808,12 +808,12 @@ class SessionArchiver(Archiver):
 		all_source_tems, all_source_cams = self.getAllSourceInstruments()
 		for source_tem in all_source_tems:
 			for source_cam in all_source_cams:
-				print source_tem['name'],source_cam['name'], self.high_tension
+				print(source_tem['name'],source_cam['name'], self.high_tension)
 				self.importCalibrations(source_cam,source_tem,self.high_tension)
 
 	def run(self):
 		source_session = self.getSourceSession()
-		print "****Session %s ****" % (source_session['name'])
+		print("****Session %s ****" % (source_session['name']))
 		if self.hasImagesInSession():
 			if self.isStatusGood():
 				self.runStep1()
@@ -824,10 +824,10 @@ class SessionArchiver(Archiver):
 				if self.isStatusGood():
 					self.runStep4()
 		self.reset()
-		print ''
+		print('')
 
 def archiveEssentialUsers(projectid):
-	print "Importing Default Users for %d...." % (projectid,)
+	print("Importing Default Users for %d...." % (projectid,))
 	userarchiver = UserArchiver(projectid)
 	userarchiver.run()
 
@@ -837,21 +837,21 @@ def archiveProject(projectid):
 	'''
 	archiveEssentialUsers(projectid)
 
-	print 'Finding sessions for the project....'
+	print('Finding sessions for the project....')
 	from leginon import projectdata
 	p = projectdata.projects().direct_query(projectid)
 	source_sessions = projectdata.projectexperiments(project=p).query()
-	session_names = map((lambda x:x['session']['name']),source_sessions)
+	session_names = list(map((lambda x:x['session']['name']),source_sessions))
 	session_names.reverse()  #oldest first
 	
-	print 'Found %d sessions for the project' %  (len(session_names))
+	print('Found %d sessions for the project' %  (len(session_names)))
 	for session_name in session_names:
 		# Don't archive sessions before 2011
 		if int(session_name[:2]) < (YEAR-2000):
 			continue
 		app = SessionArchiver(session_name)
 		if SKIP_ARCHIVED and app.isSessionInArchive():
-			print 'Session %s already archived' % session_name
+			print('Session %s already archived' % session_name)
 			continue
 		app.run()
 		app = None
@@ -859,11 +859,11 @@ def archiveProject(projectid):
 if __name__ == '__main__':
 	import sys
 	if len(sys.argv) != 2:
-		print "Usage: python archive_leginondb.py <project id number>"
-		print ""
-		print "sinedon.cfg should include a module"
-		print "[importdata]"
-		print "db: writable_archive_database"
+		print("Usage: python archive_leginondb.py <project id number>")
+		print("")
+		print("sinedon.cfg should include a module")
+		print("[importdata]")
+		print("db: writable_archive_database")
 		
 		sys.exit()
 	projectid = int(sys.argv[1])

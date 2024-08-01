@@ -25,7 +25,7 @@ class ShowCalibrationQuery(object):
 
 	def validateInput(self, params):
 		if len(params) != 4:
-			print "Usage showcal.py source_database_hostname source_camera_hosthame camera_name"
+			print("Usage showcal.py source_database_hostname source_camera_hosthame camera_name")
 			self.close(1)
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:
@@ -35,19 +35,19 @@ class ShowCalibrationQuery(object):
 	def getSourceCameraInstrumentData(self, from_hostname,from_camname):
 		results = leginondata.InstrumentData(hostname=from_hostname,name=from_camname).query(results=1)
 		if not results:
-			print "ERROR: incorrect hostname...."
+			print("ERROR: incorrect hostname....")
 			r = leginondata.InstrumentData(name=from_camname).query(results=1)
 			if r:
-				print "  Try %s instead" % r[0]['hostname']
+				print(("  Try %s instead" % r[0]['hostname']))
 			else:
-				print "  No %s camera found" % from_camname
+				print(("  No %s camera found" % from_camname))
 			sys.exit()
 
 		sourcecam = results[0]
 		return sourcecam
 
 	def printQuery(self, q):
-		print q
+		print(q)
 		return
 
 	def getMags(self):
@@ -103,11 +103,11 @@ class ShowCalibrationQuery(object):
 		self.printStageModelCalibrationQueries(mags)
 		self.printMatrixCalibrationQueries(mags)
 
-		raw_input('hit enter when ready to quit')
+		eval(input('hit enter when ready to quit'))
 
 	def close(self, status):
 		if status:
-			print "Exit with Error"
+			print("Exit with Error")
 
 if __name__=='__main__':
 	app = ShowCalibrationQuery(sys.argv)

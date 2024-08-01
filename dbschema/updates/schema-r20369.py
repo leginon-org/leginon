@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import baseSchemaClass
+from . import baseSchemaClass
 from sinedon import directq
 from leginon import leginondata
 

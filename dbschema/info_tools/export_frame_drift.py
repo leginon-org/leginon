@@ -37,14 +37,14 @@ class DDExporter(export_targets.Exporter):
 			parent_preset = target0['image']['preset']['name']
 			# This will prevent it from descending further.
 			is_parent = True
-			if parent_preset not in self.targetlist.keys():
+			if parent_preset not in list(self.targetlist.keys()):
 				self.targetlist[parent_preset] = []
 			if target0.dbid not in self.targetlist[parent_preset]:
 				drift = self.getDDResult(img)
 				line = '%d\t%d_%d' % (img.dbid, target0['image'].dbid, target0['number'])
 				if drift:
 					#values
-					drift_str = map((lambda x: '%.4f' % x), drift)
+					drift_str = list(map((lambda x: '%.4f' % x), drift))
 					frame_time_s = img['camera']['frame time']/1000.0
 					line += '\t%.4f\t%s' % (frame_time_s, ','.join(drift_str))
 				else:
@@ -58,8 +58,8 @@ class DDExporter(export_targets.Exporter):
 		self.result_title ='ChildImageId\tTargetId_TargetNumber\tFrame_Time\tDrifts_between_Frames_in_Angstrom'
 
 if __name__=='__main__':
-	session_name = raw_input('Which session ? ')
-	base_path = raw_input('Where to save under ? (default: ./%s) ' % session_name)
+	session_name = eval(input('Which session ? '))
+	base_path = eval(input('Where to save under ? (default: ./%s) ' % session_name))
 	if not base_path:
 		base_path = './%s' % session_name
 	app = DDExporter(session_name, base_path)
