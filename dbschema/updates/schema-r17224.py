@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import baseSchemaClass
+from . import baseSchemaClass
 from leginon import leginondata
 
 class SchemaUpdate17224(baseSchemaClass.SchemaUpdate):
@@ -31,18 +31,18 @@ class SchemaUpdate17224(baseSchemaClass.SchemaUpdate):
 		camq=leginondata.CameraEMData(ccdcamera=decameradata,dimension=dim)
 		camq['save frames'] = True
 		imageq = leginondata.AcquisitionImageData(camera=camq)
-		print 'Query all DE12 images.  This may take some time...'
+		print('Query all DE12 images.  This may take some time...')
 		images = imageq.query()
-		print 'Total of %d images' % (len(images),)
+		print(('Total of %d images' % (len(images),)))
 		for image in images:
 			if image['corrector plan']:
 				continue
 			for key in ordered_keys:
 				if image.timestamp > pairs[key][1] and image.timestamp < pairs[key][0]:
-					print key,image.dbid,image['filename'],image.timestamp
+					print((key,image.dbid,image['filename'],image.timestamp))
 					status = self.leginon_dbupgrade.updateColumn('AcquisitionImageData','REF|CorrectorPlanData|corrector plan','%d' % plans[key].dbid,'`DEF_id`=%d' % image.dbid,True)
 					if not status:
-						print break_from_failed_update
+						print(break_from_failed_update)
 		
 if __name__ == "__main__":
 	update = SchemaUpdate17224()

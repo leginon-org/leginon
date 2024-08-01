@@ -10,16 +10,16 @@ class CopyCameraCal(object):
 		try:
 			from_cam, to_cam =self.readCameras()
 			self.setInstrument(from_cam, to_cam)
-		except Exception, e:
-			print e.message
+		except Exception as e:
+			print((e.message))
 			self.close()
 
 	def setCommit(self,value):
 		self.commit = value
 
 	def readCameras(self):
-		cam1 = raw_input('Enter camera name to import from: ')
-		cam2 = raw_input('Enter camera name to export to: ')
+		cam1 = eval(input('Enter camera name to import from: '))
+		cam2 = eval(input('Enter camera name to export to: '))
 		if not cam1 or not cam2:
 			raise ValueError('Missing a camera name')
 		return cam1, cam2
@@ -35,10 +35,10 @@ class CopyCameraCal(object):
 	def getInstrumentData(self,cam_name):
 		results = leginondata.InstrumentData(hostname=self.hostname,name=cam_name).query(results=1)
 		if not results:
-			print "ERROR: camera not found at host...."
+			print("ERROR: camera not found at host....")
 			r = leginondata.InstrumentData(name=cam_name).query(results=1)
 			if r:
-				print "  Try one of these instead: %s" % (map((lambda x: x['hostname']),r),)
+				print(("  Try one of these instead: %s" % (list(map((lambda x: x['hostname']),r)),)))
 				raise ValueError("  %s camera not found" % cam_name)
 		camdata = results[0]
 		return camdata
@@ -46,12 +46,12 @@ class CopyCameraCal(object):
 	def insertDest(self, newdata):
 		if self.commit:
 			newdata.insert()
-			print "inserted"
+			print("inserted")
 		else:
 			return
 
 	def confirmTEM(self, temdata):
-		answer = raw_input('Is %s the tem hostname coupled with the cameras (y/n) ?' % (temdata['hostname']))
+		answer = eval(input('Is %s the tem hostname coupled with the cameras (y/n) ?' % (temdata['hostname'])))
 		if answer in 'nN':
 			raise ValueError('Wrong tem chosen')
 
@@ -77,7 +77,7 @@ class CopyCameraCal(object):
 				pixelsize = caldata['pixelsize']
 				pixelsize /= self.pixelsize_scale
 				newdata['pixelsize'] = pixelsize
-				print 'PixelSizeCalibrationData',newdata['magnification'],newdata['pixelsize']
+				print(('PixelSizeCalibrationData',newdata['magnification'],newdata['pixelsize']))
 				self.insertDest(newdata)
 
 		#StageModelCalibrationData
@@ -86,7 +86,7 @@ class CopyCameraCal(object):
 			if results:
 				newdata = leginondata.StageModelCalibrationData(initializer=results[0])
 				newdata['ccdcamera'] = destcam
-				print 'StageModelCalibrationData', newdata['period']
+				print(('StageModelCalibrationData', newdata['period']))
 				self.insertDest(newdata)
 
 			for mag in magsdata['magnifications']:
@@ -97,7 +97,7 @@ class CopyCameraCal(object):
 					newdata = leginondata.StageModelMagCalibrationData(initializer=results[0])
 					newdata['ccdcamera'] = destcam
 					newdata['mean'] /= self.pixelsize_scale 
-					print 'StageModelMagCalibrationData', newdata['magnification'],newdata['mean']
+					print(('StageModelMagCalibrationData', newdata['magnification'],newdata['mean']))
 					self.insertDest(newdata)
 
 		for mag in magsdata['magnifications']:
@@ -113,25 +113,25 @@ class CopyCameraCal(object):
 					matrix = caldata['matrix']
 					matrix /= self.pixelsize_scale
 					newdata['matrix'] = matrix
-					print 'MatrixCalibrationData', newdata['type'],newdata['magnification'],newdata['matrix'][0,0]
+					print(('MatrixCalibrationData', newdata['type'],newdata['magnification'],newdata['matrix'][0,0]))
 					self.insertDest(newdata)
 
 	def confirmInsert(self):
-		answer = raw_input('Ready to insert ? (y/n/Y/N) ')
+		answer = eval(input('Ready to insert ? (y/n/Y/N) '))
 		if answer in 'y/Y':
 			return True
 		else:
 			return False
 
 	def close(self):
-		print 'closing'
+		print('closing')
 		sys.exit()
 
 if __name__=='__main__':
 	if len(sys.argv) < 3:
-		print "This program copies existing camera matrix and stage model calibrations to another camera at the same plane"
-		print "Usage copy_cam_cal.py hostname high_tension"
-		print "high tension is an integer in volts, i.e., 200000"
+		print("This program copies existing camera matrix and stage model calibrations to another camera at the same plane")
+		print("Usage copy_cam_cal.py hostname high_tension")
+		print("high tension is an integer in volts, i.e., 200000")
 		sys.exit()
 
 	hostname = sys.argv[1]

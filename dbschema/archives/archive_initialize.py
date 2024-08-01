@@ -11,8 +11,8 @@ import sinedon
 
 def checkSinedon():
 	if hasattr(sinedon.dbdatakeeper.DBDataKeeper,'initImported'):
-		print "sinedon must be imported from NON-myami-dbcopy branch"
-		print "currently from %s",sinedon.__file__
+		print("sinedon must be imported from NON-myami-dbcopy branch")
+		print(("currently from %s",sinedon.__file__))
 		sys.exit(1)
 
 class UserSearcher(object):
@@ -32,12 +32,12 @@ class UserSearcher(object):
 		'''
 		get dbid from a list of data object that may contain None.
 		'''		
-		valid_objects = filter(lambda x: x is not None,datalist)
-		return map((lambda x: x.dbid),valid_objects)
+		valid_objects = [x for x in datalist if x is not None]
+		return list(map((lambda x: x.dbid),valid_objects))
 		
 	def getOwnerUserId(self):
 		owners = projectdata.projectowners(project=self.project).query()
-		users = map((lambda x: x['user']),owners)
+		users = list(map((lambda x: x['user']),owners))
 		return self.getIdFromDataList(users)
 		
 	def getSharerUserId(self):
@@ -47,7 +47,7 @@ class UserSearcher(object):
 			if session is None or session['name'] != '14may29anchitestA7':
 				continue
 			sharers = projectdata.shareexperiments(experiment=session).query()
-			users = map((lambda x: x['user']),sharers)
+			users = list(map((lambda x: x['user']),sharers))
 			allsharers.extend(self.getIdFromDataList(users))
 		return allsharers
 		
@@ -63,7 +63,7 @@ class UserSearcher(object):
 if __name__=="__main__":
 	import sys
 	if len(sys.argv) != 2:
-		print "Usage: python archive_initialize.py <project id number>"
+		print("Usage: python archive_initialize.py <project id number>")
 		sys.exit()
 	checkSinedon()
 	projectid = int(sys.argv[1])

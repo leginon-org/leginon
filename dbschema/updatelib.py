@@ -20,7 +20,7 @@ class UpdateLib:
 		self.project_dbupgrade = project_dbupgrade
 		self.branch_name = gitlib.getCurrentBranch()
 		if msg is True:
-			print "Branch name '%s'"%(self.branch_name)
+			print(("Branch name '%s'"%(self.branch_name)))
 		self.commit_count = self.getCommitCount(msg=msg)
 		self.db_revision = self.getDatabaseRevision(msg=msg)
 		self.db_branch = self.getDatabaseBranch(msg=msg)
@@ -32,25 +32,25 @@ class UpdateLib:
 			idlist = []
 			for s in sdata:
 				idlist.append(s['schemaid'])
-			print idlist
+			print(idlist)
 			return True
 		# perform upgrade
 		self.versionControlSchemaUpgrade()
 
 	def versionControlSchemaUpgrade(self):
-		print "update schema table in database from legacy version"
+		print("update schema table in database from legacy version")
 		last_revision = self.getDatabaseRevision(msg=False)
 		db_branch = self.getDatabaseBranch(msg=False)
 		if db_branch != self.branch_name:
-			print "new branch: reset revision"
+			print("new branch: reset revision")
 			last_revision = self.getBranchResetRevision(self.branch_name)
 		if last_revision == 0:
-			print "first ever update: reset revision"
+			print("first ever update: reset revision")
 			last_revision = self.getBranchResetRevision(self.branch_name)
 		tag_number_list = self.getAvailableTagsForBranch()
 		for tag_number in tag_number_list:
 			if tag_number < last_revision:
-				print "putting schema update %d into database"%(tag_number)
+				print(("putting schema update %d into database"%(tag_number)))
 				self.legacyAddUpdateToSchemaTable(tag_number)
 
 	def legacyAddUpdateToSchemaTable(self, schema_number):
@@ -202,13 +202,13 @@ class UpdateLib:
 			# Only svn checkout have integer revision number
 			commit_count = int(gitlib.getCurrentCommitCount())
 			if msg is True:
-				print '\033[36mCommit count is %s\033[0m' % commit_count
+				print(('\033[36mCommit count is %s\033[0m' % commit_count))
 			return commit_count
 		except:
 			release_revision = self.getReleaseRevisionFromXML(module_path)
 			if release_revision:
 				if msg is True:
-					print '\033[36mRelease revision is %s\033[0m' % release_revision
+					print(('\033[36mRelease revision is %s\033[0m' % release_revision))
 				return release_revision
 			else:
 				# For unknown releases, assume head revision
@@ -235,14 +235,14 @@ class UpdateLib:
 		schemadatas = schemaquery.query()
 		if len(schemadatas) == 0:
 			#git update has never been applied
-			print "getDatabaseRevisionOLD()"
+			print("getDatabaseRevisionOLD()")
 			return self.getDatabaseRevisionOLD()
 		maxSchemaNumber = -1
 		for data in schemadatas:
 			schemaid = data['schemaid']
 			maxSchemaNumber = max(maxSchemaNumber, schemaid)
 		if msg:
-			print '\033[36mDatabase recorded revision is %s\033[0m' % maxSchemaNumber
+			print(('\033[36mDatabase recorded revision is %s\033[0m' % maxSchemaNumber))
 		return maxSchemaNumber
 
 	def getDatabaseRevisionOLD(self, msg=False):
@@ -274,7 +274,7 @@ class UpdateLib:
 		'''
 		revision_in_database = self.getDatabaseRevisionByBranch()
 		if checkout_revision <= revision_in_database:
-			print '\033[35mDatabase revision log up to date, Nothing to do\033[0m'
+			print('\033[35mDatabase revision log up to date, Nothing to do\033[0m')
 			return False
 		schema_revisions = self.getBranchUpdateSequence()
 		schema_revisions.sort()
@@ -287,7 +287,7 @@ class UpdateLib:
 		if minimal_revision_in_database <= revision_in_database:
 			return True
 		else:
-			print '\033[35mYou must successfully run schema-r%d.py first\033[0m' % (minimal_revision_in_database)
+			print(('\033[35mYou must successfully run schema-r%d.py first\033[0m' % (minimal_revision_in_database)))
 			return False
 
 	def getDatabaseRevisionByBranch(self,msg=False):
@@ -327,7 +327,7 @@ class UpdateLib:
 			# this module does not exist. no update
 			return False
 		if my_class.reRunOnBranchUpgrade is False:
-			print "reRunOnBranchUpgrade"
+			print("reRunOnBranchUpgrade")
 			return False
 
 		#update has been done, but not on this branch
@@ -343,7 +343,7 @@ class UpdateLib:
 		xmlpathpieces = pieces[:-1]
 		xmlpathpieces.extend(['myamiweb','xml','projectDefaultValues.xml'])
 		xmlfilepath = '/'.join(xmlpathpieces)
-		print '\033[35mGetting release revision from %s\033[0m' % xmlfilepath
+		print(('\033[35mGetting release revision from %s\033[0m' % xmlfilepath))
 		curkey = None
 		installdata = {}
 		try:
@@ -389,7 +389,7 @@ class UpdateLib:
 		selectq = " SELECT * FROM `install` WHERE `key`='resetfrom'"
 		values = self.project_dbupgrade.returnCustomSQL(selectq)
 		if values:
-			print int(values[0][1])
+			print((int(values[0][1])))
 			return int(values[0][1])
 		else:
 			return False

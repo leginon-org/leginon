@@ -76,7 +76,7 @@ if __name__ == "__main__":
 		if appiondbname is None:
 			continue
 		elif not projectdb.databaseExists(appiondbname):
-			print "\033[31merror database %s does not exist\033[0m"%(appiondbname)
+			print(("\033[31merror database %s does not exist\033[0m"%(appiondbname)))
 			time.sleep(1)
 			continue
 		if apProject.setDBfromProjectId(projectid, die=False):

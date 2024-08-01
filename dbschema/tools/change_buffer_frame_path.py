@@ -71,7 +71,7 @@ class BufferFramePathChanger(scriptrun.ScriptRun):
 		return results[0]['ccdcamera']
 
 	def run(self):
-		print('Updating BufferFramePath id=%d ...' % self.frame_path_data.dbid)
+		print(('Updating BufferFramePath id=%d ...' % self.frame_path_data.dbid))
 		query = "update BufferFramePathData set `REF|BufferHostData|host`='%d', `buffer frame path`='%s' where `DEF_id`=%d" % (self.new_host_data.dbid, self.params['new_path'], self.frame_path_data.dbid)
 		directq.complexMysqlQuery('leginondata',query)
 		print('DONE')

@@ -15,7 +15,7 @@ def confirmDBHost():
 	db_params = sinedon.getConfig('leginondata')
 	db_host = db_params['host']
 	db_name = db_params['db']
-	answer=raw_input('Are you ready to import to %s: %s? (Y/y/N/n)' % (db_host, db_name))
+	answer=eval(input('Are you ready to import to %s: %s? (Y/y/N/n)' % (db_host, db_name)))
 	if answer.lower() != 'y':
 		sys.exit()
 
@@ -25,12 +25,12 @@ class Importer(object):
 	'''
 	json_dir = 'unknown'
 	def __init__(self):
-		print('--------Working on %s-------' % self.json_dir)
+		print(('--------Working on %s-------' % self.json_dir))
 		self.db_params = sinedon.getConfig('leginondata')
 		self.db_host=self.db_params['host']
 		dir0 = os.path.abspath(os.path.curdir)
 		if not os.path.isdir(self.json_dir):
-			print('Error: no %s directory with json files' % self.json_dir)
+			print(('Error: no %s directory with json files' % self.json_dir))
 			return
 		os.chdir(self.json_dir)
 		self.runAll()
@@ -43,7 +43,7 @@ class ViewerTableCreater(object):
 	def __init__(self):
 		self.db_params = sinedon.getConfig('leginondata')
 		self.db_host=self.db_params['host']
-		if 'engine' in self.db_params.keys() and self.db_params['engine'] != '':
+		if 'engine' in list(self.db_params.keys()) and self.db_params['engine'] != '':
 			self.db_engine = self.db_params['engine']
 		else:
 			self.db_engine = 'MyISAM'
@@ -166,7 +166,7 @@ class CalibrationImporter(Importer):
 				app = import_leginon_cal.CalibrationJsonLoader(['',self.db_host, c])
 				app.run()
 			except KeyError as e:
-				print('Warning: Skipped %s: %s' % (c, e))
+				print(('Warning: Skipped %s: %s' % (c, e)))
 				continue
 
 class ReferenceImporter(Importer):
@@ -214,7 +214,7 @@ class AppImporter(Importer):
 				self.importSettings(jsonfile)
 
 	def importXml(self,xmlfile):
-		print('***importing Application from %s' % xmlfile)
+		print(('***importing Application from %s' % xmlfile))
 		app = importexport.ImportExport(**self.db_params)
 		app.importApplication(xmlfile)
 
@@ -265,7 +265,7 @@ def mysqlReminder():
 		msg = 'mysql -h %s -u %s -p%s %s < ./tables/%s.sql' % (p['host'],p['user'],p['passwd'],p['db'], name)
 		print(msg)
 	print('---------------')
-	answer=raw_input('Did you import with the above mysql commands ? (Y/y/N/n) ')
+	answer=eval(input('Did you import with the above mysql commands ? (Y/y/N/n) '))
 	if answer.lower() != 'y':
 		sys.exit(0)
 

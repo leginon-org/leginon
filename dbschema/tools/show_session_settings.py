@@ -33,10 +33,10 @@ class SettingsNode(object):
 		del self.settings['name']
 
 	def displaySettings(self):
-		keys = self.settings.keys()
+		keys = list(self.settings.keys())
 		keys.sort()
 		for k in keys:
-			print("%s\t%s" % (k,self.settings[k]))
+			print(("%s\t%s" % (k,self.settings[k])))
 
 if __name__=='__main__':
 	import sys

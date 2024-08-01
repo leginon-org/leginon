@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import baseSchemaClass
+from . import baseSchemaClass
 from leginon import leginondata, ddinfo
 
 class SchemaUpdate17916(baseSchemaClass.SchemaUpdate):

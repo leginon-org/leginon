@@ -13,8 +13,8 @@ if __name__ == "__main__":
 	projectdb = dbupgrade.DBUpgradeTools('projectdata', drop=True)
 	leginondb = dbupgrade.DBUpgradeTools('leginondata', drop=False)
 
-	print "\nWould you like to back up the database to local file before upgrading?"
-	answer = raw_input('Yes/No (default=Yes): ')
+	print("\nWould you like to back up the database to local file before upgrading?")
+	answer = eval(input('Yes/No (default=Yes): '))
 	if not answer.lower().startswith('n'):
 		leginondb.backupDatabase("leginondb.sql", data=True)
 		projectdb.backupDatabase("projectdb.sql", data=True)
@@ -227,7 +227,7 @@ if __name__ == "__main__":
 		
 			leginondb.executeCustomSQL(updateq)
 		else:
-			print "Can not set administrator group privilege"
+			print("Can not set administrator group privilege")
 		#===================	
 		#
 		# set all group privileges that are null to data user privilege
@@ -268,7 +268,7 @@ if __name__ == "__main__":
 	
 				leginondb.executeCustomSQL(updateq)
 		else:
-			print "privilege level for general users not set"
+			print("privilege level for general users not set")
 
 		# update shareexperiments
 	if projectdb.tableExists('shareexperiments') and projectdb.getNumberOfRows('shareexperiments') and projectdb.columnExists('shareexperiments','experimentId'):

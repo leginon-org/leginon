@@ -29,24 +29,24 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 
 	def insertAllData(self):
 		for datadict in self.alldata:
-			classname = datadict.keys()[0]
+			classname = list(datadict.keys())[0]
 			kwargs = datadict[classname]
 			q = self.makequery(classname,kwargs)
-			print self.cameradata
-			if 'ccdcamera' in q.keys():
+			print((self.cameradata))
+			if 'ccdcamera' in list(q.keys()):
 				q['ccdcamera'] = self.cameradata
-			if 'tem' in q.keys():
+			if 'tem' in list(q.keys()):
 				q['tem'] = self.temdata
 			checkq = q.copy()
-			if 'session' in q.keys():
+			if 'session' in list(q.keys()):
 				q['session'] = self.session
 			# This is a forced insert so it is the most recent record
 			q.insert(force=True)
-			print 'insert %s dbid=%d' % (classname, q.dbid)
+			print(('insert %s dbid=%d' % (classname, q.dbid)))
 
 	def validateInput(self, params):
 		if len(params) != 3:
-			print "Usage import_leginon_presets.py database_hostname tem_camera_presets_json_file"
+			print("Usage import_leginon_presets.py database_hostname tem_camera_presets_json_file")
 			self.close(1)
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:
@@ -61,16 +61,16 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 	def getCameraInstrumentData(self, hostname,camname):
 		results = leginondata.InstrumentData(hostname=hostname,name=camname).query(results=1)
 		if not results:
-			print "ERROR: incorrect hostname...."
+			print("ERROR: incorrect hostname....")
 			r = leginondata.InstrumentData(name=camname).query(results=1)
 			if r:
-				print "  Try rename the json file to %s+%s.json instead to match camera host" % (r[0]['hostname'], camname)
+				print(("  Try rename the json file to %s+%s.json instead to match camera host" % (r[0]['hostname'], camname)))
 			else:
-				print "  No %s camera found" % camname
+				print(("  No %s camera found" % camname))
 			sys.exit()
 
 		cam = results[0]
-		print cam.dbid
+		print((cam.dbid))
 		return cam
 
 	def getTemInstrumentData(self, tem_host, tem_name):
@@ -80,17 +80,17 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			t = r[0]['tem']
 			return t
 		else:
-			print "No tem/camera pair with pixel size calibration found"
+			print("No tem/camera pair with pixel size calibration found")
 			results = leginondata.InstrumentData().query()
 			tems = []
 			for r in results:
 				if r['cs']:
 					tems.append(r)
 			for t in tems:
-				answer = raw_input(' Is %s %s the tem to import calibration ? Y/y/N/n' % (t['hostname'], t['name']))
+				answer = eval(input(' Is %s %s the tem to import calibration ? Y/y/N/n' % (t['hostname'], t['name'])))
 				if answer.lower() == 'y':
 					return t
-			print "  No tem found"
+			print("  No tem found")
 			sys.exit()
 
 	def isTemInSessionPreset(self, session):
@@ -112,7 +112,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			admin_user = ur[0]
 		else:
 			# do not process without administrator.
-			print " Need administrator user to import"
+			print(" Need administrator user to import")
 			self.close(True)
 		q = leginondata.SessionData(user=admin_user, name=self.session_name)
 		r = q.query(timelimit='-90 0:0:0') # twenty day limit
@@ -127,10 +127,10 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 			q['hidden'] = True
 			q.insert(force=True)
 			self.session = q
-		print 'Using Session %s to import' % self.session['name']
+		print(('Using Session %s to import' % self.session['name']))
 
 	def printQuery(self, q):
-		print q
+		print(q)
 		return
 
 	def run(self):
@@ -138,9 +138,9 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		self.insertAllData()
 
 	def close(self, status):
-		raw_input('hit enter when ready to quit')
+		eval(input('hit enter when ready to quit'))
 		if status:
-			print "Exit with Error"
+			print("Exit with Error")
 			sys.exit(1)
 
 if __name__=='__main__':

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import datetime
-import baseSchemaClass
+from . import baseSchemaClass
 from appionlib import appiondata
 from leginon import projectdata
 

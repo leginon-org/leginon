@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import baseSchemaClass
+from . import baseSchemaClass
 from leginon import leginondata, ddinfo
 
 class SchemaUpdate17812(baseSchemaClass.SchemaUpdate):
@@ -19,7 +19,7 @@ class SchemaUpdate17812(baseSchemaClass.SchemaUpdate):
 			if asettings:
 				asettingsdata = asettings[0]
 				if asettingsdata['adjust for transform'] == 'no':
-					print asettingsdata.dbid,asettingsdata['session']['name'],asettingsdata['session']['user']['username']
+					print((asettingsdata.dbid,asettingsdata['session']['name'],asettingsdata['session']['user']['username']))
 					self.leginon_dbupgrade.updateColumn('AcquisitionSettingsData', 'adjust for transform',"'one'",'`DEF_id`=%d' % asettingsdata.dbid,True)
 		
 if __name__ == "__main__":

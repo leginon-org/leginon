@@ -28,7 +28,7 @@ class AppionPathChange(object):
 		self.new_parent_path = new_parent_path
 
 	def queryOldPath(self):
-		print('Change apPath in database %s' % self.apdbname)
+		print(('Change apPath in database %s' % self.apdbname))
 		query = "Select DEF_id as dbid, path from %s.ApPathData where path like '%s%%'" % (self.apdbname, self.old_parent_path)
 		print(query)
 		return directq.complexMysqlQuery('appiondata',query)
@@ -62,7 +62,7 @@ if __name__ == '__main__':
 	app.setOldParentPath(old_parent)
 	app.setNewParentPath(new_parent)
 	old_path_list = app.queryOldPath()
-	print('Found %d records' % (len(old_path_list)))
+	print(('Found %d records' % (len(old_path_list))))
 	if len(old_path_list):
 		print('do it')
 		app.updatePath(old_path_list)
