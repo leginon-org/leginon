@@ -50,6 +50,7 @@ $presets = $leginondata->getDataTypes($sessionId);
 </tr>
 <?php
 foreach ($presets as $preset) {
+    if (count($presets) > 1 && $preset == 'manual') continue;
 	echo "<tr>";
 	echo "<td>";
 	echo "- Mean & Stdev for Preset $preset"; 

@@ -12,6 +12,10 @@ require_once "Mail.php";
 
 class authlib{
 
+	var $secret;
+	var $authcook;
+	var $server_url;
+	var $logout_url;
 	var $error = array (
 				 "passwd_not_match"=>"Passwords do not match each other",
 				 "passwd_short"=>"Password is too short. Minimum is 3 valid characters.",
@@ -83,10 +87,6 @@ class authlib{
 
 
 			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
-
-			if (!get_magic_quotes_gpc()) {
-				$username=addslashes($username);
-			}
 
 			$q="select DEF_id from UserData where username = '$username'";
 			$query = $dbc->SQLQuery($q);
@@ -180,10 +180,6 @@ class authlib{
 			return $filterError;
 
 		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
-
-		if (!get_magic_quotes_gpc()) {
-			$username=addslashes($username);
-		}
 
 		$q="select DEF_id from UserData where username = '$username'";
 		$query = $dbc->SQLQuery($q);
@@ -374,10 +370,6 @@ class authlib{
 			$projectDB = DB_PROJECT;
 			$this->filter_username($username);
 
-			if (!get_magic_quotes_gpc()) {
-					$username = addslashes($username);
-			}
-
 			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 			
 			$q="select du.DEF_id, du.username, du.firstname, du.lastname, du.email, du.password, du.advanced,
@@ -451,10 +443,6 @@ class authlib{
 
 		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
-		if (!get_magic_quotes_gpc()) {
-			$password=addslashes($password);
-			$username=addslashes($username);
-		}
 		$password = md5($password);
 		if($username == 'Anonymous'){
 			$q="select DEF_id, DEF_timestamp from UserData where username = 'Anonymous'";
@@ -485,7 +473,9 @@ class authlib{
 	function is_logged () {
 
 		global $_COOKIE;
-		$cookie = $this->CookieDecrypt($_COOKIE[PROJECT_NAME]);
+		//FIXME: no session cookie;
+		//$cookie = $this->CookieDecrypt($_COOKIE[PROJECT_NAME]);
+		$cookie = array_key_exists(PROJECT_NAME, $_COOKIE) ? $this->CookieDecrypt($_COOKIE[PROJECT_NAME]):null;
                 if($cookie === null){
                         setcookie(PROJECT_NAME, "", time()-3600);
                         return false;

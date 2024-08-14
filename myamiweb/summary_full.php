@@ -249,6 +249,7 @@ if ($r) {
 	$n=0;
 	echo "<tr>";
 	foreach ($presets as $preset) {
+        if (count($presets) > 1 && $preset == 'manual') continue;
 		$sessionId=$expId;
 		
 		if ($n%3==0) {

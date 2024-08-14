@@ -34,7 +34,7 @@ $newimage = $leginondata->findImage($imgId, $preset);
 $imgId = $newimage['id'];
 
 $imageinfo = $leginondata->getImageInfo($imgId);
-$sessionId = $imageinfo[sessionId];
+$sessionId = $imageinfo['sessionId'];
 $filepath = $leginondata->getFilenameFromId($imgId,true);
 $imagerequest = new imageRequester();
 $fileinfo = $imagerequest->requestInfo($filepath);

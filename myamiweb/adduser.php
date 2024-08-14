@@ -42,7 +42,7 @@ if($_POST){
 	$advanced = ($_POST['advanced']=='on') ? 1:0;
 	$userinfo['advanced'] = $advanced;
 	
-	if(!haspass)
+	if(!$haspass)
 		$chpass=true;
 	if($_POST['submit']=='update'){
 		$updateProfile=$dbemauth->updateUser($userId, $username, $firstname, $lastname, $title, $institution, 

@@ -12,7 +12,7 @@ class histogram {
 	var $debug = false;
 	var $histogramdata = array();
 
-	function histogram($data) {
+	function __construct($data) {
 		$this->data = $data;
 		$this->minval = min($data);
 		$this->maxval = max($data);

@@ -5,12 +5,13 @@ require_once dirname(__FILE__).'/../config.php';
 require_once "inc/leginon.inc";
 
 class Tomography {
-	function Tomography($mysql) {
+	function __construct($mysql) {
 		$this->mysql = $mysql;
 		$this->leginon = new leginondata;
 	}
 
 	function getTiltSeriesSessions() {
+		if (!$this->mysql->SQLTableExists('TiltSeriesData')) return array();
 		$query = 'SELECT DISTINCT(s.`DEF_id`) AS `id`, '
 			.'UNIX_TIMESTAMP(DATE(s.`DEF_timestamp`)) AS time, '
 			.'s.name AS name, '
@@ -286,6 +287,7 @@ class Tomography {
 	}
 
 	function getAtlasName($imageId) {
+        if (empty($imageId)) return '';
 		$query = 'SELECT '
 			.'tlist.`label` AS label '
 			.'FROM ImageTargetListData tlist '
@@ -378,6 +380,7 @@ class Tomography {
 	}
 
 	function getTiltSeriesDose($tiltSeriesData) {
+        if (empty($tiltSeriesData)) return 'n/a';
 		$first_image_dose_data = $this->getImageDose($tiltSeriesData[0]['id']);
 		$total_exposure_time = 0;
 		foreach ($tiltSeriesData as $tdata) {

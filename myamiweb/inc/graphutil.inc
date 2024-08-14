@@ -119,6 +119,9 @@ function imagestringshadow($img, $size, $cx, $cy, $text, $col, $colshadow="") {
 
 class graphutil {
 
+    function __construct() {
+    }
+
 	function translatePoint(&$x,&$y,$angle,$cx,$cy)
 	{
 	   $x -= $cx;
@@ -147,7 +150,8 @@ class graphutil {
 
 class square extends graphutil {
 
-	function square($cx,$cy, $dim) {
+	function __construct($cx,$cy, $dim) {
+        parent::__construct();
 		$this->cx=$cx;
 		$this->cy=$cy;
 		$this->points = $this->getSquarePoints($cx,$cy, $dim);
@@ -178,7 +182,8 @@ class arrow extends graphutil {
 	var $arrow_data = array ();
 	var $size = 5;
 
-	function arrow($img, $x1,$y1, $x2, $y2, $col) {
+	function __construct($img, $x1,$y1, $x2, $y2, $col) {
+        parent::__construct();
 		$this->img = $img;
 		$this->col = $col;
 		$this->x1 = $x1;
@@ -324,7 +329,7 @@ function getMaxVector($vectors) {
 
 class Point2D {
 	var $x,$y;
-	function Point2D($x,$y) {
+	function __construct($x,$y) {
 		$this->x=$x;
 		$this->y=$y;
 	}

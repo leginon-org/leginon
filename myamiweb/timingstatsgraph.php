@@ -59,7 +59,6 @@ if (!$datay) {
 
 		$rdatax = $rdata['x'];
 		$rdatay = $rdata['y'];
-
 		$graph->SetScale("linlin");
 
 		$graph->img->SetMargin(40,30,20,40);
@@ -74,7 +73,8 @@ if (!$datay) {
 	} else {
 		$graph->title->Set("$data_name for preset $preset");
 		$graph->SetAlphaBlending();
-		$graph->SetScale("intlin",0,'auto'); //,$datax[0],$datax[$n-1]);
+		$graph->SetScale("intlin");
+		$graph->yaxis->scale->SetAutoMin(0);
 		$graph->xaxis->SetLabelFormatCallback('TimeCallback');
 		$graph->xaxis->SetLabelAngle(90);
 		$graph->xaxis->SetTitlemargin(25);

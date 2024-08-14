@@ -9,6 +9,7 @@
 
 require_once "inc/viewer.inc";
 require_once "inc/leginon.inc";
+if (!defined('PROCESSING')) exit;
 require_once "inc/particledata.inc";
 
 $imgId=$_GET['id'];

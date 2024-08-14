@@ -15,12 +15,14 @@ $height = $_GET['h'];
 $viewdata = $_GET['vd'];
 $viewsql = $_GET['vs'];
 
-
+$ids = array();
 $data = $leginondata->getDriftedImages($sessionId);
 foreach ($data as $d) {
 	$ids[]=$d['imageId'];
 }
-if ($dt = $leginondata->getDriftTime($ids)) {
+$datay=array();
+$total=0;
+if ($ids && $dt = $leginondata->getDriftTime($ids)) {
 	foreach ($dt as $d) {
 		$datay[] = $d['total'];
 		$total += $d['total'];

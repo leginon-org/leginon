@@ -5,7 +5,7 @@ class setLeginonDefaultValues {
 	var $sessionId;
 	var $mysqld;	// make sure this is using the leginon database
 	
-	function setLeginonDefaultValues($mysqld, $userId=null){
+	function __construct($mysqld, $userId=null){
 		
 		$this->mysqld = $mysqld;
 		
@@ -219,7 +219,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -258,7 +257,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -296,7 +294,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -335,7 +332,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -374,7 +370,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -413,7 +408,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -454,7 +448,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -493,7 +486,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -532,7 +524,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -571,7 +562,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -610,7 +600,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -649,7 +638,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -688,7 +676,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -727,7 +714,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -766,7 +752,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -805,7 +790,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -844,7 +828,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -883,7 +866,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -922,7 +904,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -966,7 +947,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -1009,7 +989,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -1052,7 +1031,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -1095,7 +1073,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -1138,7 +1115,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -1181,7 +1157,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -1224,7 +1199,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -1267,7 +1241,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -1310,7 +1283,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -1353,7 +1325,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -1396,7 +1367,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -2310,7 +2280,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -2362,7 +2331,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -2476,7 +2444,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -3253,7 +3220,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -3293,7 +3259,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -3335,7 +3300,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -3383,7 +3347,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
@@ -3522,7 +3485,6 @@ class setLeginonDefaultValues {
 		$data["bad stats response"] = "Continue";
 		$data["high mean"] = "65536";
 		$data["low mean"] = "50";
-		$data["emission off"] = "0";
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";

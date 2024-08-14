@@ -114,7 +114,7 @@ if ($imgId) {
 	$nptclsel = ($_GET['psel']) ? $_GET['psel'] : 0;
 	$displaynptcl = ($_GET['nptcl']) ? true : false;
 	$ptclparams= ($displaynptcl) ? trim($_GET['nptcl']) : false;
-	if ($ptclparams) { 
+	if (defined('PROCESSING') && $ptclparams) {
 			require_once "inc/image.inc";
 			require_once "inc/particledata.inc";
 

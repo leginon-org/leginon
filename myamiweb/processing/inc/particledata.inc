@@ -32,7 +32,7 @@ class particledata {
 					'xmipp'=>array('ApXmippCtfParamsData','xmipp_ctf_params'),
 					);
 
-	function particledata () {
+	function __construct () {
 		$this->mysql = new mysql(
 					DB_HOST,
 					DB_USER,
@@ -794,6 +794,7 @@ class particledata {
 	}
 
 	function getTiltSeries($sessionId) {
+		if (!$this->mysql->SQLTableExists(DB_LEGINON.".TiltSeriesData")) return array();
 		if($sessionId == NULL)
 			return array();
 		$query = "SELECT `DEF_id` as id, "
@@ -4127,6 +4128,7 @@ class particledata {
 
 	#--------- RECIPE BAKING FUNCTIONS---------------#
 	function getAllRecipeData() {
+		if (!$this->mysql->SQLTableExists("ApRecipeData")) return array();
 		# Return all recipe info
 		$q = "SELECT `DEF_id`, `name`, `description`, `ctfrunids`, "
 			."`REF|ApStackData|stack` as stackid, "
@@ -6397,6 +6399,7 @@ class particledata {
 	}
 	
 	function getCryosparcJobs($expId, $id=false) {
+		if (!$this->mysql->SQLTableExists("cryosparc")) return array();
 	    $q = "SELECT * from cryosparc WHERE expId = $expId";
 	    if ($id) $q.= " AND id = $id";
 	    return $this->mysql->getSQLResult($q);

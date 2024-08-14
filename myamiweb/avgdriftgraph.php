@@ -81,7 +81,8 @@ if (!$datax && !$datay) {
 
 		$graph->title->Set('Date: '.Date('Y-m-d',$datax[0]));
 		$graph->SetAlphaBlending();
-		$graph->SetScale("intlin",0,'auto'); 
+		$graph->SetScale("intlin");
+		$graph->yaxis->scale->SetAutoMin(0);
 		$graph->xaxis->SetLabelFormatCallback('TimeCallback');
 		$graph->xaxis->SetLabelAngle(90);
 		$graph->xaxis->SetTitlemargin(30);

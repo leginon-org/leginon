@@ -28,7 +28,7 @@ class formValidator{
 	var $validateObjs;
 	var $errorMessages;
 	
-	function formValidator(){
+	function __construct(){
 		
 		$this->validateObjs = array();
 		$this->errorMessages = array();
@@ -215,7 +215,7 @@ class formValidator{
 			}
 			
 			case 'abs_path':{
-				$result = $this->validateRegExp($validateObj->getVariableValue(), "#^/[\w/\-]*$#");
+				$result = $this->validateRegExp($validateObj->getVariableValue(), "#^/[\w/\./\-]*$#");
 				break;
 			}
 			

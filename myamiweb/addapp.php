@@ -15,33 +15,33 @@ if (privilege('groups') < 2)
 
 $sqlhosts = $SQL_HOSTS;
 $hostkeys = array_keys($sqlhosts);
-$applicationId = $_POST[applicationId];
-$exfromhostId = ($_POST[exportfromhostId]) ? $_POST[exportfromhostId] : current($hostkeys);
-$extohostId = ($_POST[exporttohostId]) ? $_POST[exporttohostId] : current($hostkeys);
-$im_hostId = ($_POST[import_hostId]) ? $_POST[import_hostId] : current($hostkeys);
+$applicationId = $_POST['applicationId'];
+$exfromhostId = ($_POST['exportfromhostId']) ? $_POST['exportfromhostId'] : current($hostkeys);
+$extohostId = ($_POST['exporttohostId']) ? $_POST['exporttohostId'] : current($hostkeys);
+$im_hostId = ($_POST['import_hostId']) ? $_POST['import_hostId'] : current($hostkeys);
 
 $leginondata->mysql->setSQLHost($SQL_HOSTS[$exfromhostId]);
 $applications = $leginondata->getApplications();
 $check_str = 'checked="checked"';
 $app_change_display = array();
 
-if ($_POST[format]) {
-	$xmlradiochecked = ($_POST[format]=="xml") ? $check_str : '';
-	$tableradiochecked = ($_POST[format]=="table") ? $check_str : '';
-	$hostradiochecked = ($_POST[format]=="host") ? $check_str : '';
-	$hideradiochecked = ($_POST[format]=="hide") ? $check_str : '';
-	$unhideradiochecked = ($_POST[format]=="unhide") ? $check_str : '';
-	$filechecked  = ($_POST[saveasfile]) ? 'checked="checked"' : '';
-	$allversionschecked  = ($_POST[all_versions]) ? 'checked="checked"' : '';
+if (array_key_exists('format',$_POST) && $_POST['format']) {
+	$xmlradiochecked = ($_POST['format']=="xml") ? $check_str : '';
+	$tableradiochecked = ($_POST['format']=="table") ? $check_str : '';
+	$hostradiochecked = ($_POST['format']=="host") ? $check_str : '';
+	$hideradiochecked = ($_POST['format']=="hide") ? $check_str : '';
+	$unhideradiochecked = ($_POST['format']=="unhide") ? $check_str : '';
+	$filechecked  = ($_POST['saveasfile']) ? 'checked="checked"' : '';
+	$allversionschecked  = ($_POST['all_versions']) ? 'checked="checked"' : '';
 } else {
 	$xmlradiochecked = $check_str;
 }
 
-if ($_POST[bt_export]) {
-	if ($_POST[applicationId]) {
+if ($_POST['bt_export']) {
+	if ($_POST['applicationId']) {
 		$appinfo = $leginondata->getApplicationInfo($applicationId);
 		$dumpapplication = $leginondata->dumpApplicationData($applicationId,'xml');
-		if ($_POST[format]=='xml' && $_POST[saveasfile]) {
+		if ($_POST['format']=='xml' && $_POST['saveasfile']) {
 			$filename = $appinfo['name'].'_'.$appinfo['version'].'.xml';
 			$leginondata->download($filename, $dumpapplication);
 			exit;
@@ -49,7 +49,7 @@ if ($_POST[bt_export]) {
 	}
 	if ( $hideradiochecked || $unhideradiochecked ) {
 		$hide_status = ( $hideradiochecked ) ? 1:0;
-		if ($_POST[applicationId]) {
+		if ($_POST['applicationId']) {
 			$app_ids_to_update = array($applicationId);
 			if ($allversionschecked)
 				$app_ids_to_update = $leginondata->getAllApplicationIdsOfSameName($applicationId);
@@ -59,9 +59,9 @@ if ($_POST[bt_export]) {
 	}
 }
 
-	if ($_POST[bt_import]) {
-	if ($filename = $_FILES[import_file][name])
-		$xmldata = $_FILES[import_file][tmp_name];
+	if ($_POST['bt_import']) {
+	if ($filename = $_FILES['import_file']['name'])
+		$xmldata = $_FILES['import_file']['tmp_name'];
 }
 
 admin_header();
@@ -209,13 +209,13 @@ From Host:
 
 </form>
 <?php
-if ($_POST[bt_export]) {
+if ($_POST['bt_export']) {
 	echo "<hr>";
-	if ($_POST[format]=="xml") {
+	if ($_POST['format']=="xml") {
 		echo "<pre>";
 		echo htmlspecialchars($dumpapplication);
 		echo "</pre>";
-	} else if ($_POST[format]=="table") {
+	} else if ($_POST['format']=="table") {
 		foreach ($leginondata->applicationtables as $table) {
 			echo "<b>".$table."</b>";
 			if (!$leginondata->mysql->SQLTableExists($table)) {
@@ -229,16 +229,16 @@ if ($_POST[bt_export]) {
 			display($r, True);
 		}
 		echo "<br>";
-	} else if ($_POST[format]=="host") {
+	} else if ($_POST['format']=="host") {
 		$xmldata=$dumpapplication;
-	} else if ($_POST[format]=="hide" || $_POST[format]=="unhide") {
+	} else if ($_POST['format']=="hide" || $_POST['format']=="unhide") {
 		foreach ($app_change_display as $display_str)
 			echo $display_str."<br>";
 	}
 } 
 if ($xmldata) {
 	$leginondata->mysql->setSQLHost($SQL_HOSTS[$extohostId]);
-	if ($_POST[bt_import])
+	if ($_POST['bt_import'])
 		$leginondata->mysql->setSQLHost($SQL_HOSTS[$im_hostId]);
 	$app = $leginondata->importApplication($xmldata);
 	echo $app;

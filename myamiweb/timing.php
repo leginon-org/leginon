@@ -21,7 +21,7 @@ checkExptAccessPrivilege($expId,'data');
 // $lastId = $leginondata->getLastSessionId();
 // $sessionId = (empty($_GET[Id])) ? $lastId : $_GET[sessionId];
 $sessioninfo = $leginondata->getSessionInfo($sessionId);
-$title = $sessioninfo[Name];
+$title = $sessioninfo['Name'];
 //$presets = $leginondata->getDatalabels($sessionId);
 $presets = $leginondata->getDataTypes($sessionId);
 $preset="hi3";
@@ -55,6 +55,7 @@ $timingstats = $leginondata->getTimingStats($expId);
 //print_r($timingstats);
 $tot_time=0;
 foreach ((array)$timingstats as $t) {
+    if ($t['name']=='manual') continue;
 	$images_time[$t['name']]=$t['time'];
 	$images_mean[$t['name']]=$t['mean'];
 	$images_stdev[$t['name']]=$t['stdev'];
@@ -120,6 +121,7 @@ echo "<tr>";
 <?php
 $presets = array_reverse($presets);
 foreach ($presets as $preset) {
+    if ($preset=='manual') continue;
 //	$preset = $preset['label'];
 	if (!$preset)
 		continue;

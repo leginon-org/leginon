@@ -5,10 +5,15 @@ require_once "inc/utilpj.inc.php";
 
 $project = new project();
 
-$projectId = ($_GET['projectId']) ? $_GET['projectId'] : $_POST['projectId'];
+$projectId = (array_key_exists('projectId',$_GET) && $_GET['projectId']) ? $_GET['projectId'] : (array_key_exists('projectId',$_POST) ? $_POST['projectId']:null);
 if (empty($projectId) || !($project->checkProjectExistsbyId($projectId))) {
 	$title='- new project';
 	$action='add';
+    $name= '';
+	$category = '';
+	$funding = '';
+    $short_description = '';
+    $long_description = '';
 } else {
 	$curproject = $project->getProjectInfo($projectId);
 
@@ -22,7 +27,7 @@ if (empty($projectId) || !($project->checkProjectExistsbyId($projectId))) {
 	$action='update';
 }
 
-if ($_POST['submit']) {
+if (array_key_exists('submit',$_POST) && $_POST['submit']) {
 	foreach($_POST as $k=>$v){
 			$v = trim($v);
 			$$k = addslashes($v);
@@ -32,7 +37,7 @@ if ($_POST['submit']) {
 		$result = $project->addProject($name, $short_description, $long_description, $category, $funding);
 	else if ($_POST['submit']=='update')
 		$result = $project->updateProject($projectId, $name, $short_description, $long_description, $category, $funding);
-		$location = ($_GET['ln']) ? $_GET['ln'] : "index.php";
+		$location = (array_key_exists('ln',$_GET) && $_GET['ln']) ? $_GET['ln'] : "index.php";
 
 } 
 project_header("Projects $title");
@@ -42,7 +47,7 @@ project_header("Projects $title");
 <p>
 
 <?php 
-if ($_POST['submit']) {
+if (array_key_exists('submit',$_POST) && $_POST['submit']) {
 	if (!empty($result)) {
 		echo '<p><font face="Arial, Helvetica, sans-serif" size="4" color="#FF2200">'.$result.'</font></p>';
 	}

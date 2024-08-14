@@ -17,15 +17,11 @@ $maxrate = (is_numeric($_POST['maxr'])) ? $_POST['maxr']
 #$slow = (is_numeric($_POST['slow'])) ? $_POST['slow'] 
 #		: (is_numeric($_GET['slow']) ? $_GET['slow'] : 0);
 
+$data = array();
 if ($driftdata = $leginondata->getDriftDataFromSessionId($sessionId)) {
-foreach ($driftdata as $drift) {
-	$id = $drift['imageId'];
+foreach ($driftdata[0] as $drift) {
+	$id = (int) $drift[0]['imageId'];
 	$data[$id] = $drift;
-}
-
-foreach ($data as $drift) {
-	$id = $drift['imageId'];
-	$t  = $drift['time'];
 }
 }
 // --- Set  experimentId

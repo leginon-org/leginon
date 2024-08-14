@@ -42,8 +42,20 @@ class viewer {
 	var $debug=false;
 
 	var $jsparams;
+    var $projectId=null;
+    var $sessionId=null;
+    var $imageId=null;
+    var $scopeId = null;
+    var $addfilesel="";
+    var $nbviewperrow=0;
+    var $addplaybackcontrol = false;
+	var $addplaybackjavascript = "";
+    var $addprojectsel = false;
+    var $addsessionsel = false;
+    var $addscopesel = false;
+    var $addautolabel = false;
 
-	function viewer() {
+	function __construct() {
 	}
 
 	function displayDebug() {
@@ -85,7 +97,7 @@ class viewer {
 			if ($project['id']==$this->projectId) $s='selected'; else $s='';
 			if ($project['age'] && $project['age'] < 30) $style="style='background-color: Beige;'"; else $style='';
 			$projectselector .= "<option $style value=".$project['id']." ".$s." >"
-						.substr($project[name],0,32)." (".$project['id'].")</option>".$this->crlf; 
+						.substr($project['name'],0,32)." (".$project['id'].")</option>".$this->crlf; 
 		}
 		$projectselector .= '</select>'.$this->crlf;
 		if ($currentproject) {
@@ -103,9 +115,9 @@ class viewer {
 	function addFilterSelector($filters=array()) {
 		$filterselector = '<select name="filterId" onchange="get_image_list()">'.$this->crlf;
 		foreach ($filters as $filter) {
-			if ($filter[id]==$this->filterId) $s='selected'; else $s='';
-			$filterselector .= '<option value='.$filter[id].' '.$s.' >'
-						.$filter[name].'</option>'.$this->crlf; 
+			if ($filter['id']==$this->filterId) $s='selected'; else $s='';
+			$filterselector .= '<option value='.$filter['id'].' '.$s.' >'
+						.$filter['name'].'</option>'.$this->crlf;
 		}
 		$filterselector .= '</select>'.$this->crlf;
 		$this->addfiltersel = $filterselector;
@@ -119,13 +131,13 @@ class viewer {
 				$selector .= '<option value="-1">List all sessions</option>'.$this->crlf;
 				break;
 			}
-			if ($session[id]==$this->sessionId) $s='selected'; else $s='';
+			if ($session['id']==$this->sessionId) $s='selected'; else $s='';
 			$maxlength=70;
-			if (strlen($session[name])>$maxlength) {
-				$session[name]=substr($session[name],0,$maxlength)."... ";
+			if (strlen($session['name'])>$maxlength) {
+				$session['name']=substr($session['name'],0,$maxlength)."... ";
 			}
-			$selector .= '<option value='.$session[id].' '.$s.' >'
-					.$session[name].'</option>'.$this->crlf;
+			$selector .= '<option value='.$session['id'].' '.$s.' >'
+					.$session['name'].'</option>'.$this->crlf;
 		}
 		$selector .= '</select>';
 		$selector .= '<input type="hidden" name="sessionIdmemo" value="'.$this->sessionId.'">';
@@ -142,9 +154,9 @@ class viewer {
 		if (is_array($scopes) && count($scopes) > 2) {
 			$selector = '<select name="scopeId" onchange="newexp()">'.$this->crlf;
 			foreach ((array)$scopes as $scope) {
-				if ($scope[id]==$this->scopeId) $s='selected'; else $s='';
-				$scope_alias = ($scope[description]) ? $scope[description]: $scope[hostname].'-'.$scope[name];
-				$selector .= '<option value='.$scope[id].' '.$s.' >'
+				if ($scope['id']==$this->scopeId) $s='selected'; else $s='';
+				$scope_alias = ($scope[description]) ? $scope[description]: $scope[hostname].'-'.$scope['name'];
+				$selector .= '<option value='.$scope['id'].' '.$s.' >'
 						.$scope_alias.'</option>'.$this->crlf;
 			}
 			$selector .= '</select>';
@@ -311,9 +323,9 @@ class viewer {
 		if ($size) $htmlsize = "size=$size";
 		$selector = '#images :'.count($filenames).'<br />';
 		$selector .= '<select style="width: 250px text-align:left" name="imageId" '.$htmlsize .' >'.$this->crlf;
-		$default = ($this->imageId) ? $this->imageId : $filenames[0][id];
+		$default = ($this->imageId) ? $this->imageId : $filenames[0]['id'];
 		foreach ((array)$filenames as $filename) {
-			$filestr = preg_replace('%[[:alnum:]]+_(.*)%', '\1', $filename[name]);
+			$filestr = preg_replace('%[[:alnum:]]+_(.*)%', '\1', $filename['name']);
 			$filestr = preg_replace('%_0*%', '_', $filestr);
 			$filestr = preg_replace('%^0*%', '', $filestr);
 			$filestr = preg_replace('%_v[0-2][0-9]_%', '_', $filestr);
@@ -322,8 +334,8 @@ class viewer {
 			$filestr = preg_replace('%hole%', 'hl', $filestr);
 			$filestr = preg_replace('%focus%', 'fc', $filestr);
 			$filestr = preg_replace('%.mrc%', '', $filestr);
-			if ($filename[id]==$default) $s='selected'; else $s='';
-				$selector .= '<option value='.$filename[id].' '.$s.' >'.$filestr.$this->crlf; 
+			if ($filename['id']==$default) $s='selected'; else $s='';
+				$selector .= '<option value='.$filename['id'].' '.$s.' >'.$filestr.$this->crlf;
 		}
 		$selector .= '</select>';
 		$this->addfilesel = $selector;
@@ -596,6 +608,88 @@ class view {
 	var $size=256;
 	var $displayview='true';
 	var $params;
+    var $addplaybackcontrol=false;
+    var $addplaybackjavascript="";
+    var $viewnb=0;
+    var $title="";
+    var $name="";
+    var $displayname="";
+    var $displaypresetselection=false;
+    var $displaypresetinfo=false;
+    var $displaycomment=false;
+    var $btdownload=null;
+    var $btinfo=null;
+    var $btscale=null;
+    var $bttarget=null;
+    var $bttag=null;
+    var $btfft=null;
+    var $btclose=null;
+    var $btnptcl=null;
+    var $btace=null;
+    var $btdeq=null;
+    var $btsort=null;
+    var $btdd=null;
+    var $btactvlrn=null;
+	var $displayscaleicon = true;
+	var $displaytargeticon = true;
+	var $displaytagicon = true;
+	var $displaynptclicon = true;
+	var $displayffticon = true;
+	var $displayaceicon = true;
+	var $displayinfoicon = true;
+	var $displayparticleicon = false;
+	var $displaydownloadicon = true;
+	var $displaydeqicon = false;
+	var $displaysorticon = false;
+	var $displayddicon = false;
+	var $displayactvlrnicon = false;
+	var $displaycloseicon = true;
+	var $displayadjustlink = true;
+	var $displayexportlink = true;
+	var $displayhidebt = true;
+	var $displayhideallbt = true;
+	var $displaynextbt = true;
+	var $displayexemplarbt = true;
+	var $displaygradient = true;
+	var $displayimage = true;
+	var $displayfilename = "0";
+	var $framecolor = ' class="bgcolor1" ';
+	var $menucolor = ' class="bgimg1" ';
+    var $presetscript='';
+    var $reportscript='';
+    var $dwdscript='';
+    var $histoscript='';
+    var $imagescript='';
+    var $commentscript='';
+    var $scale_st="false";
+    var $target_st="false";
+    var $tag_st="false";
+    var $nptcl_st="false";
+    var $dd_st="false";
+    var $btscalestate="false";
+    var $bttargetstate="false";
+    var $bttagstate="false";
+    var $btfftstate="false";
+    var $btnptclstate="false";
+    var $btddstate="false";
+    var $quality="80";
+    var $gradient="";
+    var $filter= "default";
+	var $fftbin= "a";
+	var $binning= "auto";
+	var $autoscale = "s;5";
+	var $loadjpg= "1";
+	var $cacheonly= "0";
+		// particle picking
+	var $ptclsel = "0";
+		// ctf estimation
+	var $jsacemethod= "1";
+	var $jsacerun= "-1";
+	var $jsacepar= "1";
+	var $jsaceopt= "2";
+		// tag?
+	var $jstagpar1 = "1";
+	var $jstagpar2 = "1";
 
 	function __construct($title, $name) {
 		global $VIEWNB;

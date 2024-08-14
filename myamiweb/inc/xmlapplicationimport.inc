@@ -22,6 +22,9 @@ class XMLImport {
 	var $fieldtypes;
 	var $fieldvalues;
 
+    function __construct() {
+    }
+
 	function importXML($inputdata) {
 		// --- try to read a XML file or a XML string
 		$data = (@is_file($inputdata)) ? implode("",file($inputdata)) : $inputdata;
@@ -108,7 +111,8 @@ class XMLImport {
 
 class XMLCalibrationImport extends XMLImport {
 
-	function XMLCalibrationImport($xmldata) {
+	function __construct($xmldata) {
+		parent::__construct();
 		$this->importXML($xmldata);
 		$this->XMLDefinition2SQL();
 		$this->XMLData2SQL();
@@ -168,7 +172,8 @@ class XMLCalibrationImport extends XMLImport {
 
 class XMLApplicationImport extends XMLImport {
 
-	function XMLApplicationImport($xmldata) {
+	function __construct($xmldata) {
+		parent::__construct();
 		$this->importXML($xmldata);
 		$this->XMLDefinition2SQL();
 		$this->XMLData2SQL();

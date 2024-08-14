@@ -31,6 +31,7 @@ require_once "inc/path.inc";
 
 class leginondata {
 
+	var $mysql;
 	var $crlf = "\n";
 	var $ffttypes = array('focpow', 'fft');
 	var $defaulttypes = array('all', 'atlas', 'exemplar', 'hidden','trash');
@@ -49,8 +50,9 @@ class leginondata {
 		'BindingSpecData',
 		'NodeSpecData'
 	);
+	var $sessions;
 
-	function leginondata() {
+	function __construct() {
 		$this->mysql = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 		if (!$this->mysql->checkDBConnection()) {
 			$this->mysql->dbError();
@@ -250,12 +252,15 @@ class leginondata {
 				$ids[] = "s.`Name` like '$n'";
 		}
 		$sqlwhere = "where (".join(" OR ", $ids).")";
-		if ($reject_projection === true)
+		if (false)
+		//if ($reject_projection === true)
 			// z projection images from tomography is not part of Leginon run.
 			// This part of the query is needed to ensure settings is only considered within
 			// data collection time frame for reverting settings per session.
 			// However, it slows down this general function too much.
 			// Therefore, it is only included in the query if asked specifically
+            // FIXME: we now use ScopeEMData instead of AcquisitionImageData for
+            // sessioninfo, this is no longer meaningful
 			$sqlwhere .= " and a.`label`!='projection'";
 
 		$q="select "
@@ -1685,10 +1690,12 @@ class leginondata {
 
 	function getViewerImageStatus($imgId) {
 		if (!$this->mysql->isTable('ViewerImageStatus'))
-			return null;
+			return;
+        if (!$imgId) return;
 		$q = 'select status from ViewerImageStatus '
 				.'where `REF|AcquisitionImageData|image` = '.$imgId.' ';
 		list($r) = $this->mysql->getSQLResult($q);
+        if (!$r) return;
 		return $r['status'];
 	}
 
@@ -1940,19 +1947,20 @@ class leginondata {
 						$index[$kname]['type'] = $row['Index_type'];
 			}
 
-			while(list($x, $columns) = @each($index))
+			foreach ($index as $x =>$columns)
 			{
-		if ($type=$columns['type'])
-			unset($columns['type']);
-		$full = ($type=='FULLTEXT') ? 'FULLTEXT ' : '';
-					 $schema_create .= "    <key>";
-					 if($x == "PRIMARY")
-							 $schema_create .= "PRIMARY KEY (" . implode($columns, ", ") . ")";
-					 elseif (substr($x,0,6) == "UNIQUE")
-							$schema_create .= "UNIQUE ".substr($x,7)." (" . implode($columns, ", ") . ")";
-					 else
-							$schema_create .= $full."KEY ".$x." (" . implode($columns, ", ") . ")";
-					 $schema_create .= "</key>$crlf";
+	
+				if ($type=$columns['type'])
+					unset($columns['type']);
+				$full = ($type=='FULLTEXT') ? 'FULLTEXT ' : '';
+				$schema_create .= "    <key>";
+				if($x == "PRIMARY")
+					$schema_create .= "PRIMARY KEY (" . implode(", ", $columns) . ")";
+				elseif (substr($x,0,6) == "UNIQUE")
+					$schema_create .= "UNIQUE ".substr($x,7)." (" . implode(", ",$columns) . ")";
+				else
+					$schema_create .= $full."KEY ".$x." (" . implode(", ",$columns) . ")";
+				$schema_create .= "</key>$crlf";
 			}
 
 			$schema_create .= "  </sqltable>$crlf";
@@ -2301,7 +2309,6 @@ class leginondata {
 		$this->sqldefinitions = $sqldef;
 		$this->sqlfieldtypes = $fieldtypes;
 		$this->sqlfieldvalues = $fieldvalues;
-
 		//--- Generate the tables
 		$this->mysql->SQLQueries($sqldef);
 		//--- Check if application exits
@@ -2634,7 +2641,7 @@ class leginondata {
 			left join StageModelCalibrationData s
 			on (s.axis=sm.axis and s.label = sm.label)
 			where m.label='$label' and m.axis='$axis' and s.`DEF_id`='$ModelId'
-			and (s.`DEF_timestamp`<= sm.`DEF_timestamp`+30 and s.`DEF_timestamp`>= sm.`DEF_timestamp`-30)";
+			and (s.`DEF_timestamp`<= sm.`DEF_timestamp`+120 and s.`DEF_timestamp`>= sm.`DEF_timestamp`-120)";
 		return $this->mysql->getSQLResult($q);
 	}
 
@@ -2964,6 +2971,7 @@ class leginondata {
 	}
 
 	function getZeroLossIceThickness($sessionId) {
+		if ( !$this->mysql->isTable('ZeroLossIceThicknessData') ) return false;
  		$q="SELECT "
 		. "a.DEF_id AS DEF_id, UNIX_TIMESTAMP(a.DEF_timestamp) AS unix_timestamp, filename, z.`slit mean`, z.`no slit mean`, z.thickness "
 		. "FROM "
@@ -2976,6 +2984,7 @@ class leginondata {
 	}
 
 	function getObjIceThickness($sessionId) {
+		if ( !$this->mysql->isTable('ObjIceThicknessData') ) return false;
  		$q="SELECT "
 		. "a.DEF_id AS DEF_id, UNIX_TIMESTAMP(a.DEF_timestamp) AS unix_timestamp, "
 		. "CONCAT(a.filename,'.mrc') AS filename, z.thickness, z.mfp, z.intensity, z.`vacuum intensity` "
@@ -2989,6 +2998,7 @@ class leginondata {
 	}
 
 	function getZeroLossIceThicknessfromImage($sessionId,$imgId) {
+		if ( !$this->mysql->isTable('ZeroLossIceThicknessData') ) return false;
  		$q="SELECT "
 		. " z.thickness "
 		. "FROM "
@@ -3001,6 +3011,7 @@ class leginondata {
 	}
 
 	function getObjIceThicknessfromImage($sessionId,$imgId) {
+		if ( !$this->mysql->isTable('ObjIceThicknessData') ) return false;
  		$q="SELECT "
 		. "z.thickness "
 		. "FROM "
@@ -3046,6 +3057,7 @@ class leginondata {
 		$presets = $this->getDataTypes($sessionId);
 		$diffarray = array();
 		foreach ($presets as $pname) {
+            if ($pname == 'manual') continue;
 			$diffarray[$pname] = $this->_getPresetTimes($sessionId, $pname, 1000);
 		}
 		return $this->_calculatePresetStats($diffarray);
@@ -3081,6 +3093,7 @@ class leginondata {
 	function _calculatePresetStats($diffarray) {
 		$retarray = array();
 		foreach ((array)$diffarray as $key=>$presetarray) {
+			if (count($presetarray) < 2) continue;
 			$res1 = array_stats($presetarray);
 			$retarray[$key]['name'] = $key;
 			$retarray[$key]['time'] = round($res1['mean'],3);
@@ -3099,6 +3112,7 @@ class leginondata {
 		// overhead from processing rejected targets nor autofilling etc.
 		$datatype=($preset) ? array($preset):$this->getDataTypes($sessionId);
 		foreach ($datatype as $preset) {
+            if ($preset == 'manual') continue;
 			$siblings=$this->getSiblingsfrompreset($sessionId, $preset);
 			$presetorder=array();
 			if ($siblings)
@@ -3239,6 +3253,8 @@ class leginondata {
 					$ref = preg_replace("%^REF\|%",'',$field);
 					$ref .= '|'.preg_replace("%'%","",$row[$i]);
 					$refinfo = explode("|", $ref);
+                    $refid = $refinfo[2];
+                    if (!$refid) continue;
 					$qref="select * from `$refinfo[0]` where `DEF_id`=".$refinfo[2];
 					$Rqref = $this->mysql->SQLQuery($qref);
 					if ($recursive)
@@ -3310,7 +3326,7 @@ class leginondata {
 	}
 
 	function formatMatrixValue(&$val) {
-		$val = (empty($val)) ? $val : format_sci_number($val, 4);
+		$val = (empty($val)) ? $val : format_sci_number($val, 4, false);
 		return $val;
 	}
 
@@ -3326,13 +3342,13 @@ class leginondata {
 		$nodeparent = array();
 		// --- build a tree with '/' as separator
 
-		$q="	select * from $table
+		$q="select * from $table
 			where  `DEF_id` = \"$id\" ";
 		$Rq = $this->mysql->SQLQuery($q);
 		$this->readDataTree($arr_node,$Rq);
 //		return $arr_node;
 		$tree = "var Tree = new Array; ".$this->crlf;
-		while (list($k1, $v1) = each($arr_node)) {
+		foreach ($arr_node as $k1=>$v1) {
 			$jsvar[]="Tree[".($k1-1)."]";
 			$nodeId[]=$k1;
 			$nodeparent[]=0;
@@ -3786,6 +3802,9 @@ class leginondata {
 	}
 
 	function getQueueTargetListIds($sessionId,$qtype,$limit=100) {
+		$has_Data = $this->mysql->isTable('QueueData');
+			if (!$has_Data) return array();
+
 		$whereqtype = "";
 		if ($qtype)
 			$whereqtype = ""
@@ -4072,6 +4091,8 @@ class leginondata {
 	}
 
 	function getQueueTypes($sessionId) {
+		$has_Data = $this->mysql->isTable('QueueData');
+		if (!$has_Data) return array();
 		$q="SELECT "
 			."`label`,`DEF_id` as id FROM QueueData where `REF|SessionData|session` = ".$sessionId."";
 		return $this->mysql->getSQLResult($q);

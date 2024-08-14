@@ -16,7 +16,7 @@
  */
 require_once 'config.php';
 
-function useCache($filepath,$sessionname,$is_fft=false,$cacheonly) {
+function useCache($filepath,$sessionname,$is_fft=false,$cacheonly=false) {
 	//search for imcache jpg file.
 	$filename = basename($filepath);
 	if (!$is_fft)

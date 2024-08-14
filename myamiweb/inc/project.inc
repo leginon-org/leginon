@@ -58,8 +58,9 @@ if (!$PROCESSING_DB) {
 define('PARTICLE_DB', $PROCESSING_DB);
 
 class project {
+    var $mysql;
 
-	function project(){
+	function __construct(){
 		$this->mysql = new mysql(	DB_HOST, DB_USER,
 			DB_PASS, DB_PROJECT);
 	}

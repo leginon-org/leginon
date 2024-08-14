@@ -137,7 +137,7 @@ if (!preg_match("%\.mrc$%i", $filename))
 
 
 $delimiter = chr(9);
-$context = stream_context_create($data);
+$context = stream_context_create();
 $handle = fopen('php://memory', "w");
 foreach ($data as $line) {
 	fwrite($handle, $line."\n");
