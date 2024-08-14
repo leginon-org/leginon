@@ -125,8 +125,8 @@ def findCaustic(input, smallrange, bigrange, mask, binning=None):
 		big_limit = big_row0, big_row1, big_col0, big_col1
 
 	print('**Full size:')
-	radii_small = numpy.arange(smallrange[0], smallrange[1]+1, dtype=numpy.int_)
-	radii_big = numpy.arange(bigrange[0], bigrange[1]+1, dtype=numpy.int_)
+	radii_small = numpy.arange(smallrange[0], smallrange[1]+1, dtype=numpy.int32)
+	radii_big = numpy.arange(bigrange[0], bigrange[1]+1, dtype=numpy.int32)
 
 	small_circle, big_circle = __findCaustic(input, radii_small, radii_big, mask, small_limit, big_limit)
 	return small_circle, big_circle
