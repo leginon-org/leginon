@@ -305,8 +305,9 @@ class mysql {
 		}
 		mysqli_query($link, "SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
 
+        try {
 		$result = mysqli_query($link, $query); 
-		if (!$result) {
+        } catch (Exception $e) {
 			$this->mysqlerror = "= Error: mysql.inc::SQLQuery - " . mysqli_error($link);
 			$this->mysqlerrornb = mysqli_errno($link);
 			// error_log($this->mysqlerror);
@@ -314,7 +315,7 @@ class mysql {
 			// error_log("  trace: " . $this->_backtrace());
 			// error_log("... =");
 			return False;
-		}
+        }
 
 		if ($insert) {
 			return mysqli_insert_id($link);
