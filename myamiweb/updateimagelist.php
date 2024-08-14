@@ -32,7 +32,7 @@ if ($imageId && $sessionId) {
 	$q="delete from ViewerImageStatus where `REF|AcquisitionImageData|image`=$imageId";
 	$dbc->SQLQuery($q);
 	// not sure why, but this line repeats the deletion
-	$q="delete from `ImageStatusData` where `REF|AcquisitionImageData|image`=$imageId";
+	$q="delete from `ViewerImageStatus` where `REF|AcquisitionImageData|image`=$imageId";
 	$dbc->SQLQuery($q);
 
 	if ($prefpreset) {

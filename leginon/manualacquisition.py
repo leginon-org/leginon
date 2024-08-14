@@ -611,7 +611,7 @@ class ManualAcquisition(node.Node):
 			if not viewstatus or viewstatus == 'normal':
 				pass
 			else:
-				status = leginondata.ImageStatusData()
+				status = leginondata.ViewerImageStatus()
 				status['session'] = self.session
 				status['image'] = image
 				status['status'] = viewstatus
@@ -629,7 +629,7 @@ class ManualAcquisition(node.Node):
 			commentq['image'] = imagedata
 			commentresults = self.research(commentq, readimages=False)
 			
-			statusq = leginondata.ImageStatusData()
+			statusq = leginondata.ViewerImageStatus()
 			statusq['image'] = imagedata
 			statusresults = self.research(statusq, readimages=False)
 			
