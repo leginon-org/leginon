@@ -16,7 +16,7 @@ require_once "inc/leginon.inc";
 $Id=$_GET['Id'];
 
 $goniometer = $leginondata->getGoniometerModel($Id);
-while(list($k, $v) = each($goniometer)) {
+foreach ($goniometer as $k=>$v) {
 	// --- convert NULL value to 0
 	if (!$v)
 			$v=0;

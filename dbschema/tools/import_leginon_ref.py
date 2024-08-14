@@ -21,7 +21,7 @@ def convertStringToSQL(value):
 class ReferenceJsonLoader(jsonfun.DataJsonLoader):
 	def __init__(self,params):
 		tem_hostname, tem_name, cam_hostname, camera_name = self.validateInput(params)
-		print tem_hostname, tem_name
+		print((tem_hostname, tem_name))
 		super(ReferenceJsonLoader,self).__init__(leginondata)
 		self.data = {}
 		self.setSessionData()
@@ -34,16 +34,16 @@ class ReferenceJsonLoader(jsonfun.DataJsonLoader):
 		self.data['dark'] = None
 
 	def addKnownData(self, q):
-		if 'ccdcamera' in q.keys():
+		if 'ccdcamera' in list(q.keys()):
 			q['ccdcamera'] = self.ccddata
-		if 'tem' in q.keys():
+		if 'tem' in list(q.keys()):
 			q['tem'] = self.temdata
 		q['session'] = self.session
-		for k in self.data.keys():
+		for k in list(self.data.keys()):
 			# don't want to associate corrector plan with others
-			if k in q.keys() and k not in ('corrector plan',):
+			if k in list(q.keys()) and k not in ('corrector plan',):
 				q[k] = self.data[k]
-		if 'image' in q.keys() and 'filename' in q.keys():
+		if 'image' in list(q.keys()) and 'filename' in list(q.keys()):
 			mrc_name = q['filename']+'.mrc'
 			if not os.path.exists(mrc_name):
 				raise ValueError('%s does not exist.' % mrc_name)
@@ -65,7 +65,7 @@ class ReferenceJsonLoader(jsonfun.DataJsonLoader):
 					datalist = datadict[name]
 				q[name] = datalist
 		info = 'inserting  %s ' % (classname,)
-		if 'filename' in datadict.keys():
+		if 'filename' in list(datadict.keys()):
 			info += 'saving %dx%d %s.mrc in %s' % (datadict['camera']['dimension']['x'],datadict['camera']['dimension']['y'],datadict['filename'], self.session['name'])
 		print(info)
 		# This is a forced insert so it is the most recent record
@@ -75,9 +75,9 @@ class ReferenceJsonLoader(jsonfun.DataJsonLoader):
 	def insertAllData(self):
 		for datadict in self.alldata:
 			self.data = {}
-			if 'NormImageData' in datadict.keys():
+			if 'NormImageData' in list(datadict.keys()):
 				self.processNormImageData(datadict)
-			if 'CorrectorPlanData' in datadict.keys():
+			if 'CorrectorPlanData' in list(datadict.keys()):
 				self.processCorrectorPlanData(datadict)
 
 	def processNormImageData(self, datadict):
@@ -104,7 +104,7 @@ class ReferenceJsonLoader(jsonfun.DataJsonLoader):
 	def processCorrectorPlanData(self, datadict):
 			# processing  CorrectorPlanData
 			classname = 'CorrectorPlanData'
-			if classname in datadict.keys():
+			if classname in list(datadict.keys()):
 				kwargs = datadict[classname]
 				# add instrument as key
 				kwargs['camera']['ccdcamera'] = None
@@ -113,7 +113,7 @@ class ReferenceJsonLoader(jsonfun.DataJsonLoader):
 
 	def validateInput(self, params):
 		if len(params) != 3:
-			print "Usage import_leginon_ref.py database_hostname camera_ref_json_file"
+			print("Usage import_leginon_ref.py database_hostname camera_ref_json_file")
 			self.close(1)
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:
@@ -128,12 +128,12 @@ class ReferenceJsonLoader(jsonfun.DataJsonLoader):
 	def getCameraInstrumentData(self, hostname,camname):
 		results = leginondata.InstrumentData(hostname=hostname,name=camname).query(results=1)
 		if not results:
-			print "ERROR: incorrect hostname...."
+			print("ERROR: incorrect hostname....")
 			r = leginondata.InstrumentData(name=camname).query(results=1)
 			if r:
-				print "  Try rename the json file to %s+%s.json instead to match camera host" % (r[0]['hostname'], camname)
+				print(("  Try rename the json file to %s+%s.json instead to match camera host" % (r[0]['hostname'], camname)))
 			else:
-				print "  No %s camera found" % camname
+				print(("  No %s camera found" % camname))
 			sys.exit()
 
 		cam = results[0]
@@ -151,13 +151,13 @@ class ReferenceJsonLoader(jsonfun.DataJsonLoader):
 		all_tems = self.getTemsByHostAndName(tem_hostname,tem_name)
 		if len(all_tems) == 1:
 			return all_tems[0]
-		print map((lambda x: x['hostname']),all_tems)
+		print((list(map((lambda x: x['hostname']),all_tems))))
 		temq = leginondata.InstrumentData(hostname=tem_hostname, name=tem_name)
 		r = leginondata.PixelSizeCalibrationData(tem=temq, ccdcamera=self.ccddata).query(results=1)
 		ptemid = None # tem with pixel calibration is checked first.
 		if r:
 			t = r[0]['tem']
-			answer = raw_input(' Is %s %s the tem to import ? Y/y/N/n ' % (t['hostname'], t['name']))
+			answer = eval(input(' Is %s %s the tem to import ? Y/y/N/n ' % (t['hostname'], t['name'])))
 			if answer.lower() == 'y':
 				return t
 			ptemid = t.dbid
@@ -169,10 +169,10 @@ class ReferenceJsonLoader(jsonfun.DataJsonLoader):
 		if len(other_tems) == 1:
 			return other_tems[0]
 		for t in other_tems:
-			answer = raw_input(' Is %s %s the tem to import ? Y/y/N/n ' % (t['hostname'], t['name']))
+			answer = eval(input(' Is %s %s the tem to import ? Y/y/N/n ' % (t['hostname'], t['name'])))
 			if answer.lower() == 'y':
 				return t
-		print "  No tem found"
+		print("  No tem found")
 		sys.exit()
 
 	def setSessionData(self):
@@ -182,17 +182,17 @@ class ReferenceJsonLoader(jsonfun.DataJsonLoader):
 			admin_user = ur[0]
 		else:
 			# do not process without administrator.
-			print " Need administrator user to import"
+			print(" Need administrator user to import")
 			self.close(True)
 		try:
 			self.session = session.createReferenceSession(admin_user, None)
 		except Exception as e:
 			raise
-			print("Error setting session: %s" % (e))
+			print(("Error setting session: %s" % (e)))
 		fileutil.mkdirs(self.session['image path'])
 
 	def printQuery(self, q):
-		print q
+		print(q)
 		return
 
 	def run(self):
@@ -200,9 +200,9 @@ class ReferenceJsonLoader(jsonfun.DataJsonLoader):
 		self.insertAllData()
 
 	def close(self, status):
-		raw_input('hit enter when ready to quit')
+		eval(input('hit enter when ready to quit'))
 		if status:
-			print "Exit with Error"
+			print("Exit with Error")
 			sys.exit(1)
 
 if __name__=='__main__':

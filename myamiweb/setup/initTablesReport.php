@@ -20,8 +20,9 @@ require_once("../inc/mysql.inc");
 		// query out the settable value, so we can find out the user already have database schema or not.
 		// we might also need to check the version number for feature update, but not this release.
 		
-		$results = $mysqld->SQLQuery('select `key`, value from install where `key` = \'settable\'');
-
+		if ($mysqld->SQLTableExists('install')) {
+			$results = $mysqld->SQLQuery('select `key`, value from install where `key` = \'settable\'');
+		} else {$results = false;}
 		if(($results != false) && mysqli_num_rows($results) > 0){				
 			// for upgrade			
 			$results = $mysqld->SQLQuery('describe processingdb');

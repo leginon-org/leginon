@@ -187,7 +187,7 @@ static PyObject * despike(PyObject *self, PyObject *args) {
 
 	/* create an array object copy of input data */
 	desc = PyArray_DescrNewFromType(NPY_FLOAT32);
-	floatimage = PyArray_FromAny(image, desc, 0, 0, NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_FORCECAST | NPY_ARRAY_CARRAY, NULL);
+	floatimage = PyArray_FromAny(image, desc, 0, 0, NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_FORCECAST | NPY_ARRAY_CARRAY, NULL);
 	if (floatimage == NULL) {
 		Py_XDECREF(floatimage);
 		return NULL;

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import baseSchemaClass
+from . import baseSchemaClass
 import leginon.leginondata
 import leginon.projectdata
 

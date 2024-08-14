@@ -197,7 +197,7 @@ class RawTransfer(filetransfer.FileTransfer):
 			# copy reference if possible
 			if self.refcopy:
 				try:
-					self.refcopy.setFrameDir(frames_path, gid, uid)
+					self.refcopy.setFrameDir(frames_path, uid, gid)
 					self.refcopy.run(imdata, imname)
 				except:
 					print('reference copying error. skip')

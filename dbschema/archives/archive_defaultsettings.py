@@ -107,7 +107,7 @@ class SettingArchiver(archive_leginondb.Archiver):
 		return self.destination_session
 
 	def importSession(self, comment=''):
-		print "Importing session...."
+		print("Importing session....")
 		session = self.getSourceSession()
 		source_sessionid = session.dbid
 		# change session description if needed
@@ -126,14 +126,14 @@ class SettingArchiver(archive_leginondb.Archiver):
 
 	def importSessionDependentData(self,dataclassname):
 		source_session = self.getSourceSession()
-		print "Importing %s...." % (dataclassname[:-4])
+		print(("Importing %s...." % (dataclassname[:-4])))
 		q = getattr(leginondata,dataclassname)(session=source_session)
 		results = self.research(q)
 		self.publish(results)
 
 	def importFocusSequenceSettings(self, allalias):
-		print 'importing Focus Sequence Settings....'
-		if 'Focuser' not in allalias.keys():
+		print('importing Focus Sequence Settings....')
+		if 'Focuser' not in list(allalias.keys()):
 			return
 		sequence_names = []
 		for node_name in (allalias['Focuser']):
@@ -158,20 +158,20 @@ class SettingArchiver(archive_leginondb.Archiver):
 				'EM':None,
 				'FileNames':'ImageProcessorSettingsData',
 		}
-		for classname in allalias.keys():
+		for classname in list(allalias.keys()):
 			settingsname = classname+'SettingsData'
-			if classname in unusual_settingsnames.keys():
+			if classname in list(unusual_settingsnames.keys()):
 				settingsname = unusual_settingsnames[classname]
 			if not settingsname:
 				continue
-			if classname in allalias.keys():
-				print 'importing %s Settings....' % (classname,)
+			if classname in list(allalias.keys()):
+				print(('importing %s Settings....' % (classname,)))
 				for node_name in (allalias[classname]):
 					try:
 						results = self.researchSettings(settingsname,name=node_name)
 					except:
 						raise
-						print 'ERROR: %s class node %s settings query failed' % (classname,node_name)
+						print(('ERROR: %s class node %s settings query failed' % (classname,node_name)))
 					self.publish(results[:1])
 		# FocusSequence and FocusSettings needs a different importing method
 		self.importFocusSequenceSettings(allalias)
@@ -192,7 +192,7 @@ class SettingArchiver(archive_leginondb.Archiver):
 			q = leginondata.NodeSpecData(application=appdata)
 			results = self.research(q)
 			for r in results:
-				if r['class string'] not in allalias.keys():
+				if r['class string'] not in list(allalias.keys()):
 					allalias[r['class string']] = []
 				allalias[r['class string']].append(r['alias'])
 			unique_apps.append(appdata['name'])
@@ -201,12 +201,12 @@ class SettingArchiver(archive_leginondb.Archiver):
 
 	def run(self):
 		source_session = self.getSourceSession()
-		print "****Session %s ****" % (source_session['name'])
+		print(("****Session %s ****" % (source_session['name'])))
 		self.importRecentSettings()
-		print ''
+		print('')
 
 def archiveAdminUser():
-	print "Importing Administrator User...."
+	print("Importing Administrator User....")
 	userarchiver = AdminUserArchiver()
 	userarchiver.run()
 	return userarchiver.getAdminId()
@@ -218,7 +218,7 @@ def archiveAdminSettings():
 	adminid = archiveAdminUser()
 
 	if adminid is None:
-		print "No administration user found, Abort"
+		print("No administration user found, Abort")
 		sys.exit(1)
 	u = leginondata.UserData().direct_query(adminid)
 	recent_session = leginondata.SessionData(user=u).query()[0]
@@ -229,11 +229,11 @@ def archiveAdminSettings():
 if __name__ == '__main__':
 	import sys
 	if len(sys.argv) != 1:
-		print "Usage: python archive_defaultsettings.py"
-		print ""
-		print "sinedon.cfg should include a module"
-		print "[importdata]"
-		print "db: writable_archive_database"
+		print("Usage: python archive_defaultsettings.py")
+		print("")
+		print("sinedon.cfg should include a module")
+		print("[importdata]")
+		print("db: writable_archive_database")
 		
 		sys.exit()
 

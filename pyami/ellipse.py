@@ -144,10 +144,10 @@ def solveEllipseB2AC(points):
 	convention note: ellipse points are x,y coordinates, so alpha
 		is measured as positive values towards the y-axis
 	'''
-	X = numpy.array(points, numpy.float_)
+	X = numpy.array(points, numpy.float64)
 	D = numpy.column_stack((X[:,0]**2, X[:,0]*X[:,1], X[:,1]**2, X[:,0], X[:,1], numpy.ones(X.shape[0])))
 	S = numpy.dot(D.transpose(), D)
-	C = numpy.zeros((6,6), numpy.float_)
+	C = numpy.zeros((6,6), numpy.float64)
 	C[0,2] = -2
 	C[1,1] = 1
 	C[2,0] = -2
@@ -335,7 +335,7 @@ def solveEllipseOLS(points, center=(0,0)):
 	"""
 
 	### power twos
-	X = numpy.array(points, numpy.float_) - numpy.array(center, numpy.float_)
+	X = numpy.array(points, numpy.float64) - numpy.array(center, numpy.float64)
 
 	### power twos
 	p2 = numpy.power(X, 2.0)
@@ -453,7 +453,7 @@ if __name__ == '__main__':
 	ydim = numrow = 16
 	shape = (numrow,numcol)
 	alpha = random.random()*math.pi - math.pi/2
-	center = numpy.array((numrow, numcol), dtype=numpy.float_)/2.0
+	center = numpy.array((numrow, numcol), dtype=numpy.float64)/2.0
 	majormax = min( abs(numrow/math.cos(alpha)) , abs(numcol/math.sin(alpha)) )/3.0 - 1
 	minormax = min( abs(numrow/math.sin(alpha)) , abs(numcol/math.cos(alpha)) )/3.0 - 1
 	print(alpha, majormax, minormax)

@@ -8,6 +8,15 @@ leginon.cfg
 instruments.cfg
 dmsem.cfg
 jeol.cfg
+fei.cfg
+hht.cfg
+tvips.cfg
+leginon_session.cfg
+gridhook.cfg
+pyami.cfg
+redux.cfg
+ptolemy.cfg
+remote.cfg
 *.[oa]
 *~
 *.pyc

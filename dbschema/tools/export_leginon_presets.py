@@ -18,7 +18,7 @@ class DataJsonMaker(object):
 		Make SQL query of leginondata from class name and keyword arguments.
 		'''
 		q = getattr(leginondata,classname)()
-		for key in kwargs.keys():
+		for key in list(kwargs.keys()):
 			# leginondata keys never contains '_'
 			realkey = key.replace('_',' ')
 			q[realkey] = kwargs[key]
@@ -50,7 +50,7 @@ class DataJsonMaker(object):
 		for r in results:
 			classname = r.__class__.__name__
 			data = {}
-			for k in r.keys():
+			for k in list(r.keys()):
 				if k not in self.ignorelist:
 					if hasattr(r[k],'dbid'):
 						# not to include data reference
@@ -63,7 +63,7 @@ class DataJsonMaker(object):
 		self.alldata = []
 
 	def writeJsonFile(self,filename='test.json'):
-		print 'Writing to %s' % filename
+		print(('Writing to %s' % filename))
 		jstr = json.dumps(self.alldata, indent=2, separators=(',',':'))
 		f = open(filename,'w')
 		f.write(jstr)
@@ -105,20 +105,20 @@ class PresetJsonMaker(DataJsonMaker):
 		all_digicam_presets = {}
 		for p in presets:
 			pname = p['name']
-			if pname not in all_presets.keys() and '-' not in pname:
+			if pname not in list(all_presets.keys()) and '-' not in pname:
 				all_presets[pname] = p
 				digicam_name = p['ccdcamera']['name']
 				digicam_hostname = p['ccdcamera']['hostname']
 				digi_key = digicam_hostname+'_'+digicam_name
 				digi_key = '%s+%s+%s+%s' % (p['tem']['hostname'],p['tem']['name'],digicam_hostname,digicam_name)
-				if digi_key not in all_digicam_presets.keys():
+				if digi_key not in list(all_digicam_presets.keys()):
 					all_digicam_presets[digi_key] = []
 				all_digicam_presets[digi_key].append(p)
 		return all_digicam_presets
 
 	def exportPresets(self):
 		all_digicam_presets = self.getPresets()
-		for k in all_digicam_presets.keys():
+		for k in list(all_digicam_presets.keys()):
 			self.resetData()
 			presets = all_digicam_presets[k]
 			self.publish(presets)
@@ -126,14 +126,14 @@ class PresetJsonMaker(DataJsonMaker):
 
 	def run(self, appname=None):
 		source_session = self.getSession()
-		print "****Session %s ****" % (source_session['name'])
+		print(("****Session %s ****" % (source_session['name'])))
 		self.exportPresets()
-		print ''
+		print('')
 
 if __name__ == '__main__':
 	import sys
 	if len(sys.argv) < 2:
-		print "Usage: python export_leginon_presets.py <sessionname> <optional partial application name> <optional node name prefix>"
+		print("Usage: python export_leginon_presets.py <sessionname> <optional partial application name> <optional node name prefix>")
 		sys.exit()
 	sessionname = sys.argv[1]
 	if len(sys.argv) >= 3:

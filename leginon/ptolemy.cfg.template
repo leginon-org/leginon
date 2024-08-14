@@ -1,0 +1,8 @@
+# config file for leginon/ptolemyhandler.py to interact with ptolemy server
+# base url with port for the requests
+[baseurl]
+url: http://127.0.0.1
+port: 8000
+[logger]
+# verbosity 0-none, 1-debug
+verbosity: 0

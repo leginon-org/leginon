@@ -8,6 +8,9 @@ class imageUtil{
 	 * otherwise use their original image size.
 	 * When binning has been set, find x, y by given binning.
 	 */
+    function __construct() {
+    }
+
 	function getDefaultImageSize($isfft) {
 		if ($isfft)
 			// imcache are created with binning after fft

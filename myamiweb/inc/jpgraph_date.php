@@ -5,7 +5,7 @@
  // Created:     2005-05-02
  // Ver:         $Id: jpgraph_date.php 1106 2009-02-22 20:16:35Z ljp $
  //
- // Copyright (c) Aditus Consulting. All rights reserved.
+ // Copyright (c) Asial Corporation. All rights reserved.
  //========================================================================
  */
 
@@ -406,9 +406,15 @@ class DateScale extends LinearScale {
         // identical to LinearScale::AutoScale
         if( $aStartTime == $aEndTime ) {
             // Special case when we only have one data point.
-            // Create a small artifical intervall to do the autoscaling
+            // Create a small artificial interval to do the autoscaling
             $aStartTime -= 10;
             $aEndTime += 10;
+        }
+        if( abs($aEndTime - $aStartTime) <= 1 ) {
+            // Special case when we only have one second.
+            // Create a small artificial interval to do the autoscaling
+            $aStartTime -= 1;
+            $aEndTime += 1;
         }
         $done=false;
         $i=0;

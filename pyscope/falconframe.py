@@ -95,10 +95,14 @@ class FalconFrameMaker(object):
 		return self._createFramePath(base_path)
 
 	def _createFramePath(self, base_path):
+		'''
+		Directory of fullpath_pattern created here for TIA_Falcon style frames.
+		'''
 		full_base_path = os.path.join(self.fei_image_storage_path, base_path)
 		if os.path.isdir(full_base_path) or self.simulation:
+			new_frame_name = self.makeFrameDirName(True)
 			# real path including existing base_path becomes the subpath_pattern
-			self.subpath_pattern = os.path.join(base_path,self.makeFrameDirName(True))
+			self.subpath_pattern = os.path.join(base_path,new_frame_name)
 			self.fullpath_pattern = os.path.join(self.fei_image_storage_path,self.subpath_pattern)
 			if not self.simulation:
 				os.makedirs(self.fullpath_pattern)
@@ -276,7 +280,6 @@ class FalconFrameConfigXmlMaker(FalconFrameMaker):
 		if status is False:
 			return False
 		self.setExposureTime(second)
-		self.createFramePath(self.base_frame_path)
 		self.makeConfigXML()
 		return True
 
@@ -323,8 +326,13 @@ class FalconFrameRangeListMaker(FalconFrameMaker):
 		self.resetParams()
 
 	def _createFramePath(self, base_path):
+		'''
+		Overwrite base class _createFramePath to just assign attributes.
+		No path or directory creation involved.
+		'''
+		new_frame_name = self.makeFrameDirName(True)
 		# real path including existing base_path becomes the subpath_pattern
-		self.subpath_pattern = os.path.join(base_path,self.makeFrameDirName(True))
+		self.subpath_pattern = os.path.join(base_path,new_frame_name)
 		self.fullpath_pattern = os.path.join(self.fei_image_storage_path,self.subpath_pattern)
 
 	def makeFrameDirName(self,use_timestamp):
@@ -405,6 +413,7 @@ if __name__ == '__main__':
 			app = FalconFrameRangeListMaker(False)
 			app.setFeiImageStoragePath(fei_image_storage_path)
 			app.setBaseFramePath('framecam')
+			app.createFramePath(app.base_frame_path)
 			app.setFrameNamePrefix('f')
 			app.setExposureTime(exposure_second)
 			frame_time_second = 0.2

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import baseSchemaClass
+from . import baseSchemaClass
 from appionlib import appiondata, apDisplay
 
 class SchemaUpdate17311(baseSchemaClass.SchemaUpdate):

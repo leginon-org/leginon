@@ -249,6 +249,7 @@ if ($r) {
 	$n=0;
 	echo "<tr>";
 	foreach ($presets as $preset) {
+        if (count($presets) > 1 && $preset == 'manual') continue;
 		$sessionId=$expId;
 		
 		if ($n%3==0) {
@@ -442,6 +443,13 @@ if (!empty($imageshiftpresets)) {
 	}
 	echo "</table>\n";
 } else echo "no Image Shift information available";
+
+	$imageshiftname = $preset['name'];
+	$imageshiftdownlink = "<h3>";
+	$imageshiftdownlink .= "<a href='downloadimageshiftdata.php?expId=$expId&preset=$imageshiftname&vdata=1'>\n";
+	$imageshiftdownlink .= "  <img style='vertical-align:middle' src='processing/img/download_arrow.png' border='0' width='16' height='17' alt='download EPU-style XML  files for Cryosparc 4.4'>&nbsp;download EPU-style XML files for CryoSparc 4.4\n";
+	$imageshiftdownlink .= "</a></h3>\n";
+	echo $imageshiftdownlink ;
 	echo "</td>";
 	
 ?>

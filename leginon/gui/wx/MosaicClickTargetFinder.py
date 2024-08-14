@@ -27,7 +27,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 	icon = 'atlastarget'
 	def initialize(self):
 		leginon.gui.wx.ClickTargetFinder.Panel.initialize(self)
-		self.SettingsDialog = SettingsDialog
+		self.SettingsDialog = self._settingsDialog()
 		self.imagepanel.selectiontool.setEnableSettings('acquisition', True)
 		self.imagepanel.selectiontool.setDisplayed('focus', False)
 		self.imagepanel.selectiontool.setEnableSettings('focus', False)
@@ -47,6 +47,9 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 			'currentposition', shortHelp='Show Position')
 		self.addOtherTools()
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
+
+	def _settingsDialog(self):
+		return SettingsDialog
 
 	def addTargetTools(self):
 		# add example target at top
@@ -115,6 +118,9 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True)
 
+	def _enable_on_tile_loaded(self):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
+
 	def onTilesButton(self, evt):
 		choices = self.node.getMosaicNames()
 		dialog = TilesDialog(self, choices)
@@ -124,7 +130,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 			if selection:
 				self.node.setMosaicName(selection)
 				self.node.loadMosaicTiles(selection)
-				self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
+				self._enable_on_tile_loaded()
 		elif result == wx.ID_RESET:
 			self.node.clearTiles()
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
@@ -410,6 +416,7 @@ class TargetScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['target grouping']['total targets'] = IntEntry(self, -1, min=0, chars=6)
 		self.widgets['target grouping']['classes'] = IntEntry(self, -1, min=1, chars=6)
 		self.widgets['target multiple'] = IntEntry(self, -1, min=1, max=9, chars=6)
+		self.widgets['target grouping']['randomize blobs'] = wx.CheckBox(self, -1, 'Randomize blob selection within groups')
 		# row sizers
 		sz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Max. number of targets:')
@@ -431,6 +438,7 @@ class TargetScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'targets')
 		tm_sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(tm_sz, (3, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		tm_sz.Add(self.widgets['target grouping']['randomize blobs'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		# finalize
 		sz.AddGrowableCol(1)
 		sbsz1.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
@@ -440,7 +448,7 @@ class TargetScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		groupmethods = self.node.getGroupMethodChoices()
 		self.widgets['target grouping']['group method'] = Choice(self, -1, choices=groupmethods)
 		szgroupmethod = wx.GridBagSizer(5, 5)
-		szgroupmethod.Add(wx.StaticText(self, -1, 'Each group has equal'),
+		szgroupmethod.Add(wx.StaticText(self, -1, 'Grouping method: '),
 										(0, 0), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL)
 		szgroupmethod.Add(self.widgets['target grouping']['group method'],
@@ -457,7 +465,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'General Mosaic Click Target Finder Settings ')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sz = self.addSettings()
+		sz = self._addSettings()
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 		return [sbsz]
 
@@ -479,13 +487,19 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 										wx.ALIGN_CENTER_VERTICAL)
 		return szcheckmethod
 
+	def createSimpleBlobMergeSizer(self):
+		sz = wx.GridBagSizer(5, 5)
+		self.widgets['simpleblobmerge'] = wx.CheckBox(self, -1, 'Simple blob merging')
+		sz.Add(self.widgets['simpleblobmerge'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return sz
+
 	def createSortTargetSizer(self):
 		sz = wx.GridBagSizer(5, 5)
 		self.widgets['sort target'] = wx.CheckBox(self, -1, 'Sort targets by shortest path')
 		sz.Add(self.widgets['sort target'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		return sz
 
-	def addSettings(self):
+	def _addSettings(self):
 		sortsz = self.createSortTargetSizer()
 		autosz = self.createAutoFinderSizer()
 		checkmethodsz = self.createCheckMethodSizer()

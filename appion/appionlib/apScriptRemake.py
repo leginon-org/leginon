@@ -208,6 +208,13 @@ class AceRemaker(LoopScriptRemaker):
 	jobtypes = ['ctfestimate',]
 	valid_dependencies = ['DDAligner','Denoiser']
 
+class LearnRemaker(LoopScriptRemaker):
+	"""
+	auto learn command remake for another session.
+	"""
+	jobtypes = ['learn',]
+	valid_dependencies = ['Ace',]
+
 class PickerRemaker(LoopScriptRemaker):
 	"""
 	particle selector estimation command remake for another session.
@@ -223,7 +230,7 @@ class StackRemaker(LoopScriptRemaker):
 	valid_dependencies = ['Picker','Ace']
 
 class OldSessionScripts(object):
-	order = ['DDAligner','Denoiser','LoopScript','Ace','Picker','Stack']
+	order = ['DDAligner','Denoiser','LoopScript','Ace','Learn','Picker','Stack']
 	def __init__(self, session_name):
 		try:
 			self.session = leginondata.SessionData(name=session_name).query()[0]

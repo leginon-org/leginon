@@ -65,11 +65,7 @@ def resize(pil_image, size):
 ntype_itype = {
 	(numpy.uint8,1) : ('L','L'),
 	(numpy.int16,2) : ('I','I;16NS'),
-	(numpy.int_,2) : ('I','I;16NS'),
-	(numpy.int_,4) : ('I','I;32NS'),
 	(numpy.int32,4) : ('I','I;32NS'),
-	(numpy.float_,4) : ('F','F;32NF'),
-	(numpy.float_,8) : ('F','F;64NF'),
 	(numpy.float32,4) : ('F','F;32NF'),
 	(numpy.float64,8) : ('F','F;64NF')
 	}
@@ -89,7 +85,7 @@ def numpy_to_Image(numarray, clip, outputsize=None):
 	nstr = final.tostring()
 	stride = 0
 	orientation = 1
-	image = Image.fromstring(immode, imsize, nstr, 'raw', rawmode, stride, orientation)
+	image = Image.frombuffer(immode, imsize, nstr, 'raw', rawmode, stride, orientation)
 	if outputsize is not None:
 		image = resize(image, outputsize)
 	return image

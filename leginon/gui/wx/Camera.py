@@ -122,7 +122,7 @@ class CameraPanel(wx.Panel):
 		sz.Add(self.feexposuretime, (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		sz.Add(stms, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szmain.Add(sz, (4, 1), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		self.szmain.Add(sz, (4, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
 
 		sz = self.createFrameCameraSizer()
 		self.szmain.Add(sz, (7, 0), (1, 3), wx.ALIGN_CENTER|wx.EXPAND)
@@ -157,7 +157,7 @@ class CameraPanel(wx.Panel):
 		# save frames
 		self.saveframes = wx.CheckBox(self, -1, 'Save frames')
 		self.framewidges.append(self.saveframes)
-		ddsz.Add(self.saveframes, (0, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(self.saveframes, (0, 0), (1, 2), wx.ALIGN_LEFT|wx.EXPAND)
 
 		# frame time
 		stet = wx.StaticText(self, -1, 'Exposure time per Frame:')
@@ -170,42 +170,42 @@ class CameraPanel(wx.Panel):
 		ftsz.Add(self.frametime, (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		ftsz.Add(stms, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		ddsz.Add(ftsz, (1, 1), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(ftsz, (1, 1), (1, 2), wx.ALIGN_RIGHT|wx.EXPAND)
 
 		# DE64c Request Total Movie Frames
 		label = wx.StaticText(self, -1, 'DEc Request Total Movie Frames:')
-		self.requestnframes = IntEntry(self, -1)
+		self.requestnframes = IntEntry(self, -1, chars=4)
 		self.framewidges.append(self.requestnframes)
 		ddsz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		ddsz.Add(self.requestnframes, (2, 1), (1, 1), wx.ALIGN_CENTER | wx.EXPAND)
+		ddsz.Add(self.requestnframes, (2, 1), (1, 2), wx.ALIGN_RIGHT |wx.FIXED_MINSIZE)
 
 		# use raw frames
 		label = wx.StaticText(self, -1, 'Frames to use:')
-		self.useframes = Entry(self, -1)
+		self.useframes = Entry(self, -1, chars=9)
 		self.framewidges.append(self.useframes)
 		ddsz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		ddsz.Add(self.useframes, (3, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
-
+		ddsz.Add(self.useframes, (3, 1), (1, 2), wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		# readout delay
 		strd = wx.StaticText(self, -1, 'Readout delay:')
 		self.readoutdelay = IntEntry(self, -1, chars=7)
 		self.framewidges.append(self.readoutdelay)
 		stms = wx.StaticText(self, -1, 'ms')
-		sz = wx.BoxSizer(wx.HORIZONTAL)
-		sz.Add(strd)
-		sz.Add(self.readoutdelay)
-		sz.Add(stms)
-		ddsz.Add(sz, (4, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(strd,(4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		rdsz = wx.GridBagSizer(0, 3)
+		rdsz.Add(self.readoutdelay, (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		rdsz.Add(stms, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		ddsz.Add(rdsz, (4, 1), (1, 2), wx.ALIGN_RIGHT|wx.EXPAND)
 
 		# save 8x8 fake image so it is fast to save and transfer
 		self.fastsave = wx.CheckBox(self, -1, 'Save 8x8 stats image to speed up')
 		self.framewidges.append(self.fastsave)
-		ddsz.Add(self.fastsave, (5, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(self.fastsave, (5, 0), (1, 2), wx.ALIGN_LEFT|wx.EXPAND)
 
 		# use cds for K3
 		self.usecds = wx.CheckBox(self, -1, 'Use CDS (Gatan K3)')
 		self.framewidges.append(self.usecds)
-		ddsz.Add(self.usecds, (6, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(self.usecds, (6, 0), (1, 2), wx.ALIGN_LEFT|wx.EXPAND)
 
 		# align frames box
 		sb = wx.StaticBox(self, -1, 'Frame-Aligning Camera Only')
@@ -214,7 +214,7 @@ class CameraPanel(wx.Panel):
 		# align frames
 		self.alignframes = wx.CheckBox(self, -1, 'Align frames')
 		self.framewidges.append(self.alignframes)
-		afsz.Add(self.alignframes, (0, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		afsz.Add(self.alignframes, (0, 0), (1, 2), wx.ALIGN_LEFT|wx.EXPAND)
 
 		# align frame filter
 		label = wx.StaticText(self, -1, 'c-correlation filter:')

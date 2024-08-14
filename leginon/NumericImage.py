@@ -20,11 +20,7 @@ Image = numpil.Image2
 ntype_itype = {
 	(numpy.uint8,1) : ('L','L'),
 	(numpy.int16,2) : ('I','I;16NS'),
-	(numpy.int_,2) : ('I','I;16NS'),
-	(numpy.int_,4) : ('I','I;32NS'),
 	(numpy.int32,4) : ('I','I;32NS'),
-	(numpy.float_,4) : ('F','F;32NF'),
-	(numpy.float_,8) : ('F','F;64NF'),
 	(numpy.float32,4) : ('F','F;32NF'),
 	(numpy.float64,8) : ('F','F;64NF')
 	}
@@ -39,7 +35,7 @@ def numpy2PILImage(numericarray, scale=False):
 	immode = ntype_itype[type.type, itemsize][0]
 	rawmode = ntype_itype[type.type, itemsize][1]
 	nstr = numericarray.tostring()
-	return Image.fromstring(immode, imsize, nstr, 'raw', rawmode, 0, 1)
+	return Image.frombuffer(immode, imsize, nstr, 'raw', rawmode, 0, 1)
 
 def numpy2wxImage(numericarray):
 	image = numpy2PILImage(numericarray)
@@ -136,7 +132,7 @@ class NumericImage:
 
 		stride = 0
 		orientation = 1
-		image = Image.fromstring(immode, imsize, nstr, 'raw', rawmode, stride, orientation)
+		image = Image.frombuffer(immode, imsize, nstr, 'raw', rawmode, stride, orientation)
 
 		image = resize(image, self.transform['output_size'])
 

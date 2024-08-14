@@ -23,7 +23,7 @@ class colorpick {
 		array('ff99cc', 'ffcc99', 'ffff99', 'ccffcc', 'ccffff', '99ccff', 'cc99ff', 'ffffff')
 		);
 	
-	function colorpick($name, $color='') {
+	function __construct($name, $color='') {
 		$this->name = $name;
 		$this->formname = $name.'name';
 		$this->fieldname = $name.'field';
@@ -80,7 +80,7 @@ class targetpick {
 
 	var $target = "cross1"; 
 	
-	function targetpick($name, $target='') {
+	function __construct($name, $target='') {
 		$this->name = $name;
 		$this->formname = $name.'name';
 		$this->fieldname = $name.'field';

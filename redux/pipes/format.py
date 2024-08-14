@@ -4,6 +4,7 @@ import io
 # 3rd party
 import scipy.misc
 from PIL import Image
+import numpy
 
 # myami
 import pyami.mrc
@@ -63,6 +64,8 @@ class Format(redux.pipe.Pipe):
 
 	def run_pil(self, input, oformat, rgb, overlay, overlaycolor):
 		# pil_image = scipy.misc.toimage(input, cmin=0, cmax=255)
+		# refs Issue #13 input is float if going through intensity scaling.
+		input = input.astype(numpy.uint8)
 		pil_image = Image.fromarray(input)
 		if rgb or overlay:
 			pil_image = pil_image.convert('RGBA')

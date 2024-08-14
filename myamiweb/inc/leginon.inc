@@ -31,6 +31,7 @@ require_once "inc/path.inc";
 
 class leginondata {
 
+	var $mysql;
 	var $crlf = "\n";
 	var $ffttypes = array('focpow', 'fft');
 	var $defaulttypes = array('all', 'atlas', 'exemplar', 'hidden','trash');
@@ -49,8 +50,9 @@ class leginondata {
 		'BindingSpecData',
 		'NodeSpecData'
 	);
+	var $sessions;
 
-	function leginondata() {
+	function __construct() {
 		$this->mysql = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 		if (!$this->mysql->checkDBConnection()) {
 			$this->mysql->dbError();
@@ -250,12 +252,15 @@ class leginondata {
 				$ids[] = "s.`Name` like '$n'";
 		}
 		$sqlwhere = "where (".join(" OR ", $ids).")";
-		if ($reject_projection === true)
+		if (false)
+		//if ($reject_projection === true)
 			// z projection images from tomography is not part of Leginon run.
 			// This part of the query is needed to ensure settings is only considered within
 			// data collection time frame for reverting settings per session.
 			// However, it slows down this general function too much.
 			// Therefore, it is only included in the query if asked specifically
+            // FIXME: we now use ScopeEMData instead of AcquisitionImageData for
+            // sessioninfo, this is no longer meaningful
 			$sqlwhere .= " and a.`label`!='projection'";
 
 		$q="select "
@@ -547,6 +552,14 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function getSessionName($sessionId) {
+		$q="select "
+			."name from SessionData "
+			."WHERE DEF_id ='$sessionId' ";
+		$results = $this->mysql->getSQLResult($q);
+		return $results[0]['name'];
+	}
+
 	function updateSessionPurpose($sessionId, $comment) {
 		// update Session description without changing timestamp
 		if ($sessionId ) {
@@ -700,7 +713,7 @@ class leginondata {
 	}
 
 	function getFilenames($sessionId, $name="", $table="AcquisitionImageData") {
-		$has_ImageStatusData = $this->mysql->isTable('ImageStatusData');
+		$has_ViewerImageStatus = $this->mysql->isTable('ViewerImageStatus');
 		$has_PresetData = $this->mysql->isTable('PresetData');
 		$sessionwhere = "a.`REF|SessionData|session`='$sessionId' ";
 		if (!is_numeric($sessionId)) {
@@ -712,16 +725,16 @@ class leginondata {
 			$name="";
 		}
 			$hiddenjoin = "left join `ViewerImageStatus` r on (r.`REF|AcquisitionImageData|image`=a.DEF_id) ";
-			if ($has_ImageStatusData)
-				$hiddenjoin .= "left join `ImageStatusData` ir on (ir.`REF|AcquisitionImageData|image`=a.DEF_id) ";
+			if ($has_ViewerImageStatus)
+				$hiddenjoin .= "left join `ViewerImageStatus` ir on (ir.`REF|AcquisitionImageData|image`=a.DEF_id) ";
 		if ($defaultname=="trash" || $defaultname=="hidden" || $defaultname=="exemplar") {
 			$hiddenwhere = "and ((r.DEF_id is not null and r.status='$defaultname') ";
-			if ($has_ImageStatusData)
+			if ($has_ViewerImageStatus)
 				$hiddenwhere .= "or (ir.`DEF_id` is not null and ir.status='$defaultname')";
 			$hiddenwhere .=")";
 		} else {
 			$hiddenwhere = "and ((r.DEF_id is NULL or (r.status <>'hidden' and r.status <>'trash')) ";
-			if ($has_ImageStatusData)
+			if ($has_ViewerImageStatus)
 				$hiddenwhere .= "and (ir.`DEF_id` is NULL or (ir.status <>'hidden' and ir.status <> 'trash'))";
 			$hiddenwhere .=") ";
 		}
@@ -1115,7 +1128,7 @@ class leginondata {
 		return $rctfilename;
 	}
 
-	function getFilename($name,$sessionId=Null) {
+	function getFilename($name,$sessionId=null) {
 		$sqlwhere = (is_numeric($name)) ? "where `DEF_id`='$name' "
 				: "where `MRC|image` like '$name' ";
 		if ($sessionId) {
@@ -1138,7 +1151,7 @@ class leginondata {
 			return $path.$filename['filename'];
 	}
 
-	function getCalibrationIds($calibration, $scopeId=False, $cameraId=False, $limit='', $type='') {
+	function getCalibrationIds($calibration, $scopeId=false, $cameraId=false, $limit='', $type='') {
 		$calibration_fields = $this->mysql->getFields($calibration);
 		if (in_array('type', $calibration_fields) && $type) {
 			$where[] = "cal.`type`='$type'";
@@ -1249,7 +1262,7 @@ class leginondata {
 
 	}
 
-	function getCalibrations($calibration, $scopeId=False, $cameraId=False, $limit='', $type='') {
+	function getCalibrations($calibration, $scopeId=false, $cameraId=false, $limit='', $type='') {
 		$Ids = $this->getCalibrationIds($calibration, $scopeId, $cameraId, $limit, $type);
 		if ($Ids) {
 			foreach ($Ids as $id)
@@ -1677,10 +1690,12 @@ class leginondata {
 
 	function getViewerImageStatus($imgId) {
 		if (!$this->mysql->isTable('ViewerImageStatus'))
-			return null;
+			return;
+        if (!$imgId) return;
 		$q = 'select status from ViewerImageStatus '
 				.'where `REF|AcquisitionImageData|image` = '.$imgId.' ';
 		list($r) = $this->mysql->getSQLResult($q);
+        if (!$r) return;
 		return $r['status'];
 	}
 
@@ -1740,7 +1755,8 @@ class leginondata {
 		return $newimage;
 	}
 
-	function getImageTargets($imgId, $type="acquisition") {
+	function getImageTargets($imgId, $type="acquisition", $tnumber=Null) {
+		$tnumber_where = $tnumber ? "t.`number`=".$tnumber." AND ":'';
 		$q = " select "
 			."floor(t.`delta column`+c.`SUBD|dimension|x`/2) as x, "
 			."floor(t.`delta row`+c.`SUBD|dimension|y`/2) as y, "
@@ -1753,6 +1769,7 @@ class leginondata {
 			."t.`version` as tversion, "
 			."t.`status` as tstatus, "
 			."t.`number` as tnumber, "
+			."t.`REF|ImageTargetListData|list` as tlist, "
 			."t.`type` as ttype "
 			."from AcquisitionImageData as a "
 			."left join AcquisitionImageTargetData as t "
@@ -1762,9 +1779,9 @@ class leginondata {
 			."on (child.`REF|AcquisitionImageTargetData|target`=t.`DEF_id`) "
 			."where "
 			."t.`type`='$type' and "
+			.$tnumber_where
 			."a.`DEF_id`='".$imgId."' "
 			."order by `tnumber` ";
-
 		return $this->mysql->getSQLResult($q);
 	}
 
@@ -1930,19 +1947,20 @@ class leginondata {
 						$index[$kname]['type'] = $row['Index_type'];
 			}
 
-			while(list($x, $columns) = @each($index))
+			foreach ($index as $x =>$columns)
 			{
-		if ($type=$columns['type'])
-			unset($columns['type']);
-		$full = ($type=='FULLTEXT') ? 'FULLTEXT ' : '';
-					 $schema_create .= "    <key>";
-					 if($x == "PRIMARY")
-							 $schema_create .= "PRIMARY KEY (" . implode($columns, ", ") . ")";
-					 elseif (substr($x,0,6) == "UNIQUE")
-							$schema_create .= "UNIQUE ".substr($x,7)." (" . implode($columns, ", ") . ")";
-					 else
-							$schema_create .= $full."KEY ".$x." (" . implode($columns, ", ") . ")";
-					 $schema_create .= "</key>$crlf";
+	
+				if ($type=$columns['type'])
+					unset($columns['type']);
+				$full = ($type=='FULLTEXT') ? 'FULLTEXT ' : '';
+				$schema_create .= "    <key>";
+				if($x == "PRIMARY")
+					$schema_create .= "PRIMARY KEY (" . implode(", ", $columns) . ")";
+				elseif (substr($x,0,6) == "UNIQUE")
+					$schema_create .= "UNIQUE ".substr($x,7)." (" . implode(", ",$columns) . ")";
+				else
+					$schema_create .= $full."KEY ".$x." (" . implode(", ",$columns) . ")";
+				$schema_create .= "</key>$crlf";
 			}
 
 			$schema_create .= "  </sqltable>$crlf";
@@ -2291,7 +2309,6 @@ class leginondata {
 		$this->sqldefinitions = $sqldef;
 		$this->sqlfieldtypes = $fieldtypes;
 		$this->sqlfieldvalues = $fieldvalues;
-
 		//--- Generate the tables
 		$this->mysql->SQLQueries($sqldef);
 		//--- Check if application exits
@@ -2624,7 +2641,7 @@ class leginondata {
 			left join StageModelCalibrationData s
 			on (s.axis=sm.axis and s.label = sm.label)
 			where m.label='$label' and m.axis='$axis' and s.`DEF_id`='$ModelId'
-			and (s.`DEF_timestamp`<= sm.`DEF_timestamp`+30 and s.`DEF_timestamp`>= sm.`DEF_timestamp`-30)";
+			and (s.`DEF_timestamp`<= sm.`DEF_timestamp`+120 and s.`DEF_timestamp`>= sm.`DEF_timestamp`-120)";
 		return $this->mysql->getSQLResult($q);
 	}
 
@@ -2954,6 +2971,7 @@ class leginondata {
 	}
 
 	function getZeroLossIceThickness($sessionId) {
+		if ( !$this->mysql->isTable('ZeroLossIceThicknessData') ) return false;
  		$q="SELECT "
 		. "a.DEF_id AS DEF_id, UNIX_TIMESTAMP(a.DEF_timestamp) AS unix_timestamp, filename, z.`slit mean`, z.`no slit mean`, z.thickness "
 		. "FROM "
@@ -2966,6 +2984,7 @@ class leginondata {
 	}
 
 	function getObjIceThickness($sessionId) {
+		if ( !$this->mysql->isTable('ObjIceThicknessData') ) return false;
  		$q="SELECT "
 		. "a.DEF_id AS DEF_id, UNIX_TIMESTAMP(a.DEF_timestamp) AS unix_timestamp, "
 		. "CONCAT(a.filename,'.mrc') AS filename, z.thickness, z.mfp, z.intensity, z.`vacuum intensity` "
@@ -2979,6 +2998,7 @@ class leginondata {
 	}
 
 	function getZeroLossIceThicknessfromImage($sessionId,$imgId) {
+		if ( !$this->mysql->isTable('ZeroLossIceThicknessData') ) return false;
  		$q="SELECT "
 		. " z.thickness "
 		. "FROM "
@@ -2991,6 +3011,7 @@ class leginondata {
 	}
 
 	function getObjIceThicknessfromImage($sessionId,$imgId) {
+		if ( !$this->mysql->isTable('ObjIceThicknessData') ) return false;
  		$q="SELECT "
 		. "z.thickness "
 		. "FROM "
@@ -3036,6 +3057,7 @@ class leginondata {
 		$presets = $this->getDataTypes($sessionId);
 		$diffarray = array();
 		foreach ($presets as $pname) {
+            if ($pname == 'manual') continue;
 			$diffarray[$pname] = $this->_getPresetTimes($sessionId, $pname, 1000);
 		}
 		return $this->_calculatePresetStats($diffarray);
@@ -3071,6 +3093,7 @@ class leginondata {
 	function _calculatePresetStats($diffarray) {
 		$retarray = array();
 		foreach ((array)$diffarray as $key=>$presetarray) {
+			if (count($presetarray) < 2) continue;
 			$res1 = array_stats($presetarray);
 			$retarray[$key]['name'] = $key;
 			$retarray[$key]['time'] = round($res1['mean'],3);
@@ -3089,6 +3112,7 @@ class leginondata {
 		// overhead from processing rejected targets nor autofilling etc.
 		$datatype=($preset) ? array($preset):$this->getDataTypes($sessionId);
 		foreach ($datatype as $preset) {
+            if ($preset == 'manual') continue;
 			$siblings=$this->getSiblingsfrompreset($sessionId, $preset);
 			$presetorder=array();
 			if ($siblings)
@@ -3229,6 +3253,8 @@ class leginondata {
 					$ref = preg_replace("%^REF\|%",'',$field);
 					$ref .= '|'.preg_replace("%'%","",$row[$i]);
 					$refinfo = explode("|", $ref);
+                    $refid = $refinfo[2];
+                    if (!$refid) continue;
 					$qref="select * from `$refinfo[0]` where `DEF_id`=".$refinfo[2];
 					$Rqref = $this->mysql->SQLQuery($qref);
 					if ($recursive)
@@ -3300,7 +3326,7 @@ class leginondata {
 	}
 
 	function formatMatrixValue(&$val) {
-		$val = (empty($val)) ? $val : format_sci_number($val, 4);
+		$val = (empty($val)) ? $val : format_sci_number($val, 4, false);
 		return $val;
 	}
 
@@ -3316,13 +3342,13 @@ class leginondata {
 		$nodeparent = array();
 		// --- build a tree with '/' as separator
 
-		$q="	select * from $table
+		$q="select * from $table
 			where  `DEF_id` = \"$id\" ";
 		$Rq = $this->mysql->SQLQuery($q);
 		$this->readDataTree($arr_node,$Rq);
 //		return $arr_node;
 		$tree = "var Tree = new Array; ".$this->crlf;
-		while (list($k1, $v1) = each($arr_node)) {
+		foreach ($arr_node as $k1=>$v1) {
 			$jsvar[]="Tree[".($k1-1)."]";
 			$nodeId[]=$k1;
 			$nodeparent[]=0;
@@ -3360,7 +3386,7 @@ class leginondata {
 		if (is_file($filename))
 			return '0x'.bin2hex(file_get_contents($filename));
 		else
-			return False;
+			return false;
 	}
 
 	function getviewerlog($type, $ip="") {
@@ -3516,6 +3542,146 @@ class leginondata {
 			$this->mysql->SQLInsert($table, $data);
 	}
 
+	function getRecentImageData($sessionId) {
+		$limit = " limit 1 ";
+		$q = "SELECT *,UNIX_TIMESTAMP(`DEF_timestamp`) as unix_timestamp FROM AcquisitionImageData WHERE `REF|SessionData|session`=".$sessionId." "
+				."ORDER BY `DEF_id` DESC".$limit.";";
+		$results=$this->mysql->getSQLResult($q);
+		if (is_array($results)) return $results[0];
+		// no data.
+		return false;
+	}
+
+	function getTargetPtolemySquares($sessionId, $targetId) {
+		//Find ptolemy squares from this target
+		$q = "SELECT target.`number` as 'tnumber', link.`REF|PtolemySquareData|ptolemy` as ptolemy_square_id "
+				."From PtolemySquareStatsLinkData as link "
+				."INNER JOIN SquareStatsData as stats "
+				."ON stats.`DEF_id` = link.`REF|SquareStatsData|stats` "
+				."INNER JOIN AcquisitionImageTargetData as target "
+				."ON target.`REF|SquareStatsData|square` = stats.`DEF_id` "
+				."WHERE target.`DEF_id`=".$targetId." "
+				."AND target.`REF|SessionData|session`=".$sessionId." "
+				."ORDER BY ptolemy_square_id ASC;";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getPtolemyScoreHistoryData($sessionId, $tile_imageId=null, $ptolemy_squareId=null, $tnumber=null, $set_number=null) {
+		if ( !$this->mysql->isTable('PtolemyScoreHistoryData') ) return false;
+		//Return scores history of ptolemy squares
+		$tile_where = ($tile_imageId == null) ? '':'AND square.`tile_id`='.$tile_imageId.' ';
+		$square_where = ($ptolemy_squareId == null) ? '':'AND square.`DEF_id`='.$ptolemy_squareId.' ';
+		$tnumber_where = ($tnumber == null) ? '':'AND target.`number`='.$tnumber.' ';
+		$set_where = ($set_number == null) ? '':'AND score.`set_number`='.$set_number.' ';
+		$q = "SELECT target.`number` as 'tnumber', target.`DEF_id` as `tId`, "
+				."square.`DEF_id` as 'p_sqId', square.`tile_id` as 'tile_id', "
+				."score.*,UNIX_TIMESTAMP(score.`DEF_timestamp`) as unix_timestamp "
+				."FROM PtolemyScoreHistoryData as score "
+				."INNER JOIN PtolemySquareData as square "
+				."ON score.`REF|PtolemySquareData|square` = square.`DEF_id` "
+				."INNER JOIN PtolemySquareStatsLinkData as link "
+				."ON score.`REF|PtolemySquareData|square` = link.`REF|PtolemySquareData|ptolemy` "
+				."INNER JOIN SquareStatsData as stats "
+				."ON stats.`DEF_id` = link.`REF|SquareStatsData|stats` "
+				."INNER JOIN AcquisitionImageTargetData as target "
+				."ON target.`REF|SquareStatsData|square` = stats.`DEF_id` "
+				."WHERE "
+				."score.`REF|SessionData|session`=".$sessionId." "
+				.$tile_where
+				.$square_where
+				.$tnumber_where
+				.$set_where
+				."GROUP BY score.`DEF_id` "
+				."ORDER BY score.`DEF_id` ASC;";
+		$results=$this->mysql->getSQLResult($q);
+		return $results;
+	}
+
+	function getSquareTargetScores($sessionId, $tile_imageId) {
+		/* return score info at each set number on the tile image
+		*/
+		$score_data = $this-> getPtolemyScoreHistoryData($sessionId, $tile_imageId);
+		// targets sorted by target number
+		$tnumbers = array();
+		$tIds = array();
+		$all_data = array();
+		$timestamps = array();
+		$sets = array();
+		foreach ($score_data as $s) {
+			if (!in_array($s['set_number'],$sets)) {
+				$timestamps[] = $s['unix_timestamp'];
+				$sets[] = $s['set_number'];
+			}
+			if (!in_array($s['tId'],$all_tIds)) {
+				$tIds[] = $s['tId'];
+				$tnumbers[]=$s['tnumber'];
+			}
+		}
+		for ($i=0; $i < count($sets); $i++) {
+			$data=array('unix_timestamp'=> $score_data[$i]['unix_timestamp']);
+			$s = $score_data[$i];
+			for ($j=0; $j < count($tIds); $j++) {
+				$targetId = $tIds[$j];
+				$tnumber = $tnumbers[$j];
+				// get score for the specific target and set number
+				$t_data = $this-> getPtolemyScoreHistoryData($sessionId, $tile_imageId, null, $tnumber, $sets[$i]);
+				// should only has one $t_data;
+				if (is_array($t_data) && count($t_data) > 0) {
+					$data[$tnumber] = $t_data[0];
+					$data['set_number'] = $sets[$i];
+				}
+			}
+			$all_data[] = $data;
+		}
+		return $all_data;
+	}
+
+	function getTargetNumberByOrderOnTileImage($sessionId, $imgId) {
+		// targets sorted by target number
+		$targets = $this->getImageTargets($imgId, $type="acquisition");
+		if (!is_array($targets) || count($targets) == 0) return array(array('timestamp'=>time(),'0'=>0));
+		//
+		$tnumbers = array();
+		foreach ($targets as $t) {
+			$tnumbers[]=$t['tnumber'];
+		}
+		$recent_image = $this-> getRecentImageData($sessionId);
+		$max_unix_timestamp = ($recent_image) ? $recent_image['unix_timestamp']: false;
+		$targetlistId = $targets[0]['tlist'];
+		$all_targets_in_list = $this->getTargetsFromTargetListId($targetlistId,$targettype='acquisition');
+		$all_target_order_data = $this->getTargetOrder($sessionId,$targetlistId,true);
+		//oldest is at the front
+		$all_target_order_data = array_reverse($all_target_order_data);
+		$all_target_orders = array();
+		foreach ($all_target_order_data as $order_data) {
+			// only process order data with more than one item in the order list.
+			if (strlen($order_data['SEQ|order']) > 2) {
+				$order = array_map('intval', explode(",",substr($order_data['SEQ|order'],1,-1)));
+			} else {
+				continue;
+			}
+			// don't show after data collection stops
+			if ($max_unix_timestamp && $max_unix_timestamp < $order_data['unix_timestamp'])
+				continue;
+			$all_target_orders[] = array('unix_timestamp'=>$order_data['unix_timestamp'],'order'=>$order);
+		}
+		$all_data = array();
+		foreach ($all_target_orders as $order_data) {
+			$data = array();
+			$data['unix_timestamp'] = $order_data['unix_timestamp'];
+			$i = 0;
+			foreach ($order_data['order'] as $t) {
+				if (in_array($t + 0, $tnumbers)) {
+					$data[$i] = $t + 0;
+					$i = $i + 1;
+				}
+			}
+			// all_data contains only target order on this tile.
+			$all_data[] = $data;
+		}
+		return $all_data;
+	}
+
 	function saveTargetOrder($sessionId, $tlistId, $order_str) {
 			// save target order in a targetlist
 			$table = 'TargetOrderData';
@@ -3526,16 +3692,18 @@ class leginondata {
 			$this->mysql->SQLInsert($table, $data);
 	}
 
-	function getTargetOrder($sessionId, $tlistId) {
+	function getTargetOrder($sessionId, $tlistId, $get_all=false) {
 		//Return target order in array
-		if ( !$this->mysql->isTable('TargetOrderData') ) return False;
-		$q = "SELECT * FROM TargetOrderData WHERE `REF|SessionData|session`=".$sessionId." "
+		if ( !$this->mysql->isTable('TargetOrderData') ) return false;
+		$limit = ($get_all) ? "":" limit 1 ";
+		$q = "SELECT *,UNIX_TIMESTAMP(`DEF_timestamp`) as unix_timestamp FROM TargetOrderData WHERE `REF|SessionData|session`=".$sessionId." "
 				."AND `REF|ImageTargetListData|list`=".$tlistId." "
-				."ORDER BY `DEF_id` DESC limit 1 ";
+				."ORDER BY `DEF_id` DESC".$limit.";";
 		$results=$this->mysql->getSQLResult($q);
-		if (is_array($results)) return $results[0];
+		if (is_array($results) && !$get_all) return $results[0];
+		if (is_array($results) && $get_all) return $results;
 		// no data.
-		return False;
+		return false;
 	}
 
 	function getNewTargetsFromAtlasImageList($ilId) {
@@ -3634,6 +3802,9 @@ class leginondata {
 	}
 
 	function getQueueTargetListIds($sessionId,$qtype,$limit=100) {
+		$has_Data = $this->mysql->isTable('QueueData');
+			if (!$has_Data) return array();
+
 		$whereqtype = "";
 		if ($qtype)
 			$whereqtype = ""
@@ -3920,6 +4091,8 @@ class leginondata {
 	}
 
 	function getQueueTypes($sessionId) {
+		$has_Data = $this->mysql->isTable('QueueData');
+		if (!$has_Data) return array();
 		$q="SELECT "
 			."`label`,`DEF_id` as id FROM QueueData where `REF|SessionData|session` = ".$sessionId."";
 		return $this->mysql->getSQLResult($q);

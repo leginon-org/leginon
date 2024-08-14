@@ -15,7 +15,10 @@ if (privilege('projects')) {
 	redirect(BASE_URL.'login.php?ln='.$redirect);
 }
 
+$legdb = new mysql(DB_HOST, DB_USER, DB_PASS, $dbname);
+
 function getStatistic($dbname) {
+	$legdb = new mysql(DB_HOST, DB_USER, DB_PASS, $dbname);
 	$stats = array(
 		'db_name' => $dbname,
 		'tot_cell' => 0,
@@ -24,7 +27,6 @@ function getStatistic($dbname) {
 		'idx_sz' => 0,
 		'tot_sz' => 0
 	);
-	$legdb = new mysql(DB_HOST, DB_USER, DB_PASS, $dbname);
 	$res = $legdb->SQLQuery('SHOW TABLE STATUS FROM `'.$dbname.'`'); 
 	while ($row = mysqli_fetch_array($res, MYSQLI_ASSOC)) {
 		$stats['tbl_cnt']++;
@@ -102,6 +104,7 @@ $numOfImages = (int)$row[0];
 $numOfImageSize = byteSize($row[1] * 4);
 
 /* get total number of sessions with at least 10 images */
+$numOfSessionsWithImages = 0;
 $q = "select distinct `REF|SessionData|session` as sessionID, 
 		count(DEF_id) as images from AcquisitionImageData group by sessionID";
 $r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
@@ -111,11 +114,16 @@ while ($row = mysqli_fetch_array($r, MYSQLI_ASSOC)) {
 }
 
 /* get total tomographic tilt series */
-$q = "SELECT count(*) from TiltSeriesData where `tilt max` is not null";
-$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
-$row = mysqli_fetch_row($r);
-$TomographicTiltSeries = (int)$row[0];
+/* TiltSeriesData is not initialized */
+if ($legdb->isTable('TiltSeriesData')) {;
+    $q = "SELECT count(*) from TiltSeriesData where `tilt max` is not null";
+    $r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
+    $row = mysqli_fetch_row($r);
 
+    $TomographicTiltSeries = (int)$row[0];
+} else {
+    $TomographicTiltSeries = 0;
+}
 /* change to project database */
 mysqli_select_db($link, DB_PROJECT);
 
@@ -190,6 +198,34 @@ if(!empty($row)){
 		$totalTemplates = $row[26];
 		$totalInitialModels = $row[27];
 		$firstExptRunTime = $row[28];
+	} else {
+		$numOfApProjects = 0;
+		$numOfSessionsProcessed = 0;
+		$numOfTotalProcessingRuns = 0;
+		$lastExptRunTime = '2000-01-01 00:00:00.00000';
+		$aceRun = 0;
+		$ace2Run = 0;
+		$ctfindRun = 0;
+		$aceProcessedImages = 0;
+		$particleSelectionRuns = 0;
+		$dogPickerRuns = 0;
+		$manualPickerRuns = 0;
+		$tiltPickerRuns = 0;
+		$templatePicker = 0;
+		$selectedParticles = 0;
+		$classificationRuns = 0;
+		$numOfClasses = 0;
+		$classifiedParticles = 0;
+		$totalRCTModels = 0;
+		$tomogramRun = 0;
+		$totalStacks = 0;
+		$totalStacksParticles = 0;
+		$totalReconRun = 0;
+		$totalReconIterations = 0;
+		$totalClassifiedParticles = 0;
+		$totalTemplates = 0;
+		$totalInitialModels = 0;
+		$firstExptRunTime = '2000-01-01 00:00:00.000000';
 	}
 }
 
@@ -376,6 +412,8 @@ if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1
 			$classifiedParticles.", ".$totalRCTModels.", ".$tomogramRun.", ".$totalStacks.", ".
 			$totalStacksParticles.", ".$totalReconRun.", ".$totalReconIterations.", ".$totalClassifiedParticles.", ".
 			$totalTemplates.", ".$totalInitialModels.", '".$firstExptRunTime."')";
+
+echo $q;
 	$r = mysqli_query($link, $q) or die("Query error: " . mysqli_error($link));
 }
 	
@@ -389,7 +427,7 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 		<td><table border="1"  cellpadding="5" cellspacing="0" width="100%">
 			<tr><td><b># Project</b></td><td><b># Experiments</b></td><td><b>First Experiment (Date)</b><td><b>Last Experiment (Date)</b></td>
 			<td><b># Processing Runs</b></td><td><b>First Run (Date)</b></td><td><b>Last Run (Date)</b></td></tr>
-			<tr align="center"><td><?php echo number_format($totalNumProjects); ?></td>
+			<tr align="center"><td><?php var_dump($totalNumProjects); echo number_format($totalNumProjects); ?></td>
 			<td><?php echo number_format($totalNumSessionUnderProjects); ?></td>
 			<td><?php echo $firstSessionTime ?></td>
 			<td><?php echo $lastSessionTime ?></td>

@@ -14,7 +14,7 @@ def getAppionDatabases(projectdb):
 	elif projectdb.columnExists('processingdb', 'db'):
 		colname = 'db'
 	else:
-		print "could not find appion tables"
+		print("could not find appion tables")
 		return []
 
 	selectq = "SELECT DISTINCT "+colname+" FROM processingdb ORDER BY `REF|projects|project` ASC"
@@ -31,9 +31,9 @@ def getAppionDatabases(projectdb):
 #===================
 #===================
 def upgradeAppionDB(appiondbname, projectdb, backup=True):
-	print ""
-	print "========================"
-	print "Upgrading appion database: "+appiondbname
+	print("")
+	print("========================")
+	print(("Upgrading appion database: "+appiondbname))
 	time.sleep(0.1)
 
 	appiondb = dbupgrade.DBUpgradeTools('appiondata', appiondbname, drop=True)
@@ -279,7 +279,7 @@ def upgradeAppionDB(appiondbname, projectdb, backup=True):
 		'recon': 'emanrecon',
 	}
 	if appiondb.tableExists('ApAppionJobData'):
-		for key in jobmap.keys():
+		for key in list(jobmap.keys()):
 			appiondb.updateColumn('ApAppionJobData', 'jobtype', 
 				"'"+jobmap[key]+"'", "`jobtype` = '"+key+"' ")
 
@@ -329,7 +329,7 @@ def upgradeAppionDB(appiondbname, projectdb, backup=True):
 	appiondb.changeColumnDefinition('ApAssessmentData', 'selectionkeep', appiondb.bool)
 	appiondb.indexColumn('ApAssessmentData', 'selectionkeep')
 	appiondb.changeColumnDefinition('ApAlignParticleData', 'mirror', appiondb.bool)
-	print "DONE"
+	print("DONE")
 
 def makeAppionTables(dbname):
 	sinedonname = 'appiondata'
@@ -423,8 +423,8 @@ KEY `status` ( `status` )
 if __name__ == "__main__":
 	projectdb = dbupgrade.DBUpgradeTools('projectdata', drop=True)
 	leginondb = dbupgrade.DBUpgradeTools('leginondata', drop=False)
-	print "\nWould you like to back up the database to local file before upgrading?"
-	answer = raw_input('Yes/No (default=Yes): ')
+	print("\nWould you like to back up the database to local file before upgrading?")
+	answer = eval(input('Yes/No (default=Yes): '))
 	if answer.lower().startswith('n'):
 		backup = False
 	else:
@@ -435,7 +435,7 @@ if __name__ == "__main__":
 	appiondblist = getAppionDatabases(projectdb)
 	for appiondbname in appiondblist:
 		if not projectdb.databaseExists(appiondbname):
-			print "\033[31merror database %s does not exist\033[0m"%(appiondbname)
+			print(("\033[31merror database %s does not exist\033[0m"%(appiondbname)))
 			time.sleep(1)
 			continue
 		upgradeAppionDB(appiondbname, projectdb, backup=backup)

@@ -18,6 +18,7 @@ function getExperimentInfo($id_array_or_name, $hidden=false) {
 	$id_or_name = (is_array($id_array_or_name) && array_key_exists('leginonId',$id_array_or_name)) ? $id_array_or_name['leginonId']:$id_array_or_name;
 	$sessioninfo = $leginondata->getSessionInfo($id_or_name);
 	$summary = $leginondata->getSummary($sessioninfo['SessionId'],false, $hidden=$hidden);
+	$tot_imgs = 0;
 	if (!empty($summary)) {
 		foreach($summary as $s) {
 			$s['defocusmin']=$leginondata->formatDefocus($s['defocusmin']);
@@ -30,8 +31,8 @@ function getExperimentInfo($id_array_or_name, $hidden=false) {
 			$tot_imgs += $s['nb'];
 		}
 
-	$sessioninfo['Total images']=$tot_imgs;
 	}
+	$sessioninfo['Total images']=$tot_imgs;
 	return $sessioninfo;
 }
 

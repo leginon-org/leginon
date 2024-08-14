@@ -50,7 +50,7 @@ Optional argument 'newsize' is used for scaling the image.
 	## use PIL to write JPEG
 	imsize = a.shape[1], a.shape[0]
 	nstr = a.tostring()
-	image = Image.fromstring('L', imsize, nstr, 'raw', 'L', 0, 1)
+	image = Image.frombuffer('L', imsize, nstr, 'raw', 'L', 0, 1)
 	image.convert('L').save(filename, "JPEG", quality=quality)
 	if newsize is None:
 		image.convert('L').save(filename, "JPEG", quality=quality)

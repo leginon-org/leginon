@@ -148,9 +148,10 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 													shortHelp='Measure')
 		# Add again only if remove is successful.
 		if atb is not None and ctb is not None:
-			self.toolbar.AddToolItem(atb)
+            # leginon.gui.wx.toolbar.ToolBar can not take just wx.ToolBarToolBase
+			self.toolbar.AddTool(atb.Id, atb.Label, shortHelp='Abort Measurement')
 			self.toolbar.AddSeparator()
-			self.toolbar.AddToolItem(ctb)
+			self.toolbar.AddTool(ctb.Id, ctb.Label, shortHelp='Fit Measurements')
 
 		self.Bind(leginon.gui.wx.Events.EVT_MEASUREMENT_DONE, self.onMeasurementDone)
 

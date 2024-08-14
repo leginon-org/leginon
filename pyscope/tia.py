@@ -474,6 +474,7 @@ class TIA_Falcon(TIA):
 		self.calculateMovieExposure()
 		movie_exposure_second = self.movie_exposure/1000.0
 		if self.save_frames:
+			self.frameconfig.createFramePath(self.frameconfig.getBaseFramePath())
 			self.frameconfig.makeRealConfigFromExposureTime(movie_exposure_second,self.equal_distr_frame_number,self.start_frame_number)
 		else:
 			try:

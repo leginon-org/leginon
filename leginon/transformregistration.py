@@ -43,7 +43,7 @@ class Registration(object):
 	def undoTilt(self,imagedata):
 		# matrix and shift returned from tiltcorrector is that for image transform
 		untilted_array,image2by2matrix,imageshiftvector =self.stagetiltcorrector.getZeroTiltArray(imagedata)
-		affinematrix = numpy.matrix(numpy.identity(3, numpy.float_))
+		affinematrix = numpy.matrix(numpy.identity(3, numpy.float64))
 		affinematrix[:2,:2] = image2by2matrix
 		# Matrix for target transform is the inverse of that for image transform 
 		# without shift because the target is defined relative to center of the image
@@ -52,8 +52,8 @@ class Registration(object):
 	def registerImageData(self,image1,image2):
 		# return target transform matrix
 		transformtypes = self.determinetransformtypes(image1,image2)
-		prepmatrix1 = numpy.matrix(numpy.identity(3, numpy.float_))
-		prepmatrix2 = numpy.matrix(numpy.identity(3, numpy.float_))
+		prepmatrix1 = numpy.matrix(numpy.identity(3, numpy.float64))
+		prepmatrix2 = numpy.matrix(numpy.identity(3, numpy.float64))
 		array1 = image1['image']
 		array2 = image2['image']
 		for ttype in transformtypes:
@@ -73,7 +73,7 @@ class Registration(object):
 class IdentityRegistration(Registration):
 	'''Fake registration.  Always returns identity matrix'''
 	def register(self, array1, array2):
-		return numpy.matrix(numpy.identity(3, numpy.float_))
+		return numpy.matrix(numpy.identity(3, numpy.float64))
 
 class CorrelationRegistration(Registration):
 	'''Register using peak found in phase correlation image.  Good for shift'''
@@ -92,7 +92,7 @@ class CorrelationRegistration(Registration):
 		peak = self.peakfinder.subpixelPeak(newimage=corrimage)
 		self.node.setTargets([(peak[1],peak[0])], 'Peak')
 		shift = correlator.wrap_coord(peak, corrimage.shape)
-		matrix = numpy.matrix(numpy.identity(3, numpy.float_))
+		matrix = numpy.matrix(numpy.identity(3, numpy.float64))
 		matrix[2,0] = shift[0]*shrink_factor
 		matrix[2,1] = shift[1]*shrink_factor
 		return matrix
@@ -113,7 +113,7 @@ class LogPolarRegistration(Registration):
 	def register(self, array1, array2):
 		result = align.findRotationScaleTranslation(array1, array2)
 		rotation, scale, shift, rsvalue, value = result
-		matrix = numpy.matrix(numpy.identity(3, numpy.float_))
+		matrix = numpy.matrix(numpy.identity(3, numpy.float64))
 		matrix[0,0] = scale*math.cos(rotation)
 		matrix[0,1] = -scale*math.sin(rotation)
 		matrix[1,0] = scale*math.sin(rotation)

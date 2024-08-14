@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import baseSchemaClass
+from . import baseSchemaClass
 from leginon import leginondata
 
 class SchemaUpdate17561(baseSchemaClass.SchemaUpdate):
@@ -21,7 +21,7 @@ class SchemaUpdate17561(baseSchemaClass.SchemaUpdate):
 				ms = seconds * 1000
 				status = self.leginon_dbupgrade.updateColumn('CameraEMData','frame time','%e' % ms,'`DEF_id`=%d' % r[0],True)
 				if not status:
-					print 'break_from_failed_update'
+					print('break_from_failed_update')
 		
 if __name__ == "__main__":
 	update = SchemaUpdate17561()

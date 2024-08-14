@@ -20,8 +20,8 @@ foreach($instrumenthosts as $host) {
 	$models = $leginondata->getGoniometerModelsByHost($host);
 	if ($models) $validhosts[] = $host;
 }
-$selectedhost = ($_POST[host])? $_POST[host]:$validhosts[0];
-$selectedmodelId = $_POST[modelId];
+$selectedhost = ($_POST['host'])? $_POST['host']:$validhosts[0];
+$selectedmodelId = $_POST['modelId'];
 if (!$selectedhost) {
 	$models= $leginondata->getAllGoniometerModels();
 } else {
@@ -30,12 +30,12 @@ $models= $leginondata->getGoniometerModelsByHost($selectedhost);
 //change selected model if host changes
 $in = 0;
 foreach($models as $model) {
-	if ($model[DEF_id]==$selectedmodelId)
+	if ($model['DEF_id']==$selectedmodelId)
         	$in += 1;
     	else
         	$in +=0;
 }
-if ($in == 0) $selectedmodelId = $models[0][DEF_id];
+if ($in == 0) $selectedmodelId = $models[0]['DEF_id'];
 
 admin_header();
 ?>
@@ -56,11 +56,11 @@ foreach($validhosts as $host) {
 <select name="modelId" onChange="javascript:document.goniometerform.submit()">
 <?php
 foreach($models as $model) {
-	if ($model[DEF_id]==$selectedmodelId)
+	if ($model['DEF_id']==$selectedmodelId)
         	$s='selected';
     	else
         	$s='';
-	echo '<option value="'.$model[DEF_id].'" '.$s.' >'.$model[label].'</option>';
+	echo '<option value="'.$model['DEF_id'].'" '.$s.' >'.$model['label'].'</option>';
 }
 ?>
 </select>

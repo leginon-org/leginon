@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import baseSchemaClass
+from . import baseSchemaClass
 
 class SchemaUpdate15961(baseSchemaClass.SchemaUpdate):
 	'''

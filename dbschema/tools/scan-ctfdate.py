@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import datetime
-import scandb
+from . import scandb
 from appionlib import appiondata, apDisplay
 
 class ScanCtf(scandb.ScanDB):
@@ -20,7 +20,7 @@ class ScanCtf(scandb.ScanDB):
 			if results:
 				ctfdata = results[0]
 				if ctfdata.timestamp > self.checktime:
-					print "\033[35m%s has new ApCtfData in %d days %d hours\033[0m" % (self.appion_dbtools.getDatabaseName(),-self.deltadays,-self.deltahours)
+					print(("\033[35m%s has new ApCtfData in %d days %d hours\033[0m" % (self.appion_dbtools.getDatabaseName(),-self.deltadays,-self.deltahours)))
 		if self.appion_dbtools.tableExists('ApStackRunData'):
 			results = appiondata.ApStackRunData().query(results=1)
 			if results:
@@ -30,7 +30,7 @@ class ScanCtf(scandb.ScanDB):
 					if stackpartr:
 						stackpartdata = stackpartr[0]
 						if stackpartdata.timestamp > self.checktime:
-							print "\033[35m%s has new particle inserted to Stack with phase flip in %d days %d hours\033[0m" % (self.appion_dbtools.getDatabaseName(),-self.deltadays,-self.deltahours)
+							print(("\033[35m%s has new particle inserted to Stack with phase flip in %d days %d hours\033[0m" % (self.appion_dbtools.getDatabaseName(),-self.deltadays,-self.deltahours)))
 
 if __name__ == "__main__":
 	update = ScanCtf()

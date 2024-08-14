@@ -25,28 +25,28 @@ class ArchiveRun(object):
 		self.projectids = [1,]
 
 	def setDatabases(self):
-		self.old_projectdb = raw_input('Enter project database name with data to be used to make the archive:')
-		self.old_leginondb = raw_input('Enter leginon database name with data to be used to make the archive:')
-		self.new_projectdb = raw_input('Enter project database name where the archive will go to:')
-		self.new_leginondb = raw_input('Enter leginon database name where the archive will go to:')
+		self.old_projectdb = eval(input('Enter project database name with data to be used to make the archive:'))
+		self.old_leginondb = eval(input('Enter leginon database name with data to be used to make the archive:'))
+		self.new_projectdb = eval(input('Enter project database name where the archive will go to:'))
+		self.new_leginondb = eval(input('Enter leginon database name where the archive will go to:'))
 
 	def setDbCopySinedonPath(self):
 		while True:
-			self.dbcopy_sinedon_path = raw_input('Enter myami-dbcopy sinedon path')
+			self.dbcopy_sinedon_path = eval(input('Enter myami-dbcopy sinedon path'))
 			if os.path.isdir(self.dbcopy_sinedon_path) and 'sinedon' in self.dbcopy_sinedon_path[-9:]:
 				break
-			print 'Not an existing directory, try again'
+			print('Not an existing directory, try again')
 
 	def runSubProcess(self,cmd):
-		print cmd	
+		print(cmd)	
 		proc = subprocess.Popen(cmd, shell=True, stdout=None)
 		stdout_value = proc.communicate()[0]
 		while proc.returncode is None:
 			time.wait(60)
 			stdout_value = proc.communicate()[0]
-			print stdout_value
+			print(stdout_value)
 		if proc.returncode != 0:
-			print "EXIT WITH ERROR"
+			print("EXIT WITH ERROR")
 			sys.exit(1)
 
 	def runScript(self, sinedon_base_path, pythonfile):
@@ -58,7 +58,7 @@ class ArchiveRun(object):
 		# get the original database host, user info
 		import sinedon
 		self.globalconfigs = sinedon.getConfig('leginondata')
-		print self.globalconfigs
+		print((self.globalconfigs))
 		# make backup
 		homepath = expanduser("~")
 		self.sinedon_cfg_file = os.path.join(homepath,'sinedon.cfg')

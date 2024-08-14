@@ -66,8 +66,10 @@ class DMSEM(ccdcamera.CCDCamera):
 			'setEnergyFilter',
 			'getEnergyFilterWidth',
 			'setEnergyFilterWidth',
+			'getEnergyFilterWidthRange',
 			'getEnergyFilterOffset',
 			'setEnergyFilterOffset',
+			'setEnergyShiftRange',
 			'alignEnergyFilterZeroLossPeak',
 		]
 
@@ -548,6 +550,10 @@ class DMSEM(ccdcamera.CCDCamera):
 		if result < 0.0:
 			raise RuntimeError('unable to set energy filter width')
 
+    def getEnergeFilterWidthRange(self):
+        # TODO Find gatan filter range
+        return 0.0,100.0
+
 	def getEnergyFilterOffset(self):
 		# get Spectrum Offset in general, but will read Shift gui if
 		# set in GMS gui.
@@ -561,6 +567,10 @@ class DMSEM(ccdcamera.CCDCamera):
 		result = self.camera.SetEnergyFilterOffset(value)
 		if result < 0.0:
 			raise RuntimeError('unable to set energy filter energy shift')
+
+    def getEnergeShiftRange(self):
+        # TODO Find gatan filter range
+        return -100.0,250.0
 
 	def alignEnergyFilterZeroLossPeak(self):
 		result = self.camera.AlignEnergyFilterZeroLossPeak()

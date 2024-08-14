@@ -1174,6 +1174,12 @@ def flatDict(in_dict):
 
 			items.update(nd)
 		else:
+			if issubclass(type(value), float):
+				# handle numpy float type. numpy2.0 default to output with np type.
+				value = float(value)
+			if issubclass(type(value), int):
+				# handle numpy float type. numpy2.0 default to output with np type.
+				value = int(value)
 			items[key] = value	
 	return items
 

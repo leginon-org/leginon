@@ -13,15 +13,18 @@ class mysql {
 	var $db_host;
 	var $db_user;
 	var $db_pass;
+	var $db_link;
 	var $db;
 	var $sqldefault = array();
+	var $sqlquery;
 	var $SQL = array ( 
 		'showcolumns'=>1,
 		'where'=>" WHERE 1 "
 		);
 	var $crlf = "\n";
+	private  $__SQLQuery_link;
 
-	function mysql ($db_host, $db_user, $db_pass, $db=null) {
+	function __construct ($db_host, $db_user, $db_pass, $db=null) {
 		$this->db_host	= $db_host;
 		$this->db_user	= $db_user;
 		$this->db_pass	= $db_pass;
@@ -51,9 +54,9 @@ class mysql {
 			error_log("... =");
 			return false;
 		}
-
-		if(!empty($this->db))
+		if(!empty($this->db)) {
 			$link = $this->select_db($this->db, $link);
+        }
       $this->db_link = $link;
 		return $link;
 	}
@@ -154,7 +157,7 @@ class mysql {
 	         $index[$kname][] = $row['Column_name'];
 	    }
 	
-	    while(list($x, $columns) = @each($index))
+	    foreach ($index as $x =>$columns)
 	    {
 	         $schema_create .= ",$crlf";
 	         if($x == "PRIMARY")
@@ -249,7 +252,11 @@ class mysql {
 	}
 
 	function getDBName() {
-		return $this->getSQLResult("SELECT database();");
+		if (!$r = $this->getSQLResult("SELECT database();")) {
+            return 'error';
+        } else {
+            return ($r[0]["database()"]);
+        }
 	}
 
 	function getSQLQuery() {
@@ -298,8 +305,9 @@ class mysql {
 		}
 		mysqli_query($link, "SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
 
+        try {
 		$result = mysqli_query($link, $query); 
-		if (!$result) {
+        } catch (Exception $e) {
 			$this->mysqlerror = "= Error: mysql.inc::SQLQuery - " . mysqli_error($link);
 			$this->mysqlerrornb = mysqli_errno($link);
 			// error_log($this->mysqlerror);
@@ -307,7 +315,7 @@ class mysql {
 			// error_log("  trace: " . $this->_backtrace());
 			// error_log("... =");
 			return False;
-		}
+        }
 
 		if ($insert) {
 			return mysqli_insert_id($link);

@@ -353,7 +353,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		axes = ('x', 'y')
 		states = ({'defocus': defocii[0]}, {'defocus': defocii[1]})
-		matrix = numpy.identity(2, numpy.float_)
+		matrix = numpy.identity(2, numpy.float64)
 		for i, axis in enumerate(axes):
 			self.logger.info('Calibrating on %s-axis...' % axis)
 			args = (axis, beam_tilt, states)
@@ -420,7 +420,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 				s = leginondata.ScopeEMData(stigmator={'objective': v})
 				states.append(s)
 
-			matrix = numpy.identity(2, numpy.float_)
+			matrix = numpy.identity(2, numpy.float64)
 			for i, tilt_axis in enumerate(axes):
 				self.logger.info('Calibrating on %s-axis...' % tilt_axis)
 				args = (tilt_axis, beam_tilt, states)

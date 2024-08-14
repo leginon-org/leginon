@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import baseSchemaClass
+from . import baseSchemaClass
 import leginon.leginondata
 import sys,os
 
@@ -13,7 +13,7 @@ class SchemaUpdate16607(baseSchemaClass.SchemaUpdate):
 			if (not self.leginon_dbupgrade.columnExists('FocuserSettingsData','manual focus preset')):
 				self.leginon_dbupgrade.addColumn('FocuserSettingsData', 'manual focus preset', self.leginon_dbupgrade.str)
 			q = leginon.leginondata.FocuserSettingsData()
-			print 'Querying All Focuser Settings....'
+			print('Querying All Focuser Settings....')
 			results = q.query()
 			for qdata in results:
 				presets = qdata['preset order']

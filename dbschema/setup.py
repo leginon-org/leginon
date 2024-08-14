@@ -4,16 +4,16 @@ import sys
 
 # script files to be installed in bin dir
 binfiles=glob.glob('tools/*.py')
-binfiles.remove('tools/__init__.py)
+binfiles.remove('tools/__init__.py')
 binfiles.extend(glob.glob('info_tools/export_all_target_info.py'))
 binfiles.extend(['schema_update.py','show_schema_history.py'])
-print binfiles
+print(binfiles)
 # determine if script destination has been properly specified
 arg_cmd = None
 arg_install_scripts = False
 arg_install_dir = False
 arg_help = False
-print sys.argv
+print((sys.argv))
 for arg in sys.argv:
 	if arg == 'install':
 		arg_cmd = 'install'
@@ -39,9 +39,9 @@ if warn_user:
   you do not wish to clutter up with these scripts.
 
   Are you sure you want to continue? (y/n): ''' % (warn_user, len(binfiles))
-	answer = raw_input(message)
+	answer = eval(input(message))
 	if answer != 'y':
-		print 'Installation aborted.'
+		print('Installation aborted.')
 		sys.exit()
 
 

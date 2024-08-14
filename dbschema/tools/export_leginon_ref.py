@@ -10,13 +10,13 @@ class ReferenceJsonMaker(jsonfun.DataJsonMaker):
 		super(ReferenceJsonMaker,self).__init__(leginondata)
 		try:
 			self.validateInput(params)
-		except ValueError, e:
-			print "Error: %s" % e.message
+		except ValueError as e:
+			print(("Error: %s" % e.message))
 			self.close(1)
 
 	def validateInput(self, params):
 		if len(params) < 4:
-			print "Usage export_leginon_ref.py source_database_hostname source_camera_hosthame camera_name <limit_storage_path>"
+			print("Usage export_leginon_ref.py source_database_hostname source_camera_hosthame camera_name <limit_storage_path>")
 			self.close(1)
 		database_hostname = leginondata.sinedon.getConfig('leginondata')['host']
 		if params[1] != database_hostname:
@@ -33,7 +33,7 @@ class ReferenceJsonMaker(jsonfun.DataJsonMaker):
 		q = self.makequery('InstrumentData',kwargs)
 		result = self.research(q,True)
 		if not result:
-			print "ERROR: incorrect hostname...."
+			print("ERROR: incorrect hostname....")
 			r = leginondata.InstrumentData(name=from_camname).query(results=1)
 			if r:
 				raise ValueError("Try %s instead" % r[0]['hostname'])
@@ -75,15 +75,15 @@ class ReferenceJsonMaker(jsonfun.DataJsonMaker):
 				if '%d-%d' % (r['camera']['offset']['x'], r['channel']) not in offset_channels:
 					offset_channels.append('%d-%d' % (r['camera']['offset']['x'],r['channel']))
 					normids.append(r.dbid)
-			print "bin and number of normids", b, normids
-			print 'offset and channel: ', offset_channels
-			print 'limit storage: ', self.storage_path
+			print(("bin and number of normids", b, normids))
+			print(('offset and channel: ', offset_channels))
+			print(('limit storage: ', self.storage_path))
 			for dbid in normids:
 				normdata = leginondata.NormImageData().direct_query(dbid)
 				try:
 					self.publishNormData(normdata)
 				except IOError as e:
-					print e
+					print(e)
 				if normdata['channel'] == 0:
 					# just do one channel
 					plandata = self.researchCorrectorPlan(normdata['camera'])
@@ -171,7 +171,7 @@ class ReferenceJsonMaker(jsonfun.DataJsonMaker):
 
 	def close(self, status=0):
 		if status:
-			print "Exit with Error"
+			print("Exit with Error")
 			sys.exit(1)
 
 if __name__=='__main__':

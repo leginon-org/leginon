@@ -325,6 +325,14 @@ class Proxy(object):
 			self.setData(instance['scope'], temname=temname)
 			self.setData(instance['camera'], ccdcameraname=ccdcameraname)
 			return
+		elif isinstance(instance, leginondata.InstrumentData):
+			# just set instrument not parameters
+			name = instance['name']
+			if instance['cs'] is None:
+				self.setCCDCamera(name)
+			else:
+				self.setTEM(name)
+			return
 		if proxy is None:
 			raise ValueError('no proxy selected for this data instance')
 		keys = []
@@ -429,15 +437,15 @@ parametermapping = (
 	('energy filter', 'EnergyFilter'),
 	('energy filter width', 'EnergyFilterWidth'),
 	('energy filter offset', 'EnergyFilterOffset'),
-	('nframes', 'NumberOfFrames'),
+	('save frames', 'SaveRawFrames'),
 	('align frames', 'AlignFrames'),
 	('tiff frames', 'SaveLzwTiffFrames'),
 	('eer frames', 'SaveEer'),
 	('align filter', 'AlignFilter'),
-	('save frames', 'SaveRawFrames'),
 	('frames name', 'PreviousRawFramesName'),
-	('use frames', 'UseFrames'),
 	('frame time', 'FrameTime'),
+	('nframes', 'NumberOfFrames'),
+	('use frames', 'UseFrames'),
 	('request nframes', 'RequestNFrames'),
 	('frame flip', 'FrameFlip'),
 	('frame rotate', 'FrameRotate'),

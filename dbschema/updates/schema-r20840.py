@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import baseSchemaClass
+from . import baseSchemaClass
 from sinedon import directq
 from leginon import leginondata
 
@@ -61,7 +61,7 @@ class SchemaUpdate(baseSchemaClass.SchemaUpdate):
 		# Set default values
 		query = '''UPDATE ScopeEMData SET `intended defocus` = `defocus` WHERE
 							`intended defocus` IS NULL;'''
-		print 'Updating ScopeEMData intended defocus....'
+		print('Updating ScopeEMData intended defocus....')
 		results = directq.complexMysqlQuery('leginondata',query)
 
 		# Substract delta z correction
@@ -71,7 +71,7 @@ class SchemaUpdate(baseSchemaClass.SchemaUpdate):
 							on image.`REF|EMTargetData|emtarget`=emtarget.`DEF_id`
 							WHERE emtarget.`delta z` > 1e-9 or emtarget.`delta z` < -1e-9;'''
 		results = directq.complexMysqlQuery('leginondata',query)
-		print 'Updating %d stage tilt image shift correction....' % (len(results),)
+		print(('Updating %d stage tilt image shift correction....' % (len(results),)))
 		for r in results:
 			delta_z = r['delta_z']
 			scope_id = r['scope_id']

@@ -8,14 +8,19 @@ import wx
 import wx.lib.filebrowsebutton as filebrowse
 
 from leginon.gui.wx.Entry import Entry, FloatEntry
+from leginon.gui.wx.Choice import Choice
 import leginon.gui.wx.Settings
 import leginon.gui.wx.MosaicClickTargetFinder
 import leginon.gui.wx.ToolBar
+import threading
 
 class Panel(leginon.gui.wx.MosaicClickTargetFinder.Panel):
 	icon = 'atlastarget'
 	def initialize(self):
 		leginon.gui.wx.MosaicClickTargetFinder.Panel.initialize(self)
+
+	def _settingsDialog(self):
+		return SettingsDialog
 
 	def addOtherTools(self):
 		self.toolbar.InsertSeparator(10)
@@ -47,6 +52,11 @@ class Panel(leginon.gui.wx.MosaicClickTargetFinder.Panel):
 			dialog.ShowModal()
 			dialog.Destroy()
 
+	def onFindSquaresButton(self, evt):
+		xys = self.imagepanel.shapetool.fitted_shape_points
+		threading.Thread(target=self.node.guiTargetMask, args=[xys,]).start()
+		threading.Thread(target=self.node.autoTargetFinder).start()
+
 class BlobSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return BlobsScrolledSettings(self,self.scrsize,False)
@@ -76,7 +86,7 @@ class ThresholdScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb2 = wx.StaticBox(self, -1, 'Blob Filtering (Set by example targets)')
 		sbsz2 = wx.StaticBoxSizer(sb2, wx.VERTICAL)
-		self.widgets['filter-key'] = Entry(self, -1, chars=10)
+		self.widgets['filter-key'] = Choice(self, -1, choices=['Size','Signal','Score','Mean'])
 		self.widgets['filter-min'] = FloatEntry(self, -1, chars=6)
 		self.widgets['filter-max'] = FloatEntry(self, -1, chars=6)
 
@@ -103,6 +113,34 @@ class ThresholdScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sbsz2.Add(sz2, 1, wx.EXPAND|wx.ALL, 5)
 
 		return [sbsz2]
+
+class SettingsDialog(leginon.gui.wx.MosaicClickTargetFinder.SettingsDialog):
+	def initialize(self):
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(leginon.gui.wx.MosaicClickTargetFinder.ScrolledSettings):
+	def createSimpleBlobMergeSizer(self):
+		sz = wx.GridBagSizer(5, 5)
+		self.widgets['simpleblobmerge'] = wx.CheckBox(self, -1, 'Simple blob merging')
+		sz.Add(self.widgets['simpleblobmerge'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return sz
+
+	def _addSettings(self):
+		sortsz = self.createSortTargetSizer()
+		autosz = self.createAutoFinderSizer()
+		checkmethodsz = self.createCheckMethodSizer()
+		simpleblobmergesz = self.createSimpleBlobMergeSizer()
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(sortsz, (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(autosz, (1, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(simpleblobmergesz, (2, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(checkmethodsz, (3, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		self.Bind(wx.EVT_CHOICE, self.onChooseCheckMethod, self.widgets['check method'])
+		return sz
 
 if __name__ == '__main__':
 	class App(wx.App):

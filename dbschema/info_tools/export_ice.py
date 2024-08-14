@@ -59,7 +59,7 @@ class IceThicknessExporter(export_targets.Exporter):
 			parent_preset = target0['image']['preset']['name']
 			# This will prevent it from descending further.
 			is_parent = True
-			if parent_preset not in self.targetlist.keys():
+			if parent_preset not in list(self.targetlist.keys()):
 				self.targetlist[parent_preset] = []
 			if target0.dbid not in self.targetlist[parent_preset]:
 				als_ice = self.getApertureLimitedScatteringIce(img)
@@ -91,8 +91,8 @@ class IceThicknessExporter(export_targets.Exporter):
 		self.result_title ='ChildImageId\tTargetId_TargetNumber\tALS_Thickness\tALS_I\tALS_I0\tALS_MFP\tZL_Thickness\tZL_I\tZL_I0\thl_Thickness\thl_I\thl_I0'
 
 if __name__=='__main__':
-	session_name = raw_input('Which session ? ')
-	base_path = raw_input('Where to save under ? (default: ./%s) ' % session_name)
+	session_name = eval(input('Which session ? '))
+	base_path = eval(input('Where to save under ? (default: ./%s) ' % session_name))
 	if not base_path:
 		base_path = './%s' % session_name
 	app = IceThicknessExporter(session_name, base_path)

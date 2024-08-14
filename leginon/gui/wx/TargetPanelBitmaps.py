@@ -151,8 +151,8 @@ def targetBitmap_plus(color, width=global_width):
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
-	dc.DrawLine(width/2, 0, width/2, width)
-	dc.DrawLine(0, width/2, width, width/2)
+	dc.DrawLine(width//2, 0, width//2, width)
+	dc.DrawLine(0, width//2, width, width//2)
 	#dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
@@ -203,7 +203,7 @@ def targetBitmap_exp(color, width=global_width):
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
 	dc.DrawRectangle(4, 4, width-6, width-6)
-	dc.DrawCircle(width/2, width/2, width/2-1)
+	dc.DrawCircle(width//2, width//2, width//2-1)
 	#dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
@@ -243,8 +243,8 @@ def targetBitmap_star(color, width=global_width):
 	dc.DrawLine(2, 2, width-3, width-3)
 	dc.DrawLine(2, width-3, width-3, 2)
 	#horiz/vert lines
-	dc.DrawLine(width/2, 0, width/2, width)
-	dc.DrawLine(0, width/2, width, width/2)
+	dc.DrawLine(width//2, 0, width//2, width)
+	dc.DrawLine(0, width//2, width, width//2)
 	#dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
@@ -259,7 +259,7 @@ def targetBitmap_circle(color, width=global_width):
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
-	dc.DrawCircle(width/2, width/2, width/2-1)
+	dc.DrawCircle(width//2, width//2, width//2-1)
 	#dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
@@ -267,7 +267,7 @@ def targetBitmap_circle(color, width=global_width):
 
 #--------------------
 def getTargetBitmaps(color, shape='+', size=global_width):
-	selectedcolor = wx.Colour(color.Red()/2, color.Green()/2, color.Blue()/2,)
+	selectedcolor = wx.Colour(color.Red()//2, color.Green()//2, color.Blue()//2,)
 	return getTargetBitmap(color, shape, size), getTargetBitmap(selectedcolor, shape, size)
 
 

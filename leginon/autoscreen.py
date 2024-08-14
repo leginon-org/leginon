@@ -345,9 +345,16 @@ if __name__ == "__main__":
 		grid_info_map = readMapFile(answer)
 	else:
 		slot_list = input('List comma-separated slot number to screen, i.e., 1,11,12: ')
-		slots = slot_list.split(',')
-		if not slots:
+		slots1 = slot_list.split(',')  # first separate by comma
+		if not slots1:
 			sys.exit(1)
+		slots=[]
+		for slot in slots1:  # calculate a range of numbers if there is one
+			try:
+				beg, end = slot.split('-')
+				slots.extend(i for i in range(int(beg),int(end)+1))
+			except:
+				slots.append(int(slot))
 		use_gui = True
 		for s in slots:
 			grid_info_map.append({'slot_number':int(s),'comment':'','project_id':None})

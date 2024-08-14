@@ -17,7 +17,7 @@ def confirmDBHost():
 	db_params = sinedon.getConfig('leginondata')
 	db_host = db_params['host']
 	db_name = db_params['db']
-	answer=raw_input('Are you ready to export from %s: %s? (Y/y/N/n)' % (db_host, db_name))
+	answer=input('Are you ready to export from %s: %s? (Y/y/N/n)' % (db_host, db_name))
 	if answer.lower() != 'y':
 		sys.exit()
 
@@ -27,13 +27,13 @@ class Exporter(object):
 	'''
 	json_dir = 'unknown'
 	def __init__(self, instruments=[]):
-		print('--------Working on %s-------' % self.json_dir)
+		print(('--------Working on %s-------' % self.json_dir))
 		self.db_params = sinedon.getConfig('leginondata')
 		self.db_host=self.db_params['host']
 		self.dir0 = os.path.abspath(os.path.curdir)
 		if not os.path.isdir(self.json_dir):
 			os.mkdir(self.json_dir)
-			print('Making %s directory to add json files' % self.json_dir)
+			print(('Making %s directory to add json files' % self.json_dir))
 		os.chdir(self.json_dir)
 		self.instruments = instruments
 		self.runAll()
@@ -49,7 +49,7 @@ class InstrumentExporter(Exporter):
 	json_dir = 'instrument'
 	def runAll(self):
 		from dbschema.tools import export_leginon_instruments
-		include_sim = False
+		include_sim = True
 		app = export_leginon_instruments.InstrumentJsonMaker(['',self.db_host, None, include_sim])
 		app.run()
 		self.instruments = app.instruments
@@ -64,17 +64,17 @@ class CalibrationExporter(Exporter):
 		instrument_json = os.path.join(self.dir0,'instrument/instruments.json')
 		f=open(instrument_json,'r')
 		instruments = json.loads(f.read())
-		cams = filter((lambda x:x['InstrumentData']['cs'] is None), instruments)
-		tems = filter((lambda x:x['InstrumentData']['cs'] is not None), instruments)
-		print(map((lambda x:x['InstrumentData']['name']),cams))
-		print(map((lambda x:x['InstrumentData']['name']),tems))
+		cams = list(filter((lambda x:x['InstrumentData']['cs'] is None), instruments))
+		tems = list(filter((lambda x:x['InstrumentData']['cs'] is not None), instruments))
+		print((list(map((lambda x:x['InstrumentData']['name']),cams))))
+		print((list(map((lambda x:x['InstrumentData']['name']),tems))))
 		from dbschema.tools import export_leginon_cal
 		for c in cams:
 			c = c['InstrumentData']
 			for t in tems:
 				t = t['InstrumentData']
 				params = ['',self.db_host,c['hostname'],c['name'],t['name']]
-				print('params', params)
+				print(('params', params))
 				app = export_leginon_cal.CalibrationJsonMaker(params)
 				app.run()
 
@@ -96,7 +96,7 @@ class ReferenceExporter(Exporter):
 		for c in cams:
 			cam_host=c['hostname']
 			cam_name=c['name']
-			print('Exporting references for %s:%s' % (cam_host,cam_name))
+			print(('Exporting references for %s:%s' % (cam_host,cam_name)))
 			app = export_leginon_ref.ReferenceJsonMaker(['',self.db_host, cam_host, cam_name])
 			app.run()
 
@@ -112,7 +112,7 @@ class BufferHostExporter(ReferenceExporter):
 		for c in cams:
 			cam_host=c['hostname']
 			cam_name=c['name']
-			print('Exporting buffer hosts for %s:%s' % (cam_host,cam_name))
+			print(('Exporting buffer hosts for %s:%s' % (cam_host,cam_name)))
 			app = export_leginon_bufferhost.BufferHostJsonMaker(['',self.db_host, cam_host, cam_name])
 			app.run()
 
@@ -136,7 +136,7 @@ class AppExporter(Exporter):
 		'''
 		Application of the most recent version.
 		'''
-		print('app name %s' % (name))
+		print(('app name %s' % (name)))
 		r = leginon.leginondata.ApplicationData(name=name).query(results=1)
 		if r:
 			return r[0]
@@ -212,7 +212,7 @@ class PresetExporter(Exporter):
 			# organize json files by APP_ORDER
 			if not os.path.isdir(app_type):
 				os.mkdir(app_type)
-				print('Making %s directory to add json files' % app_type)
+				print(('Making %s directory to add json files' % app_type))
 			os.chdir(app_type)
 			app = export_leginon_presets.PresetJsonMaker(session_name)
 			app.run(app_name)
@@ -228,15 +228,15 @@ def mysqlReminder():
 	sql_dir = os.path.join(dir0,'tables')
 	if not os.path.isdir(sql_dir):
 			os.mkdir(sql_dir)
-			print('Making %s directory to add sql files' % sql_dir)
+			print(('Making %s directory to add sql files' % sql_dir))
 	
 	for name in ('projects','projectowners','privileges','install','processingdb','shareexperiments','userdetails'):
 		p = sinedon.getConfig('projectdata')
-		msg = 'mysqldump -h %s -u %s -p%s %s %s > ./tables/%s.sql' % (p['host'],p['user'],p['passwd'],p['db'], name, name)
+		msg = 'mysqldump -h %s -u %s -p%s %s %s > ./tables/%s.sql' % (p['host'],p['user'],p['password'],p['db'], name, name)
 		print(msg)
 	for name in ('GroupData','UserData'):
 		p = sinedon.getConfig('leginondata')
-		msg = 'mysqldump -h %s -u %s -p%s %s %s > ./tables/%s.sql' % (p['host'],p['user'],p['passwd'],p['db'], name, name)
+		msg = 'mysqldump -h %s -u %s -p%s %s %s > ./tables/%s.sql' % (p['host'],p['user'],p['password'],p['db'], name, name)
 		print(msg)
 	print('---------------')
 

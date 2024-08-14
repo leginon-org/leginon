@@ -10,7 +10,9 @@ require_once('../inc/formValidator.php');
 		require_once(CONFIG_FILE);
 		$update = true;
 	}
-	
+
+	$errMsg = array();
+
 	if($_POST){
 
 		$validator = new formValidator();

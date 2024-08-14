@@ -11,6 +11,8 @@ require_once('../inc/formValidator.php');
 		$update = true;
 	}
 	
+	$errMsg == array();
+
 	if($_POST){
 
 		$validator = new formValidator();
@@ -247,9 +249,9 @@ require_once('../inc/formValidator.php');
 		<input type="text" size=10 name="def_processing_prefix" 
 		<?php 
 			if($_POST){
-				($_POST['processing'] == 'true') ? print("value='".$_POST['def_processing_prefix']."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value='ap'");
+				($_POST['processing'] == 'true') ? print("value='".$_POST['def_processing_prefix']."'") : print("readOnly='true' style='background:#eeeeee' value='ap'");
 			}else{
-				($update && PROCESSING === true) ? print("value='".DEF_PROCESSING_PREFIX."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value='ap'"); 
+				($update && (defined("PROCESSING") && PROCESSING === true)) ? print("value='".DEF_PROCESSING_PREFIX."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value='ap'");
 			}
 		?> /><br /><br />
 		<br />
@@ -286,7 +288,7 @@ require_once('../inc/formValidator.php');
 			if($_POST){
 				($_POST['processing'] == 'true') ? print("value='".$_POST['temp_images_dir']."'") : print("readOnly=\"true\" style=\"background:#eeeeee\"");
 			}else{
-				($update && PROCESSING === true) ? print("value='".TEMP_IMAGES_DIR."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); 
+				($update && defined("PROCESSING") && PROCESSING === true) ? print("value='".TEMP_IMAGES_DIR."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); 
 			}
 		?> /><br /><br />
 		<br />
@@ -300,7 +302,7 @@ require_once('../inc/formValidator.php');
 			if($_POST){
 				($_POST['processing'] == 'true') ? print("value='".$_POST['default_appion_path']."'") : print("readOnly=\"true\" style=\"background:#eeeeee\"");
 			}else{
-				($update && PROCESSING === true) ? print("value='".DEFAULT_APPION_PATH."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); 
+				($update && (defined("PROCESSING") && PROCESSING === true)) ? print("value='".DEFAULT_APPION_PATH."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''");
 			}
 		?> /><br /><br />
 		<br />

@@ -33,10 +33,10 @@ class SessionPathChange(object):
 if __name__=='__main__':
 
 	if len(sys.argv) <= 3:
-		print 'usage: python leginon_path_change.py sessionname new_image_path path_type'
-		print 'new_image_path needs to lead to where the images are stored'
-		print 'For example, /data/leginon/14oct01a/rawdata, and exists'
-		print "path_type can be either image or frame"
+		print('usage: python leginon_path_change.py sessionname new_image_path path_type')
+		print('new_image_path needs to lead to where the images are stored')
+		print('For example, /data/leginon/14oct01a/rawdata, and exists')
+		print("path_type can be either image or frame")
 		sys.exit()
 
 	sessionname = sys.argv[1]
@@ -48,5 +48,5 @@ if __name__=='__main__':
 	try:
 		app = SessionPathChange(sessionname, new_path, path_type)
 		app.run()
-	except ValueError, e:
-		print 'Value Error: %s' % (e.message)
+	except ValueError as e:
+		print(('Value Error: %s' % (e.message)))

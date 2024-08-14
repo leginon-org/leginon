@@ -586,8 +586,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if ret in ('aborted', 'repeat'):
 				self.reportStatus('acquisition', 'Acquisition state is "%s"' % ret)
 				break
-			if ret == 'repeat':
-				return repeat
 
 		self.reportStatus('processing', 'Processing complete')
 
@@ -772,8 +770,65 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.logger.info('Set zero beam tilt and stig at %d mag' % (int(mag)))
 		self.beamtilt0 = self.instrument.tem.getBeamTilt()
 		self.stig0 = self.instrument.tem.getStigmator()['objective']
-		self.defoc0 = self.instrument.tem.getDefocus()
 		self.probe0 = self.instrument.tem.getProbeMode()
+
+	def setDefocus0(self):
+		'''
+		Set beam-image shift defocus correction reset value.  This should
+		be called after preset and random defocus is set.
+		'''
+		self.defoc0 = self.instrument.tem.getDefocus()
+
+	def correctImageShiftAbberations(self, cam=None):
+		if self.settings['correct image shift coma']:
+			## beam tilt correction induced by image shift
+			beamtiltclient = self.calclients['beam tilt']
+			tem = self.instrument.getTEMData()
+			# avoid retrieving ccacamera InstrumentData in case it is locked
+			# from acquiring image.
+			if not cam:
+				cam = self.instrument.getCCDCameraData()
+			ht = self.instrument.tem.HighTension
+			mag = self.instrument.tem.Magnification
+			imageshift = self.instrument.tem.getImageShift()
+			try:
+				beamtilt = beamtiltclient.transformImageShiftToBeamTilt(imageshift, tem, cam, ht, self.beamtilt0, mag)
+				self.instrument.tem.BeamTilt = beamtilt
+				self.logger.info("beam tilt for image acquired (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
+			except Exception as e:
+				self.resetComaCorrection()
+				raise NoMoveCalibration(e)
+			try:
+				stig = beamtiltclient.transformImageShiftToObjStig(imageshift, tem, cam, ht, self.stig0, mag)
+				self.instrument.tem.Stigmator = {'objective':stig}
+				stig1 = self.instrument.tem.getStigmator()['objective']
+				self.logger.info("objective stig for image acquired (%.4f,%.4f)" % (stig1['x']-self.stig0['x'],stig1['y']-self.stig0['y']))
+			except Exception as e:
+				self.resetComaCorrection()
+				raise NoMoveCalibration(e)
+			try:
+				defoc = beamtiltclient.transformImageShiftToDefocus(imageshift, tem, cam, ht, self.defoc0, mag)
+				self.instrument.tem.Defocus = defoc
+				defoc1 = self.instrument.tem.getDefocus()
+				self.logger.info("correcting defocus for image acquired by (%.4f) (um)" % ((defoc1-self.defoc0)*1e6))
+			except Exception as e:
+				self.resetComaCorrection()
+				raise NoMoveCalibration(e)
+
+	def adjustTiltExposure(self, presetdata):
+			stageposition = self.instrument.tem.getStagePosition()
+			stagea = stageposition['a']
+			if self.settings['adjust time by tilt'] and abs(stagea) > 10 * 3.14159 / 180:
+				camdata = leginondata.CameraEMData()
+				camdata.friendly_update(presetdata)
+				old_time = camdata['exposure time']
+				new_time = old_time / math.cos(stagea)
+				if new_time > 5000 or new_time <= 1:
+					self.logger.warning('Ignore unreasonable exposure time at %d ms' % new_time)
+					new_time = old_time
+				camdata['exposure time'] = new_time
+				self.logger.info('scale exposure time from %d to %d by cos(%d)' % (old_time,new_time,int(stagea*180/3.14159)))
+				self.instrument.setData(camdata)
 
 	def moveAndPreset(self, presetdata, emtarget):
 			'''
@@ -816,52 +871,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 			# DO this the second time give an effect of normalization. Removed defocus and beam shift hysteresis on Talos
 			if presetdata['tem']['hostname'] == 'talos-20taf2c':
 				self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
-			stageposition = self.instrument.tem.getStagePosition()
-			stagea = stageposition['a']
-			if self.settings['correct image shift coma']:
-				## beam tilt correction induced by image shift
-				beamtiltclient = self.calclients['beam tilt']
-				tem = self.instrument.getTEMData()
-				cam = self.instrument.getCCDCameraData()
-				ht = self.instrument.tem.HighTension
-				mag = self.instrument.tem.Magnification
-				self.setComaStig0()
-				imageshift = self.instrument.tem.getImageShift()
-				try:
-					beamtilt = beamtiltclient.transformImageShiftToBeamTilt(imageshift, tem, cam, ht, self.beamtilt0, mag)
-					self.instrument.tem.BeamTilt = beamtilt
-					self.logger.info("beam tilt for image acquired (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
-				except Exception as e:
-					self.resetComaCorrection()
-					raise NoMoveCalibration(e)
-				try:
-					stig = beamtiltclient.transformImageShiftToObjStig(imageshift, tem, cam, ht, self.stig0, mag)
-					self.instrument.tem.Stigmator = {'objective':stig}
-					stig1 = self.instrument.tem.getStigmator()['objective']
-					self.logger.info("objective stig for image acquired (%.4f,%.4f)" % (stig1['x']-self.stig0['x'],stig1['y']-self.stig0['y']))
-				except Exception as e:
-					self.resetComaCorrection()
-					raise NoMoveCalibration(e)
-				try:
-					defoc = beamtiltclient.transformImageShiftToDefocus(imageshift, tem, cam, ht, self.defoc0, mag)
-					self.instrument.tem.Defocus = defoc
-					defoc1 = self.instrument.tem.getDefocus()
-					self.logger.info("correcting defocus for image acquired by (%.4f) (um)" % ((defoc1-self.defoc0)*1e6))
-				except Exception as e:
-					self.resetComaCorrection()
-					raise NoMoveCalibration(e)
-
-			if self.settings['adjust time by tilt'] and abs(stagea) > 10 * 3.14159 / 180:
-				camdata = leginondata.CameraEMData()
-				camdata.friendly_update(presetdata)
-				old_time = camdata['exposure time']
-				new_time = old_time / math.cos(stagea)
-				if new_time > 5000 or new_time <= 1:
-					self.logger.warning('Ignore unreasonable exposure time at %d ms' % new_time)
-					new_time = old_time
-				camdata['exposure time'] = new_time
-				self.logger.info('scale exposure time from %d to %d by cos(%d)' % (old_time,new_time,int(stagea*180/3.14159)))
-				self.instrument.setData(camdata)
+			# at this point all scope parameters from the preset is applied
+			self.setComaStig0()
+			self.setDefocus0()
+			self.correctImageShiftAbberations(presetdata['ccdcamera'])
+			self.adjustTiltExposure(presetdata)
 			self.onTarget = True
 			self.setStatus('processing')
 			return status
@@ -988,6 +1002,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				defaultchannel = None
 		else:
 			defaultchannel = channel
+		return defaultchannel
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
 		reduce_pause = self.onTarget
@@ -1424,6 +1439,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.setStatus('processing')
 		# no need to pause longer for simulateTarget
 		self.is_firstimage = False
+		return self._simulateTarget()
+
+	def _simulateTarget(self):
 		# current preset is used to create a target for this node.
 		currentpreset = self.presetsclient.getCurrentPreset()
 		if currentpreset is None:

@@ -95,8 +95,11 @@ if (!$p_prefix = trim(DEF_PROCESSING_PREFIX)) {
 }
 
 // Get the name of the processing database for this project
-$processingdb = $project->getProcessingDB( $selectedprojectId );
-
+if (defined('PROCESSING') && PROCESSING == true) {
+    $processingdb = $project->getProcessingDB( $selectedprojectId );
+} else {
+    $processingdb = 'N/A';
+}
 $title = "Project".$projectname;
 login_header($title);
 project_header($title, 'init()');
@@ -446,18 +449,23 @@ if (SAMPLE_TRACK) {
 		}
 		$summarylink="<a class='header' target='viewer' href='".SUMMARY_URL.$info['SessionId']."'>summary&raquo;</a>";
 		$experiments[$k]['summary']=$summarylink;
-		
-		// Add the number of Processing Runs
-		$numProcessingRuns = $project->getExperimentProcessingRunCount( $processingdb, $info['SessionId'] );
-		$experiments[$k]['numruns'] = $numProcessingRuns;
+	    if (defined('PROCESSING') && PROCESSING == true) {
+		    // Add the number of Processing Runs
+		    $numProcessingRuns = $project->getExperimentProcessingRunCount( $processingdb, $info['SessionId'] );
+		    $experiments[$k]['numruns'] = $numProcessingRuns;
 
-		// Add the date of the last Processing Run
-		$lastProcessingRunDate = $project->getLastExperimentProcessingRunDate( $processingdb, $info['SessionId'] );
-		$experiments[$k]['lastrundate'] = $lastProcessingRunDate;
+		    // Add the date of the last Processing Run
+		    $lastProcessingRunDate = $project->getLastExperimentProcessingRunDate( $processingdb, $info['SessionId'] );
+		    $experiments[$k]['lastrundate'] = $lastProcessingRunDate;
 		
-		// Add the number of Reconstructions
-		$numRecons = $project->getExperimentReconCount( $processingdb, $info['SessionId'] );
-		$experiments[$k]['numrecons'] = $numRecons;
+		    // Add the number of Reconstructions
+		    $numRecons = $project->getExperimentReconCount( $processingdb, $info['SessionId'] );
+		    $experiments[$k]['numrecons'] = $numRecons;
+        } else {
+		    $experiments[$k]['numruns'] = 'N/A';
+		    $experiments[$k]['lastrundate'] = 'N/A';
+		    $experiments[$k]['numrecons'] = 'N/A';
+        }
 	}
 	
 // sort the experiment array if needed
