@@ -9,6 +9,13 @@
 
 require_once "inc/leginon.inc";
 
+function show_session_finder() {
+    if (defined("SHOW_SESSION_FINDER")) {
+        return SHOW_SESSION_FINDER;
+    }
+    return true;
+}
+
 $baseurl = BASE_URL;
 
 $link = new iconlink();
@@ -65,13 +72,16 @@ login_header(PROJECT_TITLE,'','',true);
 <p>
 		<?php echo $link->Display(); ?>
 </p>
-		<?php #if (HIDE_FEATURE === false) { ?>
-<label for="query"><strong>Session finder:</strong>&nbsp;
-<input style="border: 1px solid #bdcebb;" type="text" name="search" autocomplete="off" id="query" onKeyUp="preSearch()" />
-</label>
-<p>
-<div style="border: 1px solid #bdcebb; padding-left: 5px" id="result">&nbsp;</div>
 </p>
-<?php #}
+
+<?php if (show_session_finder()) { ?>
+    <label for="query"><strong>Session finder:</strong>&nbsp;
+    <input style="border: 1px solid #bdcebb;" type="text" name="search" autocomplete="off" id="query" onKeyUp="preSearch()" />
+    </label>
+    <p>
+    <div style="border: 1px solid #bdcebb; padding-left: 5px" id="result">&nbsp;</div>
+    </p>
+<?php }
+
 login_footer();
 ?>
