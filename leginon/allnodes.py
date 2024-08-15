@@ -71,6 +71,9 @@ noderegistry.registerNodeClass(MosaicClickTargetFinder,classtype)
 from mosaicexternalfinder import MosaicScoreTargetFinder
 noderegistry.registerNodeClass(MosaicScoreTargetFinder,classtype)
 
+from mosaiclearnfinder import MosaicLearnTargetFinder
+noderegistry.registerNodeClass(MosaicLearnTargetFinder,classtype)
+
 from mosaicquiltfinder import MosaicQuiltFinder
 noderegistry.registerNodeClass(MosaicQuiltFinder,classtype)
 
@@ -158,6 +161,9 @@ noderegistry.registerNodeClass(ScoreTargetFinder,classtype)
 
 from extholefinder import ExtHoleFinder
 noderegistry.registerNodeClass(ExtHoleFinder,classtype)
+
+from ptolemyfinder import PtolemyMmTargetFinder
+noderegistry.registerNodeClass(PtolemyMmTargetFinder,classtype)
 
 from dogfinder import DoGFinder
 noderegistry.registerNodeClass(DoGFinder,classtype)

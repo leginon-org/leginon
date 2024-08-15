@@ -13,13 +13,13 @@ import json
 import numpy
 import math
 from pyami import imagefun, mrc, arraystats
-import pyami.circle
+from leginon import ptolemyhandler as ph
 import os
 
-from leginon import icefinderback, statshole, lattice
+from leginon import scorefinderback, icefinderback, statshole, lattice
 
 class ScoreResultMissingError(Exception):
-	'''Raised when score result is missing.  This assumes script fails.
+	'''Raised when score result is missing.  This assumes ptolemy server fails.
 	Requests from user to downgrade this because it is too often.
 	'''
 	pass
@@ -27,7 +27,7 @@ class ScoreResultMissingError(Exception):
 ###################
 ### Because of the use of __result, the subclass don't get them as attribute. AC 2021
 ###################
-class HoleFinder(icefinderback.IceFinder):
+class HoleFinder(scorefinderback.HoleFinder):
 	'''
 	Create an instance of HoleFinder:
 		hf = HoleFinder()
@@ -60,6 +60,7 @@ class HoleFinder(icefinderback.IceFinder):
 		}
 		self.setComponents()
 		self.setDefaults()
+		self.square = None
 		self.lattice_matrix = None
 
 	def setComponents(self):
@@ -70,7 +71,7 @@ class HoleFinder(icefinderback.IceFinder):
 		## some default configuration parameters
 		super(HoleFinder, self).setDefaults()
 		self.save_mrc = False
-		self.holefinder_config = {'script': '','job_name':'hole','in_path':None,'out_dir':None, 'score_key':'score','threshold':0}
+		self.holefinder_config = {'imagedata':{}, 'score_key':'score','threshold':0}
 		self.holestats_config = {'radius': 20}
 		self.filter_config = {'tmin': -10, 'tmax': 20}
 		self.convolve_config = {'conv_vect':None}
@@ -105,33 +106,14 @@ class HoleFinder(icefinderback.IceFinder):
 	def get_result(self, key):
 		return self.__results[key]
 
-	def configure_holefinder(self, script=None, job_name='hole', in_path=None, out_dir=None, score_key=None, threshold=None):
+	def configure_holefinder(self, imagedata=None, score_key=None, threshold=None):
 		'''
 		configuration for holefinder to run. Each non-None kwarg is added.
 		'''
-		if not in_path and self.get_result('original'):
-			self.temp_in_path = '%s.mrc' % job_name
-			mrc.write(self.get_result('original'), self.temp_in_path)
-			in_path = self.temp_in_path
-		if not script or not in_path or not out_dir:
-				raise ValueError('incomplete configuration')
-		if not os.path.exists(in_path):
-			raise ValueError('input %s does not exist' % in_path)
-		self.holefinder_config['script']=script
-		if job_name is not None:
-			self.holefinder_config['job_name']=job_name
+		if imagedata is not None:
+			self.holefinder_config['imagedata']= imagedata
 		else:
-			# default job_name to 'hole'
-			self.holefinder_config['job_name']='hole'
-		if not os.path.exists(in_path):
-			self.holefinder_config['in_path']=None
-			raise ValueError('input %s does not exist' % in_path)
-		else:
-			self.holefinder_config['in_path']=in_path
-			if os.path.isdir(out_dir):
-				self.holefinder_config['out_dir']=out_dir
-			else:
-				raise ValueError('output dir %s does not exist' % out_dir)
+			raise RuntimeError('need imagedata to run hole finding')
 		if score_key is not None:
 			self.holefinder_config['score_key']= score_key
 		else:
@@ -149,28 +131,13 @@ class HoleFinder(icefinderback.IceFinder):
 		'''
 		if self.get_result('original') is None:
 			raise RuntimeError('need original image to run hole finding')
-		self.temp_in_path = None
+		jsondict = self._runPtolemyHoleFinder(dict(self.holefinder_config))
+		self.loadHoles(jsondict)
 
-		self._runExternalHoleFinder(dict(self.holefinder_config))
-		self.loadHoles()
-	
-	def _runExternalHoleFinder(self,config):
-		scoring_script = config['script']
-		if not scoring_script:
-			raise ValueError('%s invalid.' % scoring_script)
-		shell_source = '/bin/bash'
-		if scoring_script.endswith('csh'):
-			shell_source = '/bin/csh'
-		job_basename = config['job_name']
-		out_dir = config['out_dir']
-		input_mrc_path = config['in_path']
-		outpath = os.path.join(out_dir, '%s.json' % job_basename)
-		if os.path.isfile(outpath):
-			os.remove(outpath)
-		# This process must create the output '%s.json' % job_basename at outpath
-		cmd = 'source %s %s %s %s' % (scoring_script, job_basename, input_mrc_path, out_dir)
-		proc = subprocess.Popen(cmd, shell=True, executable=shell_source)
-		proc.wait()
+	def _runPtolemyHoleFinder(self,config):
+		imagedata = config['imagedata']
+		jsondict = ph.push_and_evaluate_mm(imagedata)
+		return jsondict
 
 	def jsonCenterToHoleCenter(self, json_center):
 		"""
@@ -179,19 +146,11 @@ class HoleFinder(icefinderback.IceFinder):
 		# return center in (row, col)
 		return (json_center[1], json_center[0])
 
-	def loadHoles(self):
+	def loadHoles(self, jsondict):
 		'''
 		load target locations and score as StatsHole
 		'''
-		outpath = self.getOutPath()
-		if not os.path.isfile(outpath):
-			self.update_result('holes', [])
-			raise ScoreResultMissingError('hole finder did not run: %s missing' % outpath)
-			return
-		f = open(outpath,'r')
-		# returns one line
-		line = f.readlines()[0]
-		hole_dicts = json.loads(line)
+		hole_dicts = jsondict
 		# set lattice matrix for centerCarbon
 		self.setLatticeMatrix(hole_dicts)
 		holes = []
@@ -238,6 +197,11 @@ class HoleFinder(icefinderback.IceFinder):
 		"""
 		return [(point[1],point[0]) for point in points]
 
+	def configure_ice(self, i0=None, tmin=None, tmax=None, tstdmax=None, tstdmin=None):
+		if i0 is not None:
+			ph.set_noice_hole_intensity(i0)
+		super(HoleFinder, self).configure_ice(i0, tmin, tmax, tstdmax, tstdmin)
+
 	def configure_filter(self, tmin=None, tmax=None):
 		"""
 		Set score filter min and max values if not None.
@@ -262,16 +226,17 @@ class HoleFinder(icefinderback.IceFinder):
 		self.sampling(input_name='holes2')
 
 if __name__ == '__main__':
-	from pyami import mrc
 	hf = HoleFinder()
-	mrc_path = '/Users/acheng/testdata/leginon/21aug27y/rawdata/21aug27y_i_00005gr_00023sq.mrc'
+	hl_id = 5897
+	from leginon import leginondata
+	imagedata = leginondata.AcquisitionImageData().direct_query(hl_id)
 	score_key = 'score'
-	hf['original'] = mrc.read(mrc_path)
-	hf.configure_holefinder('/Users/acheng/hl_finding.sh', 'test', mrc_path, out_dir='.', score_key=score_key, threshold=0.0)
+	hf['original'] = imagedata['image']
+	hf.configure_holefinder(imagedata, score_key=score_key, threshold=0.0)
 	hf.configure_filter(tmin=-1, tmax=10) # score filter
-	hf.configure_ice(i0=133, tmin=0.0)
+	hf.configure_ice(i0=180, tmin=0.0)
 	hf.configure_convolve(conv_vect=[(20,0),])
 	hf.configure_sample(classes=2, samples=4, category='thickness-mean')
 	hf.find_holes()
-	print 'first holes of',len(hf['holes']),hf['holes'][0].stats
-	print 'first holes2 of',len(hf['holes2']),hf['holes2'][0].stats
+	print('first holes of',len(hf['holes']),hf['holes'][0].stats)
+	print('first holes2 of',len(hf['holes2']),hf['holes2'][0].stats)

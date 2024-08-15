@@ -373,7 +373,6 @@ class FalconFrameRangeListMaker(FalconFrameMaker):
 		'''
 		self.setExposureTime(exposure_second)
 		bin_second = frame_time_second
-		self.createFramePath(self.base_frame_path)
 		bins = int(math.ceil(exposure_second*1000 / (bin_second*1000)))
 		self.setMaxNumberOfFrameBins(bins)
 		starts, ends = self.setFrameRange()
@@ -413,6 +412,7 @@ if __name__ == '__main__':
 			app = FalconFrameRangeListMaker(False)
 			app.setFeiImageStoragePath(fei_image_storage_path)
 			app.setBaseFramePath('framecam')
+			app.createFramePath(app.base_frame_path)
 			app.setFrameNamePrefix('f')
 			app.setExposureTime(exposure_second)
 			frame_time_second = 0.2

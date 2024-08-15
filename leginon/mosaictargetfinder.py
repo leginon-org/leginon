@@ -386,6 +386,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 
 		if self.targetlist is None:
 			self.targetlist = self.newTargetList()
+			# force to make it in front
 			self.publish(self.targetlist, database=True, dbforce=True)
 
 		if self.hasNewImageVersion():
@@ -419,11 +420,23 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# create a list of targets of each type
 		self.logger.info('Submitting targets...')
 		self.target_order = self.getTargetOrder(self.targetlist)
-		self.publishNewTargetsOfType('acquisition')
-		self.publishNewTargetsOfType('focus')
-		self.publishNewTargetsOfType('preview')
-		self.publishTargetOrder(self.targetlist,self.target_order)
 		try:
+			self.publishNewTargetsOfType('acquisition')
+			self.publishNewTargetsOfType('focus')
+			self.publishNewTargetsOfType('preview')
+		except ValueError as e:
+			self.logger.error('New target creation failed: %s' % e)
+			self.logger.error('Reload tiles with auto finding to correct this.')
+			# trigger onTargetsSubmitted in the gui.
+			self.panel.targetsSubmitted()
+			return
+		except Exception as e:
+			self.logger.error('New target creation failed: %s' % e)
+			# trigger onTargetsSubmitted in the gui.
+			self.panel.targetsSubmitted()
+			return
+		try:
+			self.publishTargetOrder(self.targetlist,self.target_order)
 			self.publish(self.targetlist, pubevent=True)
 		except node.PublishError, e:
 			self.logger.error('Submitting acquisition targets failed')
@@ -691,7 +704,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 
 		self.mosaicimagelist = leginondata.ImageListData(session=self.session, targets=targetlist)
 		self.logger.debug('publishing new mosaic image list')
-		self.publish(self.mosaicimagelist, database=True, dbforce=True)
+		# not to force insertion so mosaicimage and tile images are on the same imagelist
+		self.publish(self.mosaicimagelist, database=True)
 		self.logger.debug('published new mosaic image list')
 		self.setMosaicName(targetlist)
 		return self.mosaicimagelist
@@ -844,11 +858,18 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.logger.info('Mosaic loaded (%i of %i images loaded successfully)' % (i+1, ntotal))
 		if self.settings['create on tile change'] in ('all', 'final'):
 			self.createMosaicImage(True)
+		self.loadSquareBlobsAfterAllTiles()
 		# use currentimagedata to set TargetImageVectors for target multiple
 		self.setTargetImageVectors(self.currentimagedata)
 		self.autofinderlock.release()
 		# hacking
 		self.handleTargetListDone(None)
+
+	def loadSquareBlobsAfterAllTiles(self):
+		'''
+		load square blobs if available after create final mosaic image.
+		'''
+		pass
 
 	def targetToMosaic(self, tile, targetdata):
 		scalepos = self._targetToMosaic(tile, targetdata, self.mosaic)
@@ -875,13 +896,13 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		return self._mosaicToTargetOnMosaic(row, col, self.mosaic)
 
 	def _mosaicToTargetOnMosaic(self, row, col, mosaic_instance):
-		self.logger.info('mosaicToTarget r %s, c %s' % (row, col))
+		self.logger.debug('mosaicToTarget r %s, c %s' % (row, col))
 		unscaled = mosaic_instance.unscaled((row,col))
 		tile, pos = mosaic_instance.mosaic2tile(unscaled)
 		shape = tile.image.shape
 		drow,dcol = pos[0]-shape[0]/2.0, pos[1]-shape[1]/2.0
 		imagedata = tile.imagedata
-		self.logger.info('target tile image: %s, pos: %s' % (imagedata.dbid,pos))
+		self.logger.debug('target tile image: %s, pos: %s' % (imagedata.dbid,pos))
 		return imagedata, drow, dcol
 
 	def mosaicToTarget(self, typename, row, col, **kwargs):
@@ -889,12 +910,6 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		Convert and publish the mosaic position to targetdata of the tile image.
 		'''
 		imagedata, drow, dcol = self._mosaicToTarget(row, col)
-		### create a new target list if we don't have one already
-		'''
-		if self.targetlist is None:
-			self.targetlist = self.newTargetList()
-			self.publish(self.targetlist, database=True, dbforce=True)
-		'''
 		# publish as targets on most recent version of image to preserve adjusted z
 		recent_imagedata = self.researchImages(list=imagedata['list'],target=imagedata['target'])[-1]
 		targetdata = self.newTargetForTile(recent_imagedata, drow, dcol, type=typename, list=self.targetlist, **kwargs)
@@ -1272,7 +1287,6 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		targets = map((lambda x: self.blobToDisplayTarget(x,self.finder_scale_factor)), combined_blobs)
 		# flat list of multihole convolution at the original mosaic dimension
 		targets = self.multiHoleConvolution(targets)
-		# TODO save SquareStatsData
 		return targets
 
 	def multiHoleConvolution(self, targets):

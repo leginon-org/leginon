@@ -441,11 +441,12 @@ class LeginonLogger(object):
 	def info(self,msg):
 		printMsg(msg)
 	def debug(self,msg):
-		printDebug(msg)
+		if isDebugOn():
+			printDebug(msg)
 	def warning(self,msg):
 		printWarning(msg)
 	def error(self,msg):
-		printWarning('Leginon ERROR: ',msg)
+		printWarning('Leginon ERROR: %s' % msg)
 
 ####
 # This is a low-level file with NO database connections
