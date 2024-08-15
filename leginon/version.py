@@ -116,7 +116,7 @@ def getSVNInfo(module_path=''):
 	return infodict
 
 def getTextVersion():
-	return 'myami-beta'
+	return 'myami-3.7'
 
 def getSVNVersion(module_path=''):
 	svninfo = getSVNInfo(module_path)
