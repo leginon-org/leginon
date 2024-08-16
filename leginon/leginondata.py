@@ -3307,6 +3307,9 @@ class ZeroLossIceThicknessSettingsData(SettingsData):
 			('obj mean free path', float),
 			('vacuum intensity', float),
 			('use_best_quart_stats', bool),
+			('cfeg',bool),
+			('cfeg_slope',float),
+			('cfeg_intercept',float),
 		)
 	typemap = classmethod(typemap)
 
