@@ -142,7 +142,18 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'Vacuum intensity for exposure images:')
 		sz_vac.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz_vac.Add(self.widgets['vacuum intensity'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		self.widgets['use_best_quart_stats'] = wx.CheckBox(self, -1, 'Use best quardant stats')
+		self.widgets['use_best_quart_stats'] = wx.CheckBox(self, -1, 'Use best quadrant stats')
+		self.widgets['cfeg'] = wx.CheckBox(self, -1, 'Correct for changing Cold FEG intensity')
+		self.widgets['cfeg_slope'] = FloatEntry(self, -1, chars=8)
+		sz_cfegslope = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Slope for CFEG correction (fractional drop per second):')
+		sz_cfegslope.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_cfegslope.Add(self.widgets['cfeg_slope'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		self.widgets['cfeg_intercept'] = FloatEntry(self, -1, chars=6)
+		sz_cfegintercept = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Intercept for CFEG correction:')
+		sz_cfegintercept.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_cfegintercept.Add(self.widgets['cfeg_intercept'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
 
 		sz = wx.GridBagSizer(5, 10)
@@ -160,6 +171,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(sz_objmeanfreepath, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_vac, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['use_best_quart_stats'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['cfeg'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_cfegslope, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_cfegintercept, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sbszdb.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sbsz, sbszdb]
