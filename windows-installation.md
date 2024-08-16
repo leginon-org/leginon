@@ -15,7 +15,11 @@
         2. dir -Recurse | Unblock-File
       
 ## Replace the files with updated git clone
-You may replace individual myami subpackages inside leginon-py3 directory.
+If you want to use a cloned branch from github repository, and retain its git history
+1. cd your_Desktop\Leginon-install
+2. git clone -b your_branch https://github.com/leginon-org/leginon.git myami-git
+3. cp leginon-py3.v300\*.bat myami-git
+4. Start your running using the *.bat files in myami-git instead of the ones in leginon-py3.v300
 
 ## Follow leginion.org wiki to set up config files
 [leginon.org configuration on instruments](https://emg.nysbc.org/redmine/projects/leginon/wiki/Windows_Myami_Configuration)
