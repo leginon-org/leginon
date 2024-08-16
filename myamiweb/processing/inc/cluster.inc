@@ -349,8 +349,8 @@ class Cluster {
         if (!$returnResult)
             return true;
 
-        // Setting blocking to true can cause it to hang.
-        stream_set_blocking($stream, false);
+        // block to wait for process to exit
+        stream_set_blocking($stream, true);
 
         //error_log("Command = ".$command." max_time =".$max_time);
         // This block will wait a given time to get a result from the output stream.
