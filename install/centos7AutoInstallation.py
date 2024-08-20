@@ -15,7 +15,7 @@ class CentosInstallation(object):
 
 	def setReleaseDependantValues(self):
 		# need to change to branch when release
-		self.gitCmd = "git clone -b myami-beta https://emg.nysbc.org/git/myami " + self.gitMyamiDir
+		self.gitCmd = "git clone -b myami-beta https://github.com/leginon-org/leginon.git " + self.gitMyamiDir
 		# redhat release related values
 		self.torqueLibPath = '/var/lib/torque/'
 
@@ -290,7 +290,8 @@ class CentosInstallation(object):
 		self.runCommand("yum install -y python2-pip")
 		self.runCommand("pip install joblib==0.10.3")		
 		self.runCommand("pip install slackclient==1.0.0")
-		self.runCommand("pip install PyMySQL==0.10.1") #https://emg.nysbc.org/redmine/issues/11689
+		self.runCommand("pip install PyMySQL==0.10.1")
+		self.runCommand("pip install Cython==3.0")
 
 	def setupWebServer(self):
 		self.writeToLog("--- Start install Web Server")
@@ -1221,16 +1222,18 @@ endif
 		print "===================================="
 		print ""
 		
-		value = raw_input("Please enter the registration key. You must be registered at https://emg.nysbc.org/redmine to recieve a registration key: ")
-		value = value.strip()
+		#value = raw_input("Registration key: ")
+		#value = value.strip()
 
-		self.regKey = value
-		# Note to user: We try to collect a small amount of information about who installs our software
-		# so that we may recieve funding for its continued support and development. We also pass this information
-		# on to the providers of EMAN, XMIPP, and SPIDER, which we install with this script, 
-		# to ensure their continued development as well. If you remove this check for the reg key, please
-		# remember to appropriatly cite any software that you find useful while processing your data.
-		result = self.checkRegistrationKey()
+		#self.regKey = value
+        print """
+		# Note to user: While we no longer require registration, please
+		# remember to appropriatly cite any software installed through this
+        # script that you find useful while processing your data to ensure
+        # their continuous support.
+        """
+		#result = self.checkRegistrationKey()
+        result = True
 		if result is False:
 			return False
 
