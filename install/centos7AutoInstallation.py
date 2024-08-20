@@ -19,7 +19,7 @@ class CentosInstallation(object):
 		# redhat release related values
 		self.torqueLibPath = '/var/lib/torque/'
 
- 		self.redhatMajorRelease = '7'
+		self.redhatMajorRelease = '7'
 		# SHA-1 digest of a registration key provided by AMI. When we change the key that we give to
 		# registered users, we need to update this value.
 		self.regKeyHash = '4\xa3T\xf2KB\x0e\xd7\x1fk1\xfdb\xcd\x04\xdcH>\xcc\x8e'
@@ -1226,14 +1226,14 @@ endif
 		#value = value.strip()
 
 		#self.regKey = value
-        print """
+		print """
 		# Note to user: While we no longer require registration, please
 		# remember to appropriatly cite any software installed through this
-        # script that you find useful while processing your data to ensure
-        # their continuous support.
-        """
+		# script that you find useful while processing your data to ensure
+		# their continuous support.
+		"""
 		#result = self.checkRegistrationKey()
-        result = True
+		result = True
 		if result is False:
 			return False
 
