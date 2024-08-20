@@ -45,6 +45,7 @@ packages=(
 	modules/radermacher
 	modules/libcv
 	modules/numextension
+	modules/jenks-master
 )
 
 #
