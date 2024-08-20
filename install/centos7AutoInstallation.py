@@ -15,7 +15,7 @@ class CentosInstallation(object):
 
 	def setReleaseDependantValues(self):
 		# need to change to branch when release
-		self.gitCmd = "git clone -b myami-beta https://github.com/leginon-org/leginon.git " + self.gitMyamiDir
+		self.gitCmd = "git clone -b myami-3.7 https://github.com/leginon-org/leginon.git " + self.gitMyamiDir
 		# redhat release related values
 		self.torqueLibPath = '/var/lib/torque/'
 
