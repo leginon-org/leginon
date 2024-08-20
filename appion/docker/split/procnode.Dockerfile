@@ -37,7 +37,7 @@ RUN mkdir -p /emg/sw && echo 'mkdir /emg/sw'
 RUN chmod 777 -R /emg  && echo 'chmod 777'
 
 ### Myami setup
-RUN git clone -b myami-3.3 http://emg.nysbc.org/git/myami.git /emg/sw/myami/
+RUN git clone -b myami-3.3 https://github.com/leginon-org/leginon.git /emg/sw/myami/
 
 #COPY sinedon.cfg /etc/myami/sinedon.cfg
 #COPY leginon.cfg /etc/myami/leginon.cfg

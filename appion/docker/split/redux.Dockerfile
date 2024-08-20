@@ -43,7 +43,7 @@ RUN yum -y install \
 
 RUN yum -y install git
 
-RUN git clone -b trunk http://emg.nysbc.org/git/myami /var/www/html/
+RUN git clone -b trunk https://github.com/leginon-org/leginon.git /var/www/html/
 
 RUN chown -R apache.apache /var/www/html/myamiweb/
 
