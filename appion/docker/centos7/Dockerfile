@@ -59,7 +59,7 @@ RUN mysql_install_db --user=mysql --ldata=/var/lib/mysql/
 #EXPOSE 3306
 
 ### Myami setup
-RUN git clone http://emg.nysbc.org/git/myami.git /emg/sw/myami/
+RUN git clone -b myami-3.3 https://github.com/leginon-org/leginon.git /emg/sw/myami/
 RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/ami
 RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/myamiweb
 
