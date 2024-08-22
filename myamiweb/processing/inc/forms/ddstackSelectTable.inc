@@ -43,6 +43,7 @@ class DDStackSelectTable extends BasicForm
 
 		// Update label according to only_aligned		
 		$this->ddStackIds = $this->particle->getDDStackRunIdsAlign($this->expId);
+		var_dump($this->ddStackIds);
 		$ddstack_type = 'aligned';
 		if (!$this->only_aligned) {
 			$unaligned = $this->particle->getDDStackRunIdsUnAligned($this->expId);

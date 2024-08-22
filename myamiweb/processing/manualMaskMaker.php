@@ -26,12 +26,12 @@ else {
 }
 
 function maskMakerJavaCommands () {
-	$minthresh = $_POST[minthresh];
-	$maxthresh = $_POST[maxthresh];
-	$blur = $_POST[blur];
-	$bin = $_POST[bin];
-	$masktype = ($_POST[masktype]);
-	$crudstd = $_POST[crudstd];
+	$minthresh = $_POST['minthresh'];
+	$maxthresh = $_POST['maxthresh'];
+	$blur = $_POST['blur'];
+	$bin = $_POST['bin'];
+	$masktype = ($_POST['masktype']);
+	$crudstd = $_POST['crudstd'];
 
 	$java ="
       <SCRIPT LANGUAGE='JavaScript'>
@@ -129,7 +129,7 @@ function createManualMaskMakerTable ($sessionId) {
 
 function parseManualMaskMakerParams () {
 	$assessname = getAssessname();
-	$bin = $_POST[bin];
+	$bin = $_POST['bin'];
 
 	$command.=" --assess=$assessname";
 	if ($bin && $bin > 0) $command.=" --bin=$bin";
@@ -138,8 +138,8 @@ function parseManualMaskMakerParams () {
 }
 
 function getAssessname () {
-	$runname = $_POST[runname];
-	$assess = $_POST[assess];
+	$runname = $_POST['runname'];
+	$assess = $_POST['assess'];
 	switch ($assess) {
 	case 0:
 		$assessname = $runname;
@@ -148,7 +148,7 @@ function getAssessname () {
 		$assessname = $_POST['oldassess'];
 		break;
 	case 2:
-		$assessname = $_POST[newassessname];
+		$assessname = $_POST['newassessname'];
 		break;
 	}
 	return $assessname;
@@ -156,7 +156,7 @@ function getAssessname () {
 
 function maskMakerSummaryTable () {
 	$assessname = getAssessname();
-	$bin = $_POST[bin];
+	$bin = $_POST['bin'];
 	$masktype = 'manaul';
 
 	echo "<TR><td>mask type</TD><td>$masktype</TD></tr>\n";
@@ -271,8 +271,8 @@ function runMaskMaker() {
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
-	$assess = $_POST[assess];
-	$newassess= $_POST[newassessname];
+	$assess = $_POST['assess'];
+	$newassess= $_POST['newassessname'];
 	$oldassess= $_POST['oldassess'];
 	
 	/* *******************

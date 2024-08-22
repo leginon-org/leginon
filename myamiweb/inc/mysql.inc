@@ -94,17 +94,11 @@ class mysql {
 
 	function SQLTableExists($name) {
 		$table_exists=false;
-		$Rtables = $this->SQLQuery("SHOW TABLES");
-		if ($Rtables === false){
-			error_log("Error in mysql.inc SQLTableExists ".$this->mysqlerror);
+		$q = "SELECT * from $name limit 1;";
+		$Rtables = $this->SQLQuery($q);
+		if ($Rtables === false)
 			return false;
-		}
-	    	while($table = mysqli_fetch_array($Rtables))
-			if ($table[0] == $name) {
-				$table_exists=true;
-				break;
-			}
-		return $table_exists;
+		return true;
 	}
 	
 	function listTables(){
@@ -327,6 +321,7 @@ class mysql {
 	function getSQLResult($query, $fetch=MYSQLI_ASSOC) {
 		$result = $this->SQLQuery($query);
 		if (!is_object($result)) {
+			if ($result === false) return array();
 			return $result;
 		}
 		$data = array();

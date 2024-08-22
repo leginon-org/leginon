@@ -43,10 +43,10 @@ def boxParticlesFromFile(mrcfile, stackfile, initboxsize, finalboxsize, coordina
 	boxedparticles = []
 	usedparticles = []
 	for x,y,partnum in coordinates:
-		x1 = x-initboxsize/2
-		x2 = x+initboxsize/2
-		y1 = y-initboxsize/2
-		y2 = y+initboxsize/2
+		x1 = x-initboxsize//2
+		x2 = x+initboxsize//2
+		y1 = y-initboxsize//2
+		y2 = y+initboxsize//2
 		if x1 < 0 or y1 < 0:
 			continue
 		if x2 >= imgarray.shape[1] or y2 >= imgarray.shape[0]:

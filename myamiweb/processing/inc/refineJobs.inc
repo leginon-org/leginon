@@ -71,7 +71,7 @@ abstract class RefineJobs
 	# Sort a given array of Jobs by the given key
 	private function sortJobs( &$jobArray, $key="'DEF_timestamp'" )
 	{
-		$compareFunction = create_function('$a, $b','if ($a['.$key.'] == $b['.$key.']) return 0; return ($a['.$key.'] > $b['.$key.']) ? -1 : 1;');
+		$compareFunction = function($a, $b) {if ($a['.$key.'] == $b['.$key.']) return 0; return ($a['.$key.'] > $b['.$key.']) ? -1 : 2;};
 		usort( $jobArray, $compareFunction);
 	}
 		

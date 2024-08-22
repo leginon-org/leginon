@@ -1878,7 +1878,7 @@ class particledata {
 			if (preg_match('~.img~', $s['name'])) $opvals.='|--|'.preg_replace('~img~','hed',$s['name']);
 			
 			// Add this stack to the options dictionary
-			$options[$opvals] = $s[shownstackname]." ID: ".$stackid[stackid]." (".$nump." particles, ".$showapix." &Aring;/pix, ".$box."x".$box.")";
+			$options[$opvals] = $s['shownstackname']." ID: ".$stackid['stackid']." (".$nump." particles, ".$showapix." &Aring;/pix, ".$box."x".$box.")";
 		}
 		
 		return $options;
@@ -1957,7 +1957,7 @@ class particledata {
 		$q = "select max(DEF_id) as runId "
 			." from ApAssessmentRunData where `REF|leginondata|SessionData|session` = '$sessionId'";
 		list($r) = $this->mysql->getSQLResult($q);
-		return $r[runId];
+		return $r['runId'];
 	}
 
 	function getAssessmentRunIds ($sessionId) {
@@ -2658,6 +2658,7 @@ class particledata {
 		$q.= "ORDER BY r.`DEF_id` DESC ";
 		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		if ($r === false) $r=array();
 		//echo print_r($r)."<br/>\n";
 		return $r;
 	}
@@ -3040,7 +3041,7 @@ class particledata {
 		// Parameters of original stack of the runs in stack
 		$selectionstacks = array();
 		foreach ($stackrunIds as $runid) {
-			$stackrunId = $runid[runid];
+			$stackrunId = $runid['runid'];
 			$rstack = $this->getOriginalStackFromStackRun($stackrunId);
 			$childstackId = $rstack['stackId'];
 			//Get Parameters

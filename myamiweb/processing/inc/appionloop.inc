@@ -28,7 +28,7 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 		}
 	}
 
-	$outdir = ($_POST[outdir]) ? $_POST[outdir] : $sessionpath;
+	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	
 	//--- Add the Run Parameters Form
 	$showDesc = $desc;
@@ -270,15 +270,15 @@ function parseParticleLoopParams ($type) {
 }
 
 function checkParticleErrors ($type) {
-	if (!$_POST[diam]) {
+	if (!$_POST['diam']) {
 		return "<B>ERROR:</B> Specify a particle diameter";
 		exit;
 	}
-	if ($type != "manual" and !$_POST[thresh]) {
+	if ($type != "manual" and !$_POST['thresh']) {
 		return "<B>ERROR:</B> No thresholding value was entered";
 		exit;
 	}
-	//$bin = $_POST[bin];
+	//$bin = $_POST['bin'];
 	//$logbin = log($bin)/log(2.0);
 	//if ($bin && !is_int($bin)) {
 	//	return "<B>ERROR:</B> Bin value must be a power of 2, <I>e.g.</I> 1, 2, 4, 8, 16";
@@ -288,18 +288,18 @@ function checkParticleErrors ($type) {
 };
 
 function particleLoopSummaryTable () {
-	$thresh = $_POST[thresh];
-	$maxthresh = $_POST[maxthresh];
-	$maxpeaks = $_POST[maxpeaks];
-	$lp = $_POST[lp];
-	$hp = $_POST[hp];
-	$median = $_POST[median];
-	$bin = $_POST[bin];
-	$defocpair = ($_POST[defocpair]=="on") ? "<font color='red'>false</font>" : "<font color='green'>true</font>";
-	$maxsize = $_POST[maxsize];
-	$overlapmult = $_POST[overlapmult];
+	$thresh = $_POST['thresh'];
+	$maxthresh = $_POST['maxthresh'];
+	$maxpeaks = $_POST['maxpeaks'];
+	$lp = $_POST['lp'];
+	$hp = $_POST['hp'];
+	$median = $_POST['median'];
+	$bin = $_POST['bin'];
+	$defocpair = ($_POST['defocpair']=="on") ? "<font color='red'>false</font>" : "<font color='green'>true</font>";
+	$maxsize = $_POST['maxsize'];
+	$overlapmult = $_POST['overlapmult'];
 	$peaktype = $_POST['peaktype'];
-	$invert = ($_POST[invert]=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
+	$invert = ($_POST['invert']=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$diam = $_POST[diam];
 	$doubles = ($_POST['doubles']=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$planereg = ($_POST['planereg']=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";

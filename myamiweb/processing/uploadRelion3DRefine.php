@@ -55,7 +55,7 @@ $title='uploadParticles.py Launcher', $heading='Upload particle selection') {
 	//query the database for parameters
 	$particle = new particledata();
 
-	$outdir = ($_POST[outdir]) ? $_POST[outdir] : $sessionpath;
+	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	$lastrunnumber = $particle->getLastRunNumberForType($sessionId,'ApSelectionRunData','name');
 	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'relion3Drefine'.($lastrunnumber+1);
 	$scale = ($_POST['scale']) ? $_POST['scale'] : '1';
