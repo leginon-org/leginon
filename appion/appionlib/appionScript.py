@@ -517,7 +517,7 @@ class AppionScript(basicScript.BasicScript):
 			file = open(logfilepath,'w')
 		except:
 			apDisplay.printError('Log file can not be created, process did not run.')
-		file.write(stdout_value)
+		file.write(stdout_value.decode('latin-1','ignore'))
 		file.close()
 		if proc.returncode > 0:
 			pieces = cmd.split(' ')

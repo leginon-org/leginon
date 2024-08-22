@@ -50,18 +50,18 @@ class TemplateSelectionTable extends BasicForm
 		$params = $this->getFormParams();
 
 		if (is_array($templateinfo)) {
-			$filename = $templateinfo[path] ."/".$templateinfo[templatename];
+			$filename = $templateinfo['path'] ."/".$templateinfo['templatename'];
 			$checkboxname='template'.$i;
-			$templaterundata = $this->particle->getRecentTemplateRunFromId($templateinfo[DEF_id]);
+			$templaterundata = $this->particle->getRecentTemplateRunFromId($templateinfo['DEF_id']);
 			//print_r($templaterundata);
-			$startval = (int) $templaterundata[range_start];
-			$endval = (int) $templaterundata[range_end];
-			$incrval = (int) $templaterundata[range_incr];
+			$startval = (int) $templaterundata['range_start'];
+			$endval = (int) $templaterundata['range_end'];
+			$incrval = (int) $templaterundata['range_incr'];
 			if ($endval==0 || $endval==10) $endval='';
 			if ($incrval==0 || $incrval==20) $incrval='';
 			if ($startval==0 && $endval=='') $startval='';
 
-			$params->addParam( "templateId".$i, $templateinfo[DEF_id], "template id" );
+			$params->addParam( "templateId".$i, $templateinfo['DEF_id'], "template id" );
 			$params->addParam( $checkboxname, '', "Use Template ".$i );
 			$params->addParam( $checkboxname."strt", $startval, "Starting Angle" );
 			$params->addParam( $checkboxname."end", $endval, "Ending Angle" );
@@ -152,8 +152,8 @@ class TemplateSelectionTable extends BasicForm
 		}
 
 		if (is_array($templateinfo)) {
-			$filename = $templateinfo[path] ."/".$templateinfo[templatename];
-			$templaterundata = $this->particle->getRecentTemplateRunFromId($templateinfo[DEF_id]);
+			$filename = $templateinfo['path'] ."/".$templateinfo['templatename'];
+			$templaterundata = $this->particle->getRecentTemplateRunFromId($templateinfo['DEF_id']);
 
 			// create the javascript functions to enable/disable the templates
 			$javafunctions.="function enable".$checkboxname."() {
@@ -171,9 +171,9 @@ class TemplateSelectionTable extends BasicForm
 				// create the image template table
 			$templatetable.="<img src='loadimg.php?filename=$filename&w=120' width='120'>\n";
 			$templatetable.="<br/>\n";
-			$templatetable.="Template ID: <i>&nbsp;$templateinfo[DEF_id]</i><br/>\n";
-			$templatetable.="Diameter:    <i>&nbsp;$templateinfo[diam] &Aring;</i><br/>\n";
-			$templatetable.="Pixel Size:  <i>&nbsp;$templateinfo[apix] &Aring;</i><br/>\n";
+			$templatetable.="Template ID: <i>".$templateinfo['DEF_id']."</i><br/>\n";
+			$templatetable.="Diameter:    <i>".$templateinfo['diam']." &Aring;</i><br/>\n";
+			$templatetable.="Pixel Size:  <i>".$templateinfo['apix']." &Aring;</i><br/>\n";
 
 
 			// Table separator

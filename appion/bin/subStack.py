@@ -70,7 +70,8 @@ class subStackScript(appionScript.AppionScript):
 		if self.params['last'] is None:
 			self.params['last'] = numpart
 
-		if self.params['random'] > numpart or self.params['last'] > numpart:
+		if (self.params['random'] is not None and self.params['random'] > numpart) or self.params['last'] > numpart:
+
 			apDisplay.printError("Requesting too many particles from stack, max %d"%(numpart))
 
 		if self.params['first'] is None and self.params['split'] == 1:

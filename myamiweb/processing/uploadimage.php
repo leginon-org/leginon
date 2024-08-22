@@ -214,7 +214,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 			else
 				$filetypes = array("mrc");
 			foreach ($filetypes as $ftype) {
-				$s = ($ftype==$_POST[fileformat]) ? ' selected' : '';
+				$s = ($ftype==$_POST['fileformat']) ? ' selected' : '';
 				$keyinput_format .= "<option".$s.">$ftype</option>";
 			}
 			$keyinput_format .= "</select>\n";
