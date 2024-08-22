@@ -874,6 +874,7 @@ class leginondata {
 			." where `REF|SessionData|session`='$sessionId' "
 			." order by `DEF_timestamp` desc limit 1 ";
 		$RfileInfo = $this->mysql->SQLQuery($q);
+		if ($RfileInfo === false) return array();
 		$fileInfo = mysqli_fetch_array($RfileInfo);
 		return $fileInfo['id'];
 	}
@@ -1563,6 +1564,7 @@ class leginondata {
 			."a.`DEF_id` ='".$imgId."' "
 			."order by pi.`DEF_id` desc";
 		$Rimageinfo = $this->mysql->SQLQuery($q);
+		if ($Rimageinfo === false) return array();
 		$imageinfo = mysqli_fetch_array($Rimageinfo,MYSQLI_ASSOC);
 		// All diffraction mode instrument should have 'Diffr' as a part of the name
 		$imageinfo['is_diffraction'] = (strpos($imageinfo['scope'],'Diffr')!== false) ? true: false;
@@ -1612,6 +1614,7 @@ class leginondata {
 			."a.`DEF_id` ='".$imgId."' ";
 
 		$Rgridinfo = $this->mysql->SQLQuery($q);
+		if ($RfileInfo === false) return '';
 		$gridinfo = mysqli_fetch_array($Rgridinfo);
 		return $gridinfo['gridId'];
 	}
@@ -1881,6 +1884,7 @@ class leginondata {
 		if ($this->mysql->SQLTableExists("ApplicationData")) {
 			$q = "select DEF_Id, name, version from ApplicationData order by name,version";
 			$Rapplication = $this->mysql->SQLQuery($q);
+			if ($Rapplication === false) return array();
 			while($application = mysqli_fetch_array($Rapplication))
 				$applications[] = $application;
 		}
