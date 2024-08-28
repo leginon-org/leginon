@@ -1,18 +1,43 @@
 #!/usr/bin/env python3
 
 import grpc
+from google.protobuf import json_format as json_format
 
-# used to find device id name
+# requests builders
 from utapi_types.v1 import device_id_pb2 as dip
+from optics.v1 import aperture_mechanism_control_pb2 as apmc_p
+from column.v1 import column_mode_pb2 as cm_p
+from column.v1 import normalization_pb2 as norm_p
 
-from optics.v1 import beam_stopper_control_pb2_grpc as bscpg
-from optics.v1 import aperture_mechanism_control_pb2 as amcp
-from optics.v1 import aperture_mechanism_control_pb2_grpc as amcpg
+# used to create stub for access
+from optics.v1 import beam_stopper_control_pb2_grpc as bstop_pg
+from optics.v1 import aperture_mechanism_control_pb2_grpc as apmc_pg
+from optics.v1 import deflectors_pb2_grpc as defl_pg
+from optics.v1 import focus_pb2_grpc as foc_pg
+from optics.v1 import illumination_pb2_grpc as illu_pg
+from optics.v1 import magnification_pb2_grpc as mag_pg
+from optics.v1 import optics_pb2_grpc as optics_pg
+from optics.v1 import stigmator_pb2_grpc as stig_pg
+from optics.v1 import xlens_pb2_grpc as xlens_pg
+from column.v1 import column_mode_pb2_grpc as cm_pg
+from column.v1 import normalization_pb2_grpc as norm_pg
 
-
+# Can we connect remotely ?
 channel = grpc.insecure_channel('localhost:46699', options=[('grpc.max_receive_message_length', 200 * 1024 * 1024)])
-beam_stopper = bscpg.BeamStopperControlServiceStub(channel)
-aperture_mechanism = amcpg.ApertureMechanismControlServiceStub(channel)
+
+bstop_stub = bstop_pg.BeamStopperControlServiceStub(channel)
+apmc_stub = apmc_pg.ApertureMechanismControlServiceStub(channel)
+defl_stub = defl_pg.DeflectorsServiceStub(channel)
+foc_stub = foc_pg.FocusServiceStub(channel)
+illu_stub = illu_pg.IlluminationServiceStub(channel)
+mag_stub = mag_pg.MagnificationServiceStub(channel)
+optics_stub =  optics_pg.OpticsServiceStub(channel)
+stig_stub = stig_pg.StigmatorServiceStub(channel)
+xlens_stub = xlens_pg.XLensAlignmentsServiceStub(channel)
+cm_stub = cm_pg.ColumnServiceStub(channel)
+norm_stub = norm_pg.ServiceStub(channel)
+
+cm_probe_mode_map = [('nano', 'PROBE_MODE_NANO_PROBE'), ('micro', 'PROBE_MODE_MICRO_PROBE')]
 
 def handleRpcError(e):
 	if e.code() == grpc.StatusCode.ABORTED:
@@ -23,6 +48,26 @@ def handleRpcError(e):
 		# Not an UtapiResponse. rethrow exception
 		raise
 
+def _response_to_dict(response):
+	return json_format.MessageToDict(response_dict)
+
+def _get_by_request(stub,attr_name,request):
+	my_attr = getattr(stub,attr_name)
+	try:
+		# perform my_attr action on the request and convert to list and dict
+		return _response_to_dict(my_attr(request))
+	except grpc.RpcError as rpc_error:
+		handleRpcError(rpc_error)
+
+def _set_by_request(stub, attr_name, request):
+	my_attr = getattr(stub,attr_name)
+	try:
+		# perform my_attr action on the request
+		my_attr(request)
+	except grpc.RpcError as rpc_error:
+		handleRpcError(rpc_error)
+
+
 import time
 from pyscope import fei
 
@@ -30,16 +75,15 @@ class Utapi(fei.Krios):
 	name = 'Utapi'
 	def __init__(self):
 		super(Utapi, self).__init__()
-		self.beamstop = bscpg.BeamStopperControlServiceStub(channel)
 		self.beamstop_device_id = dip.DeviceIdRequest(id='BeamStopper')
 
 	def getDebugAll(self):
 		return True
 
 	def getBeamstopPosition(self):
-		state = self.beamstop.GetState(self.beamstop_device_id).__str__()
-		state_short = state[:state.index('\n')]
-		state_map = [('state: inserted','in'),('state: retracted','out')]
+		state_dict = _get_by_request(bstop_stub,'GetState',self.beamstop_device_id)
+		state_short = state_dict['state']
+		state_map = [('inserted','in'),('retracted','out')]
 		if state:
 			result = state_map[list(map((lambda x: x[0].lower()),state_map)).index(state_short.lower())][1]
 			return result
@@ -52,7 +96,6 @@ class Utapi(fei.Krios):
 	def setBeamstopPosition(self, value):
 		"""
 		Possible values: ('in','out','halfway')
-		Tecnically tecnai has no software control on this.
 		"""
 		if value == self.getBeamstopPosition():
 			return
@@ -61,11 +104,7 @@ class Utapi(fei.Krios):
 		max_trials = 5
 		trial = 1
 		while value != self.getBeamstopPosition():
-			my_attr = getattr(beam_stopper,attr_name)
-			try:
-				my_attr(self.beamstop_device_id)
-			except grpc.RpcError as rpc_error:
-				handleRpcError(rpc_error)
+			_set_by_request(bstop_stub, attr_name, self.beamstop_device_id)
 			time.sleep(0.5)
 			if self.getDebugAll() and trial > 1:
 				print('beamstop positioning trial %d' % trial)
@@ -73,31 +112,65 @@ class Utapi(fei.Krios):
 				raise RuntimeError('Beamstop setting to %s failed %d times' % (value, trial))
 			trial += 1
 
-	def getApertureSelections(self, mechanism_name):
-		'''
-		get valid selection for an aperture mechanism to be used in gui,including "open" if available.
-		'''
+	def _getApertureMechanismId(self, value):
 		if mechanism_name == 'condenser':
 			# always look up condenser 2 value
 			mechanism_name = 'condenser_2'
 		mechanism_id = mechanism_name[0].upper()+mechanism_name[1:].replace('_',' ')
-		aperture_collection_request = amcp.GetApertureCollectionRequest(
+		return mechanism_id
+
+	def getApertureSelections(self, mechanism_name):
+		'''
+		get valid selection for an aperture mechanism to be used in gui,including "open" if available.
+		'''
+		mechanism_id = self._getApertureMechanismId(mechanism_name)
+		# use the name-specified request
+		my_request = apmc_p.GetApertureCollectionRequest(
 			device_id=dip.DeviceId(id=mechanism_id),
-			#aperture_type=amcp.ApertureType.APERTURE_TYPE_CIRCULAR)
 			)
-		try:
-			aperture_collection = aperture_mechanism.GetApertureCollection(aperture_collection_request)
-		except Exception as e:
-			if e.code() == grpc.StatusCode.ABORTED:
-				print("aperture mechnism '%s' not available to control" % mechanism_name)
-				return []
-		print("aperture_collection: ", aperture_collection)
-		aperture_collection_str = str(aperture_collection)
-
-		# This may be string or integer.
-		aperture_list = aperture_collection_str.split('aperture_name: ')[1:]
-
-		names = list(map((lambda x: str(x.split('"')[1])),aperture_list))
-
-		#TODO check if the mechanism can be retracted.
+		results = _get_by_request(apmc_stub,'GetApertureCollection',my_request)
+		names = list(map((lambda x: str(x['apertureName'])),results['apertures']))
 		return names
+
+	def getApertureSelection(self, mechanism_name):
+		mechanism_id = self._getApertureMechanismId(mechanism_name)
+		my_request = dip.DeviceId(id=mechanism_id)
+		#TODO check if the mechanism is retracted.
+		# Retracted mechanism will get error in the next statement
+		# return "open"
+		result = _get_by_request(apmc_stub,'GetSelectedAperture',mechanism_id))
+		return result['aperture_name']
+
+	def setApertureSelection(self, mechanism_name, name):
+		#TODO handle open position
+		all_names = self.getApertureSelections(mechanism_name)
+		if name not in all_names:
+			raise RuntimeError('Invalid aperture %s' % (name))
+		mechanism_id = self._getApertureMechanismId(mechanism_name)
+		my_request = apmc_p.SelectApertureRequest(device_id=dip.DeviceId(id=mechanism_id),name)
+		_set_by_request(apmc_stub, 'SelectAperture', my_request)
+
+	# column modes
+	def _get_column_modes(self):
+		results = _get_by_request(cm_pg,'GetColumnModes',cm_p.ColumnModeRequest())
+		return results
+
+	def getProbeModes(self):
+		mode_names = list(map((lambda x[0]),cm_mode_map))
+		return mode_names
+
+	def getProbeMode(self):
+		all_modes = self._get_column_modes()
+		try:
+			value = list(map((lambda x:x[1]), cm_probe_mode_map)).index(all_modes['probeMode'])
+		except:
+			raise
+		return value
+
+	def setProbeMode(self, value):
+		try:
+			my_index = self.getProbeModes().index(value)
+		except ValueError:
+			raise RuntimeError('Invalid probe mode %s' % (value))
+		my_request =getattr(cm_p, my_index)
+		_set_by_request(cm_stub, attr_name, my_request)
