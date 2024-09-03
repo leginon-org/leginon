@@ -37,7 +37,6 @@ xlens_stub = xlens_pg.XLensAlignmentsServiceStub(channel)
 cm_stub = cm_pg.ColumnModeServiceStub(channel)
 norm_stub = norm_pg.NormalizationServiceStub(channel)
 
-cm_probe_mode_map = [('micro','PROBE_MODE_MICRO_PROBE'),('nano', 'PROBE_MODE_NANO_PROBE')]
 
 def handleRpcError(e):
 	if e.code() == grpc.StatusCode.ABORTED:
@@ -71,46 +70,100 @@ def _set_by_request(stub, attr_name, request):
 import time
 from pyscope import fei
 
+class Logger(object):
+	def __init__(self,logtype=''):
+		self.level = 0
+		if logtype:
+			self.logtype = logtype.upper()+' '
+
+	def setLever(self,value):
+		self.level = value
+
+	def info(self, msg):
+		if self.level >= 1:
+			print('%sINFO: %s' % (self.logtype,msg))
+
+	def warning(self, msg):
+		if self.level >= 1:
+			print('%sWARNING: %s' % (self.logtype,msg))
+
+	def debug(self, msg):
+		if self.level >= 3:
+			print('%sDEBUG: %s' % (self.logtype,msg))
+
+	def error(self, msg):
+		if self.level >= 1:
+			print('%sERROR: %s' % (self.logtype,msg))
+
 class Utapi(fei.Krios):
 	name = 'Utapi'
+	# (pyscope value, utapi CONSTANT)
+	cm_projection_mode_map = [	('imaging','PROJECTION_MODE_IMAGING'),
+							('diffraction', 'PROJECTION_MODE_DIFFRACTION')
+	]
+	cm_objective_mode_map = [	('lm','OBJECTIVE_MODE_LM'),
+							('hm', 'OBJECTIVE_MODE_HM')
+	]
+	cm_objective_sub_mode_map = [	('lm','OBJECTIVE_MODE_LM'),
+							('hm', 'OBJECTIVE_MODE_HM')
+	]
+	cm_probe_mode_map = [	('micro','PROBE_MODE_MICRO_PROBE'),
+							('nano', 'PROBE_MODE_NANO_PROBE')
+	]
+	# (pyscope value, utapi Method)
+	bstop_attr_map = [	('in','Insert'),
+						('out','Retract'),
+						('halfway','InsertedHalfway')
+	]
 	def __init__(self):
 		super(Utapi, self).__init__()
 		self.beamstop_device_id = dip.DeviceIdRequest(id='BeamStopper')
+		self.logger = Logger()
+		self.stage_logger = Logger()
+		if self.getDebugAll():
+			self.logger.setLevel(3)
+			self.stage_logger.setLevel(3)
 
 	def getDebugAll(self):
 		return True
 
 	def getBeamstopPosition(self):
+		self.logger.debug('---getBeamstopPosition---')
 		try:
 			state_dict = _get_by_request(bstop_stub,'GetState',self.beamstop_device_id)
+			self.logger.debug('GetState result: %s' % state_dict)
 			state_short = state_dict['state']
-			print(state_short)
 		except Exception as e:
-			print(e)
+			self.logger.debug(e)
 			return 'unknown'
-		state_map = [('inserted','in'),('retracted','out'),('moving','moving'),('inserted_halfway','halfway'),('undefined','unknown')]
+		state_map = list(map((lambda x: (x[0],x[1].upper())),self.bstop_attr_map))
+		state_map.extend([('moving','MOVING'),('halfway','INSERTED_HALFWAY'),('unknown','UNDEFINED')])
 		try:
-			result = state_map[list(map((lambda x: x[0].lower()),state_map)).index(state_short.lower())][1]
+			result = state_map[list(map((lambda x: x[1]),state_map)).index(state_short)][0]
 			return result
 		except Exception as e:
-			print(e)
+			self.logger.debug(e)
 			return 'unknown'
 
 	def setBeamstopPosition(self, value):
 		"""
 		Possible values: ('in','out','halfway')
 		"""
+		self.logger.debug('---setBeamstopPosition---')
 		if value == self.getBeamstopPosition():
 			return
-		state_map = [('Insert','in'),('Retract','out'),('InsertedHalfway','halfway')]
-		attr_name = state_map[list(map((lambda x: x[1].lower()),state_map)).index(value.lower())][0]
+		accepted_values = ['in','out']
+		if value not in accepted_values:
+				raise ValueError('Beamstop setting to %s not possible' % value)
+		attr_name = self.bstop_attr_map[list(map((lambda x: x[0].lower()),self.bstop_attr_map)).index(value.lower())][1]
+		# try 5 times
 		max_trials = 5
 		trial = 1
 		while value != self.getBeamstopPosition():
 			_set_by_request(bstop_stub, attr_name, self.beamstop_device_id)
 			time.sleep(0.5)
-			if self.getDebugAll() and trial > 1:
-				print('beamstop positioning trial %d' % trial)
+			if trial > 1:
+				self.logger.debug('beamstop positioning trial %d' % trial)
 			if trial > max_trials:
 				raise RuntimeError('Beamstop setting to %s failed %d times' % (value, trial))
 			trial += 1
@@ -159,23 +212,58 @@ class Utapi(fei.Krios):
 		results = _get_by_request(cm_stub,'GetColumnModes',cm_p.ColumnModeRequest())
 		return results
 
-	def getProbeModes(self):
-		mode_names = list(map((lambda x: x[0]),cm_probe_mode_map))
-		return mode_names
-
-	def getProbeMode(self):
+	def _getColumnModeByMap(self, cm_name, my_map):
 		all_modes = self._get_column_modes()
 		try:
-			value = cm_probe_mode_map[list(map((lambda x:x[1]),cm_probe_mode_map)).index(all_modes['probeMode'])][0]
+			key = cm_name
+			key.replace(key[0],key[0].lower(),1)
+			value = my_map[list(map((lambda x:x[1]),my_map)).index(all_modes[key])][0]
 		except:
 			raise
 		return value
 
-	def setProbeMode(self, value):
+	def _mapColumnModeConstant(self,cm_name, my_map):
 		try:
-			my_index = self.getProbeModes().index(value)
+			# find index all the values
+			my_index = getattr(self,'get%ss' % cm_name)().index(value)
 		except ValueError:
-			raise RuntimeError('Invalid probe mode %s' % (value))
-		my_mode = getattr(cm_p,cm_probe_mode_map[my_index][1])
+			raise RuntimeError('Invalid %s %s' % (cm_name,value))
+		my_mode = getattr(cm_p,my_map[my_index][1])
+		return my_mode
+
+	def getProbeModes(self):
+		mode_names = list(map((lambda x: x[0]),self.cm_probe_mode_map))
+		return mode_names
+
+	def getProbeMode(self):
+		return self._getColumnModeByMap('ProbeMode', self.cm_probe_mode_map)
+
+	def setProbeMode(self, value):
+		cm_name = 'ProbeMode'
+		my_map = self.cm_probe_mode_map
+		my_mode = self._mapColumnMode(cm_name, my_map)
+		request_name = cm_name+'Request'
 		my_request =cm_p.ProbeModeRequest(probe_mode=my_mode)
-		_set_by_request(cm_stub, 'SetProbeMode', my_request)
+		_set_by_request(cm_stub, 'Set%s' % cm_name, my_request)
+
+	def getProjectionModes(self):
+		mode_names = list(map((lambda x: x[0]),self.cm_projection_mode_map))
+		return mode_names
+
+	def getProjectionMode(self):
+		return self._getColumnModeByMap('ProjectionMode', self.cm_projection_mode_map)
+
+	def setProjectionMode(self, value):
+		# Not setable in Leginon instrument
+		pass
+
+	def getProjectionSubModes(self):
+		mode_names = list(map((lambda x: x[0]),self.cm_objective_mode_map))
+		sub_mode_names = list(map((lambda x: x[0]),self.cm_objective_sub_mode_map))
+		return mode_names
+
+	def getProjectionSubMode(self):
+		return self._getColumnModeByMap('ObjectiveSubMode', self.cm_objective_sub_mode_map)
+
+	def setProjectionSubMode(self, value):
+		raise ValuError('can not set projection submode')
