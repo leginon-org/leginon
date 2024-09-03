@@ -76,7 +76,7 @@ class Logger(object):
 		if logtype:
 			self.logtype = logtype.upper()+' '
 
-	def setLever(self,value):
+	def setLevel(self,value):
 		self.level = value
 
 	def info(self, msg):
@@ -104,8 +104,9 @@ class Utapi(fei.Krios):
 	cm_objective_mode_map = [	('lm','OBJECTIVE_MODE_LM'),
 							('hm', 'OBJECTIVE_MODE_HM')
 	]
-	cm_objective_sub_mode_map = [	('lm','OBJECTIVE_MODE_LM'),
-							('hm', 'OBJECTIVE_MODE_HM')
+	cm_objective_sub_mode_map = [	('m','OBJECTIVE_SUB_MODE_ML'),
+							('sa', 'OBJECTIVE_SUB_MODE_SA'),
+							('mh', 'OBJECTIVE_SUB_MODE_MH')
 	]
 	cm_probe_mode_map = [	('micro','PROBE_MODE_MICRO_PROBE'),
 							('nano', 'PROBE_MODE_NANO_PROBE')
@@ -216,8 +217,9 @@ class Utapi(fei.Krios):
 		all_modes = self._get_column_modes()
 		try:
 			key = cm_name
-			key.replace(key[0],key[0].lower(),1)
-			value = my_map[list(map((lambda x:x[1]),my_map)).index(all_modes[key])][0]
+			# dictionary response keys starts are camelCasing, not CamelCasing.
+			mode_key = key.replace(key[0],key[0].lower(),1)
+			value = my_map[list(map((lambda x:x[1]),my_map)).index(all_modes[mode_key])][0]
 		except:
 			raise
 		return value
@@ -260,7 +262,7 @@ class Utapi(fei.Krios):
 	def getProjectionSubModes(self):
 		mode_names = list(map((lambda x: x[0]),self.cm_objective_mode_map))
 		sub_mode_names = list(map((lambda x: x[0]),self.cm_objective_sub_mode_map))
-		return mode_names
+		return sub_mode_names
 
 	def getProjectionSubMode(self):
 		return self._getColumnModeByMap('ObjectiveSubMode', self.cm_objective_sub_mode_map)
