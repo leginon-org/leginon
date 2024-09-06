@@ -1,42 +1,61 @@
 #!/usr/bin/env python3
+SIMULATION = False
 
-import grpc
-from google.protobuf import json_format as json_format
+if not SIMULATION:
+	from pyscope import fei
+	import grpc
+	from google.protobuf import json_format as json_format
 
-# requests builders
-from utapi_types.v1 import device_id_pb2 as dip
-from optics.v1 import aperture_mechanism_control_pb2 as apmc_p
-from column.v1 import column_mode_pb2 as cm_p
-from column.v1 import normalization_pb2 as norm_p
+	# requests builders
+	from utapi_types.v1 import device_id_pb2 as dip
+	from utapi_types.v1 import utapi_response_pb2 as urp
+	from optics.v1 import aperture_mechanism_control_pb2 as apmc_p
+	from optics.v1 import deflectors_pb2_grpc as defl_pg
+	from optics.v1 import focus_pb2 as foc_p
+	from optics.v1 import illumination_pb2 as illu_p
+	from optics.v1 import magnification_pb2 as mag_p
+	from column.v1 import column_mode_pb2 as cm_p
+	from column.v1 import normalization_pb2 as norm_p
 
-# used to create stub for access
-from optics.v1 import beam_stopper_control_pb2_grpc as bstop_pg
-from optics.v1 import aperture_mechanism_control_pb2_grpc as apmc_pg
-from optics.v1 import deflectors_pb2_grpc as defl_pg
-from optics.v1 import focus_pb2_grpc as foc_pg
-from optics.v1 import illumination_pb2_grpc as illu_pg
-from optics.v1 import magnification_pb2_grpc as mag_pg
-from optics.v1 import optics_pb2_grpc as optics_pg
-from optics.v1 import stigmator_pb2_grpc as stig_pg
-from optics.v1 import x_lens_alignments_pb2_grpc as xlens_pg
-from column.v1 import column_mode_pb2_grpc as cm_pg
-from column.v1 import normalization_pb2_grpc as norm_pg
+	# used to create stub for access
+	from optics.v1 import beam_stopper_control_pb2_grpc as bstop_pg
+	from optics.v1 import aperture_mechanism_control_pb2_grpc as apmc_pg
+	from optics.v1 import deflectors_pb2_grpc as defl_pg
+	from optics.v1 import focus_pb2_grpc as foc_pg
+	from optics.v1 import illumination_pb2_grpc as illu_pg
+	from optics.v1 import magnification_pb2_grpc as mag_pg
+	from optics.v1 import optics_pb2_grpc as optics_pg
+	from optics.v1 import stigmator_pb2_grpc as stig_pg
+	from optics.v1 import x_lens_alignments_pb2_grpc as xlens_pg
+	from column.v1 import column_mode_pb2_grpc as cm_pg
+	from column.v1 import normalization_pb2_grpc as norm_pg
 
-# Can we connect remotely ?
-channel = grpc.insecure_channel('localhost:46699', options=[('grpc.max_receive_message_length', 200 * 1024 * 1024)])
+	# Can we connect remotely ?
+	channel = grpc.insecure_channel('localhost:46699', options=[('grpc.max_receive_message_length', 200 * 1024 * 1024)])
 
-bstop_stub = bstop_pg.BeamStopperControlServiceStub(channel)
-apmc_stub = apmc_pg.ApertureMechanismControlServiceStub(channel)
-defl_stub = defl_pg.DeflectorsServiceStub(channel)
-foc_stub = foc_pg.FocusServiceStub(channel)
-illu_stub = illu_pg.IlluminationServiceStub(channel)
-mag_stub = mag_pg.MagnificationServiceStub(channel)
-optics_stub =  optics_pg.OpticsServiceStub(channel)
-stig_stub = stig_pg.StigmatorServiceStub(channel)
-xlens_stub = xlens_pg.XLensAlignmentsServiceStub(channel)
-cm_stub = cm_pg.ColumnModeServiceStub(channel)
-norm_stub = norm_pg.NormalizationServiceStub(channel)
 
+	bstop_stub = bstop_pg.BeamStopperControlServiceStub(channel)
+	apmc_stub = apmc_pg.ApertureMechanismControlServiceStub(channel)
+	defl_stub = defl_pg.DeflectorsServiceStub(channel)
+	foc_stub = foc_pg.FocusServiceStub(channel)
+	illu_stub = illu_pg.IlluminationServiceStub(channel)
+	mag_stub = mag_pg.MagnificationServiceStub(channel)
+	optics_stub =  optics_pg.OpticsServiceStub(channel)
+	stig_stub = stig_pg.StigmatorServiceStub(channel)
+	xlens_stub = xlens_pg.XLensAlignmentsServiceStub(channel)
+	cm_stub = cm_pg.ColumnModeServiceStub(channel)
+	norm_stub = norm_pg.NormalizationServiceStub(channel)
+
+else:
+	import sim_utapi
+	channel = False
+	dip = sim_utapi
+	bstop_p = sim_utapi
+	cm_p = sim_utapi
+	mag_p = sim_utapi
+	bstop_stub = sim_utapi.BeamStopperControlStub(channel)
+	cm_stub = sim_utapi.ColumnModeStub(channel)
+	mag_stub = sim_utapi.MagnificationStub(channel)
 
 def handleRpcError(e):
 	if e.code() == grpc.StatusCode.ABORTED:
@@ -48,6 +67,8 @@ def handleRpcError(e):
 		raise
 
 def _response_to_dict(response):
+	if SIMULATION:
+		return response
 	return json_format.MessageToDict(response)
 
 def _get_by_request(stub,attr_name,request):
@@ -68,11 +89,11 @@ def _set_by_request(stub, attr_name, request):
 
 
 import time
-from pyscope import fei
 
 class Logger(object):
 	def __init__(self,logtype=''):
 		self.level = 0
+		self.logtype = ''
 		if logtype:
 			self.logtype = logtype.upper()+' '
 
@@ -95,7 +116,8 @@ class Logger(object):
 		if self.level >= 1:
 			print('%sERROR: %s' % (self.logtype,msg))
 
-class Utapi(fei.Krios):
+from pyscope import simtem
+class Utapi(simtem.SimTEM300):
 	name = 'Utapi'
 	# (pyscope value, utapi CONSTANT)
 	cm_projection_mode_map = [	('imaging','PROJECTION_MODE_IMAGING'),
@@ -104,7 +126,9 @@ class Utapi(fei.Krios):
 	cm_objective_mode_map = [	('lm','OBJECTIVE_MODE_LM'),
 							('hm', 'OBJECTIVE_MODE_HM')
 	]
-	cm_objective_sub_mode_map = [	('m','OBJECTIVE_SUB_MODE_ML'),
+	cm_objective_sub_mode_map = [
+							('lm','OBJECTIVE_MODE_LM'),
+							('m','OBJECTIVE_SUB_MODE_ML'),
 							('sa', 'OBJECTIVE_SUB_MODE_SA'),
 							('mh', 'OBJECTIVE_SUB_MODE_MH')
 	]
@@ -119,6 +143,7 @@ class Utapi(fei.Krios):
 	def __init__(self):
 		super(Utapi, self).__init__()
 		self.beamstop_device_id = dip.DeviceIdRequest(id='BeamStopper')
+		self.sup_mag_data = {}
 		self.logger = Logger()
 		self.stage_logger = Logger()
 		if self.getDebugAll():
@@ -137,7 +162,8 @@ class Utapi(fei.Krios):
 		except Exception as e:
 			self.logger.debug(e)
 			return 'unknown'
-		state_map = list(map((lambda x: (x[0],x[1].upper())),self.bstop_attr_map))
+		# response state is 'INSERTED' instead of 'INSERT'
+		state_map = list(map((lambda x: (x[0],x[1].upper()+'ED')),self.bstop_attr_map))
 		state_map.extend([('moving','MOVING'),('halfway','INSERTED_HALFWAY'),('unknown','UNDEFINED')])
 		try:
 			result = state_map[list(map((lambda x: x[1]),state_map)).index(state_short)][0]
@@ -196,7 +222,6 @@ class Utapi(fei.Krios):
 		# Retracted mechanism will get error in the next statement
 		# return "open"
 		result = _get_by_request(apmc_stub,'GetSelectedAperture',my_request)
-		print(result)
 		return result['apertureName']
 
 	def setApertureSelection(self, mechanism_name, name):
@@ -209,12 +234,12 @@ class Utapi(fei.Krios):
 		_set_by_request(apmc_stub, 'SelectAperture', my_request)
 
 	# column modes
-	def _get_column_modes(self):
+	def _getColumnModes(self):
 		results = _get_by_request(cm_stub,'GetColumnModes',cm_p.ColumnModeRequest())
 		return results
 
 	def _getColumnModeByMap(self, cm_name, my_map):
-		all_modes = self._get_column_modes()
+		all_modes = self._getColumnModes()
 		try:
 			key = cm_name
 			# dictionary response keys starts are camelCasing, not CamelCasing.
@@ -224,14 +249,23 @@ class Utapi(fei.Krios):
 			raise
 		return value
 
-	def _mapColumnModeConstant(self,cm_name, my_map):
+	def _mapColumnModeConstant(self,cm_name, my_map, value):
+		"""
+		Return column mode constant without setting
+		"""
 		try:
 			# find index all the values
 			my_index = getattr(self,'get%ss' % cm_name)().index(value)
 		except ValueError:
 			raise RuntimeError('Invalid %s %s' % (cm_name,value))
-		my_mode = getattr(cm_p,my_map[my_index][1])
-		return my_mode
+		my_mode_constant = getattr(cm_p,my_map[my_index][1])
+		self.logger.debug('columnModeConstant %s, %s ' % (cm_p, my_mode_constant))
+		return my_mode_constant
+
+	def _getRequestConstant(self, cm_name, my_map, value):
+		my_constant = self._mapColumnModeConstant(cm_name, my_map, value)
+		request_name = cm_name+'Request'
+		return request_name, my_constant
 
 	def getProbeModes(self):
 		mode_names = list(map((lambda x: x[0]),self.cm_probe_mode_map))
@@ -242,14 +276,33 @@ class Utapi(fei.Krios):
 
 	def setProbeMode(self, value):
 		cm_name = 'ProbeMode'
-		my_map = self.cm_probe_mode_map
-		my_mode = self._mapColumnMode(cm_name, my_map)
-		request_name = cm_name+'Request'
-		my_request =cm_p.ProbeModeRequest(probe_mode=my_mode)
+		req_name, my_const = self._getRequestConstant(cm_name, self.cm_probe_mode_map,value)
+		my_request =getattr(cm_p,req_name)(probe_mode=my_const)
 		_set_by_request(cm_stub, 'Set%s' % cm_name, my_request)
 
+	def getObjectiveModes(self):
+		mode_names = list(map((lambda x: x[0]),self.cm_objective_mode_map))
+		return mode_names
+
+	def getObjectiveMode(self):
+		return self._getColumnModeByMap('ObjectiveMode', self.cm_objective_mode_map)
+
+	def setObjectiveMode(self, value):
+		# Objective mode setting recalls the last magnification the mode used.
+		cm_name = 'ObjectiveMode'
+		req_name, my_const = self._getRequestConstant(cm_name, self.cm_objective_mode_map,value)
+		my_request =getattr(cm_p,req_name)(objective_mode=my_const)
+		_set_by_request(cm_stub, 'Set%s' % cm_name, my_request)
+
+	def getObjectiveSubModes(self):
+		mode_names = list(map((lambda x: x[0]),self.cm_objective_sub_mode_map))
+		return mode_names
+
+	def getObjectiveSubMode(self):
+		return self._getColumnModeByMap('ObjectiveSubMode', self.cm_objective_sub_mode_map)
+
 	def getProjectionModes(self):
-		mode_names = list(map((lambda x: x[0]),self.cm_projection_mode_map))
+		mode_names = list(map((lambda x: x[0]),self.cm_k.projection_mode_map))
 		return mode_names
 
 	def getProjectionMode(self):
@@ -260,12 +313,105 @@ class Utapi(fei.Krios):
 		pass
 
 	def getProjectionSubModes(self):
+		# Return objective_mode in lm or objective_sub_mode in hm
 		mode_names = list(map((lambda x: x[0]),self.cm_objective_mode_map))
 		sub_mode_names = list(map((lambda x: x[0]),self.cm_objective_sub_mode_map))
 		return sub_mode_names
 
 	def getProjectionSubMode(self):
-		return self._getColumnModeByMap('ObjectiveSubMode', self.cm_objective_sub_mode_map)
+		obj_mode = self._getColumnModeByMap('ObjectiveMode', self.cm_objective_mode_map)
+		if obj_mode == 'lm':
+			# no sub_mode. Return obj_mode
+			return obj_mode
+		obj_sub_mode=self._getColumnModeByMap('ObjectiveSubMode', self.cm_objective_sub_mode_map)
+		return obj_sub_mode
+
+	def getProjectionSubModeName(self):
+		return self.getProjectionSubMode().upper()
+
+	def getProjectionSubModeIndex(self, mode, sub_mode):
+		# use fei.py definition wihout setting mag
+		cm_name = 'ObjectiveMode'
+		my_map = self.cm_objective_mode_map
+		my_const = self._mapColumnModeConstant(cm_name, my_map, mode)
+		if mode in ('lm','lad'):
+			return my_const
+		else:
+			my_map = self.getObjectiveSubModes()
+			sub_mode_index = my_map.index(sub_mode)
+			return sub_mode_index
 
 	def setProjectionSubMode(self, value):
 		raise ValuError('can not set projection submode')
+
+	def getMagnification(self):
+		attr_name = 'GetMagnification'
+		my_request = getattr(mag_p, attr_name+'Request')()
+		mag_data = _get_by_request(mag_stub,attr_name, my_request)
+		return self._mag_float_to_int(mag_data['magnification'])
+
+	def _getSupportedMagnifications(self):
+		attr_name = 'GetSupportedMagnifications'
+		my_request = getattr(mag_p, attr_name+'Request')()
+		sup_mag_data = _get_by_request(mag_stub,attr_name, my_request)
+		return sup_mag_data
+
+	def _mag_float_to_int(self, mag_float):
+		precision = 1
+		if mag_float <= 100.0:
+			precision = 1
+		elif mag_float < 400.0: #496.7=> 500
+			precision = 5
+			return int(round(mag_float))
+		elif mag_float < 1000.0:
+			precision = 10
+		elif mag_float < 5000.0:
+			precision = 50
+		elif mag_float < 10000.0:
+			precision = 100
+		elif mag_float < 15000.0:
+			precision = 500
+		elif mag_float < 100000.0:
+			precision = 1000
+		else:
+			precision = 5000
+		return precision*int(round(mag_float)/precision)
+
+	def setMagnification(self, int_value):
+		obj_mode = self.getObjectiveMode()
+		if int_value in self.projection_submode_map.keys():
+			mode_name, mode_id, obj_mode_name = self.projection_submode_map[int_value]
+			obj_mode_name = obj_mode_name.lower()
+			self.setObjectiveMode(obj_mode_name)
+			index = self.sup_mag_data[obj_mode_name]['displayedMagnifications'].index(int_value)
+			mag_float = self._getSupportedMagnifications()['supportedMagnifications'][index]
+			if obj_mode_name not in self.sup_mag_data.keys():
+				self._addSupportedMagData(om)
+
+	def _addSupportedMagData(self,obj_mode_name):
+		om = obj_mode_name.lower()
+		if self.getObjectiveMode() != om:
+			self.setObjectiveMode(om)
+		self.sup_mag_data[om] = self._getSupportedMagnifications()
+		mags_in_om = list(map((lambda x: self._mag_float_to_int(x)),self.sup_mag_data[om]['supportedMagnifications']))
+		self.sup_mag_data[om]['displayedMagnifications'] = mags_in_om
+
+	def findMagnifications(self):
+		obj_modes = self.getObjectiveModes()
+		saved_mode = self.getObjectiveMode()
+		saved_mag = self.getMagnification()
+		magnifications = []
+		for om in obj_modes:
+			self.setObjectiveMode(om)
+			self._addSupportedMagData(om)
+			mags_in_om = self.sup_mag_data[om]['displayedMagnifications']
+			magnifications.extend(mags_in_om)
+			for i, m in enumerate(mags_in_om):
+				sub_mode = self.getProjectionSubMode()
+				sub_mode_index = self.getProjectionSubModeIndex(om, self.sup_mag_data[om]['objectiveSubModes'][i].lower())
+				self.addProjectionSubModeMap(m, sub_mode, sub_mode_index, om, overwrite=True)
+				magnifications.append(m)
+		self.setMagnifications(magnifications)
+		# once we have self.magnifications, we can set by int values
+		self.setObjectiveMode(saved_mode)
+		self.setMagnification(saved_mag)
