@@ -47,6 +47,7 @@ if not SIMULATION:
 	norm_stub = norm_pg.NormalizationServiceStub(channel)
 
 else:
+	from pyscope import simtem
 	import sim_utapi
 	channel = False
 	dip = sim_utapi
@@ -116,8 +117,7 @@ class Logger(object):
 		if self.level >= 1:
 			print('%sERROR: %s' % (self.logtype,msg))
 
-from pyscope import simtem
-class Utapi(simtem.SimTEM300):
+class Utapi(fei.Krios):
 	name = 'Utapi'
 	# (pyscope value, utapi CONSTANT)
 	cm_projection_mode_map = [	('imaging','PROJECTION_MODE_IMAGING'),
@@ -302,7 +302,7 @@ class Utapi(simtem.SimTEM300):
 		return self._getColumnModeByMap('ObjectiveSubMode', self.cm_objective_sub_mode_map)
 
 	def getProjectionModes(self):
-		mode_names = list(map((lambda x: x[0]),self.cm_k.projection_mode_map))
+		mode_names = list(map((lambda x: x[0]),self.cm_projection_mode_map))
 		return mode_names
 
 	def getProjectionMode(self):
@@ -358,24 +358,24 @@ class Utapi(simtem.SimTEM300):
 
 	def _mag_float_to_int(self, mag_float):
 		precision = 1
+
 		if mag_float <= 100.0:
 			precision = 1
 		elif mag_float < 400.0: #496.7=> 500
 			precision = 5
-			return int(round(mag_float))
 		elif mag_float < 1000.0:
 			precision = 10
-		elif mag_float < 5000.0:
+		elif mag_float < 4000.0:
 			precision = 50
 		elif mag_float < 10000.0:
 			precision = 100
-		elif mag_float < 15000.0:
+		elif mag_float < 14000.0:
 			precision = 500
 		elif mag_float < 100000.0:
 			precision = 1000
 		else:
 			precision = 5000
-		return precision*int(round(mag_float)/precision)
+		return precision*int(round(mag_float/precision))
 
 	def setMagnification(self, int_value):
 		obj_mode = self.getObjectiveMode()
@@ -385,8 +385,8 @@ class Utapi(simtem.SimTEM300):
 			self.setObjectiveMode(obj_mode_name)
 			index = self.sup_mag_data[obj_mode_name]['displayedMagnifications'].index(int_value)
 			mag_float = self._getSupportedMagnifications()['supportedMagnifications'][index]
-			if obj_mode_name not in self.sup_mag_data.keys():
-				self._addSupportedMagData(om)
+			my_request = getattr(mag_p,'SetMagnificationRequest')(magnification=mag_float)
+			_set_by_request(mag_stub, 'SetMagnification', my_request)
 
 	def _addSupportedMagData(self,obj_mode_name):
 		om = obj_mode_name.lower()
