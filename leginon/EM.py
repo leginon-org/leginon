@@ -152,7 +152,14 @@ class EM(node.Node):
 			map_results = mapq.query()
 			for mapping in map_results:
 				if mapping['magnification'] not in list(mode_map.keys()):
-					mode_map[mapping['magnification']] = (mapping['name'], mapping['submode index'])
+					if not mapping['objective mode']:
+						if mapping['name'].lower() not in ('lowmag','lm','lad'):
+							obj_mode = 'hm'
+						else:
+							obj_mode = mapping['name'].lower()
+					else:
+						obj_mode = mapping['objective mode']
+					mode_map[mapping['magnification']] = (mapping['name'], mapping['submode index'], obj_mode)
 			instance.setProjectionSubModeMap(mode_map)
 
 	def getMagnifications(self, name):

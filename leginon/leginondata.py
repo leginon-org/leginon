@@ -3230,6 +3230,7 @@ class ProjectionSubModeMappingData(Data):
 			('magnification list', MagnificationsData),
 			('name', str),
 			('submode index', int),
+			('objective mode', str),
 			('magnification', int),
 		)
 	typemap = classmethod(typemap)

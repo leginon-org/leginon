@@ -1094,7 +1094,11 @@ class Tecnai(tem.TEM):
 		if mode_id not in list(self.projection_submodes.keys()):
 			raise ValueError('unknown projection submode')
 		# FEI scopes don't have cases with the same mag in different mode, yet.
-		self.addProjectionSubModeMap(mag, mode_name, mode_id, overwrite=True)
+		if mode_name not in ('LM','LAD'):
+			obj_mode_name = 'hm'
+		else:
+			obj_mode_name = mode_name.lower()
+		self.addProjectionSubModeMap(mag, mode_name, mode_id, obj_mode_name, overwrite=True)
 
 	def getStagePosition(self):
 		value = {'x':None,'y':None,'z':None,'a':None,'b':None}

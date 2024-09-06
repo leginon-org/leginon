@@ -461,9 +461,9 @@ class SimTEM(tem.TEM):
 		self.setProjectionSubModeMap({})
 		for mag in self.magnifications:
 			if mag < 5000:
-				self.addProjectionSubModeMap(mag,'mode0',0)
+				self.addProjectionSubModeMap(mag,'mode0',0,'mode0')
 			else:
-				self.addProjectionSubModeMap(mag,'mode1',1)
+				self.addProjectionSubModeMap(mag,'mode1',1,'mode1')
 
 	def getMagnifications(self):
 		return list(self.magnifications)
@@ -712,9 +712,9 @@ class SimTEM300(SimTEM):
 		self.setProjectionSubModeMap({})
 		for mag in self.magnifications:
 			if mag < 2000:
-				self.addProjectionSubModeMap(mag,'LM',0)
+				self.addProjectionSubModeMap(mag,'LM',0,'lm')
 			else:
-				self.addProjectionSubModeMap(mag,'SA',1)
+				self.addProjectionSubModeMap(mag,'SA',1,'hm')
 
 class SimDiffrTEM(SimTEM):
 	name = 'SimDiffrTEM'
@@ -769,11 +769,11 @@ class SimGlacios(SimTEM):
 		self.setProjectionSubModeMap({})
 		for mag in self.magnifications:
 			if mag < 1000:
-				self.addProjectionSubModeMap(mag,'LM',1)
+				self.addProjectionSubModeMap(mag,'LM',1,'lm')
 			elif mag < 2600:
-				self.addProjectionSubModeMap(mag,'Mi',2)
+				self.addProjectionSubModeMap(mag,'Mi',2,'hm')
 			else:
-				self.addProjectionSubModeMap(mag,'SA',3)
+				self.addProjectionSubModeMap(mag,'SA',3,'hm')
 
 class SimDiffrGlacios(SimDiffrTEM):
 	name = 'SimDiffrGlacios'
