@@ -16,6 +16,7 @@ if not SIMULATION:
 	from optics.v1 import magnification_pb2 as mag_p
 	from column.v1 import column_mode_pb2 as cm_p
 	from column.v1 import normalization_pb2 as norm_p
+	from column.v1 import beam_blanker_pb2 as bb_p
 
 	# used to create stub for access
 	from optics.v1 import beam_stopper_control_pb2_grpc as bstop_pg
@@ -29,6 +30,7 @@ if not SIMULATION:
 	from optics.v1 import x_lens_alignments_pb2_grpc as xlens_pg
 	from column.v1 import column_mode_pb2_grpc as cm_pg
 	from column.v1 import normalization_pb2_grpc as norm_pg
+	from column.v1 import beam_blanker_pb2_grpc as bb_pg
 
 	# Can we connect remotely ?
 	channel = grpc.insecure_channel('localhost:46699', options=[('grpc.max_receive_message_length', 200 * 1024 * 1024)])
@@ -45,6 +47,7 @@ if not SIMULATION:
 	xlens_stub = xlens_pg.XLensAlignmentsServiceStub(channel)
 	cm_stub = cm_pg.ColumnModeServiceStub(channel)
 	norm_stub = norm_pg.NormalizationServiceStub(channel)
+	bb_stub = bb_pg.BeamBlankerServiceStub(channel)
 
 else:
 	from pyscope import simtem
@@ -84,7 +87,7 @@ def _set_by_request(stub, attr_name, request):
 	my_attr = getattr(stub,attr_name)
 	try:
 		# perform my_attr action on the request
-		my_attr(request)
+		return my_attr(request)
 	except grpc.RpcError as rpc_error:
 		handleRpcError(rpc_error)
 
@@ -135,6 +138,10 @@ class Utapi(fei.Krios):
 	cm_probe_mode_map = [	('micro','PROBE_MODE_MICRO_PROBE'),
 							('nano', 'PROBE_MODE_NANO_PROBE')
 	]
+	bb_map = [
+							('on','Blank'),
+							('off','UnBlank')
+	]
 	# (pyscope value, utapi Method)
 	bstop_attr_map = [	('in','Insert'),
 						('out','Retract'),
@@ -143,6 +150,9 @@ class Utapi(fei.Krios):
 	def __init__(self):
 		super(Utapi, self).__init__()
 		self.beamstop_device_id = dip.DeviceIdRequest(id='BeamStopper')
+		# default to let the scope control auto normalization.
+		self.noramlize_all_after_setting = False
+		self.need_noramlize_all = False
 		self.sup_mag_data = {}
 		self.logger = Logger()
 		self.stage_logger = Logger()
@@ -307,6 +317,15 @@ class Utapi(fei.Krios):
 
 	def getProjectionMode(self):
 		return self._getColumnModeByMap('ProjectionMode', self.cm_projection_mode_map)
+	def _setProjectionMode(self, value):
+		"""
+		# This is an internal method for testing.  Leginon instrument
+		includes projection mode definition.
+		"""
+		cm_name = 'ProjectionMode'
+		req_name, my_const = self._getRequestConstant(cm_name, self.cm_projection_mode_map,value)
+		my_request =getattr(cm_p,req_name)(projection_mode=my_const)
+		_set_by_request(cm_stub, 'Set%s' % cm_name, my_request)
 
 	def setProjectionMode(self, value):
 		# Not setable in Leginon instrument
@@ -415,3 +434,69 @@ class Utapi(fei.Krios):
 		# once we have self.magnifications, we can set by int values
 		self.setObjectiveMode(saved_mode)
 		self.setMagnification(saved_mag)
+
+	def getBeamBlank(self):
+		attr_name = 'GetBeamBlankerState'
+		my_map = self.bb_map
+		my_request = getattr(bb_p,'BeamBlankerStateRequest')()
+		state_short = _get_by_request(bb_stub, attr_name, my_request)['state']
+
+		try:
+			result = my_map[list(map((lambda x: x[1].upper()+'ED'),my_map)).index(state_short)][0]
+			return result
+		except Exception as e:
+			self.logger.debug(e)
+			return 'unknown'
+
+	def setBeamBlank(self, value):
+		my_map = self.bb_map
+		attr_name = my_map[list(map((lambda x: x[0]),my_map)).index(value)][1]
+		my_request =getattr(bb_p,'BeamBlankerSetterRequest')()
+		r=_set_by_request(bb_stub, '%sBeam' % attr_name, my_request)
+		# TODO: This is asynchronous so should watch with future method
+		# until done. see example. The completion is very fast, though.
+
+	def normalizeLens(self, value='all'):
+		# constant values not exposed as attribute anywhere. see proto file
+		norm_map = [
+					('spotsize',1),  # 4 s on simulator
+					('intensity',2), # 4 s
+					('objective',3), # 4 s
+					('projector',4), # 4 s
+					('imagecor',6),
+					('probecor',7),
+		]
+		if value == 'all':
+			# This takes 16 s on simulator
+			# TODO: consider making them asynchronous
+			my_request = getattr(norm_p,'NormalizeAllRequest')()
+			_set_by_request(norm_stub,'NormalizeAll', my_request)
+		else:
+			my_map = norm_map
+			try:
+				const_value = my_map[list(map((lambda x: x[0]),my_map)).index(value)][1]
+			except ValueError as e:
+				self.logger.debug('%s is not a valid lens to normalize' % value)
+			my_request = getattr(norm_p, 'NormalizeRequest')(normalization=const_value)
+			_set_by_request(norm_stub, 'Normalize', my_request)
+
+	def getAutoNormalizeEnabled(self, value):
+		try:
+			my_request = norm_p.GetAtutoNormalizeEnabledRequest()
+			result = _get_by_request(norm_stub,'GetAutoNormalizeEnabled', my_request)
+			if 'enabled' not in result.keys():
+				return False
+			else:
+				return result['enabled']
+		except:
+			# does not have valid function
+			return False
+
+	def setAutoNormalizeEnabled(self, value):
+		if self.normalize_all_after_setting:
+			my_request = norm_p.SetAutoNormalizeEnabledRequest(enable=bool(value))
+			_set_by_request(norm_stub, 'SetAutoNormalizeEnabled', my_request)
+			self.need_normalize_all = not bool(value)
+		else:
+			# not affected by the value
+			self.need_normalize_all = False
