@@ -23,6 +23,11 @@ if not SIMULATION:
 	from source.v1 import high_tension_pb2 as ht_p
 	from source.v1 import feg_pb2 as feg_p
 	from source.v1 import feg_flashing_pb2 as flash_p
+	from vacuum.v1 import column_valves_pb2 as colv_p
+	from vacuum.v1 import vacuum_pb2 as vac_p
+	from vacuum.v1 import vacuum_chambers_pb2 as vchm_p
+	from sample.v0 import loader_pb2 as ldr_p
+	from system_integral.v0 import column_temperature_pb2 as ctemp_p
 
 	# used to create stub for access
 	from optics.v1 import beam_stopper_control_pb2_grpc as bstop_pg
@@ -40,6 +45,11 @@ if not SIMULATION:
 	from source.v1 import high_tension_pb2_grpc as ht_pg
 	from source.v1 import feg_pb2_grpc as feg_pg
 	from source.v1 import feg_flashing_pb2_grpc as flash_pg
+	from vacuum.v1 import column_valves_pb2_grpc as colv_pg
+	from vacuum.v1 import vacuum_pb2_grpc as vac_pg
+	from vacuum.v1 import vacuum_chambers_pb2_grpc as vchm_pg
+	from sample.v0 import loader_pb2_grpc as ldr_pg
+	from system_integral.v0 import column_temperature_pb2_grpc as ctemp_pg
 
 	# Can we connect remotely ?
 	channel = grpc.insecure_channel('localhost:46699', options=[('grpc.max_receive_message_length', 200 * 1024 * 1024)])
@@ -60,6 +70,11 @@ if not SIMULATION:
 	ht_stub = ht_pg.HighTensionServiceStub(channel)
 	feg_stub = feg_pg.FegServiceStub(channel)
 	flash_stub = flash_pg.FegFlashingServiceStub(channel)
+	colv_stub = colv_pg.ColumnValvesServiceStub(channel)
+	vac_stub = vac_pg.VacuumServiceStub(channel)
+	vchm_stub = vchm_pg.VacuumChambersServiceStub(channel)
+	ldr_stub = ldr_pg.LoaderServiceStub(channel)
+	ctemp_stub = ctemp_pg.ColumnTemperatureServiceStub(channel)
 
 else:
 	from pyscope import simtem
@@ -234,8 +249,8 @@ class Utapi(fei.Krios):
 		self.logger = Logger()
 		self.stage_logger = Logger()
 		if self.getDebugAll():
-			self.logger.setLevel(0)
-			self.stage_logger.setLevel(0)
+			self.logger.setLevel(3)
+			self.stage_logger.setLevel(3)
 
 	def getDebugAll(self):
 		return True
@@ -924,3 +939,80 @@ class Utapi(fei.Krios):
 			raise ValueError('preset %d set value %.3f out of range' % (lens_id, value))
 		my_request = getattr(xaln_p,'SetXLensPresetRequest')(x_lens_id=lens_id, x_lens_preset=value)
 		return _get_by_request(xaln_stub, 'SetXLensPreset', my_request)
+
+	#vacuum
+	def getColumnValvePositions(self):
+		return ['open','closed']
+
+	def getColumnValvePosition(self):
+		my_request = getattr(colv_p,'ColumnValvesStateRequest')()
+		r = _get_by_request(colv_stub, 'GetColumnValvesState', my_request)
+		try:
+			state = r['state'].lower()
+			return state
+		except KeyError:
+			return 'undefined'
+
+	def setColumnValvePosition(self, state):
+		if state not in self.getColumnValvePositions():
+			return self.logger.debug('Invalid column valve state: %s' % state)
+		if not self.getColumnValvePosition():
+			return self.logger.debug('Not allowed to set colunm valve to %s' % state)
+		my_request = getattr(colv_p,'ColumnValvesSetterRequest')()
+		action = state.replace(state[0],state[0].upper(),1)
+		if action == 'Closed':
+			action = 'Close'
+		attr_name = '%sColumnValves' % (action)
+		return _get_by_request(colv_stub, attr_name, my_request)
+
+		return r['state']
+
+	def getVacuumStatus(self):
+		my_request = getattr(vac_p,'VacuumStateRequest')()
+		status = _get_by_request(vac_stub, 'GetVacuumState', my_request)['state']
+		return status.replace('VACUUM_STATE_','').lower()
+
+	def runBufferCycle(self):
+		my_request = getattr(vac_p,'RunBufferCycleRequest')()
+		_get_by_request(vac_stub, 'RunBufferCycle', my_request)
+
+	def isBufferCycleRunning(self):
+		my_request = getattr(vac_p,'IsPrevacuumPumpRunningRequest')()
+		return bool(_get_by_request(vac_stub, 'GetIsPrevacuumPumpRunning', my_request)) # False gives no key in the result
+
+	def _getPressureChambers(self):
+		request_key = 'chambers'
+		my_device = 'VacuumChambers'
+		my_request = getattr(vchm_p,'Get%sRequest' % my_device)()
+		return _get_by_request(vchm_stub, 'Get%s' % my_device, my_request)[request_key]
+
+	def _getChamberPressure(self,chamber):
+		if chamber not in self._getPressureChambers():
+			raise KeyError
+		my_device = 'VacuumChamberPressure'
+		request_key = 'chamber'
+		result_key = 'pressureCollection'
+		my_request = getattr(vchm_p,'Get%sRequest' % my_device)(chamber=chamber)
+		return _get_by_request(vchm_stub, 'Get%s' % my_device, my_request)[result_key]
+
+	def getColumnPressure(self):
+		return self._getChamberPressure('Column')['pressure']
+
+	def getProjectionChamberPressure(self):
+		return self._getChamberPressure('Projection')['pressure']
+
+	def getLinerPressure(self):
+		return self._getChamberPressure('SourceBuffer')['pressure']
+
+	def hasGridLoader(self):
+		#TODO broken service not functional
+		raise NotImplemented('got implemented error in RPC')
+		my_device = 'SampleloaderType'
+		my_request = getattr(ldr_p,'Get%sRequest' % my_device)()
+		return _get_by_request(ldr_stub, 'Get%s' % my_device, my_request)
+
+	def hasAutoFiller(self):
+		my_device = 'HolderTemperatureSupported'
+		my_device = 'FillingDewar'
+		my_request = getattr(ctemp_p,'Is%sRequest' % my_device)()
+		return _get_by_request(ctemp_stub, 'Is%s' % my_device, my_request)
