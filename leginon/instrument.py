@@ -69,11 +69,19 @@ class Proxy(object):
 
 	def onRemoveDescription(self, nodename, name):
 		if name in self.tems and self.tem is self.tems[name]:
-			self.setTEM(None)
+			try:
+				self.setTEM(None)
+			except RuntimeError:
+				#wx Panel has been deleted
+				pass
 			del self.tems[name]
 
 		if name in self.ccdcameras and self.ccdcamera is self.ccdcameras[name]:
-			self.setCCDCamera(None)
+			try:
+				self.setCCDCamera(None)
+			except RuntimeError:
+				#wx Panel has been deleted
+				pass
 			del self.ccdcameras[name]
 		try:
 			del self.camerasizes[name]

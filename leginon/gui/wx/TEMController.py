@@ -476,7 +476,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sb = wx.StaticBox(self, -1, 'TEM Controller')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sz = self.addSettings()
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
+		sbsz.Add(sz, 0, wx.EXPAND|wx.ALL, 5)
 		return [sbsz]
 
 	def addSettings(self):

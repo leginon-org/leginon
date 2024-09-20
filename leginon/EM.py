@@ -206,6 +206,7 @@ class EM(node.Node):
 			mappingsdata['magnification'] = mag
 			mappingsdata['name'] = mappings[mag][0]
 			mappingsdata['submode index'] = mappings[mag][1]
+			mappingsdata['objective mode'] = mappings[mag][2]
 			self.publish(mappingsdata, database=True, dbforce=True)
 		self.logger.info('Submode mappings saved.')
 

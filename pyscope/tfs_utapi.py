@@ -28,6 +28,7 @@ if not SIMULATION:
 	from vacuum.v1 import vacuum_chambers_pb2 as vchm_p
 	from sample.v0 import loader_pb2 as ldr_p
 	from system_integral.v0 import column_temperature_pb2 as ctemp_p
+	from stage.v1 import stage_pb2 as stage_p
 
 	# used to create stub for access
 	from optics.v1 import beam_stopper_control_pb2_grpc as bstop_pg
@@ -50,6 +51,7 @@ if not SIMULATION:
 	from vacuum.v1 import vacuum_chambers_pb2_grpc as vchm_pg
 	from sample.v0 import loader_pb2_grpc as ldr_pg
 	from system_integral.v0 import column_temperature_pb2_grpc as ctemp_pg
+	from stage.v1 import stage_pb2_grpc as stage_pg
 
 	# Can we connect remotely ?
 	channel = grpc.insecure_channel('localhost:46699', options=[('grpc.max_receive_message_length', 200 * 1024 * 1024)])
@@ -75,6 +77,7 @@ if not SIMULATION:
 	vchm_stub = vchm_pg.VacuumChambersServiceStub(channel)
 	ldr_stub = ldr_pg.LoaderServiceStub(channel)
 	ctemp_stub = ctemp_pg.ColumnTemperatureServiceStub(channel)
+	stage_stub = stage_pg.StageServiceStub(channel)
 
 else:
 	from pyscope import simtem
@@ -103,6 +106,7 @@ def _response_to_dict(response):
 	return json_format.MessageToDict(response)
 
 def _get_by_request(stub,attr_name,request):
+	print('_get_by_request',stub, attr_name, request)
 	my_attr = getattr(stub,attr_name)
 	try:
 		# perform my_attr action on the request and convert to list and dict
@@ -111,6 +115,7 @@ def _get_by_request(stub,attr_name,request):
 		handleRpcError(rpc_error)
 
 def _set_by_request(stub, attr_name, request):
+	print('_set_by_request',stub, attr_name, request)
 	my_attr = getattr(stub,attr_name)
 	try:
 		# perform my_attr action on the request
@@ -155,6 +160,11 @@ def _make_vector(vector, original_vector, relative = 'absolute'):
 	if 'y' not in original_vector.keys():
 		vector['y'] = vector['y']
 	return vector
+
+def underscore_to_spacecap(value):
+	bits = value.split("_")
+	new_bits = map((lambda x: x.replace(x[0],x[0].upper(),1)), bits)
+	return ' '.join(new_bits)
 
 def underscore_to_camelcase(value,capitalize_first=False):
 	"""
@@ -299,10 +309,14 @@ class Utapi(fei.Krios):
 
 	def _getApertureMechanismId(self, mechanism_name):
 		if mechanism_name == 'condenser':
-			# always look up condenser 2 value
+			# always look up condenser 2 value for Krios
 			mechanism_name = 'condenser_2'
-		mechanism_id = mechanism_name[0].upper()+mechanism_name[1:].replace('_',' ')
+		mechanism_id = underscore_to_spacecap(mechanism_name)
 		return mechanism_id
+
+	def _isApertureMechanismRetractable(self, device_obj):
+		is_retractable = _get_by_request(apmc_stub,'GetIsRetractable',device_obj)
+		return bool(is_retractable)
 
 	def getApertureSelections(self, mechanism_name):
 		'''
@@ -310,21 +324,38 @@ class Utapi(fei.Krios):
 		'''
 		mechanism_id = self._getApertureMechanismId(mechanism_name)
 		# use the name-specified request
+		device_obj=dip.DeviceId(id=mechanism_id)
 		my_request = apmc_p.GetApertureCollectionRequest(
-			device_id=dip.DeviceId(id=mechanism_id),
+			device_id=device_obj,
 			)
 		results = _get_by_request(apmc_stub,'GetApertureCollection',my_request)
+		is_retractable = self._isApertureMechanismRetractable(device_obj)
 		names = list(map((lambda x: str(x['apertureName'])),results['apertures']))
+		if is_retractable:
+			names.append('open')
 		return names
 
 	def getApertureSelection(self, mechanism_name):
 		mechanism_id = self._getApertureMechanismId(mechanism_name)
-		my_request = dip.DeviceId(id=mechanism_id)
-		#TODO check if the mechanism is retracted.
+		device_obj = dip.DeviceId(id=mechanism_id)
+		# check if the mechanism is retracted.
 		# Retracted mechanism will get error in the next statement
-		# return "open"
-		result = _get_by_request(apmc_stub,'GetSelectedAperture',my_request)
+		is_retractable = self._isApertureMechanismRetractable(device_obj)
+		if is_retractable:
+			state = _get_by_request(apmc_stub,'GetState', device_obj)['state']
+			if state == 'RETRACTED':
+				return "open"
+			if state != 'INSERTED':
+				# invalid state, return no selection
+				return None
+		result = _get_by_request(apmc_stub,'GetSelectedAperture',device_obj)
 		return result['apertureName']
+		
+	def retractApertureMechanism(self, mechanism_name):
+		'''
+		Retract aperture mechanism.
+		'''
+		return self.setApertureSelection(mechanism_name, 'open')
 
 	def setApertureSelection(self, mechanism_name, name):
 		#TODO handle open position
@@ -332,7 +363,12 @@ class Utapi(fei.Krios):
 		if name not in all_names:
 			raise RuntimeError('Invalid aperture %s' % (name))
 		mechanism_id = self._getApertureMechanismId(mechanism_name)
-		my_request = apmc_p.SelectApertureRequest(device_id=dip.DeviceId(id=mechanism_id),aperture_name=name)
+		device_obj = dip.DeviceId(id=mechanism_id)
+		is_retractable = self._isApertureMechanismRetractable(device_obj)
+		if is_retractable and name == 'open':
+			_set_by_request(apmc_stub,'Retract', device_obj)
+			return
+		my_request = apmc_p.SelectApertureRequest(device_id=device_obj,aperture_name=name)
 		_set_by_request(apmc_stub, 'SelectAperture', my_request)
 
 	#source
@@ -591,6 +627,9 @@ class Utapi(fei.Krios):
 			mode_name, mode_id, obj_mode_name = self.projection_submode_map[int_value]
 			obj_mode_name = obj_mode_name.lower()
 			self.setObjectiveMode(obj_mode_name)
+			if obj_mode_name not in self.sup_mag_data.keys():
+				self._addSupportedMagData(obj_mode_name)
+			
 			index = self.sup_mag_data[obj_mode_name]['displayedMagnifications'].index(int_value)
 			mag_float = self._getSupportedMagnifications()['supportedMagnifications'][index]
 			my_request = getattr(mag_p,'SetMagnificationRequest')(magnification=mag_float)
@@ -620,7 +659,6 @@ class Utapi(fei.Krios):
 				sub_mode = self.getProjectionSubMode()
 				sub_mode_index = self.getProjectionSubModeIndex(om, self.sup_mag_data[om]['objectiveSubModes'][i].lower())
 				self.addProjectionSubModeMap(m, sub_mode, sub_mode_index, om, overwrite=True)
-				magnifications.append(m)
 		self.setMagnifications(magnifications)
 		# once we have self.magnifications, we can set by int values
 		self.setObjectiveMode(saved_mode)
@@ -801,7 +839,7 @@ class Utapi(fei.Krios):
 		r = self._getAllDeflectors()
 		result = _get_vector_xy(r,'difffractionShift')
 		if result['x'] is None:
-			raise ValueError('Diffraction shift not available in this mode')
+			return None
 
 	def setDiffractionShift(self, vector, relative = 'absolute'):
 		my_device = 'DiffractionShift'
@@ -1005,14 +1043,202 @@ class Utapi(fei.Krios):
 		return self._getChamberPressure('SourceBuffer')['pressure']
 
 	def hasGridLoader(self):
+		return super(Utapi, self).hasGridLoader()
 		#TODO broken service not functional
-		raise NotImplemented('got implemented error in RPC')
 		my_device = 'SampleloaderType'
 		my_request = getattr(ldr_p,'Get%sRequest' % my_device)()
 		return _get_by_request(ldr_stub, 'Get%s' % my_device, my_request)
 
 	def hasAutoFiller(self):
 		my_device = 'HolderTemperatureSupported'
-		my_device = 'FillingDewar'
+		my_device = 'DewarLevelSupported'
 		my_request = getattr(ctemp_p,'Is%sRequest' % my_device)()
+		my_device = 'DewarLevelSupported'
 		return _get_by_request(ctemp_stub, 'Is%s' % my_device, my_request)
+
+	def _getStageState(self):
+		my_device = 'StageState'
+		my_request = getattr(stage_p,'Get%sRequest' % my_device)()
+		return _get_by_request(stage_stub, 'Get%s' % my_device, my_request)['state']
+
+	def getStagePosition(self):
+		my_device = 'StagePosition'
+		my_request = getattr(stage_p,'Get%sRequest' % my_device)()
+		r = _get_by_request(stage_stub, 'Get%s' % my_device, my_request)['position']
+		r['a'] = r['rx']
+		r['b'] = 0.0
+		del r['rx']
+		return r
+
+	def resetStageSpeed(self):
+		self.stage_speed_fraction = self.default_stage_speed_fraction
+
+	def setStageSpeed(self, value):
+		self.speed_deg_per_second = float(value)
+		self.stage_speed_fraction = min(value/self.stage_top_speed,1.0)
+
+	def waitForStageReady(self,position_log,timeout=10):
+		state = self._getStageState()
+		my_msg = 'for %s' % position_log if position_log else ''
+		if 'READY' not in state:
+			raise ValueError('Stage at invalid state: %s %s' % (state, my_msg))
+		t0 = time.time()
+		dt = 0.0 # delta time
+		trials = 0
+		while state != 'STAGE_STATE_READY':
+			self.logger.debug('wait 0.2 s for stage to be ready %s' % my_msg)
+			trials += 1
+			time.sleep(0.2)
+			state = self._getStageState()
+			if dt >= timeout:
+				raise RuntimeError('stage is not going to ready status in %d seconds. Last state: %s' % (int(timeout), state))
+			dt = time.time() - t0 
+		if self.getDebugStage() and trials > 0:
+			print(datetime.datetime.now())
+			donetime = time.time() - t0
+			print('took extra %.1f seconds to get to ready status' % (donetime))
+
+	def _getStageLimits(self):
+		"""
+		Return limits for stage movement.  The returned value puts limit
+		"""
+		stage_axis_map = [('x', stage_p.AXIS_X),('y', stage_p.AXIS_Y),('z', stage_p.AXIS_Z),('a',stage_p.AXIS_RX),('b',stage_p.AXIS_RZ)]
+		my_device = 'StagePositionLimits'
+		my_request = getattr(stage_p,'Get%sRequest' % my_device)()
+		r = _get_by_request(stage_stub, 'Get%s' % my_device, my_request)['axesLimits']
+		mapped_limits = {}
+		axis_constants = list(map((lambda x:x[1]), stage_axis_map))
+		axis_names = list(map((lambda x:x[0]), stage_axis_map))
+		for k in r.keys():
+			axis = axis_names[axis_constants.index(int(k))]
+			mapped_limits[axis] = [r[k]['minimum'],r[k]['maximum']]
+		return mapped_limits
+
+	def getStageLimits(self):
+		limits = self.getFeiConfig('stage','stage_limits')
+		if limits is None:
+			return self._getStageLimits()
+		else:
+			return limits
+
+	def _validateStageLimit(self, p, axes=[]):
+		limits = self.getStageLimits()
+		for axis in axes:
+			if axis not in p.keys():
+				continue
+			if not (limits[axis][0] < p[axis] and limits[axis][1] > p[axis]):
+				if axis in ('x','y','z'):
+					um_p = p[axis]*1e6
+					raise ValueError('Requested %s axis position %.1f um out of range.' % (axis,um_p))
+				else:
+					deg_p = math.degrees(p[axis])
+					raise ValueError('Requested %s axis position %.1f degrees out of range.' % (axis,deg_p))
+
+	def checkStagePosition(self, position):
+		self.checkStageLimits(position)
+		current = self.getStagePosition()
+		bigenough = {}
+		minimum_stage = self.getMinimumStageMovement()
+		for axis in ('x', 'y', 'z', 'a', 'b'):
+			if axis in position:
+				delta = abs(position[axis] - current[axis])
+				if delta > minimum_stage[axis]:
+					bigenough[axis] = position[axis]
+		return bigenough
+
+	def _setStagePosition(self, position, relative = 'absolute'):
+		self.waitForStageReady('before setting %s' % (position,))
+		current_position = self.getStagePosition()
+		if relative == 'relative':
+			for key in position:
+				position[key] += current_position[key]
+		elif relative != 'absolute':
+			raise ValueError
+		short_pos_str = ''
+		self._validateStageLimit(position, ['x','y','z','a','b'])
+		position_options = {}
+		stage_axis_name_map = [('x', 'x'),('y', 'y'),('z', 'z'),('a','rx'),('b',stage_p,'rz')]
+		pyscope_names = list(map((lambda x: x[0]), stage_axis_name_map))
+		position_message = stage_p.Position()
+		valid_api_axes = []
+		for key, value in position.items():
+			axis_api_name = stage_axis_name_map[pyscope_names.index(key)][1]
+			valid_api_axes.append(axis_api_name)
+			short_pos_str +='%s %d' % (key,int(value*1e6))
+			setattr(position_message, axis_api_name, value)
+		if len(valid_api_axes) == 0:
+			return
+		#TODO check low speed move limit on the real scope
+		try:
+			if self.stage_speed_fraction == self.default_stage_speed_fraction:
+				my_request = stage_p.MoveStageRequest(move_type=1,position=position_message)
+				_set_by_request(stage_stub,'MoveStage', my_request)
+			else:
+				api_position_dict = _response_to_dict(position_message)
+				valid_api_axes.sort()
+				valid_api_axes.reverse()
+				# Low speed move needs to be done on individual axis
+				for k in valid_api_axes:
+					self.waitForStageReady('before setting %s' % (k,))
+					p_msg = stage_p.Position()
+					setattr(p_msg,k,api_position_dict[k])
+					my_request = stage_p.MoveStageRequest(move_type=1,position=p_msg,speed_factor=self.stage_speed_fraction)
+					_set_by_request(stage_stub,'MoveStage', my_request)
+		except Exception as e:
+			if self.getDebugStage():
+				print(datetime.datetime.now())
+				print('Error in going to %s' % (position,))
+			raise RuntimeError('set %s with error: %s' % (short_pos_str, e))
+		self.waitForStageReady('after setting %s' % (short_pos_str,))
+
+	def setStagePosition(self, value):
+		# pre-position x and y (maybe others later)
+		value = self.checkStagePosition(value)
+		if not value:
+			# no big enough movement
+			return
+		# calculate pre-position
+		prevalue = {}
+		prevalue2 = {}
+		# correct xyz
+		if self.correctedstage:
+			delta = self.getXYZStageBacklashDelta()
+			for axis in ('x','y','z'):
+				if axis in value:
+					prevalue[axis] = value[axis] - delta
+			self._validateStageLimit(prevalue,['x','y','z'])
+		# relax xy
+		relax = self.getXYStageRelaxDistance()
+		if abs(relax) > 1e-9:
+			for axis in ('x','y'):
+				if axis in value:
+					prevalue2[axis] = value[axis] + relax
+			self._validateStageLimit(prevalue2,['x','y'])
+		# preposition a
+		if self.corrected_alpha_stage:
+			# alpha tilt backlash only in one direction
+			alpha_delta_degrees = self.alpha_backlash_delta
+			if 'a' in list(value.keys()):
+					axis = 'a'
+					prevalue[axis] = value[axis] - alpha_delta_degrees*3.14159/180.0
+		self._validateStageLimit(prevalue,['a',])
+		if prevalue:
+			# set all axes in value
+			for axis in list(value.keys()):
+				if axis not in list(prevalue.keys()):
+					prevalue[axis] = value[axis]
+					# skip those requiring no further change
+					del value[axis]
+			self._setStagePosition(prevalue)
+			time.sleep(0.2)
+		# set all remaining axes in the remaining value
+		if abs(relax) > 1e-9 and prevalue2:
+			for axis in list(value.keys()):
+				if axis not in list(prevalue2.keys()):
+					prevalue2[axis] = value[axis]
+					# skip those requiring no further change
+					del value[axis]
+			self._setStagePosition(prevalue2)
+			time.sleep(0.2)
+		# final position
+		return self._setStagePosition(value)

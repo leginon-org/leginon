@@ -674,6 +674,9 @@ class ParameterMixin(object):
 				setControl(parametermap[key], parameters[key])
 			except KeyError:
 				pass
+		if parameters is None:
+			# nothing to set
+			return
 		for key, value in list(parameters.items()):
 			if key in keys:
 				continue

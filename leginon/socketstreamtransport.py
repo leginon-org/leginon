@@ -160,8 +160,11 @@ class Server(object):
 	def exit(self):
 		self.exitevent.set()
 		client = self.clientclass(self.location())
-		client.send(ExitException())
-		self.exitedevent.wait()
+		try:
+			client.send(ExitException())
+			self.exitedevent.wait()
+		except:
+			pass
 
 	def location(self):
 		return {}
