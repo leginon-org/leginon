@@ -13,7 +13,7 @@ import leginon.projectdata
 import leginon.leginonconfig
 import leginon.project
 import leginon.ddinfo
-import ptolemyhandler as ph
+import leginon.ptolemyhandler as ph
 
 projectdata = leginon.project.ProjectData()
 

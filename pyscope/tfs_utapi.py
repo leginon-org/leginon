@@ -29,6 +29,7 @@ if not SIMULATION:
 	from sample.v0 import loader_pb2 as ldr_p
 	from system_integral.v0 import column_temperature_pb2 as ctemp_p
 	from stage.v1 import stage_pb2 as stage_p
+	from acquisition.v1 import fluscreen_pb2 as scrn_p
 
 	# used to create stub for access
 	from optics.v1 import beam_stopper_control_pb2_grpc as bstop_pg
@@ -52,6 +53,7 @@ if not SIMULATION:
 	from sample.v0 import loader_pb2_grpc as ldr_pg
 	from system_integral.v0 import column_temperature_pb2_grpc as ctemp_pg
 	from stage.v1 import stage_pb2_grpc as stage_pg
+	from acquisition.v1 import fluscreen_pb2_grpc as scrn_pg
 
 	# Can we connect remotely ?
 	channel = grpc.insecure_channel('localhost:46699', options=[('grpc.max_receive_message_length', 200 * 1024 * 1024)])
@@ -78,6 +80,7 @@ if not SIMULATION:
 	ldr_stub = ldr_pg.LoaderServiceStub(channel)
 	ctemp_stub = ctemp_pg.ColumnTemperatureServiceStub(channel)
 	stage_stub = stage_pg.StageServiceStub(channel)
+	scrn_stub = scrn_pg.FluscreenServiceStub(channel)
 
 else:
 	from pyscope import simtem
@@ -888,16 +891,25 @@ class Utapi(fei.Krios):
 			return {}
 
 	def getStigmator(self):
+		stigmator_invalid = False
 		r = self._getAllStigmators()
+		if r is None:
+			stigmator_invalid = True
 		# new_r uses pyscope keys
 		new_r = {}
-		for k in r.keys():
+		keys = ['condenserStigmator','diffractionStigmator','objectiveStigmator','xStigmator']
+		for k in keys:
 			new_k = camelcase_to_underscore(k).split('_')[0]
 			new_r[new_k] = {}
-			for axis in ('x','y'):
-				if axis not in r[k]:
-					r[k][axis] = 0.0
-			new_r[new_k] = r[k]
+			if stigmator_invalid: #LM has no stigmator value passed
+				new_r[new_k] = {'x':None,'y':None}
+			elif k not in r.keys(): # axis not registered if its value is 0.0
+				new_r[new_k] = {'x':0.0,'y':0.0}
+			else:
+				for axis in ('x','y'):
+					if axis not in r[k]:
+						r[k][axis] = 0.0
+				new_r[new_k] = r[k]
 		return new_r
 
 	def setStigmator(self, stigs, relative = 'absolute'):
@@ -905,6 +917,9 @@ class Utapi(fei.Krios):
 		for device_type in stigs.keys():
 			req_key_name = device_type+'_stigmator'
 			original_vector = original_stigs[device_type]
+			if original_vector['x'] is None and original_vector['y'] is None:
+				self.logger.debug('%s is deactivated for setting' % device_type)
+				return
 			min_move = 1e-9 # TODO: what is the good value ?
 			self._setStigmator(req_key_name, stigs[device_type], original_vector, min_move, relative)
 
@@ -928,14 +943,20 @@ class Utapi(fei.Krios):
 		return _get_by_request(foc_stub, 'GetFocusSettings', my_request)
 	
 	def getFocus(self):
-		return self._getFocusSettings()['focus']
+		try:
+			return self._getFocusSettings()['focus']
+		except KeyError:
+			return 0.0
 
 	def setFocus(self, value):
 		my_request = getattr(foc_p,'FocusRequest')(focus=value)
 		return _get_by_request(foc_stub, 'SetFocus', my_request)
 
 	def getDefocus(self):
-		return self._getFocusSettings()['defocus']
+		try:
+			return self._getFocusSettings()['defocus']
+		except KeyError:
+			return 0.0
 
 	def setDefocus(self, defocus, relative = 'absolute'):
 		old_defocus = self.getDefocus
@@ -1061,6 +1082,15 @@ class Utapi(fei.Krios):
 		my_request = getattr(stage_p,'Get%sRequest' % my_device)()
 		return _get_by_request(stage_stub, 'Get%s' % my_device, my_request)['state']
 
+	def getStageStatus(self):
+		result_state_name = self._getStageState()
+		state = (result_state_name.split('STAGE_STATE_')[1]).lower()
+		if state == 'not_ready':
+			return 'busy'
+		if state == 'unspecified':
+			return 'unknown'
+		return state
+
 	def getStagePosition(self):
 		my_device = 'StagePosition'
 		my_request = getattr(stage_p,'Get%sRequest' % my_device)()
@@ -1133,6 +1163,13 @@ class Utapi(fei.Krios):
 				else:
 					deg_p = math.degrees(p[axis])
 					raise ValueError('Requested %s axis position %.1f degrees out of range.' % (axis,deg_p))
+
+	def setDirectStagePosition(self,value):
+		self.checkStageLimits(value)
+		self._setStagePosition(value)
+
+	def checkStageLimits(self, position):
+		self._validateStageLimit(position,['x','y','z','a','b'])
 
 	def checkStagePosition(self, position):
 		self.checkStageLimits(position)
@@ -1242,3 +1279,16 @@ class Utapi(fei.Krios):
 			time.sleep(0.2)
 		# final position
 		return self._setStagePosition(value)
+
+	def getLowDose(self):
+		return 'disabled'
+
+	def setLowDose(self, ld):
+		self.logger.debug('Low Dose disabled')
+		return
+	def getHolderStatus(self):
+		return 'unknown'
+
+	def getHolderType(self):
+		# TODO depends on hasAutoLoader
+		return 'cryo'
