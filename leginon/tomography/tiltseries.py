@@ -1,5 +1,5 @@
 import leginon.leginondata
-from leginon.acquisition import setImageFilename
+from leginon.acq import setImageFilename
 
 class TiltSeries(object):
 	def __init__(self, node, settings, session, preset, target, emtarget):

@@ -9,18 +9,18 @@
 BatchAcquisition node is a subclass of Acquisition.
 The method processTargetData is called on each ImageTargetData.
 '''
-import targetwatcher
-import acquisition
+from leginon import targetwatcher
+from leginon import acq as acquisition
 import time
 from leginon import leginondata
 import event
-import calibrationclient
-import presets
+from leginon import calibrationclient
+from leginon import presets
 import copy
 import threading
-import node
-import instrument
-import gui.wx.BatchAcquisition
+from leginon import node
+from leginon import instrument
+import leginon.gui.wx.BatchAcquisition
 import numpy
 import math
 from pyami import arraystats, imagefun
@@ -49,7 +49,7 @@ class BatchAcquisition(acquisition.Acquisition):
 	abberation without reset in between targets.  Pause/abort within
 	the targetlist is not allowed. Only one preset can be in preset order.
 	'''
-	panelclass = gui.wx.BatchAcquisition.Panel
+	panelclass = leginon.gui.wx.BatchAcquisition.Panel
 	settingsclass = leginondata.BatchAcquisitionSettingsData
 	# maybe not a class attribute
 	defaultsettings = dict(acquisition.Acquisition.defaultsettings)

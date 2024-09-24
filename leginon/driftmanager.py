@@ -22,7 +22,7 @@ import copy
 from leginon import EM
 import leginon.gui.wx.DriftManager
 from leginon import instrument
-from leginon import acquisition
+from leginon import acq as acquisition
 from leginon import rctacquisition
 from leginon import cameraclient
 

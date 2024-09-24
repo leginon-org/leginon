@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import time
 from leginon import leginondata
-from leginon import acquisition
+from leginon import acq as acquisition
 import leginon.gui.wx.PhasePlateTester
 import leginon.gui.wx.PhasePlateTestImager
 

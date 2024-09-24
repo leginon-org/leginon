@@ -10,7 +10,7 @@ import math
 import time
 import threading
 from leginon import singlefocuser
-from leginon import acquisition
+from leginon import acq as acquisition
 from leginon import leginondata
 import leginon.gui.wx.DiffrFocuser
 from leginon import calibrationclient

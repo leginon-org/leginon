@@ -7,7 +7,7 @@
 #
 
 import math
-from leginon import acquisition
+from leginon import acq as acquisition
 from leginon import leginondata
 import leginon.gui.wx.TiltAcquisition
 

@@ -15,10 +15,10 @@ from leginon import ptolemyfinderback
 from leginon import ptolemyhandler as ph
 
 import math
-import gui.wx.PtolemyMmTargetFinder
+import leginon.gui.wx.PtolemyMmTargetFinder
 
 class PtolemyMmTargetFinder(scorefinder.ScoreTargetFinder):
-	panelclass = gui.wx.PtolemyMmTargetFinder.Panel
+	panelclass = leginon.gui.wx.PtolemyMmTargetFinder.Panel
 	settingsclass = leginondata.PtolemyMmTargetFinderSettingsData
 	defaultsettings = dict(icetargetfinder.IceTargetFinder.defaultsettings)
 	defaultsettings.update({

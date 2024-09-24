@@ -13,7 +13,7 @@ from leginon import node
 from leginon import targethandler
 import leginon.gui.wx.TargetRepeater
 from leginon import instrument
-from leginon import acquisition
+from leginon import acq as acquisition
 from leginon import rctacquisition
 from leginon import player
 

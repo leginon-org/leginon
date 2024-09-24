@@ -6,7 +6,7 @@
 #	   see  http://leginon.org
 #
 from leginon import manualfocuschecker
-from leginon import acquisition
+from leginon import acq as acquisition
 from leginon import node, leginondata
 from leginon import calibrationclient
 import threading

@@ -11,7 +11,7 @@ from leginon import targetfinder
 from leginon import ptolemyhandler as ph
 from leginon import statssquare
 from leginon import updatetargetorder
-import gui.wx.MosaicLearnTargetFinder
+import leginon.gui.wx.MosaicLearnTargetFinder
 
 def revindex(value_tuple):
 	return value_tuple[1],value_tuple[0]
@@ -27,7 +27,7 @@ class MosaicLearnTargetFinder(mosaicexternalfinder.MosaicScoreTargetFinder):
 	External script score finder that operates on individual grid atlas tile.  Multithread
 	process is added when each tile is added, and then loaded later. 
 	"""
-	panelclass = gui.wx.MosaicLearnTargetFinder.Panel
+	panelclass = leginon.gui.wx.MosaicLearnTargetFinder.Panel
 	settingsclass = leginondata.MosaicLearnTargetFinderSettingsData
 	# same as MosaicScoreTargetFinder except one
 	defaultsettings = dict(mosaicexternalfinder.MosaicScoreTargetFinder.defaultsettings)

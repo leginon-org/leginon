@@ -6,7 +6,7 @@
 #	   see  http://leginon.org
 #
 from leginon import leginondata
-from leginon import acquisition
+from leginon import acq as acquisition
 import leginon.gui.wx.RCTAcquisition
 try:
 	from leginon import openCVcaller

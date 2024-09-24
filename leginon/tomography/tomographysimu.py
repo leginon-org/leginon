@@ -5,7 +5,7 @@ import time
 import leginon.calibrationclient
 import leginon.leginondata
 import leginon.event
-import leginon.acquisition
+import leginon.acq as acquisition
 import leginon.gui.wx.tomography.TomographySimu
 
 from . import collectionsimu as collection
@@ -18,15 +18,15 @@ from pyami import correlator, peakfinder
 class CalibrationError(Exception):
 	pass
 
-class TomographySimu(leginon.acquisition.Acquisition):
-	eventinputs = leginon.acquisition.Acquisition.eventinputs
-	eventoutputs = leginon.acquisition.Acquisition.eventoutputs + \
+class TomographySimu(acquisition.Acquisition):
+	eventinputs = acquisition.Acquisition.eventinputs
+	eventoutputs = acquisition.Acquisition.eventoutputs + \
 					[ leginon.event.MeasureDosePublishEvent,]
 
 	panelclass = leginon.gui.wx.tomography.TomographySimu.Panel
 	settingsclass = leginon.leginondata.TomographySimuSettingsData
 
-	defaultsettings = leginon.acquisition.Acquisition.defaultsettings
+	defaultsettings = acquisition.Acquisition.defaultsettings
 	defaultsettings.update({
 		'model mag': 'saved value for this series',
 		'z0 error': 2e-6,
@@ -42,7 +42,7 @@ class TomographySimu(leginon.acquisition.Acquisition):
 	})
 
 	def __init__(self, *args, **kwargs):
-		leginon.acquisition.Acquisition.__init__(self, *args, **kwargs)
+		acquisition.Acquisition.__init__(self, *args, **kwargs)
 		self.calclients['pixel size'] = \
 				leginon.calibrationclient.PixelSizeCalibrationClient(self)
 		self.calclients['beam tilt'] = \
@@ -606,7 +606,7 @@ class TomographySimu(leginon.acquisition.Acquisition):
 
 	def processTargetData(self, *args, **kwargs):
 		try:
-			leginon.acquisition.Acquisition.processTargetData(self, *args, **kwargs)
+			acquisition.Acquisition.processTargetData(self, *args, **kwargs)
 		except Exception as e:
 			self.logger.error('Failed to process the tomo target: %s' % e)
 			raise

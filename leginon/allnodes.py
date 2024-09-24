@@ -114,7 +114,7 @@ noderegistry.registerNodeClass(Tomography2,classtype)
 from leginon.batchacquisition import BatchAcquisition
 noderegistry.registerNodeClass(BatchAcquisition,classtype)
 
-from leginon.acquisition import Acquisition
+from leginon.acq import Acquisition
 noderegistry.registerNodeClass(Acquisition,classtype)
 
 from leginon.focuser import Focuser

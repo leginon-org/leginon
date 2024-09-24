@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from leginon import acquisition, singlefocuser, manualfocuschecker
+from leginon import acq as acquisition, singlefocuser, manualfocuschecker
 import leginon.gui.wx.Focuser
 from leginon import leginondata
 from leginon import node, targetwatcher

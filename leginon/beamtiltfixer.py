@@ -5,7 +5,7 @@
 #	   For terms of the license agreement
 #	   see  http://leginon.org
 #
-from leginon import acquisition
+from leginon import acq as acquisition
 from leginon import node
 from leginon import leginondata
 from leginon import calibrationclient

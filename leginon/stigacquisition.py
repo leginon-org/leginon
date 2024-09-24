@@ -7,7 +7,7 @@
 #
 
 from leginon import leginondata
-from leginon import acquisition
+from leginon import acq as acquisition
 import leginon.gui.wx.StigAcquisition
 
 class StigAcquisition(acquisition.Acquisition):

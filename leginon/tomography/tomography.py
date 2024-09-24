@@ -7,7 +7,7 @@ from pyami import correlator, peakfinder
 import leginon.calibrationclient
 import leginon.leginondata
 import leginon.event
-import leginon.acquisition
+import leginon.acq as acquisition
 import leginon.gui.wx.tomography.Tomography
 
 import leginon.tomography.collection
@@ -26,15 +26,15 @@ class CalibrationError(Exception):
 class LimitError(Exception):
     pass
 
-class Tomography(leginon.acquisition.Acquisition):
-	eventinputs = leginon.acquisition.Acquisition.eventinputs
-	eventoutputs = leginon.acquisition.Acquisition.eventoutputs + \
+class Tomography(acquisition.Acquisition):
+	eventinputs = acquisition.Acquisition.eventinputs
+	eventoutputs = acquisition.Acquisition.eventoutputs + \
 					[ leginon.event.MeasureDosePublishEvent]
 
 	panelclass = leginon.gui.wx.tomography.Tomography.Panel
 	settingsclass = leginon.leginondata.TomographySettingsData
 
-	defaultsettings = leginon.acquisition.Acquisition.defaultsettings
+	defaultsettings = acquisition.Acquisition.defaultsettings
 	defaultsettings.update({
 		'tilt min': -60.0,
 		'tilt max': 60.0,
@@ -81,7 +81,7 @@ class Tomography(leginon.acquisition.Acquisition):
 	})
 
 	def __init__(self, *args, **kwargs):
-		leginon.acquisition.Acquisition.__init__(self, *args, **kwargs)
+		acquisition.Acquisition.__init__(self, *args, **kwargs)
 		self.calclients['pixel size'] = \
 				leginon.calibrationclient.PixelSizeCalibrationClient(self)
 		self.calclients['beam tilt'] = \
@@ -699,7 +699,7 @@ class Tomography(leginon.acquisition.Acquisition):
 			self.measureDose(preset_name)
 		try:
 
-			leginon.acquisition.Acquisition.processTargetData(self, *args, **kwargs)
+			acquisition.Acquisition.processTargetData(self, *args, **kwargs)
 		except Exception as e:
 			raise
 			self.logger.error('Failed to process the tomo target: %s' % e)
