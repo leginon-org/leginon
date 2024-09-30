@@ -13,7 +13,7 @@ from leginon import targetwatcher
 from leginon import acq as acquisition
 import time
 from leginon import leginondata
-import event
+from leginon import event
 from leginon import calibrationclient
 from leginon import presets
 import copy

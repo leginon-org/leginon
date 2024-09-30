@@ -468,11 +468,6 @@ class SimTEM(tem.TEM):
 	def getMagnifications(self):
 		return list(self.magnifications)
 
-	def setMagnifications(self, magnifications):
-		self.magnifications = magnifications
-
-		self.magnifications = magnifications
-
 	def getMagnificationsInitialized(self):
 		return True
 

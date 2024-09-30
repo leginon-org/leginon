@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 SIMULATION = False
 
+from pyami import moduleconfig
+
+configs = moduleconfig.getConfigured('fei.cfg')
+configpath = moduleconfig.getConfigPath('fei.cfg')
+
 if not SIMULATION:
-	from pyscope import fei
+	from pyscope import tem
 	import grpc
 	from google.protobuf import json_format as json_format
 
@@ -222,7 +227,7 @@ class Logger(object):
 		if self.level >= 1:
 			print('%sERROR: %s' % (self.logtype,msg))
 
-class Utapi(fei.Krios):
+class Utapi(tem.TEM):
 	name = 'Utapi'
 	# (pyscope value, utapi CONSTANT)
 	cm_projection_mode_map = [	('imaging','PROJECTION_MODE_IMAGING'),
@@ -259,14 +264,29 @@ class Utapi(fei.Krios):
 		self.noramlize_all_after_setting = False
 		self.need_normalize_all = False
 		self.sup_mag_data = {}
+		self.magnifications = []
+		self.projection_submode_map ={}
 		self.logger = Logger()
 		self.stage_logger = Logger()
 		if self.getDebugAll():
 			self.logger.setLevel(3)
 			self.stage_logger.setLevel(3)
 
+	def getFeiConfig(self,optionname,itemname=None):
+		if optionname not in list(configs.keys()):
+			return None
+		if itemname is None:
+			return configs[optionname]
+		else:
+			if itemname not in configs[optionname]:
+				return None
+			return configs[optionname][itemname]
+
 	def getDebugAll(self):
-		return True
+		return self.getFeiConfig('debug','all')
+
+	def getDebugStage(self):
+		return self.getFeiConfig('debug','stage')
 
 	def getBeamstopPosition(self):
 		self.logger.debug('---getBeamstopPosition---')
@@ -1292,3 +1312,6 @@ class Utapi(fei.Krios):
 	def getHolderType(self):
 		# TODO depends on hasAutoLoader
 		return 'cryo'
+
+class UtapiEF(Utapi):
+	name = 'UtapiEF'

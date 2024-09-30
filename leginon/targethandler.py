@@ -338,8 +338,8 @@ class TargetHandler(object):
 			queuedata = self.getQueue()
 		else:
 			queuedata = None
-		if self.this_node is None:
-			self.logger.error('can not find node spec for targetlist from %s' % (image['filename']))
+		if self.this_node is None and image is not None:
+			self.logger.error('Not in an application and therefore can not find node spec for targetlist from %s' % (image['filename']))
 		listdata = leginondata.ImageTargetListData(session=self.session, label=label, mosaic=mosaic, image=image, queue=queuedata, sublist=sublist, node=self.this_node)
 		return listdata
 

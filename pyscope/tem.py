@@ -106,6 +106,7 @@ class TEM(baseinstrument.BaseInstrument):
 		self.initConfig()
 		self.cs = self.conf['cs']
 		self.projection_submode_map = {}
+		self.magnifications = []
 		self.grid_inventory = {}
 
 	def getCs(self):
@@ -166,6 +167,18 @@ class TEM(baseinstrument.BaseInstrument):
 		except:
 			# get an error if setProjectionSubModeMapping is not called from leginon/EM.py
 			raise NotImplementedError()
+
+	def getMagnificationsInitialized(self):
+		if self.magnifications:
+			return True
+		else:
+			return False
+
+	def getMagnifications(self):
+		return self.magnifications
+
+	def setMagnifications(self, magnifications):
+		self.magnifications = magnifications
 
 	def relaxBeam(self,steps=3,interval=0.1,totaltime=2):
 		'''

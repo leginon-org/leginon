@@ -801,9 +801,6 @@ class Jeol(tem.TEM):
 		value, unit_str, label_str, result = self.eos3.GetMagValue()
 		return value
 		
-	def getMagnifications(self):
-		return self.magnifications
-
 	def setMagnifications(self, mags):
 		# This is called by EM node with magnifications list input
 		self.magnifications = mags
@@ -824,12 +821,6 @@ class Jeol(tem.TEM):
 			# do not duplicate if exists already
 			return
 		self.magnifications = mags
-
-	def getMagnificationsInitialized(self):
-		if self.magnifications:
-			return True
-		else:
-			return False
 
 	def findMagnifications(self):
 		'''

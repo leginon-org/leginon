@@ -99,21 +99,6 @@ class CM(tem.TEM):
 			print('from setMainScreenScale')
 		self.mainscreenscale = mainscreenscale
 
-	def getMagnificationsInitialized(self):
-		if Debug == True:
-			print("from getMagnificationsInitialized")
-		if self.magnifications:
-			return True
-		else:
-			return False
-
-
-	def getMagnifications(self):
-		if Debug == True:
-			print("from getMagnifications")
-		return self.magnifications
-
-
 	# Mag index is not retrievable from CM. Only the Mag value can be retrieved.
 	# Assume Mag index is pre-known and stored in CMCal.
 	def findMagnifications(self):

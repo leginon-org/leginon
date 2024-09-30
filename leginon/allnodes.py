@@ -71,10 +71,10 @@ noderegistry.registerNodeClass(MosaicClickTargetFinder,classtype)
 from leginon.mosaicexternalfinder import MosaicScoreTargetFinder
 noderegistry.registerNodeClass(MosaicScoreTargetFinder,classtype)
 
-from mosaiclearnfinder import MosaicLearnTargetFinder
+from leginon.mosaiclearnfinder import MosaicLearnTargetFinder
 noderegistry.registerNodeClass(MosaicLearnTargetFinder,classtype)
 
-from mosaicquiltfinder import MosaicQuiltFinder
+from leginon.mosaicquiltfinder import MosaicQuiltFinder
 noderegistry.registerNodeClass(MosaicQuiltFinder,classtype)
 
 from leginon.mosaicsectionfinder import MosaicSectionFinder
@@ -162,7 +162,7 @@ noderegistry.registerNodeClass(ScoreTargetFinder,classtype)
 from leginon.extholefinder import ExtHoleFinder
 noderegistry.registerNodeClass(ExtHoleFinder,classtype)
 
-from ptolemyfinder import PtolemyMmTargetFinder
+from leginon.ptolemyfinder import PtolemyMmTargetFinder
 noderegistry.registerNodeClass(PtolemyMmTargetFinder,classtype)
 
 from leginon.dogfinder import DoGFinder

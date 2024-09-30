@@ -226,12 +226,6 @@ class Tecnai(tem.TEM):
 			relax = 0
 		return relax
 
-	def getMagnificationsInitialized(self):
-		if self.magnifications:
-			return True
-		else:
-			return False
-
 	def setCorrectedStagePosition(self, value):
 		self.correctedstage = bool(value)
 		return self.correctedstage
@@ -1058,12 +1052,6 @@ class Tecnai(tem.TEM):
 
 	def setMagnificationIndex(self, value):
 		setattr(self.tecnai.Projection,self.mag_attr_name+'Index', value + 1)
-
-	def getMagnifications(self):
-		return self.magnifications
-
-	def setMagnifications(self, magnifications):
-		self.magnifications = magnifications
 
 	def findMagnifications(self):
 		savedindex = self.getMagnificationIndex()
