@@ -193,7 +193,7 @@ class ImagePanel(wx.Panel):
 			wximage = self.numpyToWxImage(self.imagedata)
 		elif isinstance(self.imagedata, Image.Image):
 			wximage = wx.Image(self.imagedata.size[0], self.imagedata.size[1])
-			wximage.SetData(self.imagedata.convert('RGB').tostring())
+			wximage.SetData(self.imagedata.convert('RGB').tobytes())
 		else:
 			self.bitmap = None
 			return
@@ -225,7 +225,7 @@ class ImagePanel(wx.Panel):
 		if self.colormap is None:
 			normarray = normarray.astype(numpy.uint8)
 			h, w = normarray.shape[:2]
-			imagedata = Image.frombuffer("L", (w, h), normarray.tostring())
+			imagedata = Image.frombuffer("L", (w, h), normarray.tobytes())
 		else:
 			valarray = normarray*6.0
 			valarray = valarray.astype(numpy.uint16)
