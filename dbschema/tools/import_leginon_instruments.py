@@ -84,7 +84,7 @@ class ClientJsonLoader(jsonfun.DataJsonLoader):
 			self.session = q
 
 	def readMagsJsonFile(self, filename):
-		hostname, temtail = filename.split('_')[1].split('+')
+		hostname, temtail = '_'.join(filename.split('_')[1:]).split('+')
 		temname = temtail[:-5]
 		results = leginondata.InstrumentData(hostname=hostname,name=temname).query()
 		if not results:

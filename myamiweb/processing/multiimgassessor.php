@@ -196,7 +196,7 @@ if ($_POST['oldimgtype'] != $_POST['imgtype']) {
 
 	// if the output directory is specified so that is not in the available runs, change the run to "not selected"
 	for ($i = 1; $i <=$lastimgrun; $i++) {
-		$inselections += ($imgdir === $allruns[$i][path]) ? 1 : 0;
+		$inselections += ($imgdir === $allruns[$i]['path']) ? 1 : 0;
 	}
 
 	if ($inselections) {

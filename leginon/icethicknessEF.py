@@ -62,6 +62,9 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		'vacuum intensity': -1.0, #counts 
 		'binning': 1,  # binning for image, will throw uncorrected warning if not match exposure binning, but can significantly speed up with no effect on result
 		'use_best_quart_stats': False,
+		'cfeg': False,  # is instrument a Cold FEG
+		'cfeg_slope':  -0.04657619048,  # intensity drop of CFEG, per second
+		'cfeg_intercept':  0,  # intercept of linear fit of cfeg drop
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation, **kwargs)
@@ -74,6 +77,17 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 		self.presetsclient = presets.PresetsClient(self)
 		self.zlpcounter = 0 #keep count of how many times it has been called in order to di it every N images
 		self.start()
+
+	def queryConditioningDone(self, crequest):
+		'''
+		Get the most recent conditioning request that fixing was completed, i.e., not bypassed.
+		'''
+		cdonequery = leginondata.ConditioningDoneData(session=self.session, request=crequest)
+		done_conditions = cdonequery.query(results=1)
+		if done_conditions:
+			return done_conditions[0]
+		else:
+			return None
 
 	def processImageData(self, imagedata, ):  #wjr
 		'''
@@ -119,6 +133,22 @@ class IcethicknessEF(imagewatcher.ImageWatcher):
 			
 			objth = leginondata.ObjIceThicknessData()
 			objth['vacuum intensity'] = self.settings['vacuum intensity']
+			if self.settings['cfeg']:
+			# adjust vacuum intensty for expected drop since last flash
+				ctype = 'cfeg'
+				#ctype = 'autofiller'
+				#ctype = 'buffer_cycle'
+				#Save timestamped conditioning request to database
+				crequestdata = leginondata.ConditioningRequestData(session=self.session, type=ctype)
+				crequestdata.insert()
+				conditiondone = self.queryConditioningDone(crequestdata)
+				if conditiondone is not None:
+					donetime = conditiondone.timestamp
+					diff = donetime.now() - donetime
+					self.logger.info('since last  %s check, it has been %d seconds ' % (ctype,diff.seconds))
+					#objth['vacuum intensity'] += objth['vacuum intensity'] * self.settings['cfeg_slope'] * diff.seconds  + self.settings['cfeg_intercept'] 	
+					objth['vacuum intensity'] =  self.settings['cfeg_slope'] * diff.seconds  + self.settings['cfeg_intercept'] 	
+					self.logger.info('Using adjusted vacuum intensity %f' %(objth['vacuum intensity']))
 			objth['mfp'] = self.settings['obj mean free path']
 			if self.settings['use_best_quart_stats'] :
 				objth['intensity'] = bestice.getBestHoleMeanIntensity(imagedata['image'])

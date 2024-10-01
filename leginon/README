@@ -1,5 +1,5 @@
 See http://leginon.org for documentation
 
 git clone myami/trunk to desktop:
-   git clone -b trunk http://emg.nysbc.org/git/myami myami-trunk
+   git clone -b trunk https://github.com/leginon-org/leginon.git myami-trunk
 

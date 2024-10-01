@@ -7,6 +7,7 @@ import time
 import math
 import random
 import pickle
+import functools
 #appion
 from appionlib import apDisplay
 from appionlib import apDatabase
@@ -404,7 +405,7 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 		if os.path.isfile(self.donedictfile) and self.params['continue'] == True:
 			### unpickle previously done dictionary
 			apDisplay.printMsg("Reading old done dictionary: "+os.path.basename(self.donedictfile))
-			f = open(self.donedictfile,'r')
+			f = open(self.donedictfile,'rb')
 			self.donedict = pickle.load(f)
 			f.close()
 			try:
@@ -429,7 +430,7 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 		apDisplay.printMsg("Creating new done dictionary: "+os.path.basename(self.donedictfile))
 
 		### write donedict to file
-		f = open(self.donedictfile, 'w', 0o666)
+		f = open(self.donedictfile, 'wb', 0o666)
 		pickle.dump(self.donedict, f)
 		f.close()
 
@@ -474,7 +475,7 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 		#Lock DoneDict file
 		self._lockDoneDict()
 
-		f = open(self.donedictfile,'r')
+		f = open(self.donedictfile,'rb')
 		self.donedict = pickle.load(f)
 		f.close()
 
@@ -490,7 +491,7 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 		self._lockDoneDict()
 
 		### reload donedict from file just in case two runs are running
-		f = open(self.donedictfile,'r')
+		f = open(self.donedictfile,'rb')
 		self.donedict = pickle.load(f)
 		f.close()
 
@@ -500,7 +501,7 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 		self.donedict['commit'] = self.params['commit']
 
 		### write donedict to file
-		f = open(self.donedictfile, 'w', 0o666)
+		f = open(self.donedictfile, 'wb', 0o666)
 		pickle.dump(self.donedict, f)
 		f.close()
 
@@ -555,7 +556,7 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 		else:
 			# by default series are new to old
 			apDisplay.printMsg("Process series old to new")
-			self.seriestree.sort(self._reverseSortSeriesTree)
+			self.seriestree.sort(key=functools.cmp_to_key(self._reverseSortSeriesTree))
 
 		### LIMIT NUMBER
 		if self.params['limit'] is not None:

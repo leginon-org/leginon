@@ -120,8 +120,8 @@ if ($_POST['oldimgtype'] != $_POST['imgtype']) {
 		
 		} else {
 
-			$imgdir = $_POST[imgdir];
-			$imgtype = $_POST[imgtype];
+			$imgdir = $_POST['imgdir'];
+			$imgtype = $_POST['imgtype'];
 		}
 	} else {
 		// default at first loading.
@@ -132,12 +132,12 @@ if ($_POST['oldimgtype'] != $_POST['imgtype']) {
 
 	// if the output directory is specified so that is not in the available runs, change the run to "not selected"
 	for ($i = 1; $i <=$lastimgrun; $i++) {
-		$inselections += ($imgdir === $allruns[$i][path]) ? 1 : 0;
+		$inselections += ($imgdir === $allruns[$i]['path']) ? 1 : 0;
 	}
 
 	if ($inselections) {
-		$imgdir = $allruns[$imgrun][path];
-		$imgtype = $allruns[$imgrun][imgtype];
+		$imgdir = $allruns[$imgrun]['path'];
+		$imgtype = $allruns[$imgrun]['imgtype'];
 	} else {
 		$imgrun = 0;
 	}
@@ -192,7 +192,8 @@ if ($imgdir) {
 			// save sorted file list
 			foreach($files as $t) $fileList[] = $t[0];
 			// display image
-			displayImage($_POST,$fileList,$imgdir,$leginondata,$particle,$assessmentrid);
+			$imlst = $_POST['imagelist'];
+			displayImage($imlst,$fileList,$imgdir,$leginondata,$particle,$assessmentrid);
 		}
 		else echo"<FONT class='apcomment'>No file found in this directory with extension: $ext or preset: $presettype </FONT><HR>\n";
 	}
@@ -252,10 +253,9 @@ echo appionRef();
 processing_footer();
 
 
-function displayImage ($_POST,$files,$imgdir,$leginondata,$particle,$assessmentrid) {
-
+function displayImage ($imlst,$files,$imgdir,$leginondata,$particle,$assessmentrid) {
+	var_dump($imlst);
 	$numfiles=count($files);
-	$imlst=$_POST['imagelist'];
 	$imgindx= ($_POST['imgindex']) ? $_POST['imgindex'] : 0;
 	$imgrescl= ($_POST['imgrescale']) ? $_POST['imgrescale'] : 0.5; 
 	//echo "<br>\n";
