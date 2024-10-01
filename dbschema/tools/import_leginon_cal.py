@@ -67,7 +67,7 @@ class CalibrationJsonLoader(jsonfun.DataJsonLoader):
 		if not os.path.exists(params[2]):
 			raise ValueError('can not find %s to import' % params[2])
 		self.jsonfile = params[2]
-		digicam_key = self.jsonfile.split('cal_')[-1].split('.json')[0]
+		digicam_key = '_'.join(self.jsonfile.split('cal_')[1:]).split('.json')[0]
 		temhost, temname, cam_host, cameraname = digicam_key.split('+')
 		return temhost, temname, cam_host, cameraname
 
