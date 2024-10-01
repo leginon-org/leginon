@@ -272,7 +272,7 @@ the header data.
 	### check for a valid machine stamp in header, with or without byteswap
 	stampswapped = None
 	machstamp = headerbytes[212:216]
-	machstamp = numpy.fromstring(machstamp, dtype='int32', count=1)
+	machstamp = numpy.frombuffer(machstamp, dtype='int32', count=1)
 	machstampint = machstamp[0]
 	if machstampint in intbyteorder:
 		stampswapped = False
@@ -284,7 +284,7 @@ the header data.
 
 	### check for valid mode, with or without byteswap
 	mode = headerbytes[12:16]
-	mode = numpy.fromstring(mode, dtype='int32', count=1)
+	mode = numpy.frombuffer(mode, dtype='int32', count=1)
 	modeint = mode[0]
 	modeswapped = None
 	if modeint in mrc2numpy:
@@ -327,8 +327,8 @@ def parseHeader(headerbytes):
 	## ** should use numpy.frombuffer or http://construct.wikispaces.com/
 	headerarray = {}
 	try:
-		headerarray['float32'] = numpy.fromstring(headerbytes, dtype=ftype, count=224)
-		headerarray['int32'] = numpy.fromstring(headerbytes, dtype=itype, count=224)
+		headerarray['float32'] = numpy.frombuffer(headerbytes, dtype=ftype, count=224)
+		headerarray['int32'] = numpy.frombuffer(headerbytes, dtype=itype, count=224)
 	except:
 		headerarray['float32'] = numpy.fromfile(headerbytes, dtype=ftype, count=224)
 		headerarray['int32'] = numpy.fromfile(headerbytes, dtype=itype, count=224)
@@ -464,19 +464,19 @@ def valueToFloat(value):
 return the string representation of a float value
 	'''
 	a = numpy.array(value, dtype=float32dtype)
-	return a.tostring()
+	return a.tobytes()
 def valueToInt(value):
 	'''
 return the string representation of an int value
 	'''
 	a = numpy.array(value, dtype=int32dtype)
-	return a.tostring()
+	return a.tobytes()
 def valueToUInt16(value):
 	'''
 return the string representation of an int value
 	'''
 	a = numpy.array(value, dtype=uint16dtype)
-	return a.tostring()
+	return a.tobytes()
 
 def makeHeaderData(h, header_fields=header_fields):
 	'''
@@ -898,7 +898,7 @@ def saveAverageStack(filename,outfile,dtype=numpy.float32):
 
 def testHeader():
 	infilename = sys.argv[1]
-	f = open(infilename)
+	f = open(infilename, 'rb')
 	h = f.read(1024)
 	f.close()
 	h = parseHeader(h)
