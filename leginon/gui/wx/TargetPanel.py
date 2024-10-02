@@ -813,7 +813,7 @@ if __name__ == '__main__':
 
 	elif filename[-4:] == '.tif':
 		# This is only for RawImage tiff files taken from DirectElectron DE camera
-		from pyami import tifffile
+		import tifffile
 		tif = tifffile.TIFFfile(filename)
 		a = tif.asarray()
 		a = numpy.asarray(a,dtype=numpy.float32)

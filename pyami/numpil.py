@@ -8,7 +8,7 @@ from pyami import imagefun
 from pyami import arraystats
 import sys
 import scipy.ndimage
-from pyami import tifffile
+import tifffile
 pilformats = [
 	'BMP',
 	'GIF',
