@@ -14,7 +14,8 @@ import leginon.gui.wx.ToolBar
 import leginon.gui.wx.TargetPanel
 import leginon.gui.wx.Choice
 
-class Panel(leginon.gui.wx.TargetFinder.Panel):
+class Panel(leginon.gui.wx.Node.Panel):
+
 	icon = 'check'
 	imagepanelclass = leginon.gui.wx.TargetPanel.TargetImagePanel
 	def __init__(self, *args, **kwargs):

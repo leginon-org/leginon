@@ -320,7 +320,7 @@ def writeImagic(array, filename, msg=True):
 		headerstr = makeHeaderStr(partnum, array.shape, avg1, stdev1, min1, max1)
 		headfile.write(headerstr)
 		# write to imagic file
-		datafile.write(partimg.tostring())
+		datafile.write(partimg.tobytes())
 		i += 1
 	headfile.close()
 	datafile.close()
@@ -413,7 +413,7 @@ def makeHeaderStr(partnum, shape, avg, stdev, maxval, minval):
 
 #===============
 def intToFourByte(intnum):
-	fourbyte = numpy.array((intnum), dtype=numpy.int32).tostring()
+	fourbyte = numpy.array((intnum), dtype=numpy.int32).tobytes()
 	return fourbyte
 	if abs(intnum) > 2130706432:
 		apDisplay.printError("integer overflow")
@@ -456,7 +456,7 @@ def floatToFourByte(floatnum):
 	\x02\x00\x00\x00 => 2.80259693e-45
 	\x01\x00\x00\x00 => 1.40129846e-45
 	"""
-	fourbyte = numpy.array((floatnum), dtype=numpy.float32).tostring()
+	fourbyte = numpy.array((floatnum), dtype=numpy.float32).tobytes()
 	return fourbyte
 
 #===============
@@ -566,11 +566,11 @@ def appendParticleListToStackFile(partlist, mergestackfile, msg=True):
 	for partarray in partlist:
 		part32bit = numpy.asarray(partarray, dtype=numpy.float32)
 		part32bit = numpy.flipud(part32bit) #FIXME: should we continue to flip the array
-		mergedata.write(part32bit.tostring())
+		mergedata.write(part32bit.tobytes())
 	mergedata.close()
 
 	finalsize = apFile.fileSize(mergedatafile)
-	addsize = len(part32bit.tostring() * len(partlist))
+	addsize = len(part32bit.tobytes() * len(partlist))
 	if finalsize != addsize + premergesize:
 		apDisplay.printError("size mismatch %s vs. %s + %s = %s"%(
 			apDisplay.bytes(finalsize), apDisplay.bytes(addsize),

@@ -34,13 +34,13 @@ def numpy2PILImage(numericarray, scale=False):
 	itemsize = numericarray.itemsize()
 	immode = ntype_itype[type.type, itemsize][0]
 	rawmode = ntype_itype[type.type, itemsize][1]
-	nstr = numericarray.tostring()
+	nstr = numericarray.tobytes()
 	return Image.frombuffer(immode, imsize, nstr, 'raw', rawmode, 0, 1)
 
 def numpy2wxImage(numericarray):
 	image = numpy2PILImage(numericarray)
 	wximage = EmptyImage(image.size[0], image.size[1])
-	wximage.SetData(numpil.pil_image_tostring(imagedata.convert('RGB')))
+	wximage.SetData(numpil.pil_image_tobytes(imagedata.convert('RGB')))
 	return wximage
 
 # resize and rotate filters:  NEAREST, BILINEAR, BICUBIC
@@ -128,7 +128,7 @@ class NumericImage:
 		immode = ntype_itype[type.type,itemsize][0]
 		rawmode = ntype_itype[type.type,itemsize][1]
 
-		nstr = final.tostring()
+		nstr = final.tobytes()
 
 		stride = 0
 		orientation = 1
@@ -165,7 +165,7 @@ class NumericImage:
 
 	def wxImage(self):
 		wximage = EmptyImage(self.image.size[0], self.image.size[1])
-		wximage.SetData(self.image.convert('RGB').tostring())
+		wximage.SetData(self.image.convert('RGB').tobytes())
 		return wximage
 
 	def jpeg(self, filename=None, quality=100, newsize=None):
@@ -188,7 +188,7 @@ class NumericImage:
                 '''
                 i = Image.open(filename)
                 i.load()
-                s = i.tostring()
+                s = i.tobytes()
                 n = numpy.fromstring(s, '1')
                 n.shape = i.size
                 self.__use_numeric(n)
