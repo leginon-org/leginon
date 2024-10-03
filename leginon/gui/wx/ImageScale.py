@@ -65,7 +65,7 @@ def getColorMapBitmap(image, scale, size):
 		if invert:
 			image = image.transpose(Image.FLIP_LEFT_RIGHT)
 	wximage = wx.Image(*image.size)
-	wximage.SetData(image.tostring())
+	wximage.SetData(image.tobytes())
 	return wx.Bitmap(wximage)
 
 class ColorMapBitmap(wx.StaticBitmap):

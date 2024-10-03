@@ -28,7 +28,7 @@ def numpy2Image(array):
         raise ValueError
     stride = 0
     orientation = 1
-    args = (mode, size, array.tostring(), 'raw', rawmode, stride, orientation)
+    args = (mode, size, array.tobytes(), 'raw', rawmode, stride, orientation)
     return Image.frombuffer(*args)
 
 def scaleImage(image, fromrange, torange):
@@ -112,7 +112,7 @@ def numpy2RGBImage(array, x=0, y=0, width=None, height=None,
 def numpy2wxImageZoom(*args, **kwargs):
     rgbimage = numpy2RGBImage(*args, **kwargs)
     wximage = wx.Image(*rgbimage.size)
-    wximage.SetData(numpil.pil_image_tostring(rgbimage))
+    wximage.SetData(numpil.pil_image_tobytes(rgbimage))
     return wximage
 
 def numpy2wxImageBin(array, x=0, y=0, width=None, height=None,
@@ -142,7 +142,7 @@ def numpy2wxImageBin(array, x=0, y=0, width=None, height=None,
         image = scaleImage(image, fromrange, (0, 255))
         rgbimage = image.convert('RGB')
         wximage = wx.Image(*rgbimage.size)
-        wximage.SetData(numpil.pil_image_tostring(rgbimage))
+        wximage.SetData(numpil.pil_image_tobytes(rgbimage))
         return wximage
 
     sourcex0 = array_offset_x
@@ -161,7 +161,7 @@ def numpy2wxImageBin(array, x=0, y=0, width=None, height=None,
     rgbimage = image.convert('RGB')
 
     wximage = wx.Image(*rgbimage.size)
-    wximage.SetData(numpil.pil_image_tostring(rgbimage))
+    wximage.SetData(numpil.pil_image_tobytes(rgbimage))
     # Scale size
     wximage.Rescale(imagewidth,imageheight)
     # Crop to final size
@@ -179,10 +179,10 @@ def numpy2wxBitmap(array, x=0, y=0, width=None, height=None,
         return wx.Bitmap(numpy2wxImageZoom(array, x, y, width, height, imagewidth, imageheight, fromrange, filter))
 
 if __name__ == '__main__':
-    import Mrc
+    from pyami import mrc
     import sys
 
-    array = Mrc.mrc_to_numeric(sys.argv[1])
+    array = mrc.read(sys.argv[1])
 
     #app = wx.App(0)
     #print(numpy2wxBitmap(array))

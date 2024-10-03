@@ -70,7 +70,7 @@ Initialize with the sequences of args (longs, bools, doubles)
 and optional long array.
 	'''
 #Strings are packaged as long array using numpy.frombuffer(bytes(buffer,'utf-8'),numpy.int32)
-# and can be converted back with longarray.tostring()
+# and can be converted back with longarray.tobytes()
 	def __init__(self, longargs=[], boolargs=[], dblargs=[], longarray=[]):
 		# add final longarg with size of the longarray
 		if len(longarray):

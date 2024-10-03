@@ -232,12 +232,12 @@ class ImagePanel(wx.Panel):
 			remapColor = numpy.array(self.colormap)
 			rgbarray = remapColor[valarray].astype(numpy.uint8)
 			h, w = normarray.shape[:2]
-			r = Image.frombuffer("L", (w, h), rgbarray[:,:,0].tostring())
-			g = Image.frombuffer("L", (w, h), rgbarray[:,:,1].tostring())
-			b = Image.frombuffer("L", (w, h), rgbarray[:,:,2].tostring())
+			r = Image.frombuffer("L", (w, h), rgbarray[:,:,0].tobytes())
+			g = Image.frombuffer("L", (w, h), rgbarray[:,:,1].tobytes())
+			b = Image.frombuffer("L", (w, h), rgbarray[:,:,2].tobytes())
 			imagedata = Image.merge("RGB", (r,g,b))
 
-		wximage.SetData(numpil.pil_image_tostring(imagedata.convert('RGB')))
+		wximage.SetData(numpil.pil_image_tobytes(imagedata.convert('RGB')))
 		return wximage
 
 	#--------------------

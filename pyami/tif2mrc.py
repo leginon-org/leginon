@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-from . import tifffile
+import tifffile
 import sys
-from . import numpil
-from . import mrc
+from pyami import numpil
+from pyami import mrc
 
 infile = sys.argv[1]
 outfile = sys.argv[2]

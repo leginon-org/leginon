@@ -20,6 +20,6 @@ def save(a, min, max, filename, quality):
 	print(a)
 	a = a.astype(numpy.uint8)
 	imsize = a.shape[1], a.shape[0]
-	nstr = a.tostring()
+	nstr = a.tobytes()
 	image = getattr(Image,getPilFromStringFuncName())('L', imsize, nstr, 'raw', 'L', 0, 1)
 	image.convert('L').save(filename, "JPEG", quality=quality)

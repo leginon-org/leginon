@@ -754,7 +754,7 @@ class ImagePanel(wx.Panel):
 		a = numpy.clip(a, 0, 255)
 		a = numpy.asarray(a, numpy.uint8)
 		a = a.repeat(3)
-		return a.tostring()
+		return a.tobytes()
 
 	def setBitmap(self):
 		'''
@@ -772,7 +772,7 @@ class ImagePanel(wx.Panel):
 																								self.colormap))
 		elif isinstance(self.imagedata, Image.Image):
 			wximage = wx.Image(self.imagedata.size[0], self.imagedata.size[1])
-			wximage.SetData(self.imagedata.convert('RGB').tostring())
+			wximage.SetData(self.imagedata.convert('RGB').tobytes())
 		else:
 			self.bitmap = None
 			return

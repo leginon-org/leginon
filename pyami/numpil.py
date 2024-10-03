@@ -8,7 +8,7 @@ from pyami import imagefun
 from pyami import arraystats
 import sys
 import scipy.ndimage
-from pyami import tifffile
+import tifffile
 pilformats = [
 	'BMP',
 	'GIF',
@@ -28,23 +28,25 @@ def im2numpy(im):
 	width,height = im.size
 	shape = height,width
 	if im.mode == 'F':
-		s = pil_image_tostring(im)
-		a = numpy.fromstring(s, numpy.float32)
+		s = pil_image_tobytes(im, "raw")
+		a = numpy.frombuffer(s, numpy.float32)
 	elif im.mode == 'RGB':
-		s = pil_image_tostring(im)
-		a = numpy.fromstring(s, numpy.uint8)
+		s = pil_image_tobytes(im, "raw")
+		a = numpy.frombuffer(s, numpy.uint8)
 		shape = shape + (3,)
 	else:
 		im = im.convert('L')
-		s = pil_image_tostring(im)
-		a = numpy.fromstring(s, numpy.uint8)
+		s = pil_image_tobytes(im, "raw")
+		a = numpy.frombuffer(s, numpy.uint8)
 	a.shape = shape
 	return a
 
 def textArray(text, scale=1):
 	im = Image.new('1', (1,1))
 	draw = ImageDraw.Draw(im)
-	cols,rows = draw.textsize(text)
+	left,top,right,bottom = draw.textbbox((0,0),text)
+	cols = right - left
+	rows = bottom - top
 	im = Image.new('1', (cols,rows))
 	draw = ImageDraw.Draw(im)
 	draw.text((0,0), text, fill=1)
@@ -129,39 +131,20 @@ def write(a, imfile=None, format=None, limits=None, writefloat=False):
 		## bad file format
 		sys.stderr.write('Bad PIL image format.  Try one of these: %s\n' % (pilformats,))
 
-def getPilImageToStringFuncName():
-	# PIL function name changes
-	im = Image.new('1', (1,1))
-	if hasattr(im,'tobytes'):
-		func_name = 'tobytes'
-	else:
-		func_name = 'tostring'
-	return func_name
-
-def getPilImageToStringFunc(obj):
-	# obj is an instance of image class in PIL Image module
-	func_name = getPilImageToStringFuncName()
-	return getattr(obj,func_name)
-
-def getPilFromStringFuncName():
-	# PIL function name changes
-	# Issue #4252 python gets confused sometimes with Image come
-	# from either PIL directly
-	# or from this extended module.  Checking attribute on an image object
-	# instead of the module avoids the recursive hasattr call.
-	im = Image.new('1', (1,1))
-	if hasattr(im,'frombytes'):
-		func_name = 'frombytes'
-	else:
-		func_name = 'fromstring'
-	return func_name
-
 def pil_image_tostring(obj, encoder_name="raw", *args):
+	# tostring is deprecated use tobytes
 	# obj is an instance of image class in PIL Image module
-	return getPilImageToStringFunc(obj)(encoder_name, *args)
+	return pil_image_tobytes(obj, encoder_name, *args)
+
+def pil_image_tobytes(obj, encoder_name="raw", *args):
+	# obj is an instance of image class in PIL Image module
+	return obj.tobytes(encoder_name, *args)
+
+def frombytes(data, decoder_name="raw", *args):
+	return getattr(Image, 'frombytes')(data,decoder_name, *args)
 
 def fromstring(data, decoder_name="raw", *args):
-	return getattr(Image, getPilFromStringFuncName())(data,decoder_name, *args)
+	return frombytes(decoder_name, *args)
 
 def sumTiffStack(filename):
 	try:

@@ -124,7 +124,7 @@ class Handler(socketserver.StreamRequestHandler):
 		t0 = time.time()
 		print('TTTTTTTTTTT', time.time())
 
-		#s = data.tostring()
+		#s = data.tobytes()
 		#self.wfile.write(s)
 		pickle.dump(data, self.wfile, pickle.HIGHEST_PROTOCOL)
 

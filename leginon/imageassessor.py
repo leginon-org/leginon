@@ -7,7 +7,6 @@
 #
 
 from leginon import leginondata
-from leginon import targetfinder
 from leginon import event
 from leginon import node
 import leginon.gui.wx.ImageAssessor
@@ -16,7 +15,7 @@ from PIL import Image
 import numpy
 from pyami import imagefun, mrc
 
-class ImageAssessor(targetfinder.ClickTargetFinder):
+class ImageAssessor(node.Node):
 	panelclass = leginon.gui.wx.ImageAssessor.Panel
 	settingsclass = leginondata.ImageAssessorSettingsData
 	defaultsettings = {
@@ -220,14 +219,14 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 		copied and modified from http://mail.python.org/pipermail/image-sig/2005-September/003554.html
 		"""
 		if im.mode == "L":
-			a = numpy.fromstring(im.tostring(), numpy.uint8)
+			a = numpy.fromstring(im.tobytes(), numpy.uint8)
 			a = numpy.reshape(a, (im.size[1], im.size[0]))
 			#a.shape = (im.size[1], im.size[0], 1)  # alternate way
 		elif (im.mode=='RGB'):
-			a = numpy.fromstring(im.tostring(), numpy.uint8)
+			a = numpy.fromstring(im.tobytes(), numpy.uint8)
 			a.shape = (im.size[1], im.size[0], 3)
 		elif (im.mode=='RGBA'):
-			atmp = numpy.fromstring(im.tostring(), numpy.uint8)
+			atmp = numpy.fromstring(im.tobytes(), numpy.uint8)
 			atmp.shape = (im.size[1], im.size[0], 4)
 			a = atmp[:,:,3]
 		else:
