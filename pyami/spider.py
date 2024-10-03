@@ -185,7 +185,7 @@ def array2spider(arr, filename):
 	# write image data
 	farr = numpy.array(arr, dtype=numpy.dtype('>f4'))
 	farr.tofile(fp)
-	#fp.write(farr.tostring())
+	#fp.write(farr.tobytes())
 	fp.close
 
 # --------------------------------------------------------------------

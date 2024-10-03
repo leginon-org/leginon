@@ -78,7 +78,7 @@ if not sys.path:
 ## config files
 
 ## minimum python version
-minpyver = (2, 3, 4)
+minpyver = (3, 8, 10)
 mypyver = sys.version_info[:3]
 mystr = '.'.join(map(str,mypyver))
 minstr = '.'.join(map(str,minpyver))
@@ -94,7 +94,7 @@ print('    Python says home directory is:  %s' % (os.path.expanduser('~'),))
 ######################################################################
 ## Python Imaging Library
 ######################################################################
-minpilver = (1, 1, 4)
+minpilver = (8, 0, 0)
 minstr = '.'.join(map(str,minpilver))
 print('--------------------------------------------------------------')
 print('Python Imaging Library (PIL):')
@@ -119,7 +119,7 @@ else:
 ######################################################################
 ## Python MySQL client module
 ######################################################################
-minmysqlver = (0, 6)
+minmysqlver = (1, 0, 2)
 minstr = '.'.join(map(str,minmysqlver))
 print('--------------------------------------------------------------')
 print('pyMySQL Python client:')
@@ -141,7 +141,7 @@ else:
 ######################################################################
 ## numpy
 ######################################################################
-minnumpyver = (1, 0)
+minnumpyver = (1, 19)
 minstr = '.'.join(map(str,minnumpyver))
 print('--------------------------------------------------------------')
 print('numpy:')
@@ -179,6 +179,26 @@ else:
 		
 
 ######################################################################
+## tifffile
+######################################################################
+mintifffilever = (2024, 8)
+minstr = '.'.join(map(str,mintifffilever))
+print('--------------------------------------------------------------')
+print('tifffile:')
+print('    importing tifffile module...')
+try:
+	import tifffile
+except ImportError:
+	print('    *** Failed to import tifffile.  Install tifffile first.')
+else:
+	mystr = tifffile.__version__
+	mytifffilever = list(map((lambda x:int(x)),mystr.split('.')[:2]))
+	print('    tifffile version: %s' % (mystr,))
+	if versionAtLeast(mytifffilever, mintifffilever):
+		print('        OK (at least %s required)' % (minstr ,))
+	else:
+		print('        *** FAILED (at least %s required)' % (minstr,))
+######################################################################
 ## numextension
 ######################################################################
 print('--------------------------------------------------------------')
@@ -200,7 +220,7 @@ else:
 ######################################################################
 ## wxPython
 ######################################################################
-minwxver = (2, 5, 2, 8)
+minwxver = (4, 1, 1)
 minstr = '.'.join(map(str, minwxver))
 print('--------------------------------------------------------------')
 print('wxPython:')

@@ -387,7 +387,7 @@ class FeiCam(ccdcamera.CCDCamera):
 			raise RuntimeError('Error finding saved norm image')
 		if self.getDebugCamera():
 			print('loading', normpath)
-		from pyami import tifffile
+		import tifffile
 		tif = tifffile.TIFFfile(normpath)
 		arr = tif.asarray()
 		self.image_metadata = {}

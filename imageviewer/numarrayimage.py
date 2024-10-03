@@ -26,7 +26,7 @@ def numarray2Image(array):
         raise ValueError
     stride = 0
     orientation = 1
-    args = (mode, size, array.tostring(), 'raw', rawmode, stride, orientation)
+    args = (mode, size, array.tobytes(), 'raw', rawmode, stride, orientation)
     return Image.frombuffer(*args)
 
 def scaleImage(image, fromrange, torange):
@@ -99,7 +99,7 @@ def numarray2RGBImage(array, x=0, y=0, width=None, height=None,
 def numarray2wxImage(*args, **kwargs):
     rgbimage = numarray2RGBImage(*args, **kwargs)
     wximage = wx.EmptyImage(*rgbimage.size)
-    wximage.SetData(numpil.pil_image_tostring(rgbimage))
+    wximage.SetData(numpil.pil_image_tobytes(rgbimage))
     return wximage
 
 def numarray2wxBitmap(*args, **kwargs):

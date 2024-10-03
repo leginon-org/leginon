@@ -1078,7 +1078,7 @@ class ImageButton(wx.Panel):
 		bigarray = numpy.dstack((imgnorm, imgnorm, imgnorm))
 		bigarray = numpy.array(bigarray, dtype='uint8')
 		image = wx.EmptyImage(imgarray.shape[1], imgarray.shape[0])
-		image.SetData(bigarray.tostring())
+		image.SetData(bigarray.tobytes())
 		wxBitmap = image.ConvertToBitmap()
 		return wxBitmap
 

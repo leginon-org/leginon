@@ -5,8 +5,7 @@ from pyami import mrc,imagefun
 from appionlib import apDDprocess,apDisplay
 import os
 try:
-        #The tifffile module only works with python 2.6 and above
-        from pyami import tifffile
+        import tifffile
 except:
         apDisplay.printError('Need tifffile to use apDEApolloCamProcess module')
 

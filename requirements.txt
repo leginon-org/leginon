@@ -23,3 +23,4 @@ wxPython==4.1.1
 yarl==1.6.3
 joblib==1.2.0
 matlablib==3.6
+tifffile==2024.8.30

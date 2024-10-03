@@ -3,7 +3,7 @@
 from pyami import numpil
 Image = numpil.Image2
 import numpy
-from . import arraystats
+from pyami import arraystats
 
 def write(a, filename, min=None, max=None, quality=80, newsize=None, stdval=5):
 	'''
@@ -49,7 +49,7 @@ Optional argument 'newsize' is used for scaling the image.
 
 	## use PIL to write JPEG
 	imsize = a.shape[1], a.shape[0]
-	nstr = a.tostring()
+	nstr = a.tobytes()
 	image = Image.frombuffer('L', imsize, nstr, 'raw', 'L', 0, 1)
 	image.convert('L').save(filename, "JPEG", quality=quality)
 	if newsize is None:
