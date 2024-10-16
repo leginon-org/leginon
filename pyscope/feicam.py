@@ -6,9 +6,9 @@ import shutil
 import sys
 import numpy
 
-from . import ccdcamera
+from pyscope import ccdcamera
 import time
-from . import falconframe
+from pyscope import falconframe
 from pyami import moduleconfig
 
 try:
@@ -295,7 +295,7 @@ class FeiCam(ccdcamera.CCDCamera):
 
 	def _getReadoutOffset(self, key, binned_full_off):
 		limit_off = self.limit_off[key]
-		return {'x':binned_full_off['x']-limit_off['x']/self.binning['x'],'y':binned_full_off['x']-limit_off['y']/self.binning['y']}
+		return {'x':binned_full_off['x']-limit_off['x']//self.binning['x'],'y':binned_full_off['x']-limit_off['y']//self.binning['y']}
 
 	def finalizeSetup(self):
 		# final bin
@@ -415,6 +415,7 @@ class FeiCam(ccdcamera.CCDCamera):
 			print('got arr and to modify')
 		arr = self.modifyImage(arr)
 		return arr
+
 	def _getImage(self):
 		'''
 		Acquire an image using the setup for this client.

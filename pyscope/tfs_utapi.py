@@ -6,6 +6,55 @@ from pyami import moduleconfig
 configs = moduleconfig.getConfigured('fei.cfg')
 configpath = moduleconfig.getConfigPath('fei.cfg')
 
+class FEITemScriptingConnection(object):
+	instr = None
+	autoloader = None
+	temp_control = None
+
+import comtypes
+import comtypes.client
+# a clean class instance at import
+connection = FEITemScriptingConnection()
+
+def chooseTEMScriptingName():
+	return 'TEMScripting.Instrument.1'
+
+def get_feitem():
+	'''
+	Returns adv_scripting connection. Connect if not not done.
+	'''
+	global connection
+	# a simple test for server connection.
+	if hasattr(connection,'autoloader') and connection.autoloader:
+		try:
+			hasloader = connection.autoloader.AutoLoaderAvailable
+		except comtypes.COMError as e:
+			# This gives back comtypes.COMError if there is no connection to server.
+			# forcing instr attribute to None to force reconnection.
+			connection.instr = None
+	# make a coonection
+	if connection.instr is None:
+		try:
+			comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
+			print('coinitializeEx comtypes')
+		except:
+			print('coinitialize comtypes')
+			comtypes.CoInitialize()
+		type_name = chooseTEMScriptingName()
+		connection.instr = comtypes.client.CreateObject(type_name)
+		connection.autoloader = connection.instr.AutoLOader
+		connection.temp_control = connection.instr.TemperatureControl
+	return connection
+
+def connectToFEITemScripting():
+	'''
+	Connects to the COM server
+	'''
+	global connection
+	print('connection call', connection)
+	connection = get_feitem()
+	return connection
+
 if not SIMULATION:
 	from pyscope import tem
 	import grpc
@@ -227,8 +276,8 @@ class Logger(object):
 		if self.level >= 1:
 			print('%sERROR: %s' % (self.logtype,msg))
 
-class Utapi(tem.TEM):
-	name = 'Utapi'
+class Krios(tem.TEM):
+	name = 'Krios'
 	# (pyscope value, utapi CONSTANT)
 	cm_projection_mode_map = [	('imaging','PROJECTION_MODE_IMAGING'),
 							('diffraction', 'PROJECTION_MODE_DIFFRACTION')
@@ -249,6 +298,9 @@ class Utapi(tem.TEM):
 							('on','Blank'),
 							('off','UnBlank')
 	]
+	scrn_pos_map = [ ('up','SCREEN_POSITION_UP'),
+									('down','SCREEN_POSITION_DOWN'),
+	]
 	# (pyscope value, utapi Method)
 	bstop_attr_map = [	('in','Insert'),
 						('out','Retract'),
@@ -257,7 +309,7 @@ class Utapi(tem.TEM):
 	cold_feg_flash_types = {'low':1,'high':2}
 
 	def __init__(self):
-		super(Utapi, self).__init__()
+		super(Krios, self).__init__()
 		self.cold_feg_flash_types = {'low':1,'high':2}
 		self.beamstop_device_id = dip.DeviceIdRequest(id='BeamStopper')
 		# default to let the scope control auto normalization.
@@ -271,6 +323,17 @@ class Utapi(tem.TEM):
 		if self.getDebugAll():
 			self.logger.setLevel(3)
 			self.stage_logger.setLevel(3)
+		try:
+			global connection
+			print('connection initial',connection.autoloader)
+			connectToFEITemScripting()
+			print('connection after connect',connection.autoloader)
+			self.script_autoloader = connection.autoloader
+			self.script_temp_control = connection.temp_control
+			self.gridloader_slot_states = {0:'unknown', 1:'occupied', 2:'empty', 3:'error'}
+		except Exception as e:
+			print('unable to initialize Advanced Scriptiong interface, %s' % e)
+			self.adv_instr = None
 
 	def getFeiConfig(self,optionname,itemname=None):
 		if optionname not in list(configs.keys()):
@@ -1084,18 +1147,117 @@ class Utapi(tem.TEM):
 		return self._getChamberPressure('SourceBuffer')['pressure']
 
 	def hasGridLoader(self):
-		return super(Utapi, self).hasGridLoader()
+		print('hasGridLoader',connection.autoloader)
+		print('hasGridLoader2',self.script_autoloader)
+		print('LoaderAvailable',self.script_autoloader.AutoLoaderAvailable)
+		return bool(self.script_autoloader.AutoLoaderAvailable)
 		#TODO broken service not functional
-		my_device = 'SampleloaderType'
-		my_request = getattr(ldr_p,'Get%sRequest' % my_device)()
-		return _get_by_request(ldr_stub, 'Get%s' % my_device, my_request)
+		#my_device = 'SampleloaderType'
+		#my_request = getattr(ldr_p,'Get%sRequest' % my_device)()
+		#return _get_by_request(ldr_stub, 'Get%s' % my_device, my_request)
+
+	def _loadCartridge(self, number):
+		state = self.script_autoloader.LoadCartridge(number)
+		if state != 0:
+			raise RuntimeError()
+
+	def _unloadCartridge(self):
+		'''
+		FIX ME: Can we specify which slot to unload to ?
+		'''
+		state = self.script_autoloader.UnloadCartridge()
+		if state != 0:
+			raise RuntimeError()
+
+	def getGridLoaderNumberOfSlots(self):
+		if self.hasGridLoader():
+			return self.script_autoloader.NumberOfCassetteSlots
+		else:
+			return 0
+
+	def getGridLoaderSlotState(self, number):
+		# base 1
+		if not self.hasGridLoader():
+			return self.gridloader_slot_states[0]
+		else:
+			if number > self.getGridLoaderNumberOfSlots():
+				return 'error'
+			status = self.script_autoloader.SlotStatus(number)
+			state = self.gridloader_slot_states[status]
+		return state
+
+	def getGridLoaderInventory(self):
+		if not self.grid_inventory and self.hasGridLoader():
+			self.getAllGridSlotStates()
+		return self.grid_inventory
+
+	def performGridLoaderInventory(self):
+		""" need to find return states
+				0 - no error, but also could be no action taken.
+		"""
+		return self.script_autoloader.PerformCassetteInventory()
 
 	def hasAutoFiller(self):
+		return self.script_temp_control.TemperatureControlAvailable
+		#TODO broken service not functional
 		my_device = 'HolderTemperatureSupported'
 		my_device = 'DewarLevelSupported'
 		my_request = getattr(ctemp_p,'Is%sRequest' % my_device)()
 		my_device = 'DewarLevelSupported'
 		return _get_by_request(ctemp_stub, 'Is%s' % my_device, my_request)
+
+	def runAutoFiller(self):
+		'''
+		Trigger autofiller refill. If it can not refill, a COMError
+		is raised, and DewarsAreBusyFilling is set to True.  Further
+		call of this function returns immediately. The function can be
+		reactivated in NitrogenNTS Temperature Control with "Stop Filling"
+		followed by "Recover".  It takes some time to recover.
+		If ignore these steps for long enough, it does stop filling by itself
+		and give Dewar increase not detected error on TUI but will not
+		recover automatically.
+		If both dewar levels are above 70 percent, the command is denied
+		and the function returns 0
+		'''
+		if not self.hasAutoFiller:
+			return
+		t0 = time.time()
+		try:
+			self.script_temp_control.ForceRefill()
+		except com_module.COMError as e:
+			#COMError: (-2147155969, None, (u'[ln=102, hr=80004005] Cannot force refill', u'TEM Scripting', None, 0, None))
+			# This COMError can occur when fill is slow, too.  Need to ignore it
+			raise RuntimeError('Failed Force Refill')
+		t1 = time.time()
+		if t1-t0 < 10.0:
+			raise RuntimeError('Force refill Denied: returned in %.1f sec' % (t1-t0))
+
+	def isAutoFillerBusy(self):
+		try:
+			isbusy = self.script_temp_control.DewarsAreBusyFilling
+		except:
+			# property not exist for older versions
+			isbusy = None
+		return isbusy
+
+	def getAutoFillerRemainingTime(self):
+		'''
+		Get remaining time from instrument. Unit is second.
+		If it is not set to cool, the value is -60.
+		'''
+		try:
+			remain_sec = self.script_temp_control.DewarsRemainingTime
+		except:
+			# property not exist for older versions
+			remain_sec = None
+		return remain_sec
+
+	def getRefrigerantLevel(self,id=0):
+		'''
+		Get current refrigerant level. Only works on Krios and Artica. id 0 is the
+		autoloader, 1 is the column.
+		'''
+		return self.script_temp_control.RefrigerantLevel(id)
 
 	def _getStageState(self):
 		my_device = 'StageState'
@@ -1313,5 +1475,54 @@ class Utapi(tem.TEM):
 		# TODO depends on hasAutoLoader
 		return 'cryo'
 
-class UtapiEF(Utapi):
-	name = 'UtapiEF'
+	def getMainScreenPositions(self):
+		return ['up', 'down', 'unknown']
+
+	def _getScreenPosition(self,screen_type='main'):
+		scrn_name = '%sScreenPosition' % screen_type
+		my_request = scrn_p.GetScreenPositionRequest()
+		my_map = self.scrn_pos_map
+		state = _get_by_request(scrn_stub,'GetScreenPosition', my_request)[scrn_name]
+		try:
+			result = my_map[list(map((lambda x: x[1].upper()),my_map)).index(state)][0]
+			return result
+		except Exception as e:
+			self.logger.debug(e)
+			return 'unknown'
+
+	def getSmallScreenPosition(self):
+		return self._getScreenPosition('small')
+
+	def getMainScreenPosition(self):
+		return self._getScreenPosition('main')
+
+	def setMainScreenPosition(self, mode):
+		if mode not in map((lambda x: x[0]), self.scrn_pos_map):
+			raise ValueError('Invalid main screen position: %s' % mode)
+		my_map = self.scrn_pos_map
+		attr_name = 'SetMainScreenPosition'
+		state = my_map[list(map((lambda x: x[0]),my_map)).index(mode)][1]
+		my_request =getattr(scrn_p,'%sRequest' % attr_name)()
+		setattr(my_request, 'screen_position',state)
+		try:
+			r=_set_by_request(scrn_stub, attr_name, my_request)
+		except Exception as e:
+			raise RuntimeError(e)
+
+	def getScreenCurrent(self):
+		'''
+		Return current in Amp.
+		'''
+		attr_name = 'GetScreenCurrent'
+		my_request =getattr(scrn_p,'%sRequest' % attr_name)()
+		try:
+			return _get_by_request(scrn_stub,attr_name, my_request)['screenCurrent']
+		except KeyError:
+			# value is zero or screen is up.
+			return 0.0
+
+class EFKrios(Krios):
+	name = 'EF-Krios'
+	column_type = 'titan'
+	use_normalization = True
+	projection_lens_program = 'EFTEM'

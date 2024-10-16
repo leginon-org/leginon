@@ -207,9 +207,11 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 		raise NotImplementedError
 
 	def getExposureTime(self):
+		# float milliseconds
 		raise NotImplementedError
 
 	def setExposureTime(self, value):
+		# float milliseconds
 		raise NotImplementedError
 
 	def getExposureTypes(self):

@@ -1915,7 +1915,7 @@ class Tecnai(tem.TEM):
 		""" need to find return states
 				0 - no error, but also could be no action taken.
 		"""
-		return self.tecnai.PerformCassetteInventory()
+		return self.tecnai.AutoLoader.PerformCassetteInventory()
 
 	def getIsEFtem(self):
 		flag = self.tecnai.Projection.LensProgram
