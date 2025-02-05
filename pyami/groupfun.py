@@ -270,6 +270,7 @@ class BlobTopScoreSampler(BlobSampler):
 		blob_indices_at_score_in_class = {}
 		for i in indices:
 			score = self.blobs[i].stats['score']
+			self.blobs[i].stats['group'] = current_class_index+1  # record the grouping starting from 1 
 			if score not in blob_indices_at_score_in_class.keys():
 				blob_indices_at_score_in_class[score] = []
 			blob_indices_at_score_in_class[score].append(i)
