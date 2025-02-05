@@ -13,7 +13,7 @@
 
 import wx
 from leginon.gui.wx.Choice import Choice
-from leginon.gui.wx.Entry import IntEntry, FloatEntry
+from leginon.gui.wx.Entry import IntEntry, FloatEntry, Entry
 import leginon.gui.wx.MosaicAligner
 import leginon.gui.wx.Settings
 import leginon.gui.wx.TargetFinder
@@ -417,6 +417,7 @@ class TargetScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['target grouping']['classes'] = IntEntry(self, -1, min=1, chars=6)
 		self.widgets['target multiple'] = IntEntry(self, -1, min=1, max=9, chars=6)
 		self.widgets['target grouping']['randomize blobs'] = wx.CheckBox(self, -1, 'Randomize blob selection within groups')
+		self.widgets['target grouping']['groups to ignore'] = Entry(self, -1, allowspaces=False)  #add ability to skip groups
 		# row sizers
 		sz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Max. number of targets:')
@@ -427,7 +428,11 @@ class TargetScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['target grouping']['classes'], (1, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		sz.Add(self.createGroupMethodSizer(), (2,0),(1,2),
+		label = wx.StaticText(self, -1, 'Targets to ignore:')
+		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['target grouping']['groups to ignore'], (2, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		sz.Add(self.createGroupMethodSizer(), (3,0),(1,2),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_LEFT)
 		
 		tm_sz = wx.GridBagSizer(5, 5)
@@ -437,7 +442,7 @@ class TargetScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'targets')
 		tm_sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(tm_sz, (3, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(tm_sz, (4, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		tm_sz.Add(self.widgets['target grouping']['randomize blobs'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		# finalize
 		sz.AddGrowableCol(1)

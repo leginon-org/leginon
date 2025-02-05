@@ -29,7 +29,19 @@ class Panel(leginon.gui.wx.MosaicClickTargetFinder.Panel):
 		self.toolbar.InsertTool(12, leginon.gui.wx.ToolBar.ID_FIND_SQUARES,
 			'squarefinder',shortHelpString='Find Squares')
 		self.imagepanel.addTargetTool('Blobs', wx.Colour(0, 255, 255), shape='o', settings=True)
+		self.imagepanel.addTargetTool('Blobs Group 1', wx.Colour(254,124,0), shape='o', )
+		self.imagepanel.addTargetTool('Blobs Group 2', wx.Colour(254,254,0), shape='o', )
+		self.imagepanel.addTargetTool('Blobs Group 3', wx.Colour(0,0,255), shape='o', )
+		self.imagepanel.addTargetTool('Blobs Group 4', wx.Colour(230,26,142), shape='o', )
+		self.imagepanel.addTargetTool('Blobs Group 5', wx.Colour(235,175,108), shape='o', )
+		self.imagepanel.addTargetTool('Blobs Group 6', wx.Colour(35,124,0), shape='o', )
 		self.imagepanel.selectiontool.setDisplayed('Blobs', True)
+		self.imagepanel.selectiontool.setDisplayed('Blobs Group 1', True)
+		self.imagepanel.selectiontool.setDisplayed('Blobs Group 2', True)
+		self.imagepanel.selectiontool.setDisplayed('Blobs Group 3', True)
+		self.imagepanel.selectiontool.setDisplayed('Blobs Group 4', True)
+		self.imagepanel.selectiontool.setDisplayed('Blobs Group 5', True)
+		self.imagepanel.selectiontool.setDisplayed('Blobs Group 6', True)
 		self.imagepanel.addTypeTool('Thresholded', display=True, settings=True)
 
 	def onNodeInitialized(self):
