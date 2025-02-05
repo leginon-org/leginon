@@ -2028,6 +2028,7 @@ class TargetGroupingSettingsData(SettingsData):
 			('classes', int),
 			('group method', str),
 			('randomize blobs', bool),
+			('groups to ignore',str),
 		)
 	typemap = classmethod(typemap)
 

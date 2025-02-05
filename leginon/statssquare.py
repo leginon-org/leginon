@@ -14,10 +14,12 @@ class StatsBlob(object):
 		score = info_dict['score']
 		center = info_dict['center'][0],info_dict['center'][1]
 		vertices = info_dict['vertices']
+		signal = size * mean  
 		self.center_modified = False
 		# n in blob is the same as size from Ptolemy. Need n for displaying stats
 		# in gui.
-		self.stats = {"label_index": index, "center":center, "n":size, "size":size, "mean":mean, "score":score}
+		self.stats = {"label_index": index, "center":center, "n":size, "size":size, "mean":mean, "score":score, "signal":signal, "group":0} 
+		#self.stats = {"label_index": index, "center":center, "n":size, "size":size, "mean":mean, "score":score}
 		self.vertices = vertices
 		self.info_dict = info_dict
 		# imagedata of the tile if available

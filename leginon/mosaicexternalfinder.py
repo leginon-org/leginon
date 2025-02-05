@@ -244,8 +244,11 @@ class MosaicTargetFinderBase(mosaictargetfinder.MosaicClickTargetFinder):
 		key = self._mapBlobStatsKey(self.settings['filter-key'])
 		good_blobs = []
 		for i, blob in enumerate(blobs):
+			if key == 'signal':  #signal is a derived value from area and brightness, add it here if needed
+				blob.stats['signal'] = blob.stats['mean'] * blob.stats['n']
 			if i == 0 and key not in blob.stats.keys():
 				self.logger.error('Filter key %s not found in stats' % self.settings['filter-key'])
+				print (blob.stats.keys())
 				return good_blobs
 			row = blob.stats['center'][0]
 			column = blob.stats['center'][1]
@@ -496,7 +499,6 @@ class MosaicScoreTargetFinder(MosaicTargetFinderBase):
 			# center of the blob on finder_mosaic coordinate
 			# _tile2MosaicPosition standard is (row, col)
 			new_info_dict['center'] = r,c
-			new_info_dict['signal'] = new_info_dict['area'] * new_info_dict['brightness']  
 			self.mblob_values.append(new_info_dict)
 
 	def findSquareBlobs(self):

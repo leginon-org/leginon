@@ -62,6 +62,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			'classes': 1,
 			'group method': 'value delta',
 			'randomize blobs': True,
+			'groups to ignore': '0,1,6',
 		},
 		'target multiple':1,
 	}
@@ -288,6 +289,25 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		blobs = self.filterBlobsByMask(blobs)
 		xys = self.runBlobRankFilter(blobs, xytargets)
 		message = 'found %s squares' % (len(xys),)
+		###### add the blob groups objects
+		blobgroups = ([],[],[],[],[],[],[])  # 6 groups max for coloring, plus a 0th group for unindexed
+		for blob in blobs:
+			try:
+				blobgroups[blob.stats['group']].append(blob)
+			except:
+				self.logger.info('Groups > 6 are not displayed as colored blobs')
+
+		# Update the targets with the grouping
+			for target in targets:
+				if target['stats']['Label_index'] == blob.stats['label_index']:
+					target['stats']['Group'] = blob.stats['group']
+					break  # no need to keep searching through targets
+		targetgroups = []   # 6 blob target groups plus unused 0th group
+		for i in range (1,7):   #found groups number from 1-6, default unfound group is 0
+			targetgroups.append(self.blobStatsTargets(blobgroups[i], self.finder_scale_factor))
+			targetstring = 'Blobs Group ' + str(i)
+			self.setTargets(targetgroups[i-1], targetstring)
+		######## ---- end of group update	
 		self.last_xys = xys
 		## display them
 		# IMPORTANT: Don't put back unprocessed but submitted targets
@@ -1280,6 +1300,25 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		# sample some non-priority blobs
 		non_priority_total = self.settings['target grouping']['total targets']-len(priority_blobs)
 		other_blobs = self.sampleBlobs(other_blobs, non_priority_total)
+		####### remove the requested groups from blobs, if any
+		badgrouplist1= self.settings['target grouping']['groups to ignore'].split(',')  # only separate by comma
+                badgrouplist=[]
+                for badgroup in badgrouplist1:  # append groups, ignore any which are not numbers
+                        try:
+                                badgrouplist.append(int(badgroup))
+                        except:
+				self.logger.info('Ignoring unknown character %s from groups to remove' % ( badgroup,))
+		# iterate through blobs and remove any in the marked groups
+		for badgroup in badgrouplist:
+			blob_removed=True;
+			while (blob_removed):
+				blob_removed = False;
+				for blob in other_blobs:
+					if blob.stats['group'] == badgroup:
+						other_blobs.remove(blob)  # removal bounces out of the loop, so keep trying until none are left
+						blob_removed = True;
+				
+		######## wjr end of group removal
 		combined_blobs = priority_blobs+other_blobs
 		################
 		# turn combined blobs into targets at the original mosaic dimension
