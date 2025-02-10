@@ -24,7 +24,7 @@ print "\nLeave Leginon in Square targeting node and make sure window covers atla
 
 unless (defined $ARGV[0]) {
    print "Usage: $0 <window-id>\n";
-   print "To get window-id, run xwininfo and click on the Leginon main window.\n"
+   print "\nTo get window-id, run xwininfo and click on the Leginon main window.\n";
    die;
 }
 my $window_id = $ARGV[0];
@@ -53,7 +53,7 @@ while (1) {
    $row = pop @$rows;  # get the last image taken in session as the source for the grid name
    my $gridname = $row->[0];
    if ($gridname =~ m/($session\_[a-zA-Z0-9]+\_)/) {
-      $name = 'atlas_' . $1 . '_' . $comment . $name ; 
+      $name = 'atlas_' . $1 . '_' . $comment . '_' . $name ; 
    }
    else {
       $name = 'atlas_' . $comment . '_' . $name ;
