@@ -580,7 +580,7 @@ class leginondata {
 			."where `REF|AcquisitionImageData|image` = '$imageId' "
 			." ";
 		$result = $this->mysql->getSQLResult($q);
-		if ($result) return $result[0][comment];
+		if ($result) return $result[0]['comment'];
 	}
 
 	function updateImageComment($sessionId, $imageId, $comment) {
@@ -926,7 +926,7 @@ class leginondata {
 		."`t`.`number`=0 AND "
 		."`g`.`insertion`>$insertion";
 		list($r) = $this->mysql->getSQLResult($q);
-		$id = $r[id];
+		$id = $r['id'];
 		return $id;
 	}
 
@@ -1223,7 +1223,7 @@ class leginondata {
 
 	function itransform($imgId, $type) {
 		$m = $this->getImageMatrixCalibration($imgId, $type);
-		$matrix = matrix($m[a11],$m[a12],$m[a21],$m[a22]);
+		$matrix = matrix($m['a11'],$m['a12'],$m['a21'],$m['a22']);
 		$presetId=$this->getId(
 				array('DEF_id'=>$imgId),
 				'AcquisitionImageData',
@@ -1588,7 +1588,7 @@ class leginondata {
 	function calcImageBeamTilt($is_x,$is_y,$m) {
 		// Calculate beam tilt from image shift coma calibration.  
 		// 
-		$matrix = matrix($m[a11],$m[a12],$m[a21],$m[a22]);
+		$matrix = matrix($m['a11'],$m['a12'],$m['a21'],$m['a22']);
 		$vector = array($is_x,$is_y);
 		$result_vector = matrix_multiply($matrix, $vector);
 		return $result_vector;
@@ -1929,7 +1929,7 @@ class leginondata {
 					$schema_create .= "      type=\"$row[Type]\" $crlf";
 
 					if(isset($row["Default"]) && (!empty($row["Default"]) || $row["Default"] == "0"))
-						$schema_create .= "      default=\"DEFAULT '$row[Default]'\" $crlf";
+						$schema_create .= "      default=\"DEFAULT '".$row['Default']."'\" $crlf";
 					if($row["Null"] != "YES")
 						$schema_create .= "      null=\"NOT NULL\" $crlf";
 					if($row["Extra"] != "")
