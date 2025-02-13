@@ -1160,7 +1160,7 @@ class Krios(tem.TEM):
 			return 0.0
 
 	def setDefocus(self, defocus, relative = 'absolute'):
-		old_defocus = self.getDefocus
+		old_defocus = self.getDefocus()
 		if relative == 'relative':
 			defocus += old_defocus
 		elif relative == 'absolute':
