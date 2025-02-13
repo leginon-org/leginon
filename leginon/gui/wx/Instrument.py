@@ -239,6 +239,7 @@ class LensesSizer(wx.StaticBoxSizer):
 		self.addXY('Objective', 'Stigmator')
 		self.addXY('Diffraction', 'Stigmator')
 		self.addXY('Condenser', 'Stigmator')
+		self.addXY('Shift', 'PhasePlatePlane')
 
 		self.sz.AddGrowableCol(0)
 		self.sz.AddGrowableCol(1)
@@ -434,10 +435,12 @@ class FocusSizer(wx.StaticBoxSizer):
 		parameterorder = [
 			'Focus',
 			'Defocus',
+			'PhasePlateFocus',
 		]
 		self.parameters = {
 			'Focus': FloatEntry(self.parent, -1, chars=9, allownone=True),
 			'Defocus': FloatEntry(self.parent, -1, chars=9, allownone=True),
+			'PhasePlateFocus': FloatEntry(self.parent, -1, chars=9, allownone=True),
 		}
 		resetdefoc = wx.Button(self.parent, -1, 'Reset Defocus')
 		resetdefoc.Bind(wx.EVT_BUTTON, self.onResetDefocus)
@@ -826,7 +829,12 @@ class TEMPanel(wx.Panel, ParameterMixin):
 					'y': self.szlenses.xy['Stigmator']['Condenser']['y'],
 				},
 			},
+			'PhasePlatePlane': {
+				'x': self.szlenses.xy['PhasePlatePlane']['Shift']['x'],
+				'y': self.szlenses.xy['PhasePlatePlane']['Shift']['y'],
+			},
 			'Focus': self.szfocus.parameters['Focus'],
+			'PhasePlateFocus': self.szfocus.parameters['PhasePlateFocus'],
 			'Defocus': self.szfocus.parameters['Defocus'],
 			'ScreenCurrent': self.szscreen.parameters['Current'],
 			'MainScreenPositions': self.szscreen.parameters['Main'],

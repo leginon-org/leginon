@@ -84,6 +84,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'TurboPump', 'type': 'property'},
 		{'name': 'ProjectionSubModeMap', 'type': 'property'},
 		{'name': 'PhasePlatePlaneShift', 'type': 'property'},
+		{'name': 'PhasePlateFocus', 'type': 'property'},
 
 		######## methods
 		{'name': 'filmExposure', 'type': 'method'},
@@ -196,6 +197,12 @@ class TEM(baseinstrument.BaseInstrument):
 
 	def setPhasePlatePlaneShift(self, vector, relative = 'absolute'):
 		return self.setBeamTilt(vector, relative)
+
+	def getPhasePlateFocus(self):
+		return None
+
+	def setPhasePlateFocus(self, value):
+		return
 
 	def getImageBeamTilt(self):
 		return self.getBeamTilt()

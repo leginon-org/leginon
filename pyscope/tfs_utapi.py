@@ -1710,6 +1710,12 @@ class KriosXL(Krios):
 	def setPhasePlatePlaneShift(self, vector, relative = 'absolute'):
 		return self.setXDeflectorTilt(vector, relative)
 
+	def getPhasePlateFocus(self):
+		return self.getXLensAlignment(1)
+
+	def setPhasePlateFocus(self, value, relative = 'absolute'):
+		return self.setXLensAlignment(1, value, relative))
+
 class EFKrios(Krios):
 	name = 'EF-Krios'
 	column_type = 'titan'
@@ -1727,4 +1733,10 @@ class EFKriosXL(EFKrios):
 
 	def setPhasePlatePlaneShift(self, vector, relative = 'absolute'):
 		return self.setXDeflectorTilt(vector, relative)
+
+	def getPhasePlateFocus(self):
+		return self.getXLensAlignment(1)
+
+	def setPhasePlateFocus(self, value, relative = 'absolute'):
+		return self.setXLensAlignment(1, value, relative))
 
