@@ -1714,7 +1714,7 @@ class KriosXL(Krios):
 		return self.getXLensAlignment(1)
 
 	def setPhasePlateFocus(self, value, relative = 'absolute'):
-		return self.setXLensAlignment(1, value, relative))
+		return self.setXLensAlignment(1, value, relative)
 
 class EFKrios(Krios):
 	name = 'EF-Krios'
@@ -1738,5 +1738,5 @@ class EFKriosXL(EFKrios):
 		return self.getXLensAlignment(1)
 
 	def setPhasePlateFocus(self, value, relative = 'absolute'):
-		return self.setXLensAlignment(1, value, relative))
+		return self.setXLensAlignment(1, value, relative)
 
