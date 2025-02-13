@@ -234,6 +234,7 @@ class LensesSizer(wx.StaticBoxSizer):
 		self.addXY('Shift (raw)', 'Image')
 		self.addXY('Shift', 'Beam')
 		self.addXY('Tilt', 'Beam')
+		self.addXY('Tilt', 'ImageBeam')
 		self.addXY('Shift', 'Diffraction')
 		self.addXY('Objective', 'Stigmator')
 		self.addXY('Diffraction', 'Stigmator')
@@ -442,9 +443,11 @@ class FocusSizer(wx.StaticBoxSizer):
 		resetdefoc.Bind(wx.EVT_BUTTON, self.onResetDefocus)
 
 		for i, p in enumerate(parameterorder):
-			st = wx.StaticText(self.parent, -1, p)
+			st = wx.StaticText(self.parent, -1, p + ':')
 			self.sz.Add(st, (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			self.sz.Add(self.parameters[p], (i, 1), (1, 1), wx.ALIGN_CENTER)
+			self.sz.Add(self.parameters[p], (i, 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+			self.parameters[p].Enable(False)
+			self.sz.AddGrowableRow(i)
 
 		self.sz.Add(resetdefoc, (i+1, 1), (1, 1),
 								wx.ALIGN_CENTER)
@@ -804,6 +807,10 @@ class TEMPanel(wx.Panel, ParameterMixin):
 			'BeamTilt': {
 				'x': self.szlenses.xy['Beam']['Tilt']['x'],
 				'y': self.szlenses.xy['Beam']['Tilt']['y'],
+			},
+			'ImageBeamTilt': {
+				'x': self.szlenses.xy['ImageBeam']['Tilt']['x'],
+				'y': self.szlenses.xy['ImageBeam']['Tilt']['y'],
 			},
 			'Stigmator': {
 				'objective': {

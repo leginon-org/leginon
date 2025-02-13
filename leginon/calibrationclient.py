@@ -685,7 +685,16 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			return None
 
 	def setBeamTilt(self, bt):
+		"""
+		Pure beam tilt.
+		"""
 		self.instrument.tem.BeamTilt = bt
+
+	def setImageBeamTilt(self, bt):
+		"""
+		Image tilt compensated beam tilt.
+		"""
+		self.instrument.tem.ImageBeamTilt = bt
 
 	def storeRotationCenter(self, tem, ht, mag, probe, beamtilt):
 		rc = leginondata.RotationCenterData()

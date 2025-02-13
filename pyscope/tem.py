@@ -45,6 +45,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'BeamBlank', 'type': 'property'},
 		{'name': 'BeamShift', 'type': 'property'},
 		{'name': 'BeamTilt', 'type': 'property'},
+		{'name': 'ImageBeamTilt', 'type': 'property'},
 		{'name': 'BeamstopPosition', 'type': 'property'},
 		{'name': 'ColdFegFlashing', 'type': 'property'},
 		{'name': 'ColumnValvePosition', 'type': 'property'},
@@ -194,6 +195,12 @@ class TEM(baseinstrument.BaseInstrument):
 		return self.getBeamTilt()
 
 	def setPhasePlatePlaneShift(self, vector, relative = 'absolute'):
+		return self.setBeamTilt(vector, relative)
+
+	def getImageBeamTilt(self):
+		return self.getBeamTilt()
+
+	def setImageBeamTilt(self, vector, relative = 'absolute'):
 		return self.setBeamTilt(vector, relative)
 
 	def getColumnPressure(self):

@@ -919,15 +919,68 @@ class Krios(tem.TEM):
 
 	def getBeamTilt(self):
 		"""
-		Beam Tilt in radians for vector axes x,y.
+		Beam Tilt with beam deflectors in radians for vector axes x,y
+		without linked image deflectors change.
+		Using TEMScripting until utapi implementation is available.
 		"""
-		#TODO: this might need to be mapped to ImageBeamTilt, not BeamTilt
+		# TODO: switch to utapi implementation when it is available
+		value = {'x': None, 'y': None}
+		value['x'] = float(connection.instr.Illumination.RotationCenter.X)
+		value['y'] = float(connection.instr.Illumination.RotationCenter.Y) 
+
+		return value
+
+	def setBeamTilt(self, vector, relative = 'absolute'):
+		"""
+		Beam Tilt with beam deflectors in radians for vector axes x,y
+		without linked image deflectors change.
+		Using TEMScripting until utapi implementation is available.
+		"""
+		# TODO: switch to utapi implementation when it is available
+		if relative == 'relative':
+			original_vector = self.getBeamTilt()
+			try:
+				vector['x'] += original_vector['x']
+			except KeyError:
+				pass
+			try:
+				vector['y'] += original_vector['y']
+			except KeyError:
+				pass
+		elif relative == 'absolute':
+			pass
+		else:
+			raise ValueError
+		
+		vec = connection.instr.Illumination.RotationCenter
+		if abs(vec.X-vector['x'])+abs(vec.Y-vector['y']) < 1e-6:
+			# 1 urad move is ignored.
+			return
+		try:
+			vec.X = vector['x']
+		except KeyError:
+			pass
+		try:
+			vec.Y = vector['y']
+		except KeyError:
+			pass
+		connection.instr.Illumination.RotationCenter = vec
+
+	def getImageBeamTilt(self):
+		"""
+		Beam Tilt in radians for vector axes x,y that contains an Image Tilt
+		correction so that the beam on LPP plane does not shift.
+		"""
 		r = self._getAllDeflectors()
 		return _get_vector_xy(r,'imageBeamTilt')
 
-	def setBeamTilt(self, vector, relative = 'absolute'):
+	def setImageBeamTilt(self, vector, relative = 'absolute'):
+		"""
+		Beam Tilt in radians for vector axes x,y that contains an Image Tilt
+		correction so that the beam on LPP plane does not shift.
+		"""
 		my_device = 'ImageBeamTilt'
-		original_vector = getattr(self,'getBeamTilt')()
+		original_vector = getattr(self,'getImageBeamTilt')()
 		min_move = 1e-6
 
 		req_key_name = camelcase_to_underscore(my_device)

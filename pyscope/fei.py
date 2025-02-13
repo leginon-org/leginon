@@ -782,7 +782,7 @@ class Tecnai(tem.TEM):
 		except KeyError:
 			pass
 		self.tecnai.Illumination.RotationCenter = vec
-	
+
 	def getBeamShift(self):
 		value = {'x': None, 'y': None}
 		try:

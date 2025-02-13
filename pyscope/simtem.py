@@ -366,7 +366,7 @@ class SimTEM(tem.TEM):
 	def getBeamTilt(self):
 		return copy.copy(self.beam_tilt)
 	
-	def setBeamTilt(self, value):
+	def setBeamTilt(self, value, relative = 'absolute'):
 		for axis in list(self.beam_tilt.keys()):
 			try:
 				self.beam_tilt[axis] = value[axis]
@@ -376,7 +376,7 @@ class SimTEM(tem.TEM):
 	def getBeamShift(self):
 		return copy.copy(self.beam_shift)
 
-	def setBeamShift(self, value):
+	def setBeamShift(self, value, relative = 'absolute'):
 		for axis in list(self.beam_shift.keys()):
 			try:
 				self.beam_shift[axis] = value[axis]
@@ -386,7 +386,7 @@ class SimTEM(tem.TEM):
 	def getDiffractionShift(self):
 		return copy.copy(self.diffraction_shift)
 
-	def setDiffractionShift(self, value):
+	def setDiffractionShift(self, value, relative = 'absolute'):
 		for axis in list(self.diffraction_shift.keys()):
 			try:
 				self.diffraction_shift[axis] = value[axis]
@@ -396,7 +396,7 @@ class SimTEM(tem.TEM):
 	def getImageShift(self):
 		return copy.copy(self.image_shift)
 	
-	def setImageShift(self, value):
+	def setImageShift(self, value, relative = 'absolute'):
 		for axis in list(self.image_shift.keys()):
 			try:
 				self.image_shift[axis] = value[axis]
@@ -406,7 +406,7 @@ class SimTEM(tem.TEM):
 	def getRawImageShift(self):
 		return copy.copy(self.raw_image_shift)
 
-	def setRawImageShift(self, value):
+	def setRawImageShift(self, value, relative = 'absolute'):
 		for axis in list(self.raw_image_shift.keys()):
 			try:
 				self.raw_image_shift[axis] = value[axis]
@@ -416,7 +416,7 @@ class SimTEM(tem.TEM):
 	def getDefocus(self):
 		return self.focus - self.zero_defocus
 
-	def setDefocus(self, value):
+	def setDefocus(self, value, relative = 'absolute'):
 		self.focus = value + self.zero_defocus
 
 	def resetDefocus(self):

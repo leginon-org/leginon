@@ -404,6 +404,7 @@ parametermapping = (
 	('screen current', 'ScreenCurrent'),
 	('stigmator', 'Stigmator'),
 	('beam tilt', 'BeamTilt'),
+	('image beam tilt', 'ImageBeamTilt'),
 	('phase plate plane shift', 'PhasePlatePlaneShift'),
 	('stage speed', 'StageSpeed'),
 	('corrected stage position', 'CorrectedStagePosition'),
