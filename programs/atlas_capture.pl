@@ -7,7 +7,7 @@
 # Requires import from ImageMagick to do the screen capture. Newer versions may require "magick import" instead of import.
 # Requires the Leginon Window ID, which can be obtained using xwininfo or other similar programs
    
-#  Usage: $0 <optional window-id> 
+#  Usage: $0 <window-id> <optional time between images>
 #  Use xwininfo to get window-id of Leginon window.
 
 use strict;
@@ -16,18 +16,21 @@ use DBI;
 my $host='10.150.38.162'; # leginon db host IP, CHANGE as needed
 my $user = 'usr_object';  # leginon db user, CHANGE as needed
 my $pw = 'MYPASSWORD'; # leginon database password, CHANGE as needed
-my $sleeptime=1800;  #seconds between screencaps, CHANGE as needed
+my $sleeptime=1800;  #seconds between screencaps, CHANGE as needed or define when run
 
 my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 my @days = qw(Sun Mon Tue Wed Thur Fri Sat Sun);
 print "\nLeave Leginon in Square targeting node and make sure window covers atlas\n\n";
 
 unless (defined $ARGV[0]) {
-   print "Usage: $0 <window-id>\n";
+   print "Usage: $0 <window-id> <optional time(seconds) between images, default $sleeptime> \n";
    print "\nTo get window-id, run xwininfo and click on the Leginon main window.\n";
    die;
 }
 my $window_id = $ARGV[0];
+if (defined $ARGV[1]) {
+   $sleeptime = $ARGV[1];
+}
 
 my $dbh = DBI -> connect("dbi:mysql:database=leginondb;host=$host;port=3306;mysql_compression=1",$user,$pw);
 while (1) {
