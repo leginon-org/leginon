@@ -785,7 +785,27 @@ class Krios(tem.TEM):
 		return self._getIlluminationSettings()['spotSizeIndex']
 
 	def getIntensity(self):
+		if not 'c3Preset' in self._getIlluminationSettings().keys():
+			return self._getIlluminationSettings()['intensity']
 		return self._getIlluminationSettings()['illuminatedAreaDiameter']
+
+	def getParallelIlluminationOffset(self):
+		"""
+		This is a setting that exists on Titan column whhere c2 and c3 together
+		keeps the beam parallel while able to change diameter.  At paralle beam
+		this is 0.0. Other values condense or expand the beam with a combination
+		of c2 and c3 but without changing the beam diameter.  The focusing
+		distance changes as a result, and so does the beam size at the objective
+		focal point.
+		small unit-less float
+		"""
+		if not 'c3Preset' in self._getIlluminationSettings().keys():
+			# no C3, therefore unknown offset, assume as 0.0.
+			return 0.0
+		try:
+			return self._getIlluminationSettings()['c3ImageDistanceParallelOffset']
+		except KeyError:
+			return 0.0
 
 	def _setIllumination(self, req_key_name, value):
 		my_device = underscore_to_camelcase(req_key_name,True)
@@ -804,7 +824,10 @@ class Krios(tem.TEM):
 			return self._setIllumination(req_key_name, value)
 
 	def setIntensity(self, value):
-		req_key_name = 'illuminated_area_diameter'
+		if 'c3Preset' in self._getIlluminationSettings().keys():
+			req_key_name = 'illuminated_area_diameter'
+		else:
+			req_key_name = 'intensity'
 		self._setIllumination(req_key_name, value)
 		# Normalizations
 		if self.normalize_all_after_setting:
@@ -820,6 +843,16 @@ class Krios(tem.TEM):
 			time.sleep(extra_sleep)
 		#reset changed flag
 		self.setAutoNormalizeEnabled(True)
+
+	def setParallelIlluminationOffset(self, value):
+		if not 'c3Present' in self._getIlluminationSettings().keys():
+			# Do not set
+			return
+		ss = value
+		prev = self.getIlluminationParallelOffset()
+		if prev != ss:
+			req_key_name = 'c3ImageDistanceParallelOffset'
+			return self._setIllumination(req_key_name, value)
 
 	def getBeamBlank(self):
 		attr_name = 'GetBeamBlankerState'

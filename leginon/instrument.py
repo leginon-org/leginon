@@ -395,6 +395,7 @@ parametermapping = (
 	('magnification', 'Magnification'), # this change may trigger normalization.
 	('spot size', 'SpotSize'), # this change may trigger normalization.
 	('intensity', 'Intensity'), # perform normalize all lens at this step if needed
+	('parallel illumination offset', 'ParallelIlluminationOffset'), # should be aminor change and no need for more normalization
 	('beam shift', 'BeamShift'), # allowed beam shift is limited by magnification
 	('image shift', 'ImageShift'),
 	('diffraction shift', 'DiffractionShift'),

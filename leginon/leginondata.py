@@ -191,6 +191,7 @@ scope_params = (
 	('magnification', int),
 	('spot size', int),
 	('intensity', float),
+	('parallel illumination offset', float),
 	('image shift', dict),
 	('beam shift', dict),
 	('diffraction shift', dict),

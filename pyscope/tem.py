@@ -70,6 +70,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'HolderType', 'type': 'property'},
 		{'name': 'ImageShift', 'type': 'property'},
 		{'name': 'Intensity', 'type': 'property'},
+		{'name': 'ParallelIlluminationOffset', 'type': 'property'},
 		{'name': 'LowDose', 'type': 'property'},
 		{'name': 'LowDoseMode', 'type': 'property'},
 		{'name': 'Magnification', 'type': 'property'},
@@ -187,6 +188,12 @@ class TEM(baseinstrument.BaseInstrument):
 		'''
 		Only needed for JEOL scopes
 		'''
+		pass
+
+	def getParallelIlluminationOffset(self):
+		return 0.0
+
+	def setParallelIlluminationOffset(self, value):
 		pass
 
 	def nextPhasePlate(self):

@@ -77,6 +77,7 @@ class SimTEM(tem.TEM):
 		self.screen_current = 0.000001
 		self.intensity_range = (0.0, 1.0)
 		self.intensity = 0.0
+		self.parallel_offset = 0.0
 
 		self.stigmators = {
 			'condenser': {
@@ -343,6 +344,12 @@ class SimTEM(tem.TEM):
 	def setIntensity(self, value):
 		if value < self.intensity_range[0] or value > self.intensity_range[1]:
 			raise ValueError('invalid intensity')
+
+	def getParallelIlluminationOffset(self):
+		return self.parallel_offset
+
+	def setParallelIlluminationOffset(self, value):
+		self.parallel_offset = value
 
 	def getStigmator(self):
 		return copy.deepcopy(self.stigmators)
