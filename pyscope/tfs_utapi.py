@@ -851,7 +851,7 @@ class Krios(tem.TEM):
 		ss = value
 		prev = self.getParallelIlluminationOffset()
 		if prev != ss:
-			req_key_name = 'c3ImageDistanceParallelOffset'
+			req_key_name = 'c3_image_distance_parallel_offset'
 			return self._setIllumination(req_key_name, value)
 
 	def getBeamBlank(self):
