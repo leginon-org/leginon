@@ -785,7 +785,7 @@ class Krios(tem.TEM):
 		return self._getIlluminationSettings()['spotSizeIndex']
 
 	def getIntensity(self):
-		if not 'c3Preset' in self._getIlluminationSettings().keys():
+		if not 'c3Present' in self._getIlluminationSettings().keys():
 			return self._getIlluminationSettings()['intensity']
 		return self._getIlluminationSettings()['illuminatedAreaDiameter']
 
@@ -799,7 +799,7 @@ class Krios(tem.TEM):
 		focal point.
 		small unit-less float
 		"""
-		if not 'c3Preset' in self._getIlluminationSettings().keys():
+		if not 'c3Present' in self._getIlluminationSettings().keys():
 			# no C3, therefore unknown offset, assume as 0.0.
 			return 0.0
 		try:
@@ -824,7 +824,7 @@ class Krios(tem.TEM):
 			return self._setIllumination(req_key_name, value)
 
 	def setIntensity(self, value):
-		if 'c3Preset' in self._getIlluminationSettings().keys():
+		if 'c3Present' in self._getIlluminationSettings().keys():
 			req_key_name = 'illuminated_area_diameter'
 		else:
 			req_key_name = 'intensity'
