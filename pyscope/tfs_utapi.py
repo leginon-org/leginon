@@ -849,7 +849,7 @@ class Krios(tem.TEM):
 			# Do not set
 			return
 		ss = value
-		prev = self.getIlluminationParallelOffset()
+		prev = self.getParallelIlluminationOffset()
 		if prev != ss:
 			req_key_name = 'c3ImageDistanceParallelOffset'
 			return self._setIllumination(req_key_name, value)
