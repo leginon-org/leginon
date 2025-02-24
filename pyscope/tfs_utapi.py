@@ -279,6 +279,7 @@ class Logger(object):
 class Krios(tem.TEM):
 	name = 'Krios'
 	default_stage_speed_fraction = 1.0
+	has_x_lens = False
 	# (pyscope value, utapi CONSTANT)
 	cm_projection_mode_map = [	('imaging','PROJECTION_MODE_IMAGING'),
 							('diffraction', 'PROJECTION_MODE_DIFFRACTION')
@@ -1731,11 +1732,15 @@ class Krios(tem.TEM):
 			# value is zero or screen is up.
 			return 0.0
 
+	def hasXLens(self):
+		return self.has_x_lens
+
 class KriosXL(Krios):
 	name = 'KriosXL'
 	column_type = 'titan'
 	use_normalization = True
 	projection_lens_program = 'TEM XL'
+	has_x_lens = True
 
 	def getPhasePlatePlaneShift(self):
 		return self.getXDeflectorTilt()
@@ -1754,12 +1759,14 @@ class EFKrios(Krios):
 	column_type = 'titan'
 	use_normalization = True
 	projection_lens_program = 'EFTEM'
+	has_x_lens = False
 
 class EFKriosXL(EFKrios):
 	name = 'EF-KriosXL'
 	column_type = 'titan'
 	use_normalization = True
 	projection_lens_program = 'EFTEM XL'
+	has_x_lens = True
 
 	def getPhasePlatePlaneShift(self):
 		return self.getXDeflectorTilt()
