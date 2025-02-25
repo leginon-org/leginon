@@ -90,7 +90,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 			sz = self.addBasicSettings()
 		else:
 			sz = self.addSettings()
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
+		sbsz.Add(sz, 0, wx.EXPAND|wx.ALL, 5)
 		return [sbsz]
 
 	def addSettings(self):
@@ -134,7 +134,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sztest.Add(szthreshold, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sztest.Add(self.instrumentselection, (1, 0), (2, 1), wx.EXPAND)
 		sztest.Add(self.widgets['camera settings'], (3, 0), (1, 1), wx.EXPAND)
-		sbsztest.Add(sztest, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
+		sbsztest.Add(sztest, 0, wx.EXPAND|wx.ALL, 5)
 
 		#measure interval
 		self.widgets['measure drift interval'] = FloatEntry(self, -1, min=0.0, chars=4)

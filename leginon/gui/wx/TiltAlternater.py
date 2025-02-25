@@ -62,7 +62,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		label = wx.StaticText(self, -1, 'List of Tilts to Collect (in degrees)')
 		sizer.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.widgets['tilts'] = Entry(self, -1, chars=15, style=wx.ALIGN_RIGHT)
-		sizer.Add(self.widgets['tilts'], (1,2), (1,2), wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, bordersize)
+		sizer.Add(self.widgets['tilts'], (1,2), (1,2), wx.EXPAND|wx.ALL, bordersize)
 
 		self.widgets['reset per targetlist'] = \
 				wx.CheckBox(self, -1, 'Reset to the first of the tilts for targets from new image')
