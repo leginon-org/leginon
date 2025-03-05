@@ -201,6 +201,12 @@ noderegistry.registerNodeClass(TiltAlternater,classtype)
 from leginon.defocussequence import DefocusSequence
 noderegistry.registerNodeClass(DefocusSequence,classtype)
 
+from leginon.tiltcycler import TiltCycler
+noderegistry.registerNodeClass(TiltCycler,classtype)
+
+from leginon.phaseplateplaneshiftcycler import PhasePlatePlaneShiftCycler
+noderegistry.registerNodeClass(PhasePlatePlaneShiftCycler,classtype)
+
 ##############################
 # Calibrations
 ##############################

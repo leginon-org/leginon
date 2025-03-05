@@ -2346,6 +2346,22 @@ class AutoExposureSettingsData(AcquisitionSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class PhasePlatePlaneShiftCyclerSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('shifts on plane', str), #Issue #5687
+			('use cycler', bool),
+		)
+	typemap = classmethod(typemap)
+
+class TiltCyclerSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('tilts', str), #Issue #5687
+			('use cycler', bool),
+		)
+	typemap = classmethod(typemap)
+
 class TiltAlternaterSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
