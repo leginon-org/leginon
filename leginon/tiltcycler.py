@@ -67,6 +67,12 @@ class TiltCycler(acquisition.Acquisition):
 			# process as normal
 			super(TiltCycler, self).processTargetData(targetdata, attempt)
 
+	def onLoopStop(self):
+		self.logger.info('Stage alpha reset to %s' % (self.parent_tilt))
+		self.instrument.tem.setTilt(self.parent_tilt)
+		self.logger.info('Shift sequence cycler reset to beginning')
+		self.tilts_cycle = itertools.cycle(eval(self.settings['tilts']))
+
 	def resetCycle(self):
 		self.getParentTilt({})
 		self.tilts_cycle = itertools.cycle(eval(self.settings['tilts']))

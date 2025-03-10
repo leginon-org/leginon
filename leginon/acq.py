@@ -1522,8 +1522,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.setStatus('waiting')
 			time.sleep(waittime)
 			self.setStatus('processing')
+		self.onLoopStop()
 		self.logger.info('Simulated Target Loop Done')
 		self.setStatus('idle')
+
+	def onLoopStop(self):
+		pass
 
 	def simulateTargetLoopStop(self):
 		self.logger.info('Simulated Target Loop will stop after next iteration')
