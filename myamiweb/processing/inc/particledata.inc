@@ -27,7 +27,8 @@ class particledata {
 	var $ace_method_map=array(
 					'ace1'=>array('ApAceParamsData','aceparams'),
 					'ace2'=>array('ApAce2ParamsData','ace2_params'),
-					'ctffind'=>array('ApCtfTiltParamsData','ctftilt_params'),
+					'ctffind'=>array('ApCtfFind4ParamsData','ctffind4_params'),
+					'ctftilt'=>array('ApCtfTiltParamsData','ctftilt_params'),
 					'ctffind4'=>array('ApCtfFind4ParamsData','ctffind4_params'),
 					'xmipp'=>array('ApXmippCtfParamsData','xmipp_ctf_params'),
 					);
@@ -1067,6 +1068,7 @@ class particledata {
 
 		foreach ($this->ace_method_map as $k=>$p ) {
 			$ref= "REF|$p[0]|$p[1]";
+			if (gettype($result) == "NULL") continue;
 			if (in_array($ref, array_keys($result)) && is_numeric($result[$ref])) {
 				$method = $k;
 				break;

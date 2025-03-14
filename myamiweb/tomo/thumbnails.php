@@ -57,6 +57,7 @@ function getTiltData($data, $indices) {
 function thumbnailTable($tilts, $min_image_id) {
     echo '<tr>';
     foreach($tilts as $image_id => $tilt) {
+		if (empty($image_id)) continue;
         echo '<th>';
         echo '#'.($image_id - $min_image_id + 1);
         echo '</th>';
@@ -64,6 +65,7 @@ function thumbnailTable($tilts, $min_image_id) {
     echo '</tr>';
     echo '<tr>';
     foreach($tilts as $image_id => $tilt) {
+		if (is_null($image_id)) continue;
         echo '<th>';
         echo number_format($tilt, 1).'&deg';
         echo '</th>';
