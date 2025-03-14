@@ -17,7 +17,7 @@ $defaultId= 1766;
 $sessionId= ($_GET['expId']) ? $_GET['expId'] : $defaultId;
 $viewdata = ($_GET['vd']==1) ? true : false;
 $histogram = ($_GET['hg']==1) ? true : false;
-$f = $_GET[f];
+$f = $_GET['f'];
 $preset=$_GET['preset'];
 $summary = ($_GET['s']==1 ) ? true : false;
 $minimum = ($_GET['mres']) ? $_GET['mres']: false;
