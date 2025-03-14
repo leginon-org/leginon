@@ -49,11 +49,21 @@ class TiltGroup(object):
 		self.tilts = []
 		self.xs = []
 		self.ys = []
+		self.delta_xys = []
 
 	def addTilt(self, tilt, x, y):
 		self.tilts.append(tilt)
 		self.xs.append(x)
 		self.ys.append(y)
+
+	def addDelta(self, correlation):
+		"""
+		Correlation dictionary of x,y is the difference between predict and actual position.
+		"""
+		if len(self.xs) > 1:
+			self.delta_xys.append(correlation)
+		else:
+			self.delta_xys.append({'x':0.0,'y':0.0})
 
 	def __len__(self):
 		return len(self.tilts)
@@ -69,6 +79,8 @@ class Prediction(object):
 		self.fitdata = [4,4]
 		self.fixed_model = True
 		self.valid_tilt_series_list = []
+		self.damping_factor = -0.5
+		self.damping_start = 1000 # minimal delta hypot in pixels to apply damping
 
 	def resetTiltSeriesList(self):
 		self.tilt_series_list = []
@@ -136,9 +148,10 @@ class Prediction(object):
 		g = tilt_series.getCurrentTiltGroupIndex()
 		return g
 
-	def addPosition(self, tilt, position):
+	def addPosition(self, tilt, position, delta={'x':0.0,'y':0.0}):
 		tilt_group = self.getCurrentTiltGroup()
 		tilt_group.addTilt(tilt, position['x'], position['y'])
+		tilt_group.addDelta(delta)
 
 	def setParameters(self, index, params):
 		self.parameters[index] = params
@@ -259,6 +272,13 @@ class Prediction(object):
 								  tilt_group.ys,
 								  tilt,
 									n_smooth_fit)
+			damping = self.derivativeDamping(tilt_group.delta_xys)
+			debug_print('tilt_group delta', tilt_group.delta_xys)
+			debug_print('dirivative dampling', damping)
+			debug_print('original prediction x,y', x, y)
+			x = x + damping * (tilt_group.delta_xys[-1]['x'])
+			y = y + damping * (tilt_group.delta_xys[-1]['y'])
+			debug_print('combined with damping of last delta', x, y)
 			## calculate optical axis tilt and offset
 			mintilt, maxtilt = self.getMinMaxTiltsOfTiltSeriesList(current_group_index)
 			if (abs(maxtilt) < math.radians(30) and abs(mintilt) < math.radians(30)):
@@ -451,6 +471,16 @@ class Prediction(object):
 		except TypeError:
 			x = [result[0]]
 		return x
+
+	def derivativeDamping(self, delta_xys):
+		hypot1 = math.hypot(delta_xys[-1]['x'],delta_xys[-1]['y'])
+		hypot2 = math.hypot(delta_xys[-2]['x'],delta_xys[-2]['y'])
+		if hypot1 - hypot2 <= 0 or hypot2 == 0:
+			return 0.0
+		min_hypot1 = self.damping_start
+		if hypot1 <= min_hypot1:
+			return 0.0
+		return self.damping_factor*(hypot1-min_hypot1)/min_hypot1
 
 	def getParameters(self, parameters):
 		phi = parameters[0]
