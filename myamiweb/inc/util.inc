@@ -422,8 +422,10 @@ function format_filename_str($filename) {
 
 function format_sci_number($data) {
 
+	$numargs = func_num_args();
 	$decimal = @func_get_arg(1);
-	$nohtmlsup = @func_get_arg(2);
+	if ($numargs > 2)
+		$nohtmlsup = @func_get_arg(2);
 	$sup1 = ($nohtmlsup) ? 'E' : 'x10<sup>';
 	$sup2 = ($nohtmlsup) ? '' : '</sup>';
 	if (!$data) return $data;
