@@ -122,7 +122,7 @@ if ($ctfdata) {
 				echo " <b>$name:</b>&nbsp;".number_format($v,2);
 			elseif ($k == 'cs')
 				echo " <b>$name:</b>&nbsp;".number_format($v,3)."&nbsp;mm";
-			elseif ($v-floor($v)) 
+			elseif (gettype($v) == "double" && $v-floor($v)) 
 				echo " <b>$name:</b>&nbsp;".format_sci_number($v,2,2);
 			else
 				echo " <b>$name:</b>&nbsp;$v";

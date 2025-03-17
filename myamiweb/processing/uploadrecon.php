@@ -74,14 +74,14 @@ function createUploadReconForm( $extra=false, $title='UploadRecon.py Launcher', 
 		// Get refine stack preparation parameters
 		// TODO: this may need to be modified if we have multiple stacks???
 		$stacks		= $particle->getPreparedRefineStackData($refineID);
-		$lastPart 	= $stacks[0][last_part];
-		$lp 		= $stacks[0][lowpass];
-		$hp 		= $stacks[0][highpass];
-		$bin 		= $stacks[0][bin];	
-		$apix 		= $stacks[0][apix];	
-		$cs 		= $stacks[0][cs];	
-		$boxsize 	= $stacks[0][boxsize];	
-		$stackfilename = $stacks[0][filename]; 
+		$lastPart 	= $stacks[0]['last_part'];
+		$lp 		= $stacks[0]['lowpass'];
+		$hp 		= $stacks[0]['highpass'];
+		$bin 		= $stacks[0]['bin'];	
+		$apix 		= $stacks[0]['apix'];	
+		$cs 		= $stacks[0]['cs'];	
+		$boxsize 	= $stacks[0]['boxsize'];	
+		$stackfilename = $stacks[0]['filename']; 
 		
 		// Get initial models
 		$models = $particle->getModelsFromRefineID( $refineID );
@@ -181,9 +181,9 @@ function createUploadReconForm( $extra=false, $title='UploadRecon.py Launcher', 
 			<OPTION value=''>Select One</OPTION>\n";
 		$models=$particle->getModelsFromProject($projectId);
 		foreach ($models as $model) {
-			echo "<OPTION value='$model[DEF_id]'";
+			echo "<OPTION value='$model['DEF_id']'";
 			if ($model['DEF_id']==$_POST['model']) echo " SELECTED";
-			echo "> ".$model['DEF_id']." ($model[description])";
+			echo "> ".$model['DEF_id']." ($model['description'])";
 			echo "</OPTION>\n";
 		}
 		echo "</SELECT>\n";
@@ -239,10 +239,10 @@ function createUploadReconForm( $extra=false, $title='UploadRecon.py Launcher', 
 		echo "Process Used:
 				<select name='package'> ";
 		foreach ($packages as $p) {
-			echo "<option value='$p[setting]'";
+			echo "<option value='$p['setting']'";
 			// select previously set package on resubmit
 			if ($p['setting']==$method) echo " SELECTED";
-			echo ">  $p[description]";
+			echo ">  $p['description']";
 			echo "</option>\n";
 		}
 		echo "</select>";

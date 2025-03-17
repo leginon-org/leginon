@@ -221,8 +221,8 @@ class Prediction(object):
 			x0 = tilt_group.xs[0]
 			y0 = tilt_group.ys[0]
 			tilt0 = tilt_group.tilts[0]
-			cos_tilts = scipy.cos(scipy.array([tilt0, tilt]))
-			sin_tilts = scipy.sin(scipy.array([tilt0, tilt]))
+			cos_tilts = numpy.cos(numpy.array([tilt0, tilt]))
+			sin_tilts = numpy.sin(numpy.array([tilt0, tilt]))
 			parameters = self.getCurrentParameters()
 			args_list = [(cos_tilts, sin_tilts, x0, y0, None, None)]
 
@@ -277,8 +277,8 @@ class Prediction(object):
 			x0 = tilt_group.xs[0]
 			y0 = tilt_group.ys[0]
 			tilt0 = tilt_group.tilts[0]
-			cos_tilts = scipy.cos(scipy.array([tilt0, tilt]))
-			sin_tilts = scipy.sin(scipy.array([tilt0, tilt]))
+			cos_tilts = numpy.cos(numpy.array([tilt0, tilt]))
+			sin_tilts = numpy.sin(numpy.array([tilt0, tilt]))
 			parameters = self.getCurrentParameters()
 			args_list = [(cos_tilts, sin_tilts, x0, y0, None, None)]
 			debug_print("parameters go in model (%.4f,%.4f,%.1f)" % parameters)
@@ -342,8 +342,8 @@ class Prediction(object):
 		if len(xs) != len(ys):
 			return 0
 		m = len(xs)
-		xa = scipy.zeros((m, 1), scipy.dtype('d'))
-		ya = scipy.zeros((m, 1), scipy.dtype('d'))
+		xa = numpy.zeros((m, 1), numpy.dtype('d'))
+		ya = numpy.zeros((m, 1), numpy.dtype('d'))
 		for i in range(m):
 			xa[i] = xs[i]
 			ya[i] = ys[i]
@@ -355,21 +355,21 @@ class Prediction(object):
 		r2 = ssxy * ssxy / (ssxx * ssyy)
 		return r2
 
-	def acceptableindices(self,list,min,max,datalimit):
+	def acceptableindices(self,vlist,vmin,vmax,datalimit):
 		'''
-		Return indices for a list only item values in the range of min and max.
+		Return indices for a vlist only item values in the range of vmin and vmax.
 		When there are fewer items that pass the criteria than datalimit, try
-		to include more at the end of the list
+		to include more at the end of the vlist
 		'''
-		array = scipy.array(list)
-		larger = scipy.where(array >= min)
-		smaller = scipy.where(array <= max)
-		goodarrayindices = scipy.intersect1d(larger[0],smaller[0])
+		array = numpy.array(vlist)
+		larger = numpy.where(array >= vmin)
+		smaller = numpy.where(array <= vmax)
+		goodarrayindices = numpy.intersect1d(larger[0],smaller[0])
 		goodindices = goodarrayindices.tolist()
 		# The current tilt series may need an extra index to make up the number
-		while len(goodindices) < datalimit and len(goodindices) > 0 and len(list) >= datalimit:
+		while len(goodindices) < datalimit and len(goodindices) > 0 and len(vlist) >= datalimit:
 			nextindex = goodindices[-1]+1
-			if nextindex not in list(range(0,len(list))):
+			if nextindex not in list(range(0,len(vlist))):
 				break
 			goodindices.append(goodindices[-1]+1)
 		return goodindices
@@ -415,15 +415,15 @@ class Prediction(object):
 				goodtilts.append(tilt_group.tilts[i])
 				goodxs.append(tilt_group.xs[i])
 				goodys.append(tilt_group.ys[i])
-			tilts = scipy.array(goodtilts)
-			cos_tilts = scipy.cos(tilts)
-			sin_tilts = scipy.sin(tilts)
+			tilts = numpy.array(goodtilts)
+			cos_tilts = numpy.cos(tilts)
+			sin_tilts = numpy.sin(tilts)
 
 			x0 = tilt_group.xs[0]
 			y0 = tilt_group.ys[0]
 
-			x = scipy.array(goodxs)
-			y = scipy.array(goodys)
+			x = numpy.array(goodxs)
+			y = numpy.array(goodys)
 
 			args_list.append((cos_tilts, sin_tilts, x0, y0, x, y))
 
@@ -457,7 +457,7 @@ class Prediction(object):
 		optical_axis = parameters[1]
 		if self.fixed_model == True:
 			phi, optical_axis, z0 = self.getFixedParameters()
-		zs = scipy.array(parameters[2:], scipy.dtype('d'))
+		zs = numpy.array(parameters[2:], numpy.dtype('d'))
 		return phi, optical_axis, zs
 
 	def model(self, parameters, args_list):
@@ -465,11 +465,11 @@ class Prediction(object):
 		x, y positions according to phi, optical axis and each zs
 		'''
 		phi, optical_axis, zs = self.getParameters(parameters)
-		sin_phi = scipy.sin(phi)
-		cos_phi = scipy.cos(phi)
+		sin_phi = numpy.sin(phi)
+		cos_phi = numpy.cos(phi)
 		position_groups = []
 		for i, (cos_tilts, sin_tilts, x0, y0, x, y) in enumerate(args_list):
-			positions = scipy.zeros((cos_tilts.shape[0], 3), 'd')
+			positions = numpy.zeros((cos_tilts.shape[0], 3), 'd')
 			z = zs[i]
 			# transform position, rotate, inverse transform to get rotated x, y, z
 			positions[:, 0] = cos_phi*x0 + sin_phi*y0
@@ -494,22 +494,22 @@ class Prediction(object):
 		for i, positions in enumerate(position_groups):
 			n = positions.shape[0]
 			cos_tilts, sin_tilts, x0, y0, x, y = args_list[i]
-			residuals = scipy.zeros((n, 2), scipy.dtype('d'))
+			residuals = numpy.zeros((n, 2), numpy.dtype('d'))
 			residuals[:, 0] = x
 			residuals[:, 1] = y
 			residuals -= positions[:, :2]
 			# put in list
 			residuals_list.extend(residuals[:, 0])
 			residuals_list.extend(residuals[:, 1])
-		residuals_list = scipy.array(residuals_list, scipy.dtype('d'))
+		residuals_list = numpy.array(residuals_list, numpy.dtype('d'))
 		residuals_list.shape = (residuals_list.size,)
 		return residuals_list
 
 	def _leastSquaresXY(self, tilts, positions, tilt):
 		m = len(tilts)
 		n = 3
-		a = scipy.zeros((m, n), scipy.dtype('d'))
-		b = scipy.zeros((m, 1), scipy.dtype('d'))
+		a = numpy.zeros((m, n), numpy.dtype('d'))
+		b = numpy.zeros((m, 1), numpy.dtype('d'))
 		for i in range(m):
 			v = tilts[i]
 			for j in range(n):
@@ -523,7 +523,7 @@ class Prediction(object):
 
 	def leastSquaresXY(self, tilts, xs, ys, tilt, n_smooth_fit=4):
 		n = n_smooth_fit+1
-		position = scipy.zeros(2, scipy.dtype('d'))
+		position = numpy.zeros(2, numpy.dtype('d'))
 		for i, positions in enumerate((xs, ys)):
 			position[i] = self._leastSquaresXY(tilts[-n:], positions[-n:], tilt)
 		return position
