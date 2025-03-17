@@ -105,7 +105,7 @@ class PeakFinder(object):
 				self.results['snr'] = self.results['signal'] / self.results['noise']
 			else:
 				self.results['snr'] = self.results['pixel peak value']
-			#print self.results['noise'],self.results['mean'],self.results['signal'],self.results['snr']
+			#print(self.results['noise'],self.results['mean'],self.results['signal'],self.results['snr'])
 
 		return self.results['pixel peak']
 	"""

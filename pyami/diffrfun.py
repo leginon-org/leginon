@@ -193,7 +193,7 @@ def calibrate(a, ht, cam_psize, image_bin):
 			break
 		position = r_centers[p]
 		cam_length,r_pixel = calculateCameraLength(d[i], position, ht, cam_psize,image_bin)
-		#print p, position, cam_length
+		#print(p, position, cam_length)
 		cam_lengths.append(cam_length)
 		i += 1
 	return cam_lengths, center, radial_value

@@ -87,8 +87,8 @@ def algebraic2parametric(coeff):
 
 	convention note: alpha is measured as positive values towards the y-axis
 	'''
-	#print coeff
-	#print ("A=%.3f B=%.3f C=%.3f D=%.3f E=%.3f F=%.3f"
+	#print(coeff)
+	#print("A=%.3f B=%.3f C=%.3f D=%.3f E=%.3f F=%.3f"
 	#	%(coeff[0], coeff[1], coeff[2], coeff[3], coeff[4], coeff[5],))
 
 	if numpy.any(numpy.isnan(coeff)) or numpy.any(numpy.isinf(coeff)):
@@ -123,7 +123,7 @@ def algebraic2parametric(coeff):
 		a = temp
 		alpha = math.pi/2 + alpha
 
-	#print "alpha", alpha
+	#print("alpha", alpha)
 	if alpha <= -math.pi/2:
 		alpha += math.pi
 	elif alpha > math.pi/2:
@@ -264,7 +264,7 @@ def totalLeastSquareEllipse(points, center=(0,0), weights=None, epsilon=1e-5, ma
 
 		## calculate the absolute mean error
 		err = numpy.absolute(numpy.dot(X, beta) - Y).ravel()
-		#print "totalLeastSquares iter %d error: %.4f"%(i, err.mean())
+		#print("totalLeastSquares iter %d error: %.4f"%(i, err.mean()))
 		## fit to a normal distribution
 		normerr = ( err - err.min() )/err.std()
 		## calculate new weights based on 
@@ -405,18 +405,18 @@ def generate_ellipse(a, b, alpha, center=(0,0), numpoints=3, noise=None,
 	cols = center[1] + a* numpy.cos(thetas) * sina +  b* numpy.sin(thetas) * cosa
 
 	points = numpy.vstack((rows,cols)).T
-	#print points[:5,:]
+	#print(points[:5,:])
 
 	if noise is not None:
 		rand = numpy.random.standard_normal(points.shape)
 		points += rand * noise
-	#print points[0]
+	#print(points[0])
 
 	## use only integers
 	if integers is True:
 		points = numpy.array(numpy.around(points, 0), dtype=numpy.int_)
-	#print points[0]
-	#print points[:5,:]
+	#print(points[0])
+	#print(points[:5,:])
 
 	return points
 

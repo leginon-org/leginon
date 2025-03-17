@@ -108,7 +108,7 @@ def find_ast_ellipse(grad,thr,dmean,drange):
 					position = blob.stats['maximum_position']
 					newposition = (position[0]+offset[0],position[1]+offset[1])
 					if distances[i] == min(gooddistances):
-						#print division - len(angles),distances[i],position
+						#print(division - len(angles),distances[i],position)
 						symposition = (center[0]*2-newposition[0],center[1]*2-newposition[1])
 						goods.append(newposition)
 						goods.append(symposition)
@@ -150,7 +150,7 @@ def getBeamTiltPhaseShiftCorrection(imgshape,beamtilt,Cs,wavelength,pixelsize):
 		phaseshift = numpy.fromfunction(lambda i, j: 
 			2*math.pi*scaled_Cs_wavelength_squared*((i-c[0])*(i-c[0])+(j-c[1])*(j-c[1]))*((i-c[0])*beamtilt[0]+(j-c[1])*beamtilt[1]), imgshape)
 		phaseshift = imagefun.swap_quadrants(phaseshift)
-		#print phaseshift[c[0],:] * 180.0 / math.pi
+		#print(phaseshift[c[0],:] * 180.0 / math.pi)
 		correction = numpy.cos(phaseshift)+numpy.sin(phaseshift)*complex(0,1)
 		return correction
 
