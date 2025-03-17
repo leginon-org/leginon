@@ -78,7 +78,7 @@ def calculateIndexRangesInClassJenksDistribution(all_codes, n_class):
 	except:
 		print('Jenks sorting not installed or had error, no targets found')
 		return []
-	print ("Class 1 has minimum value %d" %(cutoffs[0]))
+	print("Class 1 has minimum value %d" %(cutoffs[0]))
 	for i in range(1,len(cutoffs)):
 		print("Class %d has maximum value %d"%(i,cutoffs[i]))
 		breaks=[]

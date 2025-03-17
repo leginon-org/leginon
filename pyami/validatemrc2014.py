@@ -124,27 +124,27 @@ class MRC2014Check(object):
 		nz = self.header['nz']
 		mz = self.header['mz']
 		if nz == 1:
-			print ('Check as single image....')
+			print('Check as single image....')
 			return
 		else:
 			if nz == mz:
 				if self.header['ispg'] == 0:
 					# backward compatible
 					self.is2D = True
-					print ('Check as image stack....')
+					print('Check as image stack....')
 				else:
 					self.is2D = False
-					print ('Check as single 3D volume....')
+					print('Check as single 3D volume....')
 			elif mz == 1:
 				self.is2D = True
-				print ('Check as image stack....')
+				print('Check as image stack....')
 			else:
 				self.is2D = False
 				if self.header['ispg'] < 400:
 					self.isCrystal = True
-					print ('Check as crystallographic map....')
+					print('Check as crystallographic map....')
 				else:
-					print ('Check as 3D volume stack....')
+					print('Check as 3D volume stack....')
 
 	def getEndianness(self):
 		if not self.header['byteorder']:

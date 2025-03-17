@@ -12,7 +12,7 @@ def getSubversionRevision(filename=None):
 		dirname = os.path.dirname(os.path.abspath(filename))
 	else:
 		dirname = os.path.abspath(filename)
-	#print "DIRNAME: ", dirname
+	#print("DIRNAME: ", dirname)
 	svndir = os.path.join(dirname, ".svn")
 	if not os.path.isdir(svndir):
 		return None

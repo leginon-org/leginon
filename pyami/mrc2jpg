@@ -26,7 +26,7 @@ Usage:
 	a = mrc.read(mrcfilename)
 	jpg.write(a, jpgfilename, **kwargs)
 	if verbose:
-		print jpgfilename
+		print(jpgfilename)
 
 def convert_filename(mrcfilename):
 	base, ext = os.path.splitext(mrcfilename)

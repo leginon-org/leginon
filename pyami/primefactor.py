@@ -32,7 +32,7 @@ def getAllPrimes(maxn=1028):
 	n = 2
 	while n <= maxn:
 		if isGoodPrime(n,False):
-			#print n, factors
+			#print(n, factors)
 			goodones.append(n)
 		n += 2
 	return goodones
@@ -43,7 +43,7 @@ def getAllEvenPrimes(maxn=1028):
 	n = 2
 	while n <= maxn:
 		if isGoodPrime(n,False):
-			#print n, factors
+			#print(n, factors)
 			goodones.append(n)
 		n += 2
 	return goodones
@@ -76,7 +76,7 @@ def isGoodPrime(num=4, power_of_4_rule=True):
 	(2) if greater than 4^x, must be multiple of 2^x,
 	(3) no prime factor greater than sqrt(num)
 	"""
-	#print numa
+	#print(numa)
 	if power_of_4_rule:
 		if num % 4 != 0:
 			return False

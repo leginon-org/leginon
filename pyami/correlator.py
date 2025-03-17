@@ -128,7 +128,7 @@ class Correlator(object):
 	def phaseCorrelate(self, zero=True, wiener=False):
 		# elementwise phase-correlation =
 		# cross-correlation / magnitude(cross-correlation
-		#print 'phaseCorrelate start'
+		#print('phaseCorrelate start')
 		if self.results['phase correlation image'] is None:
 			self.crossCorrelationFFT()
 			ccfft = self.results['cross correlation fft']

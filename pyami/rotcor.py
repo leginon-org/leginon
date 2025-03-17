@@ -106,7 +106,7 @@ def testMRCImages():
 	#result = register(image1, image2, range()
 	#result = register2(image1, image2, range(86,95))
 	result = register2(image1, image2, list(range(90,91)))
-	#print result
+	#print(result)
 
 def testPolarOnImage():
 	infilename = sys.argv[1]

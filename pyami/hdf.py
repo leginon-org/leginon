@@ -222,7 +222,7 @@ class HdfFile(object):
 				if key.startswith('EMAN.IMAGIC'):
 					del attrDict[key]
 		self.dset.close()
-		#print attrDict
+		#print(attrDict)
 		return attrDict
 
 	#----------------------------
@@ -245,14 +245,14 @@ class HdfFile(object):
 			print("read len %d"%(len(particleNumbers)))
 		images = []
 		for partnum in particleNumbers:
-			#print "----------"
-			#print partnum
+			#print("----------")
+			#print(partnum)
 			partnumstr = str(partnum)
 			if self.debug is True:
 				sys.stderr.write(".")
 			image = imageDict[partnumstr]['image']
 			imagedata = image[:]
-			#print imagedata
+			#print(imagedata)
 			images.append(imagedata)
 		self.dset.close()
 		return numpy.array(images)
@@ -296,7 +296,7 @@ class HdfFile(object):
 
 if __name__ == '__main__':
 	a = numpy.array(numpy.random.random((3,128,128)), dtype=numpy.float32)
-	#print a
+	#print(a)
 	print(a.shape)
 	print("\nwriting random.hdf")
 	rhdf = HdfFile('random.hdf')
@@ -307,7 +307,7 @@ if __name__ == '__main__':
 	b = rhdf.readFirstParticleHeader()
 	b = rhdf.read()
 	rhdf.append(a)
-	#print b
+	#print(b)
 	print(b.shape)
 
 	print("\ndiff")

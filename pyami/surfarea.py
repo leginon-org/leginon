@@ -40,7 +40,7 @@ def findValues():
 		weight = surfaceWeightByIfs(footprint)
 		sys.stdout.write("%.4f, "%(weight))
 		#i2 = footprintToInt(footprint)
-		#print i, footprint, i2
+		#print( i, footprint, i2)
 	print("\n")
 
 #======================
@@ -170,7 +170,7 @@ def surfaceAreaByIfs(volume, test=False):
 			Scounts.append(Smatrix.sum())
 		Sarray = numpy.array(Scounts)
 		#total = Sarray[1:].sum()
-		#print numpy.around(Sarray/total*100.0,3)
+		#print(numpy.around(Sarray/total*100.0,3))
 		print(numpy.array(Sarray, dtype=numpy.int16))
 
 	return  surfarea
@@ -188,7 +188,7 @@ def surfaceAreaByInts(volume, test=False):
 			Scounts.append(Smatrix.sum())
 		Sarray = numpy.array(Scounts)
 		#total = Sarray[1:].sum()
-		#print numpy.around(Sarray/total*100.0,3)
+		#print(numpy.around(Sarray/total*100.0,3))
 		print(numpy.array(Sarray, dtype=numpy.int16))
 
 	return  surfarea
@@ -204,7 +204,7 @@ def randomSurface():
 	for i in range(3):
 		dim = int(random.random()*50+1)*4
 		shape.append(dim)
-	#print "Shape of array: ", shape
+	#print("Shape of array: ", shape)
 	rand = numpy.random.random(shape)
 	### zero the edges
 	rand[0,:,:] = 0.0

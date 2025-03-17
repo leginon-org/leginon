@@ -83,7 +83,7 @@ def getHeaderDict(hdr):
 # --------------------------------------------------------------------
 def read(filename):
 	" Convert a SPIDER file into a numpy array "
-	#print "reading SPIDER file "+filename
+	#print("reading SPIDER file "+filename)
 	return spider2array(filename)
 
 # --------------------------------------------------------------------
@@ -97,7 +97,7 @@ def spider2array(filename):
 
 	iform = int(hdrdict['iform'])
 	#for val in hdrdict:
-	#	print val, hdrdict[val]
+	#	print(val, hdrdict[val])
 
 	if iform == 1:
 		isVolume = False
@@ -126,14 +126,14 @@ def spider2array(filename):
 	databytes = datawords * 4
 
 	# seek ahead to the data
-	#print "read"
+	#print("read")
 	fp = open(filename,'rb')
 	fp.seek(hdrbytes)
 	if int(hdrdict['bigendian']):
-		#print "using big endian"
+		#print("using big endian")
 		fmt = '>%df' % datawords
 	else:
-		#print "using small endian"
+		#print("using small endian")
 		fmt = '<%df' % datawords
 	arr = numpy.fromfile(fp, dtype=numpy.dtype(fmt))
 	"""
@@ -141,12 +141,12 @@ def spider2array(filename):
 
 		data = fp.read(databytes)
 
-		#print "unpack"
+		#print("unpack")
 		t = struct.unpack(fmt, data)
 
 		# the numpy function 'array' will automatically upcast
 		# to 64 bits if you don't use savespace
-		#print "convert"
+		#print("convert")
 		arr = numpy.array(t, dtype=numpy.dtype(fmt))
 		arr = numpy.fromfile(fp, dtype=numpy.dtype(fmt))
 	"""
@@ -166,7 +166,7 @@ def spider2array(filename):
 # --------------------------------------------------------------------
 def write(arr, filename):
 	" Convert a numpy array into a SPIDER file "
-	#print "writing SPIDER file "+filename
+	#print("writing SPIDER file "+filename)
 	return array2spider(arr, filename)
 
 # --------------------------------------------------------------------
@@ -216,7 +216,7 @@ def getSpiderHeader(filename, n=27):
 	t = struct.unpack(bigformat,f)	 # try big-endian first
 	hdr = isSpiderHeader(t)
 	if hdr == 0:
-		#print "reading small endian"
+		#print("reading small endian")
 		bigendian = 0
 		littleformat = '<%df' % n
 		t = struct.unpack(littleformat,f)  # little-endian
@@ -275,7 +275,7 @@ def makeSpiderHeader(dims):
 	hdr.append(1.0)
 	# pack binary data into a string
 	hdrstr = []
-	#print "WRITING HEADER"
+	#print("WRITING HEADER")
 	getHeaderDict(hdr)
 	for v in hdr:
 		hdrstr.append(struct.pack('>f', v))
@@ -295,7 +295,7 @@ def isSpiderHeader(t):
 	labrec = int(h[13])	# no. records in file header
 	labbyt = int(h[22])	# total no. of bytes in header
 	lenbyt = int(h[23])	# record length in bytes
-	#print "labrec = %d, labbyt = %d, lenbyt = %d" % (labrec,labbyt,lenbyt)
+	#print("labrec = %d, labbyt = %d, lenbyt = %d" % (labrec,labbyt,lenbyt))
 	if labbyt != (labrec * lenbyt): return 0
 	# looks like a valid header
 	return h
