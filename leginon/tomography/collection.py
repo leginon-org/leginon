@@ -101,7 +101,7 @@ class Collection(object):
 		# bin down images for correlation
 		imageshape = self.preset['dimension']
 		# set minimal_number_of_pixels for PID differential damping as 10%
-		self.prediction.damping_start = min(imageshape['x'],imageshape['y']*0.1
+		self.prediction.damping_start = min(imageshape['x'],imageshape['y'])*0.1
 		# use minsize since tiltcorrelator needs it square, will crop the image in there.
 		minsize = min((imageshape['x'],imageshape['y']))
 		if minsize > 512:
