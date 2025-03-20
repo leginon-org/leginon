@@ -407,6 +407,7 @@ parametermapping = (
 	('beam tilt', 'BeamTilt'),
 	('image beam tilt', 'ImageBeamTilt'),
 	('phase plate plane shift', 'PhasePlatePlaneShift'),
+	('phase plate plane tilt', 'PhasePlatePlaneTilt'),
 	('phase plate focus', 'PhasePlateFocus'),
 	('stage speed', 'StageSpeed'),
 	('corrected stage position', 'CorrectedStagePosition'),

@@ -205,6 +205,7 @@ scope_params = (
 	('beam tilt', dict),
 	('image beam tilt', dict),
 	('phase plate plane shift', dict),
+	('phase plate plane tilt', dict),
 	('phase plate focus', float),
 	('corrected stage position', int),
 	('stage position', dict),

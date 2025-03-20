@@ -1094,6 +1094,12 @@ class Krios(tem.TEM):
 	def setPhasePlatePlaneShift(self, vector, relative = 'absolute'):
 		return self.setBeamTilt(vector, relative)
 
+	def getPhasePlatePlaneTilt(self):
+		return self.getImageShift()
+
+	def setPhasePlatePlaneTilt(self, vector, relative = 'absolute'):
+		return self.setImageShift(vector, relative)
+
 	def getXDeflectorShift(self):
 		"""
 		X lens Shift in meters for vector axes x,y.
@@ -1748,6 +1754,12 @@ class KriosXL(Krios):
 	def setPhasePlatePlaneShift(self, vector, relative = 'absolute'):
 		return self.setXDeflectorTilt(vector, relative)
 
+	def getPhasePlatePlaneTilt(self):
+		return self.getXDeflectorShift()
+
+	def setPhasePlatePlaneTilt(self, vector, relative = 'absolute'):
+		return self.setXDeflectorShift(vector, relative)
+
 	def getPhasePlateFocus(self):
 		return self.getXLensAlignment(1)
 
@@ -1773,6 +1785,12 @@ class EFKriosXL(EFKrios):
 
 	def setPhasePlatePlaneShift(self, vector, relative = 'absolute'):
 		return self.setXDeflectorTilt(vector, relative)
+
+	def getPhasePlatePlaneTilt(self):
+		return self.getXDeflectorShift()
+
+	def setPhasePlatePlaneTilt(self, vector, relative = 'absolute'):
+		return self.setXDeflectorShift(vector, relative)
 
 	def getPhasePlateFocus(self):
 		return self.getXLensAlignment(1)
