@@ -585,7 +585,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 		self.logger.info('Saved tableau.')
 
 
-	def	calculateAxialComa(self):
+	def calculateAxialComa(self):
 		try:
 			A = self.abe.run()
 			Adict = self.abe.mapAberration(A)

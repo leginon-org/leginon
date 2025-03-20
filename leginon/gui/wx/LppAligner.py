@@ -83,7 +83,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		bt_sizer = wx.GridBagSizer(5, 5)
 		bt_sizer.Add(self.widgets['global view offset'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		bt_sizer.Add(wx.StaticText(self, -1, 'radian'), (0, 1), (1, 1),
+		bt_sizer.Add(wx.StaticText(self, -1, ' (scope api unit)'), (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Parallel Illumination Offset value in view:')
 		sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -100,10 +100,10 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		label = wx.StaticText(self, -1, 'degrees')
 		cmpsizer.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		# compression ratio
-		self.widgets['ratio'] = IntEntry(self, -1, min=1, allownone=False, chars=4, value='8')
+		self.widgets['compress ratio'] = IntEntry(self, -1, min=1, allownone=False, chars=4, value='8')
 		label = wx.StaticText(self, -1, 'Compression ratio:')
 		cmpsizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		cmpsizer.Add(self.widgets['ratio'], (2, 1), (1, 1), wx.ALIGN_CENTER)
+		cmpsizer.Add(self.widgets['compress ratio'], (2, 1), (1, 1), wx.ALIGN_CENTER)
 		sizer.Add(cmpsizer, (1, 1), (3, 3), wx.ALIGN_CENTER)
 
 		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)

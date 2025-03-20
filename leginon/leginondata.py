@@ -2240,7 +2240,7 @@ class LppAlignerSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
 			('global view offset', float),
-			('compress ratio', float),
+			('compress ratio', int),
 			('rotation', float), # degrees
 		)
 	typemap = classmethod(typemap)
