@@ -2235,6 +2235,15 @@ class MoverParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class LppAlignerSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('global view offset', float),
+			('compress ratio', float),
+			('rotation', float), # degrees
+		)
+	typemap = classmethod(typemap)
+
 class BeamTiltImagerSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (

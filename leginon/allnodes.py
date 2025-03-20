@@ -207,6 +207,10 @@ noderegistry.registerNodeClass(TiltCycler,classtype)
 from leginon.phaseplateplaneshiftcycler import PhasePlatePlaneShiftCycler
 noderegistry.registerNodeClass(PhasePlatePlaneShiftCycler,classtype)
 
+from leginon.lppaligner import LppAligner
+noderegistry.registerNodeClass(LppAligner,classtype)
+
+
 ##############################
 # Calibrations
 ##############################
