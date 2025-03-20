@@ -564,8 +564,8 @@ class DMSEM(ccdcamera.CCDCamera):
 
 	def alignEnergyFilterZeroLossPeak(self):
 		result = self.camera.AlignEnergyFilterZeroLossPeak()
-		if result < 0.0:
-			raise RuntimeError('unable to align energy filter zero loss peak')
+		#if result < 0.0:
+		#	raise RuntimeError('unable to align energy filter zero loss peak')
 
 	def setUseCds(self,value):
 		self.use_cds = bool(value)
