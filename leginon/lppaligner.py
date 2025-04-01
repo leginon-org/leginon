@@ -141,6 +141,6 @@ class LppAligner(acquisition.Acquisition):
 		cdata = leginondata.ImageCommentData(session=self.session, image=cmp_imdata)
 		xtilt = self.instrument.tem.PhasePlatePlaneShift
 		xshift = self.instrument.tem.PhasePlatePlaneTilt
-		txt = 'xtilt (x,y): (%.5f,%5f); xshift: (%5f,%5f)' % (xtilt['x'],xtilt['y'], xshift['x'],xshift['x'])
+		txt = 'xtilt (x,y): (%.5f,%5f); xshift: (%5f,%5f)' % (xtilt['x'],xtilt['y'], xshift['x'],xshift['y'])
 		cdata['comment'] = txt
 		cdata.insert(force=True)
