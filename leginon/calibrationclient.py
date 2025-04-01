@@ -483,8 +483,22 @@ class DoseCalibrationClient(CalibrationClient):
 		pixel_totaldose = mean_counts / sensitivity
 		return pixel_totaldose
 
+class MagDependentCalibrationClient(CalibrationClient):
+	def researchCalibration(self, queryinstance, tem, ccdcamera, mag, ht):
+		self.setDBInstruments(queryinstance,tem,ccdcamera)
+		if ht is None:
+			ht = self.instrument.tem.HighTension
+		queryinstance['magnification'] = mag
+		queryinstance['high tension'] = ht
+		if mag is None:
+			# get all.  Used in calibration
+			caldatalist = self.node.research(datainstance=queryinstance)
+		else:
+			# get the last one at the mag.
+			caldatalist = self.node.research(datainstance=queryinstance, results=1)
+		return caldatalist
 
-class PixelSizeCalibrationClient(CalibrationClient):
+class PixelSizeCalibrationClient(MagDependentCalibrationClient):
 	'''
 	basic CalibrationClient for accessing a type of calibration involving
 	a matrix at a certain magnification
@@ -578,7 +592,7 @@ class CameraLengthCalibrationClient(CalibrationClient):
 		return list(last.values())
 
 
-class MatrixCalibrationClient(CalibrationClient):
+class MatrixCalibrationClient(MagDependentCalibrationClient):
 	'''
 	basic CalibrationClient for accessing a type of calibration involving
 	a matrix at a certain magnification
@@ -1544,6 +1558,76 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		pixel_shift = numpy.dot(matrix_inv, physicalpos)
 		return pixel_shift
 
+	def saveAffineMatrixCalibration(self, tem, ccdcamera, caltype, mag, probe, defocus, afmatrix):
+		queryinstance = leginondata.AffineMatrixCalibrationData()
+		self.setDBInstruments(queryinstance,tem,ccdcamera)
+		queryinstance['type'] = caltype
+		queryinstance['magnification'] = mag
+		# getting high tension only possible after setDBInstruments
+		queryinstance['high tension'] = self.instrument.tem.HighTension
+		queryinstance['probe'] = probe
+		queryinstance['defocus'] = defocus
+		queryinstance['matrix'] = afmatrix
+	
+		queryinstance.insert(force=True)
+
+	def saveAffineMatrixByPreset(self, preset,afmatrix):
+		tem = preset['tem']
+		ccdcamera = preset['ccdcamera']
+		mag = preset['magnification']
+		defocus = preset['defocus']
+		probe = preset['probe mode']
+		par = 'image shift'
+		self.saveAffineMatrixCalibration(tem, ccdcamera, par, mag, probe, defocus, afmatrix)
+
+	def researchCorrectionAffineMatrix(self, tem, ccdcamera, caltype, mag, probe, defocus):
+		queryinstance = leginondata.AffineMatrixCalibrationData()
+		self.setDBInstruments(queryinstance,tem,ccdcamera)
+		queryinstance['type'] = caltype
+		queryinstance['magnification'] = mag
+		# getting high tension only possible after setDBInstruments
+		queryinstance['high tension'] = self.instrument.tem.HighTension
+		queryinstance['probe'] = probe
+		queryinstance['defocus'] = defocus
+		caldatalist = self.node.research(datainstance=queryinstance, results=1)
+		if caldatalist:
+			return caldatalist[0]
+		else:
+			queryinstance = leginondata.AffineMatrixCalibrationData()
+			self.setDBInstruments(queryinstance,tem,ccdcamera)
+			queryinstance['type'] = caltype
+			queryinstance['magnification'] = mag
+			# getting high tension only possible after setDBInstruments
+			queryinstance['high tension'] = self.instrument.tem.HighTension
+			queryinstance['probe'] = probe
+			caldatalist = self.node.research(datainstance=queryinstance, results=1)
+			if caldatalist:
+				self.node.logger.warning('No correction matrix for the defocus requested, use that for defocus %.2f um' % caldatalist[0]['defocus'])
+				return caldatalist[0]
+			else:
+				self.node.logger.warning('No correction matrix for imaging mag %d and instrument %s' % (int(mag),tem['name']))
+				return {'matrix':numpy.array(((1.0,0.0,0.0),(0.0,1.0,0.0),(0.0,0.0,1.0))),'defocus':0.0}
+
+	def retrieveAffineMatrix(self, tem, ccdcamera, par, mag, probe, defocus):
+		caldata = self.researchCorrectionAffineMatrix(tem, ccdcamera, par, mag, probe, defocus)
+		mat = caldata['matrix'].copy()
+		return mat
+
+	def correctDefocusImageShift(self, preset, image_shift):
+		tem = preset['tem']
+		ccdcamera = preset['ccdcamera']
+		mag = preset['magnification']
+		defocus = preset['defocus']
+		probe = preset['probe mode']
+		par = 'image shift'
+		p0 = preset['image shift']
+		p1 = image_shift
+		# defocused to focused affine transform
+		m = self.retrieveAffineMatrix(tem, ccdcamera, par, mag, probe, defocus)
+		pos_array = numpy.array((p1['y']-p0['y'],p1['x']-p0['x'],0.0)).reshape((1,3))
+		new_pos_array = numpy.dot(pos_array,m)
+		return {'y': new_pos_array[0,0],'x':new_pos_array[0,1]}
+
 class ImageScaleRotationCalibrationClient(ImageShiftCalibrationClient):
 	mover = False
 	def __init__(self, node):
@@ -1594,20 +1678,6 @@ class ImageScaleRotationCalibrationClient(ImageShiftCalibrationClient):
 	def researchImageRotation(self, tem, ccdcamera, mag=None, ht=None):
 		queryinstance = leginondata.ImageRotationCalibrationData()
 		return self.researchCalibration(queryinstance, tem, ccdcamera, mag, ht)
-
-	def researchCalibration(self, queryinstance, tem, ccdcamera, mag, ht):
-		self.setDBInstruments(queryinstance,tem,ccdcamera)
-		if ht is None:
-			ht = self.instrument.tem.HighTension
-		queryinstance['magnification'] = mag
-		queryinstance['high tension'] = ht
-		if mag is None:
-			# get all.  Used in calibration
-			caldatalist = self.node.research(datainstance=queryinstance)
-		else:
-			# get the last one at the mag.
-			caldatalist = self.node.research(datainstance=queryinstance, results=1)
-		return caldatalist
 
 	def retrieveImageRotation(self, tem, ccdcamera, mag, ht=None):
 		'''
