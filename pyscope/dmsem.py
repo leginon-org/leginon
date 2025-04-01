@@ -869,9 +869,15 @@ class GatanK2Base(DMSEM):
 
 	def getFrameRotate(self):
 		'''
+		Frame flip saved in CameraEMData for frame alignment software.
 		Frame Rotate direction is defined as x to -y rotation applied after up-down flip
 		'''
-		return 0
+		overwrite = self.getDmsemConfig('k2','overwrite_frame_orientation')
+		if not overwrite:
+			return 0
+		else:
+			my_frame_rotation = self.getDmsemConfig('k2','frame_rotation_to_overwrite_with')
+			return my_frame_rotation
 
 	def updateDarkCurrentReference(self):
 		r = self.camera.UpdateK2HardwareDarkReference(self.cameraid)
