@@ -9,7 +9,7 @@ import sys
 import wx
 
 from leginon.gui.wx.Choice import Choice
-from leginon.gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
+from leginon.gui.wx.Entry import Entry, FloatEntry, IntEntry, EVT_ENTRY
 from leginon.gui.wx.Presets import EditPresetOrder
 import leginon.gui.wx.Acquisition
 import leginon.gui.wx.Dialog
@@ -38,7 +38,7 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GET_BEAMTILT, 'beamtiltget', shortHelp='XTilt From Scope')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SET_BEAMTILT, 'beamtiltset', shortHelp='XTilt To Scope')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ALIGN, 'beamtilt',
-							 shortHelp='Align Phase Plate Plane Shift')
+							 shortHelp='Set on-plane on-node')
 		# correlation image
 		self.imagepanel.addTypeTool('Compressed', display=True)
 
@@ -47,6 +47,7 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onXTiltFromScope, id=leginon.gui.wx.ToolBar.ID_GET_BEAMTILT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onXTiltToScope, id=leginon.gui.wx.ToolBar.ID_SET_BEAMTILT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSetOnPlaneOnNode, id=leginon.gui.wx.ToolBar.ID_ALIGN)
 		leginon.gui.wx.Acquisition.Panel.onNodeInitialized(self)
 
 		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked,
@@ -65,6 +66,9 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 
 	def onXTiltFromScope(self, evt):
 		threading.Thread(target=self.node.xTiltFromScope).start()
+
+	def onSetOnPlaneOnNode(self, evt):
+		threading.Thread(target=self.node.setOnPlaneOnNode).start()
 
 class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
@@ -106,9 +110,22 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		cmpsizer.Add(self.widgets['compress ratio'], (2, 1), (1, 1), wx.ALIGN_CENTER)
 		sizer.Add(cmpsizer, (1, 1), (3, 3), wx.ALIGN_CENTER)
 
-		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
+		fitsizer = wx.GridBagSizer(5, 4)
+		bordersize = 3
+		self.widgets['align on_plane on_node'] = \
+				wx.CheckBox(self, -1, 'Acquire and fit the sequence of defocus on LPP plane')
+		fitsizer.Add(self.widgets['align on_plane on_node'], (0,0), (1,5), wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
-		return sizers + [sbsz]
+		label = wx.StaticText(self, -1, 'List of XL1 defocus from current value to collect')
+		fitsizer.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['phase plate defocus sequence'] = Entry(self, -1, chars=15, style=wx.ALIGN_RIGHT)
+		fitsizer.Add(self.widgets['phase plate defocus sequence'], (1,2),(1,3), wx.EXPAND|wx.ALL, bordersize)
+		fitsizer.AddGrowableCol(4)
+
+		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
+		sbsz.Add(fitsizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
+
+		return sizers + [sbsz,]
 
 if __name__ == '__main__':
 	class App(wx.App):

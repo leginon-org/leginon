@@ -78,7 +78,7 @@ class SimTEM(tem.TEM):
 		self.intensity_range = (0.0, 1.0)
 		self.intensity = 0.0
 		self.parallel_offset = 0.0
-
+		self.lpp_focus = 0.0
 		self.stigmators = {
 			'condenser': {
 				'x': 0.0,
@@ -688,6 +688,12 @@ class SimTEM(tem.TEM):
 	def setBeamstopPosition(self, value):
 		print('beamstop set to %s' % (value,))
 		self.beamstop_position = value
+
+	def getPhasePlateFocus(self):
+		return self.lpp_focus
+
+	def setPhasePlateFocus(self, value):
+		self.lpp_focus = value
 
 class SimTEM300(SimTEM):
 	name = 'SimTEM300'

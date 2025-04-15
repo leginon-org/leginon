@@ -2242,6 +2242,8 @@ class LppAlignerSettingsData(AcquisitionSettingsData):
 			('global view offset', float),
 			('compress ratio', int),
 			('rotation', float), # degrees
+			('align on_plane on_node', bool),
+			('phase plate defocus sequence', str), #Issue #5687
 		)
 	typemap = classmethod(typemap)
 

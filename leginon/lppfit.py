@@ -54,7 +54,6 @@ def bestPointsToLattice(positions):
 	if len(positions) < 3:
 		raise ValueError('Too few positions for reliable determination')
 	positions.sort()
-	print('positions', positions)
 	center_index = len(positions) // 2
 	center = positions[center_index]
 	# use maximum of distance around the center in case one of them is shorter
@@ -139,7 +138,7 @@ def fit_on_node(x_data, y_data):
 	popt, pcov = curve_fit(on_node_function, x_data, y_data,p0=[-10,amp0])
 	return popt #(phase_shift_to_apply at on-plane focus, amplitude for conversion)
 
-def show_results(x_data, y_data, x_center, amp_fit, freq_fit, phase_fit, offset_fit):
+def show_fringe_fit_results(x_data, y_data, x_center, amp_fit, freq_fit, phase_fit, offset_fit):
 	# index sequence
 	fit_data = amp_fit * numpy.cos(freq_fit * (x_data-x_center) + phase_fit) + offset_fit
 	#
@@ -152,7 +151,7 @@ def show_results(x_data, y_data, x_center, amp_fit, freq_fit, phase_fit, offset_
 	plt.title('Sine wave fitting')
 	plt.show()
 
-def run(a):
+def run_fringe_fit(a):
 	y_data = makeRotatedLineProfile(a, 5.0)
 	center_of_mass_array, area = findPeaks(y_data)
 	wave_period, x_cleaned_list = estimateLattice(center_of_mass_array, area)
@@ -160,7 +159,6 @@ def run(a):
 	freq0 = math.pi*2/wave_period
 	x_center = y_data.shape[0]//2
 	x_data = numpy.array(range(y_data.shape[0]))
-	print('x_center',x_center)
 	y_cleaned = numpy.array(list(map((lambda x: y_data[int(x)]), x_cleaned_list)))
 	popt, pcov = fit_cosine(x_data, y_data, (y_data.max()-y_data.min())/2, freq0, 0.0, y_cleaned.mean(), x_center)
 	amp_fit, freq_fit, phase_fit, offset_fit = popt
@@ -170,8 +168,26 @@ def run(a):
 	period_fit = math.pi*2/freq_fit
 	phase_shift_to_min_degrees = 180.0 * convert_phase(phase_fit-math.pi) / math.pi
 	if __name__=='__main__':
-		show_results(x_data, y_data, x_center, amp_fit, freq_fit, phase_fit, offset_fit)
+		show_fringe_fit_results(x_data, y_data, x_center, amp_fit, freq_fit, phase_fit, offset_fit)
 	return amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_to_min_degrees
+
+def calculateOnPlaneOnNode(data, is_over_focus=False):
+	start, end = 0, data.shape[0]
+	# on-plane phase plate focus is popt[0]
+	x_data = data[start:end,0]
+	y_data = data[start:end:,1]
+	z_data = data[start:end:,2]
+	popt = fit_on_plane(x_data, y_data, is_over_focus)
+	f_center = popt[0]
+	a1 = popt[1]
+	print('focus_center', f_center)
+	# on-node fit uses f_center as x offset
+	x1_data = x_data - numpy.ones(x_data.shape)*f_center
+	popt = fit_on_node(x1_data, z_data)
+	a2 = popt[1]
+	m2 = popt[0]
+	print('phase_shift_needed for minimum', m2)
+	return f_center, m2
 
 if __name__=='__main__':
 	import os, sys
