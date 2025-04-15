@@ -1591,6 +1591,7 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		queryinstance['defocus'] = defocus
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		if caldatalist:
+			self.node.logger.info('Got correction affine matrix for mag %d and defocus %.1f um' % (int(mag), defocus*1e6))
 			return caldatalist[0]
 		else:
 			queryinstance = leginondata.AffineMatrixCalibrationData()
