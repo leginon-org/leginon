@@ -151,8 +151,8 @@ def show_fringe_fit_results(x_data, y_data, x_center, amp_fit, freq_fit, phase_f
 	plt.title('Sine wave fitting')
 	plt.show()
 
-def run_fringe_fit(a):
-	y_data = makeRotatedLineProfile(a, 5.0)
+def run_fringe_fit(a, rotation_angle_degrees=5.0):
+	y_data = makeRotatedLineProfile(a, rotation_angle_degrees)
 	center_of_mass_array, area = findPeaks(y_data)
 	wave_period, x_cleaned_list = estimateLattice(center_of_mass_array, area)
 	# fitting
@@ -171,6 +171,23 @@ def run_fringe_fit(a):
 		show_fringe_fit_results(x_data, y_data, x_center, amp_fit, freq_fit, phase_fit, offset_fit)
 	return amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_to_min_degrees
 
+def convertPhasesToContinuous(x1_data, z_data):
+	x1_list = x1_data.tolist()
+	min_index = 0 # The value ar x1 losest to zero
+	z0 = z_data[min_index]
+	# use closest to zero to start
+	if abs(z0+360) < abs(z0):
+		z0 = z0+360
+	for i,z in enumerate(z_data.tolist()):
+		if i == 0:
+			z_data[0] = z0
+		else:
+			if abs(z-z_data[i-1]) > abs(360.0+z-z_data[i-1]):
+				z_data[i] += 360.0
+			if abs(z-z_data[i-1]) > abs(z-360.0-z_data[i-1]):
+				z_data[i] -= 360.0
+	return z_data
+
 def calculateOnPlaneOnNode(data, is_over_focus=False):
 	start, end = 0, data.shape[0]
 	# on-plane phase plate focus is popt[0]
@@ -183,6 +200,7 @@ def calculateOnPlaneOnNode(data, is_over_focus=False):
 	print('focus_center', f_center)
 	# on-node fit uses f_center as x offset
 	x1_data = x_data - numpy.ones(x_data.shape)*f_center
+	z_data = convertPhasesToContinuous(x1_data, z_data)
 	popt = fit_on_node(x1_data, z_data)
 	a2 = popt[1]
 	m2 = popt[0]
@@ -197,4 +215,4 @@ if __name__=='__main__':
 		sys.exit(1)
 	a = mrc.read(mrc_path)
 	# test fitting with display
-	amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_to_min_degrees = run(a)
+	amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_to_min_degrees = run_fringe_fit(a, 5.0)

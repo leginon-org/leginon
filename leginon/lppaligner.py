@@ -107,7 +107,11 @@ class LppAligner(acquisition.Acquisition):
 			return status
 		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
 		args = (presetdata, emtarget, defaultchannel)
-		self.x1_defocus_series = eval(self.settings['phase plate defocus sequence']) #defocus in tfs unit
+		self.x1_defocus_series = list(eval(self.settings['phase plate defocus sequence'])) #defocus in tfs unit
+		self.x1_defocus_series.sort()
+		if self.x1_defocus_series[0] < 0:
+			# always starts from value closest to f0
+			self.x1_defocus_series.reverse()
 		data = []
 		for i, df in enumerate(self.x1_defocus_series):
 			self.series_id = i+1 #base 1
@@ -115,6 +119,7 @@ class LppAligner(acquisition.Acquisition):
 				new_f = self.f0 + df
 				self.logger.info('phase plate focus set to %.8f' % new_f)
 				self.instrument.tem.PhasePlateFocus = new_f
+				time.sleep(self.settings['pause time'])
 				if self.settings['background']:
 					self.clearCameraEvents()
 					t = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
@@ -130,7 +135,7 @@ class LppAligner(acquisition.Acquisition):
 				break
 			finally:
 				try:
-					amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_needed = lppfit.run_fringe_fit(myimage)
+					amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_needed = lppfit.run_fringe_fit(myimage, self.settings['rotation'])
 					data.append((new_f, period_fit, phase_shift_needed))
 				except Exception as e:
 					self.logger.warning('failed fitting, skipping: %s' % e)
@@ -143,6 +148,7 @@ class LppAligner(acquisition.Acquisition):
 		print(numpy.array(data))
 		try:
 			self.new_f0, self.new_phase_shift = lppfit.calculateOnPlaneOnNode(numpy.array(data), is_over_focus=False)
+			self.logger.info('Calculated LPP x1 lens at %.8f, phase shift needed at %.1f' % (self.new_f0, self.new_phase_shift))
 		except Exception as e:
 			self.logger.error('Error calculating on-plane and on-node values: %s' % e)
 			return status
@@ -151,10 +157,10 @@ class LppAligner(acquisition.Acquisition):
 		try:
 			self.instrument.tem.PhasePlateFocus = self.new_f0
 			# temp one cycle shift in y only
-			xt_cycle = 0.00165
+			xt_cycle = 0.000165
 			new_xty = self.xt0['y'] + self.new_phase_shift * xt_cycle/360
 			self.instrument.tem.PhasePlatePlaneShift = {'y':new_xty}
-			self.logger.info('Set LPP x1 lens to %.8f, shift phase by %.1f' % (self.new_f0, self.new_phase_shift))
+			self.logger.info('Set LPP x1 lens to %.8f, x-tilt to %.6f' % (self.new_f0, new_xty))
 		except Exception as e:
 			self.logger.error('Error setting on-plane and on-node values')
 			self.resetLppFocus()
