@@ -131,6 +131,8 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 		setting['fit limit'] = self.fit_limit_entry.GetValue()
 		setting['delta min'] = self.delta_min_entry.GetValue()
 		setting['delta max'] = self.delta_max_entry.GetValue()
+		setting['phase search min'] = self.phase_search_min_entry.GetValue()
+		setting['phase search max'] = self.phase_search_max_entry.GetValue()
 		setting['correction type'] = \
 			self.correction_type_choice.GetStringSelection()
 
@@ -180,6 +182,8 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 		else:
 			angle = setting['tilt']
 		self.tilt_entry.SetValue(angle)
+		self.phase_search_min_entry.SetValue(setting['phase search min'])
+		self.phase_search_max_entry.SetValue(setting['phase search max'])
 		self.correlation_type_choice.SetStringSelection(
 													setting['correlation type'])
 		self.fit_limit_entry.SetValue(setting['fit limit'])
@@ -215,6 +219,8 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 			self.fit_limit_entry,
 			self.delta_min_entry,
 			self.delta_max_entry,
+			self.phase_search_min_entry,
+			self.phase_search_max_entry,
 			self.correction_type_choice,
 			self.check_drift_checkbox,
 			self.recheck_drift_checkbox,
@@ -264,13 +270,16 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 		sbauto = wx.StaticBox(self, -1, '(Autofocus Only)')
 		autosizer = wx.GridBagSizer(3, 3)
 		self.autowidgets = []
+		self.ctfwidgets = []
+		self.correctwidgets = []
+
 
 		tiltsizer = wx.GridBagSizer(3, 3)
 		label = wx.StaticText(self, -1, 'Tilt:')
 		tiltsizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.autowidgets.append(label)
 		self.tilt_entry = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6) 
-		tiltsizer.Add(self.tilt_entry, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		tiltsizer.Add(self.tilt_entry, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		self.autowidgets.append(self.tilt_entry)
 		self.tiltlabel = wx.StaticText(self, -1, 'radians')
 		tiltsizer.Add(self.tiltlabel, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -296,39 +305,63 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		self.autowidgets.append(self.fit_limit_entry)
 
+		ctfsizer = wx.GridBagSizer(3,3)
+		label = wx.StaticText(self, -1, 'Phase Shift Search Range in degrees:')
+		ctfsizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.ctfwidgets.append(label)
+		self.phase_search_min_entry = leginon.gui.wx.Entry.IntEntry(self, -1, chars=6,  max=180, min=-180)
+		self.phase_search_max_entry = leginon.gui.wx.Entry.IntEntry(self, -1, chars=6,  max=180, min=-180)
+		self.ctfwidgets.append(self.phase_search_max_entry)
+		# search range
+		searchsizer = wx.GridBagSizer(3,3)
+		label = wx.StaticText(self, -1, 'Between')
+		self.ctfwidgets.append(label)
+		searchsizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		searchsizer.Add(self.phase_search_min_entry, (0, 1), (1, 1),
+					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		self.ctfwidgets.append(self.phase_search_min_entry)
+		label = wx.StaticText(self, -1, 'and')
+		searchsizer.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.ctfwidgets.append(label)
+		searchsizer.Add(self.phase_search_max_entry, (0, 3), (1, 1),
+					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		self.ctfwidgets.append(self.phase_search_max_entry)
+		ctfsizer.Add(searchsizer, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		autosizer.Add(ctfsizer, (3, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
+		#validation
 		changelimitsizer = wx.GridBagSizer(3, 3)
 		self.delta_min_entry = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
 		label = wx.StaticText(self, -1, 'Correct for delta Defocus/Z between')
-		self.autowidgets.append(label)
+		self.correctwidgets.append(label)
 		changelimitsizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.autowidgets.append(self.delta_min_entry)
+		self.correctwidgets.append(self.delta_min_entry)
 		changelimitsizer.Add(self.delta_min_entry, (0, 1), (1, 1),
 					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
 		self.delta_max_entry = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
 		label = wx.StaticText(self, -1, 'and')
-		self.autowidgets.append(label)
+		self.correctwidgets.append(label)
 		changelimitsizer.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		changelimitsizer.Add(self.delta_max_entry, (0, 3), (1, 1),
 					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		self.autowidgets.append(self.delta_max_entry)
+		self.correctwidgets.append(self.delta_max_entry)
 		label = wx.StaticText(self, -1, 'meters')
 		changelimitsizer.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.autowidgets.append(label)
-		autosizer.Add(changelimitsizer, (3, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
+		self.correctwidgets.append(label)
+		autosizer.Add(changelimitsizer, (4, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Correction type:')
-		autosizer.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.autowidgets.append(label)
+		autosizer.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.correctwidgets.append(label)
 		self.correction_type_choice = leginon.gui.wx.Choice.Choice(self, -1, choices=self.settings.correction_types)
-		autosizer.Add(self.correction_type_choice, (4, 1), (1, 1), wx.EXPAND)
-		self.autowidgets.append(self.correction_type_choice)
+		autosizer.Add(self.correction_type_choice, (5, 1), (1, 1), wx.EXPAND)
+		self.correctwidgets.append(self.correction_type_choice)
 
 #		label = wx.StaticText(self, -1, 'Reset defocus:')
-#		autosizer.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+#		autosizer.Add(label, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 #		self.autowidgets.append(label)
 #		self.reset_choice = leginon.gui.wx.Choice.Choice(self, -1, choices=self.settings.reset_types)
-#		autosizer.Add(self.reset_choice, (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+#		autosizer.Add(self.reset_choice, (6, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 #		self.autowidgets.append(self.reset_choice)
 
 		### Frame for drift related items
@@ -340,13 +373,13 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 										   'Repeat drift check until it passes the first time')
 		driftsizer.Add(self.check_drift_checkbox, (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		self.autowidgets.append(self.check_drift_checkbox)
-		self.autowidgets.append(self.recheck_drift_checkbox)
+		self.correctwidgets.append(self.check_drift_checkbox)
+		self.correctwidgets.append(self.recheck_drift_checkbox)
 		driftsizer.Add(self.drift_threshold_entry, (0, 1), (1, 1),
 						wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		self.autowidgets.append(self.drift_threshold_entry)
+		self.correctwidgets.append(self.drift_threshold_entry)
 		label = wx.StaticText(self, -1, 'm/s')
-		self.autowidgets.append(label)
+		self.correctwidgets.append(label)
 		driftsizer.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		driftsizer.Add(self.recheck_drift_checkbox, (1, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 		autosizer.Add(driftsizer, (6, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
@@ -360,18 +393,18 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 			self.stig_defocus_max_entry = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
 			stigsizer.Add(self.correct_astig_checkbox, (0, 0), (1, 1),
 					   wx.ALIGN_CENTER_VERTICAL)
-			self.autowidgets.append(self.correct_astig_checkbox)
+			self.correctwidgets.append(self.correct_astig_checkbox)
 			stigsizer.Add(self.stig_defocus_min_entry, (0, 1), (1, 1),
 					   wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-			self.autowidgets.append(self.stig_defocus_min_entry)
+			self.correctwidgets.append(self.stig_defocus_min_entry)
 			label = wx.StaticText(self, -1, 'and')
-			self.autowidgets.append(label)
+			self.correctwidgets.append(label)
 			stigsizer.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER)
 			stigsizer.Add(self.stig_defocus_max_entry, (0, 3), (1, 1),
 					   wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-			self.autowidgets.append(self.stig_defocus_max_entry)
+			self.correctwidgets.append(self.stig_defocus_max_entry)
 			label = wx.StaticText(self, -1, 'meters')
-			self.autowidgets.append(label)
+			self.correctwidgets.append(label)
 			stigsizer.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 			autosizer.Add(stigsizer, (7, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
@@ -407,6 +440,7 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 	def onFocusMethodChoice(self, evt=None):
 		method = self.focus_method_choice.GetStringSelection()
 		if method == 'Stage Tilt':
+			self.enableCtf(False)
 			self.enableAuto(True)
 			# stage tilt focus measurement can not be used to correct defocus
 			if self.correction_type_choice.GetStringSelection()=='Defocus':
@@ -419,12 +453,18 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 				self.stig_defocus_min_entry.Disable()
 			self.tiltlabel.SetLabel('degrees')
 		elif method == 'Beam Tilt':
+			self.enableCtf(False)
 			self.enableAuto(True)
 			self.tiltlabel.SetLabel('radians')
+		elif method == 'Ctf Fit':
+			self.enableAuto(False)
+			self.enableCtf(True)
 		elif method == 'Manual':
 			self.enableAuto(False)
+			self.enableCtf(False)
 		else:
 			self.enableAuto(False)
+			self.enableCtf(False)
 		# Combine switch checkbox state and event method selection
 		# as the state of the current setting
 		evt_state = method=='Manual'
@@ -456,6 +496,14 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 	def enableAuto(self, enable):
 		for widget in self.autowidgets:
 			widget.Enable(enable)
+		for widget in self.correctwidgets:
+			widget.Enable(enable)
+
+	def enableCtf(self, enable):
+		for widget in self.ctfwidgets:
+			widget.Enable(enable)
+		for widget in self.correctwidgets:
+			widget.Enable(enable)
 
 
 if __name__ == '__main__':
@@ -471,6 +519,8 @@ if __name__ == '__main__':
 		'tilt': 0.01,
 		'correlation type': 'Phase',
 		'fit limit': 1000,
+		'phase search min':0,
+		'phase search max':0,
 		'delta min': 0,
 		'delta max': 1e-3,
 		'correction type': 'Defocus',

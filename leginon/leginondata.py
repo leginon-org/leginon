@@ -2317,6 +2317,8 @@ class FocusSettingData(InSessionData):
 			('tilt', float),
 			('correlation type', str),
 			('fit limit', float),
+			('phase search min',int),
+			('phase search max',int),
 			('delta min', float),
 			('delta max', float),
 			('correction type', str),
