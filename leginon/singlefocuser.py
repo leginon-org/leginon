@@ -386,6 +386,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		fitmin = correction['min']
 
 		resultdata.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':fitmin, 'drift': lastdrift})
+		return 'ok'
 
 		#####################################################################
 
