@@ -260,7 +260,7 @@ class LppAligner(acquisition.Acquisition):
 			self.new_xtilt['y'] += self.new_phase_shift*self.settings['one wavelength xtilt y']
 			self.logger.info('Calculated LPP new xtilt as %s' % (self.new_xtilt))
 			self.instrument.tem.PhasePlatePlaneShift = self.new_xtilt
-			self.logger.info('Set LPP x1 lens to %.8f, x-tilt to %.6f' % (self.new_f0, self.new_xtilt))
+			self.logger.info('Set LPP x1 lens to %.8f, x-tilt to x:%.6f,y:%6f' % (self.new_f0, self.new_xtilt['x'],self.new_xtilt['y']))
 		except Exception as e:
 			self.logger.error('Error setting on-plane and on-node values')
 			self.resetLppFocus()
