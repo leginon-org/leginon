@@ -82,6 +82,11 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		sizer = wx.GridBagSizer(5, 5)
+		self.widgets['acquire type'] = Choice(self, -1, choices=self.node.acquire_types)
+		label = wx.StaticText(self, -1, 'acquire image(s) for:')
+		sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.widgets['acquire type'], (0, 1), (1, 1), wx.ALIGN_CENTER)
+
 		# view offset
 		self.widgets['global view offset'] = FloatEntry(self, -1, allownone=False, chars=6, value='0.0')
 		bt_sizer = wx.GridBagSizer(5, 5)
@@ -90,8 +95,8 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		bt_sizer.Add(wx.StaticText(self, -1, ' (scope api unit)'), (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Parallel Illumination Offset value in view:')
-		sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(bt_sizer, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(bt_sizer, (1, 1), (1, 1), wx.ALIGN_CENTER)
 		#
 		cmpsizer = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Compressed View:')
@@ -108,13 +113,12 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		label = wx.StaticText(self, -1, 'Compression ratio:')
 		cmpsizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		cmpsizer.Add(self.widgets['compress ratio'], (2, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(cmpsizer, (1, 1), (3, 3), wx.ALIGN_CENTER)
+		sizer.Add(cmpsizer, (2, 1), (3, 3), wx.ALIGN_CENTER)
 
 		fitsizer = wx.GridBagSizer(5, 4)
 		bordersize = 3
-		self.widgets['align on_plane on_node'] = \
-				wx.CheckBox(self, -1, 'Acquire and fit the sequence of defocus on LPP plane')
-		fitsizer.Add(self.widgets['align on_plane on_node'], (0,0), (1,5), wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, bordersize)
+		label = wx.StaticText(self, -1, 'Align with defocus series fitting')
+		fitsizer.Add(label, (0,0), (1,5), wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
 		label = wx.StaticText(self, -1, 'List of XL1 defocus from current value to collect')
 		fitsizer.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -122,10 +126,41 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		fitsizer.Add(self.widgets['phase plate defocus sequence'], (1,2),(1,3), wx.EXPAND|wx.ALL, bordersize)
 		fitsizer.AddGrowableCol(4)
 
+		label = wx.StaticText(self, -1, 'Align with single off-plane image')
 		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 		sbsz.Add(fitsizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
+		sbsz.Add(label, 0 , wx.ALL|wx.EXPAND|wx.ALIGN_LEFT, 5)
+		sbsz.Add(self.createAcquireOnNodeReferenceSizer(), 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 
 		return sizers + [sbsz,]
+
+	def createAcquireOnNodeReferenceSizer(self):
+		savesizer = wx.GridBagSizer(5, 4)
+		bordersize = 3
+		label = wx.StaticText(self, -1, 'Reference xtilt when on-node:')
+		savesizer.Add(label, (0, 1), (1, 4), wx.ALIGN_CENTER_VERTICAL)
+		subsizer = wx.GridBagSizer(5, 4)
+		label = wx.StaticText(self, -1, 'x:')
+		subsizer.Add(label, (0, 0), (1, 1), wx.ALIGN_RIGHT)
+		self.widgets['ref on_node xtilt x'] = FloatEntry(self, -1, allownone=False, chars=8, value='0.0')
+		subsizer.Add(self.widgets['ref on_node xtilt x'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'y:')
+		subsizer.Add(label, (0, 2), (1, 1), wx.ALIGN_RIGHT)
+		self.widgets['ref on_node xtilt y'] = FloatEntry(self, -1, allownone=False, chars=8, value='0.0')
+		subsizer.Add(self.widgets['ref on_node xtilt y'], (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		savesizer.Add(subsizer, (1,1),(1,4), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL)
+		label = wx.StaticText(self, -1, 'xtilt change to move by one wavelengh:')
+		savesizer.Add(label, (2, 1), (1, 4), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'x:')
+		savesizer.Add(label, (3, 1), (1, 1), wx.ALIGN_RIGHT)
+		self.widgets['one wavelength xtilt x'] = FloatEntry(self, -1, allownone=False, chars=8, value='0.0')
+		savesizer.Add(self.widgets['one wavelength xtilt x'], (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'y:')
+		savesizer.Add(label, (3, 3), (1, 1), wx.ALIGN_RIGHT)
+		self.widgets['one wavelength xtilt y'] = FloatEntry(self, -1, allownone=False, chars=8, value='0.0')
+		savesizer.Add(self.widgets['one wavelength xtilt y'], (3, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+
+		return savesizer
 
 if __name__ == '__main__':
 	class App(wx.App):

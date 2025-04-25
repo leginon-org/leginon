@@ -2242,8 +2242,23 @@ class LppAlignerSettingsData(AcquisitionSettingsData):
 			('global view offset', float),
 			('compress ratio', int),
 			('rotation', float), # degrees
-			('align on_plane on_node', bool),
+			('acquire type', str),
 			('phase plate defocus sequence', str), #Issue #5687
+			('ref on_node xtilt x', float),
+			('ref on_node xtilt y', float),
+			('one wavelength xtilt x', float),
+			('one wavelength xtilt y', float),
+		)
+	typemap = classmethod(typemap)
+
+class LppOnNodeData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('tem', InstrumentData),
+			('ccdcamera', InstrumentData),
+			('reference', AcquisitionImageData),
+			('phase shift', float),
+			('delta lpp focus', float),
 		)
 	typemap = classmethod(typemap)
 

@@ -102,7 +102,7 @@ def on_plane_function_left(x, center, amp):
 	Return laser fringe period for x1 focus value in over-focus conditions.
 	x < center
 	"""
-	return -amp*(1/(x-center))
+	return amp*(1/(x-center))
 
 def on_plane_function_right(x, center, amp):
 	"""
@@ -122,12 +122,12 @@ def fit_on_plane(x_data, y_data, is_over_focus):
 		popt, pcov = curve_fit(on_plane_function_left, x_data, y_data,p0=[center0,1])
 	return popt # (focus_center, amplitude)
 
-def on_node_function(x, offset, amp):
+def on_node_function(x, offset, amp, tilt):
 	"""
 	Return phase shift offset for on-node condition.  This is a
 	Second order polynomial centered at laser phane x1 focus.
 	"""
-	return amp*x*x + offset
+	return amp*x*x+tilt*x+ offset
 
 def fit_on_node(x_data, y_data):
 	"""
@@ -135,7 +135,7 @@ def fit_on_node(x_data, y_data):
 	as the on_node_function.
 	"""
 	amp0 = (y_data[-1]-y_data[-2])/(x_data[-1]**2-x_data[-2]**2)
-	popt, pcov = curve_fit(on_node_function, x_data, y_data,p0=[-10,amp0])
+	popt, pcov = curve_fit(on_node_function, x_data, y_data,p0=[-10,amp0,0])
 	return popt #(phase_shift_to_apply at on-plane focus, amplitude for conversion)
 
 def show_fringe_fit_results(x_data, y_data, x_center, amp_fit, freq_fit, phase_fit, offset_fit):
@@ -166,10 +166,10 @@ def run_fringe_fit(a, rotation_angle_degrees=5.0):
 		amp_fit = abs(amp_fit)
 		phase_fit = phase_fit - math.pi
 	period_fit = math.pi*2/freq_fit
-	phase_shift_to_min_degrees = 180.0 * convert_phase(phase_fit-math.pi) / math.pi
+	phase_shift_to_max_degrees = 180.0 * convert_phase(phase_fit) / math.pi
 	if __name__=='__main__':
 		show_fringe_fit_results(x_data, y_data, x_center, amp_fit, freq_fit, phase_fit, offset_fit)
-	return amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_to_min_degrees
+	return amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_to_max_degrees
 
 def convertPhasesToContinuous(x1_data, z_data):
 	x1_list = x1_data.tolist()
@@ -204,7 +204,7 @@ def calculateOnPlaneOnNode(data, is_over_focus=False):
 	popt = fit_on_node(x1_data, z_data)
 	a2 = popt[1]
 	m2 = popt[0]
-	print('phase_shift_needed for minimum', m2)
+	print('phase_shift_needed for maximum', m2)
 	return f_center, m2
 
 if __name__=='__main__':
@@ -215,4 +215,5 @@ if __name__=='__main__':
 		sys.exit(1)
 	a = mrc.read(mrc_path)
 	# test fitting with display
-	amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_to_min_degrees = run_fringe_fit(a, 5.0)
+	amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_to_max_degrees = run_fringe_fit(a, 5.0)
+	print(phase_fit, phase_shift_to_max_degrees)
