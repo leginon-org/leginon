@@ -254,8 +254,7 @@ class LppAligner(acquisition.Acquisition):
 		try:
 			self.instrument.tem.PhasePlateFocus = self.new_f0
 			# set xtilt
-			self.new_xtilt = {'x':self.settings['ref on_node xtilt x'],
-								'y': self.settings['ref on_node xtilt y'] }
+			self.new_xtilt = self.instrument.tem.PhasePlatePlaneShift
 			c = 1/360.0
 			self.new_xtilt['x'] += self.new_phase_shift*c*self.settings['one wavelength xtilt x']
 			self.new_xtilt['y'] += self.new_phase_shift*c*self.settings['one wavelength xtilt y']
