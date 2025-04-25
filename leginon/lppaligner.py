@@ -69,7 +69,7 @@ class LppAligner(acquisition.Acquisition):
 		self.xt0 = self.instrument.tem.PhasePlatePlaneShift
 		self.new_f0 = self.f0
 		self.new_phase_shift = 0
-		if not self.settings['acquire type'] == 'global view':
+		if self.settings['acquire type'] == 'global view':
 			self.setParallelIlluminationOffsetToScope('global')
 
 	def resetParallelIlluminationOffset(self):
