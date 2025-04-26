@@ -97,6 +97,12 @@ def convert_phase(radians):
 		radians -= math.pi*2
 	return radians
 
+def convert_phase_degrees(phase_degrees):
+	"""
+	Keep the value between -180 and 180 degrees
+	"""
+	return (180.0/math.pi)*convert_phase(phase_degrees*math.pi/180)
+
 def on_plane_function_left(x, center, amp):
 	"""
 	Return laser fringe period for x1 focus value in over-focus conditions.

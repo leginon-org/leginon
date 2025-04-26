@@ -86,7 +86,7 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		tem = preset['tem']
 		ccdcamera = preset['ccdcamera']
 		xtilt_results = leginondata.LppCalibrationData(tem=tem, ccdcamera=ccdcamera).query(results=1)
-		ref_results = leginondata.LppOnNodeData(tem=tem,ccdcamera=ccdcamera).query(results=1)
+		ref_results = leginondata.LppOnNodeRefData(tem=tem,ccdcamera=ccdcamera).query(results=1)
 		if not ref_results or not xtilt_results:
 			self.logger.error('No reference or xtilt cycle calibration for on-node lpp alignment.')
 			return
@@ -117,7 +117,7 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 			self.resetLppFocus()
 		try:
 			phase_diff = phase_shift_needed - refdata['phase shift']
-			self.new_phase_shift = phase_diff
+			self.new_phase_shift = lppfit.convert_phase_degrees(phase_diff)
 		except Exception as e:
 			self.logger.error('Error calculating on-node values: %s' % e)
 		self.logger.info('phase shift correction = %.5f' % self.new_phase_shift)

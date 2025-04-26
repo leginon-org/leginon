@@ -2255,14 +2255,12 @@ class LppAlignerSettingsData(AcquisitionSettingsData):
 			('rotation', float), # degrees
 			('acquire type', str),
 			('phase plate defocus sequence', str), #Issue #5687
-			('ref on_node xtilt x', float),
-			('ref on_node xtilt y', float),
 			('wave xtilt vector x', float),
 			('wave xtilt vector y', float),
 		)
 	typemap = classmethod(typemap)
 
-class LppOnNodeData(InSessionData):
+class LppOnNodeRefData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('tem', InstrumentData),

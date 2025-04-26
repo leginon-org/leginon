@@ -33,8 +33,6 @@ class LppAligner(acquisition.Acquisition):
 		'acquire type':'single off-plane image',
 		#'phase plate defocus sequence': '(-0.002,-0.0025,-0.003,-0.004)',
 		'phase plate defocus sequence': '(-0.002,-0.003,-0.004)',
-		'ref on_node xtilt x': 0.0,
-		'ref on_node xtilt y': 0.0,
 		'wave xtilt vector x': 0.0,
 		'wave xtilt vector y': 0.000165,
 	})
@@ -109,7 +107,7 @@ class LppAligner(acquisition.Acquisition):
 			self._acquireFocusSeries(presetdata, emtarget, attempt, target, channel)
 
 	def _acquireAlignImage(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
-		ref_results = leginondata.LppOnNodeData(tem=presetdata['tem'],ccdcamera=presetdata['ccdcamera']).query(results=1)
+		ref_results = leginondata.LppOnNodeRefData(tem=presetdata['tem'],ccdcamera=presetdata['ccdcamera']).query(results=1)
 		if not ref_results:
 			self.need_save_reference = True
 			raise NoReferenceError('No reference for on-node lpp alignment found.')
@@ -117,10 +115,10 @@ class LppAligner(acquisition.Acquisition):
 		delta_f = refdata['delta lpp focus']
 		# acquire image with new_f
 		status, period_fit, phase_shift_needed = self._acquireOffPlaneImage(presetdata, emtarget, attempt, target, channel, delta_f)
-		print('focus, period, phase_shift_to_apply')
 		try:
-			phase_diff = phase_shift_needed - refdata['phase shift']
-			self.new_phase_shift = phase_diff
+			# phase shift represent correction needed, so it needs to reverse sign.
+			phase_diff = -(phase_shift_needed - refdata['phase shift'])
+			self.new_phase_shift = lppfit.convert_phase_degrees(phase_diff)
 		except Exception as e:
 			self.logger.error('Error calculating on-node values: %s' % e)
 			return status
@@ -180,7 +178,7 @@ class LppAligner(acquisition.Acquisition):
 		delta_f = self.x1_defocus_series[-1]
 		status, period_fit, phase_shift_needed = self._acquireOffPlaneImage(presetdata, emtarget, attempt, target, channel, delta_f)
 
-		q = leginondata.LppOnNodeData(
+		q = leginondata.LppOnNodeRefData(
 				session=self.session,
 				reference=self.imagedata,
 				tem=self.imagedata['scope']['tem'],
@@ -278,8 +276,8 @@ class LppAligner(acquisition.Acquisition):
 			if r['wave xtilt vector x'] == self.settings['wave xtilt vector x'] and r['wave xtilt vector y'] == self.settings['wave xtilt vector y']:
 				return
 		q = leginondata.LppCalibrationData(session=self.session, tem=tem, ccdcamera=ccdcamera)
-		q['wave xtilt vector x'] = self.new_xtilt['x']
-		q['wave xtilt vector y'] = self.new_xtilt['y']
+		q['wave xtilt vector x'] = self.settings['wave xtilt vector x']
+		q['wave xtilt vector y'] = self.settings['wave xtilt vector y']
 		q.insert(force=True)
 		self.logger.info('Lpp standing wave xtilt vector saved')
 
