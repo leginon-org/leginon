@@ -35,8 +35,8 @@ class LppAligner(acquisition.Acquisition):
 		'phase plate defocus sequence': '(-0.002,-0.003,-0.004)',
 		'ref on_node xtilt x': 0.0,
 		'ref on_node xtilt y': 0.0,
-		'one wavelength xtilt x': 0.0,
-		'one wavelength xilt y': 0.000165,
+		'wave xtilt vector x': 0.0,
+		'wave xtilt vector y': 0.000165,
 	})
 
 	eventinputs = acquisition.Acquisition.eventinputs
@@ -185,6 +185,7 @@ class LppAligner(acquisition.Acquisition):
 				reference=self.imagedata,
 				tem=self.imagedata['scope']['tem'],
 				ccdcamera=self.imagedata['camera']['ccdcamera'],
+				rotation=self.settings['rotation'],
 		)
 		q['phase shift'] = phase_shift_needed
 		q['delta lpp focus'] = delta_f
@@ -256,8 +257,8 @@ class LppAligner(acquisition.Acquisition):
 			# set xtilt
 			self.new_xtilt = self.instrument.tem.PhasePlatePlaneShift
 			c = 1/360.0
-			self.new_xtilt['x'] += self.new_phase_shift*c*self.settings['one wavelength xtilt x']
-			self.new_xtilt['y'] += self.new_phase_shift*c*self.settings['one wavelength xtilt y']
+			self.new_xtilt['x'] += self.new_phase_shift*c*self.settings['wave xtilt vector x']
+			self.new_xtilt['y'] += self.new_phase_shift*c*self.settings['wave xtilt vector y']
 			self.logger.info('Calculated LPP new xtilt as %s' % (self.new_xtilt))
 			self.instrument.tem.PhasePlatePlaneShift = self.new_xtilt
 			self.logger.info('Set LPP x1 lens to %.8f, x-tilt to x:%.6f,y:%6f' % (self.new_f0, self.new_xtilt['x'],self.new_xtilt['y']))
@@ -265,6 +266,22 @@ class LppAligner(acquisition.Acquisition):
 			self.logger.error('Error setting on-plane and on-node values')
 			self.resetLppFocus()
 			raise
+		self.saveLppCalibration()
+
+	def saveLppCalibration(self):
+		currentpreset = self.presetsclient.getCurrentPreset()
+		tem = currentpreset['tem']
+		ccdcamera = currentpreset['ccdcamera']
+		results = leginondata.LppCalibrationData(session=self.session, tem=tem, ccdcamera=ccdcamera).query(results=1)
+		if results:
+			r = results[0]
+			if r['wave xtilt vector x'] == self.settings['wave xtilt vector x'] and r['wave xtilt vector y'] == self.settings['wave xtilt vector y']:
+				return
+		q = leginondata.LppCalibrationData(session=self.session, tem=tem, ccdcamera=ccdcamera)
+		q['wave xtilt vector x'] = self.new_xtilt['x']
+		q['wave xtilt vector y'] = self.new_xtilt['y']
+		q.insert(force=True)
+		self.logger.info('Lpp standing wave xtilt vector saved')
 
 	def resetLppFocus(self):
 		self.instrument.tem.PhasePlateFocus = self.f0

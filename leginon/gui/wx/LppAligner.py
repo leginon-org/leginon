@@ -153,12 +153,12 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		savesizer.Add(label, (2, 1), (1, 4), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'x:')
 		savesizer.Add(label, (3, 1), (1, 1), wx.ALIGN_RIGHT)
-		self.widgets['one wavelength xtilt x'] = FloatEntry(self, -1, allownone=False, chars=8, value='0.0')
-		savesizer.Add(self.widgets['one wavelength xtilt x'], (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		self.widgets['wave xtilt vector x'] = FloatEntry(self, -1, allownone=False, chars=8, value='0.0')
+		savesizer.Add(self.widgets['wave xtilt vector x'], (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'y:')
 		savesizer.Add(label, (3, 3), (1, 1), wx.ALIGN_RIGHT)
-		self.widgets['one wavelength xtilt y'] = FloatEntry(self, -1, allownone=False, chars=8, value='0.0')
-		savesizer.Add(self.widgets['one wavelength xtilt y'], (3, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		self.widgets['wave xtilt vector y'] = FloatEntry(self, -1, allownone=False, chars=8, value='0.0')
+		savesizer.Add(self.widgets['wave xtilt vector y'], (3, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
 		return savesizer
 

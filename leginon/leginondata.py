@@ -422,6 +422,14 @@ class CalibrationData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class LppCalibrationData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('wave xtilt vector x', float),
+			('wave xtilt vector y', float),
+		)
+	typemap = classmethod(typemap)
+
 class CameraSensitivityCalibrationData(CalibrationData):
 	def typemap(cls):
 		return CalibrationData.typemap() + (
@@ -1122,6 +1130,9 @@ class ZeroLossCheckData(InSessionData):
 			('std', float),
 		)
 	typemap = classmethod(typemap)
+
+class AlignLppRequestData(ReferenceRequestData):
+	pass
 
 class PhasePlateLogData(InSessionData):
 	def typemap(cls):
@@ -2246,8 +2257,8 @@ class LppAlignerSettingsData(AcquisitionSettingsData):
 			('phase plate defocus sequence', str), #Issue #5687
 			('ref on_node xtilt x', float),
 			('ref on_node xtilt y', float),
-			('one wavelength xtilt x', float),
-			('one wavelength xtilt y', float),
+			('wave xtilt vector x', float),
+			('wave xtilt vector y', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -2257,6 +2268,7 @@ class LppOnNodeData(InSessionData):
 			('tem', InstrumentData),
 			('ccdcamera', InstrumentData),
 			('reference', AcquisitionImageData),
+			('rotation', float), # degrees
 			('phase shift', float),
 			('delta lpp focus', float),
 		)
@@ -3025,6 +3037,12 @@ class AlignZLPSettingsData(ReferenceTimerSettingsData):
 		return ReferenceTimerSettingsData.typemap() + (
 			('check preset', str),
 			('threshold', float),
+		)
+	typemap = classmethod(typemap)
+
+class LppAlignTimerSettingsData(ReferenceTimerSettingsData):
+	def typemap(cls):
+		return ReferenceTimerSettingsData.typemap() + (
 		)
 	typemap = classmethod(typemap)
 
