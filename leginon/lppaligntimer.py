@@ -91,6 +91,7 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 			self.logger.error('No reference or xtilt cycle calibration for on-node lpp alignment.')
 			return
 		refdata = ref_results[0]
+		self.logger.info('Using %s as the reference' % refdata['reference']['filename'])
 		self.xtilt_cycle = xtilt_results[0]
 		delta_f = refdata['delta lpp focus']
 		self._setRequestPreset(refdata['reference']['preset']['name'])
@@ -113,10 +114,7 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 			amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_needed = lppfit.run_fringe_fit(myimage, refdata['rotation'])
 		except Exception as e:
 			self.logger.warning('failed fitting, skipping: %s' % e)
-			self.resetLppFocus()
 			return
-		finally:
-			self.resetLppFocus()
 		try:
 			# phase shift represent correction needed, so it needs to reverse sign.
 			phase_diff = -(phase_shift_needed - refdata['phase shift'])
@@ -126,6 +124,9 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		self.logger.info('phase shift correction = %.5f' % self.new_phase_shift)
 		self.setOnPlaneOnNode()
 		return
+
+	def saveMeasurement(self, refdata, amp_fit, offset_fit, period_fit, phase_shift_needed_degrees):
+		pass
 
 	def resetLppFocus(self):
 		self.instrument.tem.PhasePlateFocus = self.f0
