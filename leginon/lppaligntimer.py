@@ -99,6 +99,7 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		self.xt0 = self.instrument.tem.PhasePlatePlaneShift
 		self.new_f0 = self.f0
 		lpp_focus = self.f0 + delta_f
+		self.instrument.tem.PhasePlateFocus = lpp_focus
 		self.logger.info('phase plate focus set to %.8f' % lpp_focus)
 		time.sleep(self.settings['pause time'])
 		self.imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
@@ -112,11 +113,13 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 			amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_needed = lppfit.run_fringe_fit(myimage, refdata['rotation'])
 		except Exception as e:
 			self.logger.warning('failed fitting, skipping: %s' % e)
+			self.resetLppFocus()
 			return
 		finally:
 			self.resetLppFocus()
 		try:
-			phase_diff = phase_shift_needed - refdata['phase shift']
+			# phase shift represent correction needed, so it needs to reverse sign.
+			phase_diff = -(phase_shift_needed - refdata['phase shift'])
 			self.new_phase_shift = lppfit.convert_phase_degrees(phase_diff)
 		except Exception as e:
 			self.logger.error('Error calculating on-node values: %s' % e)
@@ -126,11 +129,13 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 
 	def resetLppFocus(self):
 		self.instrument.tem.PhasePlateFocus = self.f0
+		self.logger.info('phase plate focus reset to %.8f' % self.f0)
 		self.instrument.tem.PhasePlatePlaneShift = self.xt0
 
 	def setOnPlaneOnNode(self):
 		try:
-			self.instrument.tem.PhasePlateFocus = self.new_f0
+			if self.new_f0 != self.f0:
+				self.instrument.tem.PhasePlateFocus = self.new_f0
 			# set xtilt
 			self.new_xtilt = self.instrument.tem.PhasePlatePlaneShift
 			c = 1/360.0
