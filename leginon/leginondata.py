@@ -2272,6 +2272,20 @@ class LppOnNodeRefData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class LppFitResultData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('axis', int), # axis of lpp cavity default=0
+			('on node ref', LppOnNodeRefData), # on-node reference
+			('amp', float), # lpp modulation intensiity amplitude
+			('offset', float), # modulation intensity offset
+			('period', float), # peak-to-peak distance in pixels
+			('phase shift', float), # fitting phase shift needed
+			('image', AcquisitionImageData),
+			('phase shift correction', float), # phase shift required to bring lpp on node.
+		)
+	typemap = classmethod(typemap)
+
 class BeamTiltImagerSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
