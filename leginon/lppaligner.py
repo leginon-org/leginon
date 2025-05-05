@@ -114,15 +114,21 @@ class LppAligner(acquisition.Acquisition):
 		refdata = ref_results[0]
 		delta_f = refdata['delta lpp focus']
 		# acquire image with new_f
-		status, period_fit, phase_shift_needed = self._acquireOffPlaneImage(presetdata, emtarget, attempt, target, channel, delta_f)
+		try:
+			status, amp_fit, offset_fit, period_fit, phase_shift_needed = self._acquireOffPlaneImage(presetdata, emtarget, attempt, target, channel, delta_f)
+		except Exception as e:
+			self.logger.error('Failed. on-node reference not saved: %s' % e)
+			return 'error'
 		try:
 			# phase shift represent correction needed, so it needs to reverse sign.
 			phase_diff = -(phase_shift_needed - refdata['phase shift'])
 			self.new_phase_shift = lppfit.convert_phase_degrees(phase_diff)
 		except Exception as e:
 			self.logger.error('Error calculating on-node values: %s' % e)
+			status = 'error'
 			return status
 		self.logger.info('phase shift correction = %.5f' % self.new_phase_shift)
+		self.saveLppFitMeasurement(refdata, self.imagedata, amp_fit, offset_fit, period_fit, phase_shift_needed, self.new_phase_shift)
 		return status
 
 	def _acquireOffPlaneImage(self, presetdata, emtarget=None, attempt=None, target=None, channel=None, lpp_delta_focus=None):
@@ -153,18 +159,17 @@ class LppAligner(acquisition.Acquisition):
 		except Exception as e:
 			self.logger.error('failed to acquire image, aborting: %s' % e)
 			self.resetLppFocus()
-			return 'error', 1, 0.0
-		finally:
-			try:
-				amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_needed = lppfit.run_fringe_fit(myimage, self.settings['rotation'])
-			except Exception as e:
-				self.logger.warning('failed fitting, skipping: %s' % e)
-			finally:
-				self.resetLppFocus()
+			raise RuntimeError('Acquisition Failed: %e' % e)
+		try:
+			amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_needed = lppfit.run_fringe_fit(myimage, self.settings['rotation'])
+		except Exception as e:
+			self.logger.warning('failed fitting, skipping: %s' % e)
+			is_failed = self.resetComaCorrection()
+			raise RuntimeError('Lpp Fitting failed: %e' % e)
 		is_failed = self.resetComaCorrection()
 		if is_failed:
 			self.player.pause()
-		return status, period_fit, phase_shift_needed
+		return status, amp_fit, offset_fit, period_fit, phase_shift_needed
 
 	def _acquireOnNodeReference(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
 		'''
@@ -176,7 +181,11 @@ class LppAligner(acquisition.Acquisition):
 			# always starts from value closest to f0
 			self.x1_defocus_series.reverse()
 		delta_f = self.x1_defocus_series[-1]
-		status, period_fit, phase_shift_needed = self._acquireOffPlaneImage(presetdata, emtarget, attempt, target, channel, delta_f)
+		try:
+			status, amp_fit, offset_fit, period_fit, phase_shift_needed = self._acquireOffPlaneImage(presetdata, emtarget, attempt, target, channel, delta_f)
+		except Exception as e:
+			self.logger.error('Failed. on-node reference not saved: %s' % e)
+			return
 
 		q = leginondata.LppOnNodeRefData(
 				session=self.session,

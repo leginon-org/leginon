@@ -19,12 +19,13 @@ def makeRotatedLineProfile(arr, rot_angle):
 	of the input position.
 	"""
 	shape0 = arr.shape
-	arr = nd.rotate(arr, rot_angle,mode='nearest') # angle in degrees
-	rot_shape = arr.shape
-	# remove any part that comes from nearest fill
-	bad = (int(math.tan(rot_angle*math.pi/180.0)*rot_shape[1]),
+	if rot_angle != 0:
+		arr = nd.rotate(arr, rot_angle,mode='nearest') # angle in degrees
+		rot_shape = arr.shape
+		# remove any part that comes from nearest fill
+		bad = (int(math.tan(rot_angle*math.pi/180.0)*rot_shape[1]),
 				int(math.tan(rot_angle*math.pi/180.0)*rot_shape[0]))
-	arr = arr[bad[0]:-bad[0],bad[1]:-bad[1]]
+		arr = arr[bad[0]:-bad[0],bad[1]:-bad[1]]
 	final = numpy.sum(arr, axis=1)
 	return final
 

@@ -450,6 +450,23 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		else:
 			self.logger.error('Send a preset to scope/camera first.')
 			raise RuntimeError('No preset')
+
+		imagedata = self.newImageData(preset, self.label, None)
+		# make reference target on the image
+		drow, dcol = (0,0)
+		targetdata = self.newReferenceTarget(imagedata, drow, dcol)
+		try:
+			self.publish(targetdata, database=True)
+			image_array = imagedata['image']
+			self.setImage(numpy.asarray(image_array, numpy.float32), 'Image')
+		except:
+			raise RuntimeError('Failed to publish reference target')
+
+	def newImageData(self, preset, label, filename=None):
+		"""
+		Return unpublished imagedata with acquired image array at current
+		position.
+		"""
 		emtarget = leginondata.EMTargetData(preset=preset,movetype='stage position')
 		emtarget['image shift'] = preset['image shift']
 		emtarget['beam shift'] = preset['beam shift']
@@ -462,18 +479,11 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			pixeltype = str(imagedata['image'].dtype)
 		except:
 			self.logger.error('array not returned from camera')
-			raise RuntimeError('Parent image for reference target failed to be acquired')
-		filename = self.getImageFilename(imagedata)
+			raise RuntimeError('Image failed to be acquired')
+		if not filename:
+			filename = self.getImageFilename(imagedata)
 		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=preset, label=self.name, emtarget=emtarget, pixels=pixels, pixeltype=pixeltype, filename=filename)
-		# make reference target on the image
-		drow, dcol = (0,0)
-		targetdata = self.newReferenceTarget(imagedata, drow, dcol)
-		try:
-			self.publish(targetdata, database=True)
-			image_array = imagedata['image']
-			self.setImage(numpy.asarray(image_array, numpy.float32), 'Image')
-		except:
-			raise RuntimeError('Failed to publish reference target')
+		return imagedata
 
 	def newReferenceTarget(self, image_data, drow, dcol):
 		target_data = leginondata.ReferenceTargetData()

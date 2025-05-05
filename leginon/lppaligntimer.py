@@ -50,6 +50,7 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		if preset['name'] != request_preset_name:
 			self.logger.info('Change preset to requested %s' % request_preset_name)
 			self.presets_client.toScope(request_preset_name)
+		return self.presets_client.getCurrentPreset()
 
 	def align(self, ccd_camera=None):
 		if not ccd_camera:
@@ -94,6 +95,7 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		self.logger.info('Using %s as the reference' % refdata['reference']['filename'])
 		self.xtilt_cycle = xtilt_results[0]
 		delta_f = refdata['delta lpp focus']
+		measure_preset = self.makeMeasurePreset(refdata['reference']['preset'])
 		self._setRequestPreset(refdata['reference']['preset']['name'])
 		# acquire image with new_f
 		self.f0 = self.instrument.tem.PhasePlateFocus
@@ -103,9 +105,14 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		self.instrument.tem.PhasePlateFocus = lpp_focus
 		self.logger.info('phase plate focus set to %.8f' % lpp_focus)
 		time.sleep(self.settings['pause time'])
-		self.imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		self.resetLppFocus()
-		if self.imagedata is None:
+		try:
+			self.imagedata = self.newImageData(measure_preset,'%dref' % refdata.dbid)
+			filename = self.getMeasureImageFilename(self.imagedata, refdata)
+			self.imagedata['filename'] = filename
+			self.imagedata.insert()
+		except Exception as e:
+			self.logger.error(e)
 			self.logger.error('failed to acquire image, aborting: %s' % e)
 			return
 		try:
@@ -122,11 +129,40 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		except Exception as e:
 			self.logger.error('Error calculating on-node values: %s' % e)
 		self.logger.info('phase shift correction = %.5f' % self.new_phase_shift)
+		#saving
+		self.saveLppFitMeasurement(refdata, self.imagedata, amp_fit, offset_fit, period_fit, phase_shift_needed, self.new_phase_shift)
 		self.setOnPlaneOnNode()
 		return
 
-	def saveMeasurement(self, refdata, amp_fit, offset_fit, period_fit, phase_shift_needed_degrees):
-		pass
+	def makeMeasurePreset(self, ref_preset):
+		new_name = ref_preset['name']+'-m'
+		preset = leginondata.PresetData(initializer=ref_preset,name=new_name)
+		availablepresets = self.presets_client.getPresetNames()
+		if new_name not in availablepresets:
+			# add new name and append ordernumber
+			preset['number'] = len(availablepresets)+1
+		else:
+			# keep the old order number
+			old_p = self.presets_client.getPresetByName(new_name)
+			preset['number'] = old_p['number']
+		preset.insert()
+		return preset
+
+	def getMeasureImageFilename(self, imagedata, lpp_refdata):
+		'''
+		Set image filename by next available name of the preset
+		because the image does not come from a target list.
+		'''
+		parts = []
+		parts.append(self.session['name'])
+		parts.append('%05dlpp' % lpp_refdata['reference'].dbid)
+		preset_name = imagedata['preset']['name']
+		p = leginondata.PresetData(name=preset_name)
+		r = leginondata.AcquisitionImageData(session=self.session, preset=p).query()
+		parts.append('%05d%s' % (len(r)+1, preset_name))
+		# join them
+		filename = '_'.join(parts)
+		return filename
 
 	def resetLppFocus(self):
 		self.instrument.tem.PhasePlateFocus = self.f0
