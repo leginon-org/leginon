@@ -158,8 +158,8 @@ class LppAligner(acquisition.Acquisition):
 			myimage = self.imagedata['image']
 		except Exception as e:
 			self.logger.error('failed to acquire image, aborting: %s' % e)
-			self.resetLppFocus()
 			raise RuntimeError('Acquisition Failed: %e' % e)
+		self.resetLppFocus()
 		try:
 			amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_needed = lppfit.run_fringe_fit(myimage, self.settings['rotation'])
 		except Exception as e:
