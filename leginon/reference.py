@@ -72,7 +72,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.navigator_bound = False
 		self.at_reference_target = False
 		self.last_processed = None
-
+		self.label = None
 
 		if self.__class__ == Reference:
 			print('isReference')
@@ -343,8 +343,8 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		try:
 			self.setReferenceTarget()
 			self.logger.info('Done setting reference target')
-		except:
-			self.logger.error('can not set reference target at current position')
+		except Exception as e:
+			self.logger.error('can not set reference target at current position: %s' % e)
 		finally:
 			self.panel.playerEvent('stop')
 			self.setStatus('idle')
