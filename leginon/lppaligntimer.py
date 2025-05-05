@@ -105,7 +105,6 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		self.instrument.tem.PhasePlateFocus = lpp_focus
 		self.logger.info('phase plate focus set to %.8f' % lpp_focus)
 		time.sleep(self.settings['pause time'])
-		self.resetLppFocus()
 		try:
 			self.imagedata = self.newImageData(measure_preset,'%dref' % refdata.dbid)
 			filename = self.getMeasureImageFilename(self.imagedata, refdata)
@@ -114,7 +113,9 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		except Exception as e:
 			self.logger.error(e)
 			self.logger.error('failed to acquire image, aborting: %s' % e)
+			self.resetLppFocus()
 			return
+		self.resetLppFocus()
 		try:
 			myimage = self.imagedata['image']
 			self.setImage(myimage, 'Image')
