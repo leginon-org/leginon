@@ -921,7 +921,7 @@ class Krios(tem.TEM):
 
 	def setAutoNormalizeEnabled(self, value):
 		if self.normalize_all_after_setting:
-			my_request = norm_p.SetAutoNormalizeEnabledRequest(enable=bool(value))
+			my_request = norm_p.SetAutoNormalizeEnabledRequest(enabled=bool(value))
 			_set_by_request(norm_stub, 'SetAutoNormalizeEnabled', my_request)
 			self.need_normalize_all = not bool(value)
 		else:
