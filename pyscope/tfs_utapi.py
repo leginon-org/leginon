@@ -279,6 +279,7 @@ class Logger(object):
 class Krios(tem.TEM):
 	name = 'Krios'
 	default_stage_speed_fraction = 1.0
+	stage_top_speed = default_stage_speed_fraction
 	has_x_lens = False
 	# (pyscope value, utapi CONSTANT)
 	cm_projection_mode_map = [	('imaging','PROJECTION_MODE_IMAGING'),
@@ -829,11 +830,14 @@ class Krios(tem.TEM):
 			req_key_name = 'illuminated_area_diameter'
 		else:
 			req_key_name = 'intensity'
-		self._setIllumination(req_key_name, value)
+		prev = self.getIntensity()
+		if prev != value:
+			self.setAutoNormalizeEnabled(False)
+			self._setIllumination(req_key_name, value)
 		# Normalizations
 		if self.normalize_all_after_setting:
 			if self.getDebugAll():
-				self.need_normalize_all
+				print('need_normalize_all',self.need_normalize_all)
 			if self.need_normalize_all:
 				if self.getDebugAll():
 					print('normalize all')
