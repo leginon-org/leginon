@@ -842,10 +842,19 @@ class Krios(tem.TEM):
 				if self.getDebugAll():
 					print('normalize all')
 				self.normalizeLens('all')
+		# wabble around the value for precision tuning
+		need_lpp_norm_diam = self.getFeiConfig('optics','maximum_beam_diameter_for_local_intensity_normalization')
+		if prev != value and value <= need_lpp_norm_diam and req_key_name !='intensity':
+			# This does not work with non-titan column since 10% intensity change is likely too big.
+			for v in (value*0.9, value*1.1):
+				self._setIllumination(req_key_name, v)
+				time.sleep(1)
+			self._setIllumination(req_key_name, value)
 		# sleep for intensity change
 		extra_sleep = self.getFeiConfig('camera','extra_protector_sleep_time')
 		if self.need_normalize_all and extra_sleep:
 			time.sleep(extra_sleep)
+		
 		#reset changed flag
 		self.setAutoNormalizeEnabled(True)
 
