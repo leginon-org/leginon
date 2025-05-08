@@ -43,6 +43,11 @@ MINIMUM_INTENSITY_MOVEMENT = 5.0e-8
 # api.  Meters in UTAPI, lens current in TEMScripting.
 NORMALIZING_FOCUS_VALUE = 0.0
 
+# Maximum beam diameter on Titan column that requires extra condensor normalization through wobbling values locally around the set value.
+# This is used in phase plate set up.
+# Value in metter.  0.0 turns off the feature.  Typical value is a value some what above what used in the final exposure where the phase plate focus and alignment on the phase plate plane needs to be accurate.
+MAXIMUM_BEAM_DIAMETER_FOR_LOCAL_INTENSITY_NORMALIZATION = 0.0
+
 [aperture]
 # Disable control of auto apertures if not working or not available
 # not all versions of microscope software allows auto aperture control
