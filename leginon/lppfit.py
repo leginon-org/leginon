@@ -129,7 +129,7 @@ def fit_on_plane(x_data, y_data, is_over_focus):
 		popt, pcov = curve_fit(on_plane_function_left, x_data, y_data,p0=[center0,1])
 	return popt # (focus_center, amplitude)
 
-def on_node_function(x, offset, amp, tilt):
+def on_node_function(x, offset, tilt, amp):
 	"""
 	Return phase shift offset for on-node condition.  This is a
 	Second order polynomial centered at laser phane x1 focus.
@@ -142,7 +142,7 @@ def fit_on_node(x_data, y_data):
 	as the on_node_function.
 	"""
 	amp0 = (y_data[-1]-y_data[-2])/(x_data[-1]**2-x_data[-2]**2)
-	popt, pcov = curve_fit(on_node_function, x_data, y_data,p0=[-10,amp0,0])
+	popt, pcov = curve_fit(on_node_function, x_data, y_data,p0=[-10,0,amp0])
 	return popt #(phase_shift_to_apply at on-plane focus, amplitude for conversion)
 
 def show_fringe_fit_results(x_data, y_data, x_center, amp_fit, freq_fit, phase_fit, offset_fit):
@@ -195,7 +195,7 @@ def convertPhasesToContinuous(x1_data, z_data):
 				z_data[i] -= 360.0
 	return z_data
 
-def calculateOnPlaneOnNode(data, is_over_focus=False):
+def calculateOnPlaneOnNode(data, is_over_focus=False, display=False):
 	start, end = 0, data.shape[0]
 	# on-plane phase plate focus is popt[0]
 	x_data = data[start:end,0]
@@ -209,10 +209,30 @@ def calculateOnPlaneOnNode(data, is_over_focus=False):
 	x1_data = x_data - numpy.ones(x_data.shape)*f_center
 	z_data = convertPhasesToContinuous(x1_data, z_data)
 	popt = fit_on_node(x1_data, z_data)
-	a2 = popt[1]
-	m2 = popt[0]
-	print('phase_shift_needed for maximum', m2)
-	return f_center, m2
+	a2 = popt[2] #2nd order amplitude
+	s2 = popt[1] #slope->phase plate plane tilt
+	print('pixel shift per 0.001 phase plate defocus when on-plane', s2*0.001)
+	m2 = popt[0] #offset-> phase shift
+	nearest_m2 = convert_phase_degrees(m2)
+	print('phase_shift_needed for maximum', nearest_m2)
+	# display fit results with m2 before convertion to phase shift
+	# to within -180 to 180
+	if display:
+		show_on_node_on_plane_fit_results(x1_data, z_data, m2, s2, a2)
+	return f_center, nearest_m2, s2, a2
+
+def show_on_node_on_plane_fit_results(x_data, y_data, offset, slope, amp):
+	# index sequence
+	fit_data = amp*x_data*x_data + slope*x_data + offset
+	#
+	import matplotlib.pyplot as plt
+	plt.plot(x_data, y_data, 'o', label='Data')
+	plt.plot(x_data, fit_data, '-', label='Fit')
+	#plt.legend()
+	plt.xlabel('x')
+	plt.ylabel('y')
+	plt.title('Defocus sequence fitting')
+	plt.show()
 
 if __name__=='__main__':
 	import os, sys

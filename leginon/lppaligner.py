@@ -252,7 +252,7 @@ class LppAligner(acquisition.Acquisition):
 		print('focus, period, phase_shift_to_apply')
 		print(numpy.array(data))
 		try:
-			self.new_f0, self.new_phase_shift = lppfit.calculateOnPlaneOnNode(numpy.array(data), is_over_focus=False)
+			self.new_f0, self.new_phase_shift, self.on_node_slope, self.second_order_amp = lppfit.calculateOnPlaneOnNode(numpy.array(data), is_over_focus=False)
 			self.logger.info('Calculated LPP x1 lens at %.8f, phase shift needed at %.1f' % (self.new_f0, self.new_phase_shift))
 		except Exception as e:
 			self.logger.error('Error calculating on-plane and on-node values: %s' % e)
