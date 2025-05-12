@@ -2541,7 +2541,7 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 			# last imagedata from drift check.
 			imagedata0 = image0
 		defocus0 = self.instrument.tem.Defocus
-		defocus_avg0 = self._measureCtf(imagedata0, phase_search)
+		defocus_avg0, ctfvalues0 = self.measureImageCtf(imagedata0, phase_search)
 		# adjust by pixelsize
 		ht = imagedata0['scope']['high tension']
 		cs = imagedata0['scope']['tem']['cs']
@@ -2559,7 +2559,7 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		self.instrument.tem.Defocus = defocus1
 		time.sleep(settle)
 		imagedata1 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
-		defocus_avg1 = self._measureCtf(imagedata1, phase_search)
+		defocus_avg1, ctfvalues0 = self.measureImageCtf(imagedata1, phase_search)
 
 		# reset
 		self.instrument.tem.Defocus = defocus0
@@ -2577,8 +2577,8 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		result['stigy'] = None
 		return result
 
-	def _measureCtf(self, imagedata, phase_search=(0,0)):
-		imagedata['filename']='temp'
+	def measureImageCtf(self, imagedata, phase_search=(0,0)):
+		#imagedata['filename']='temp'
 		mrc.write(imagedata['image'],'%s/temp.mrc' % (imagedata['session']['image path']))
 		im = imagedata['image']
 		self.displayImage(im)
@@ -2588,7 +2588,7 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		defocus_avg1 = 1e-10*(ctfvalues['defocus1']+ctfvalues['defocus2'])/2.0
 		if max(phase_search) > min(phase_search):
 			self.node.logger.info('estimated phase shift: %.2f degrees' % ctfvalues['extra_phase_shift'])
-		return defocus_avg1
+		return defocus_avg1, ctfvalues
 
 class EucentricFocusClient(CalibrationClient):
 	def __init__(self, node):

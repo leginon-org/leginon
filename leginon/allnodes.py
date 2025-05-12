@@ -213,6 +213,9 @@ noderegistry.registerNodeClass(LppAligner,classtype)
 from leginon.lppaligntimer import LppAlignTimer
 noderegistry.registerNodeClass(LppAlignTimer,classtype)
 
+from leginon.lppimageshiftimager import LppImageShiftImager
+noderegistry.registerNodeClass(LppImageShiftImager,classtype)
+
 
 ##############################
 # Calibrations

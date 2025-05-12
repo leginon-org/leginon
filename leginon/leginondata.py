@@ -2260,6 +2260,19 @@ class LppAlignerSettingsData(AcquisitionSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class LppImageShiftImagerSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('image shift', float),
+			('image shift count', int),
+			('sites', int),
+			('startangle', float),
+			('tableau type', str),
+			('tableau binning', int),
+			('fringe rotation', float),
+		)
+	typemap = classmethod(typemap)
+
 class LppOnNodeRefData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
