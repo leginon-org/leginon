@@ -44,7 +44,7 @@ class GctffindClient(object):
 			"-TileSize %d" % inputparams['fieldsize'],
 			"-AmpContrast %.4f" % inputparams['amplitude_contrast'],
 		]
-		if 'phase_min' in inputparams.keys() and 'phase_max' in inputparams.keys():
+		if 'min_phase_shift' in inputparams.keys() and 'max_phase_shift' in inputparams.keys():
 			command_input_list.append(
 				"-ExtPhase %.1f %.1f" % (inputparams['min_phase_shift'],inputparams['max_phase_shift'])
 			)
