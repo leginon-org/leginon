@@ -197,7 +197,12 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 			newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
 			self.instrument.tem.ImageShift = newbt
 			self.logger.info('New image shift: %.4f, %.4f' % (newbt['x'],newbt['y'],))
+			self.x1focus = self.instrument.tem.PhasePlateFocus
+			if self.settings['tableau type'] == 'image shift series-lpp defocused':
+				self.instrument.tem.PhasePlateFocus = self.x1focus - 0.005
 			status = manualfocuschecker.ManualFocusChecker.acquire(self, presetdata, emtarget, channel= channel)
+			if self.settings['tableau type'] == 'image shift series-lpp defocused':
+				self.instrument.tem.PhasePlateFocus = self.x1focus
 			imagedata = self.imagedata
 			# get these values once
 			if not self.rpixelsize or not self.ht or not self.cs:

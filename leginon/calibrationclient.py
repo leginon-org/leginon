@@ -2578,11 +2578,11 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		return result
 
 	def measureImageCtf(self, imagedata, phase_search=(0,0)):
-		imagedata['filename']='temp'
-		mrc.write(imagedata['image'],'%s/temp.mrc' % (imagedata['session']['image path']))
+		if not imagedata['filename']:
+			imagedata['filename']='temp'
+			mrc.write(imagedata['image'],'%s/temp.mrc' % (imagedata['session']['image path']))
 		im = imagedata['image']
 		self.displayImage(im)
-		mrc.write(im,'%s/temp.mrc' % (imagedata['session']['image path']))
 		ctfvalues = self.ctfclient.runFromImageData(imagedata)
 		print(ctfvalues)
 		self.node.logger.info('estimated ctf: def1,def2,angle_astig: %.2f um, %.2f um, %.1f degrees' % (ctfvalues['defocus1']*1e-4, ctfvalues['defocus2']*1e-4, ctfvalues['angle_astigmatism']))
