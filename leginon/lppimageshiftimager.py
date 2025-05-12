@@ -313,8 +313,9 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 			'''
 			return simulate ctf result with this function call instead of getImageCtfResult
 			'''
-			defocus_avg, ctfvalues = self.ctfcalclient.measureImageCtf(imagedata, phase_search)
-			return ctfvalues
+		phase_search = (0,15)
+		defocus_avg, ctfvalues = self.ctfcalclient.measureImageCtf(imagedata, phase_search)
+		return ctfvalues
 
 	def _addTextToImageArray(self, image, s):
 		if s:

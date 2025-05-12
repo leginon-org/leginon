@@ -2583,7 +2583,7 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 			mrc.write(imagedata['image'],'%s/temp.mrc' % (imagedata['session']['image path']))
 		im = imagedata['image']
 		self.displayImage(im)
-		ctfvalues = self.ctfclient.runFromImageData(imagedata)
+		ctfvalues = self.ctfclient.runFromImageData(imagedata, phase_search=phase_search)
 		print(ctfvalues)
 		self.node.logger.info('estimated ctf: def1,def2,angle_astig: %.2f um, %.2f um, %.1f degrees' % (ctfvalues['defocus1']*1e-4, ctfvalues['defocus2']*1e-4, ctfvalues['angle_astigmatism']))
 		defocus_avg1 = 1e-10*(ctfvalues['defocus1']+ctfvalues['defocus2'])/2.0
