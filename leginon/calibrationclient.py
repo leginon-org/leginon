@@ -2559,7 +2559,7 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		self.instrument.tem.Defocus = defocus1
 		time.sleep(settle)
 		imagedata1 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
-		defocus_avg1, ctfvalues0 = self.measureImageCtf(imagedata1, phase_search)
+		defocus_avg1, ctfvalues1 = self.measureImageCtf(imagedata1, phase_search)
 
 		# reset
 		self.instrument.tem.Defocus = defocus0
@@ -2578,12 +2578,13 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		return result
 
 	def measureImageCtf(self, imagedata, phase_search=(0,0)):
-		#imagedata['filename']='temp'
+		imagedata['filename']='temp'
 		mrc.write(imagedata['image'],'%s/temp.mrc' % (imagedata['session']['image path']))
 		im = imagedata['image']
 		self.displayImage(im)
 		mrc.write(im,'%s/temp.mrc' % (imagedata['session']['image path']))
 		ctfvalues = self.ctfclient.runFromImageData(imagedata)
+		print(ctfvalues)
 		self.node.logger.info('estimated ctf: def1,def2,angle_astig: %.2f um, %.2f um, %.1f degrees' % (ctfvalues['defocus1']*1e-4, ctfvalues['defocus2']*1e-4, ctfvalues['angle_astigmatism']))
 		defocus_avg1 = 1e-10*(ctfvalues['defocus1']+ctfvalues['defocus2'])/2.0
 		if max(phase_search) > min(phase_search):
