@@ -30,6 +30,7 @@ class GctffindClient(object):
 		self.run(cmd, inputparams['ctf_output'])
 		self.ctfvalues = self.readResult(inputparams['ctf_output'])
 		self.ctfvalues.update(inputparams)
+		os.remove(inputparams['ctf_output'])
 		return self.ctfvalues
 
 	def makeCommand(self, inputparams):

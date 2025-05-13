@@ -2570,8 +2570,8 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		else:
 			if defocus_avg1 < abs(delta_defoc):
 				defocus0_is_over_focus = False
-		sign = 1 if defocus0_is_over_focus else -1
-		self.node.logger.info('sign of the first image is %d' % sign)
+		sign = -1 if defocus0_is_over_focus else 1
+		self.node.logger.info('correction sign of the first image is %d' % sign)
 		result = {'defocus': defocus_avg0*sign, 'min': 0.0}
 		result['stigx'] = None
 		result['stigy'] = None
@@ -2584,7 +2584,6 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		im = imagedata['image']
 		self.displayImage(im)
 		ctfvalues = self.ctfclient.runFromImageData(imagedata, phase_search=phase_search)
-		print(ctfvalues)
 		self.node.logger.info('estimated ctf: def1,def2,angle_astig: %.2f um, %.2f um, %.1f degrees' % (ctfvalues['defocus1']*1e-4, ctfvalues['defocus2']*1e-4, ctfvalues['angle_astigmatism']))
 		defocus_avg1 = 1e-10*(ctfvalues['defocus1']+ctfvalues['defocus2'])/2.0
 		if max(phase_search) > min(phase_search):

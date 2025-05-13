@@ -58,8 +58,6 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 		self.increment = 5e-4
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.ctfcalclient = calibrationclient.CtfCalibrationClient(self)
-		self.rpixelsize = None
-		self.ht = None
 		self.cs = None
 		# ace2 is not used for now.
 		self.ace = None
@@ -99,7 +97,7 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 		image = imagedata['image']
 		binning = self.settings['tableau binning']
 		if self.settings['tableau type'] == 'image shift series-lpp infocus':
-			binned = self.makeBinnedPowerAndAddCTFlabel(image, result, binning)
+			binned = self.makeBinnedImageAndAddCTFlabel(image, result, binning)
 		else:
 			binned = imagefun.bin(image, binning)
 			binned = self.makeBinnedImageAndAddFringeFitlabel(image, result, binning)
@@ -148,7 +146,6 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 		if self.catchBadSettings(presetdata) == 'error':
 			return 'error'
 
-		self.rpixelsize = None
 		self.defocus = presetdata['defocus']
 		## sometimes have to apply or un-apply deltaz if image shifted on
 		## shifted specimen
@@ -157,7 +154,7 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 		else:
 			self.deltaz = emtarget['delta z']
 
-		# aquire and save the focus image
+		# aquire and save the image
 		# Need to set Magnification of the preset first so that beam and stig is valid
 		self.setPresetMagProbeMode(presetdata, emtarget)
 
@@ -183,6 +180,10 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 				newtarget = leginondata.AcquisitionImageTargetData(initializer=target, number=newnumber)
 				newemtarget = leginondata.EMTargetData(initializer=emtarget, target=newtarget)
 
+			bt = shiftlist[i+1]
+			oldbt = emtarget['image shift']
+			newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
+			newemtarget['image shift'] = newbt
 			newemtarget.insert(force=True)
 			emtargetlist.append(newemtarget)
 
@@ -193,22 +194,24 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 				channel = 0
 			else:
 				channel = 1
-			self.logger.info('Old image shift: %.4f, %.4f' % (oldbt['x'],oldbt['y'],))
-			newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
-			self.instrument.tem.ImageShift = newbt
-			self.logger.info('New image shift: %.4f, %.4f' % (newbt['x'],newbt['y'],))
+			# image shift is set by emtarget
+			newbt = emtarget['image shift']
+			self.logger.info('New image shift um: %.4f, %.4f' % (newbt['x']*1e6,newbt['y']*1e6,))
 			self.x1focus = self.instrument.tem.PhasePlateFocus
 			if self.settings['tableau type'] == 'image shift series-lpp defocused':
 				self.instrument.tem.PhasePlateFocus = self.x1focus - 0.005
-			status = manualfocuschecker.ManualFocusChecker.acquire(self, presetdata, emtarget, channel= channel)
+			# actual move by emtarget/preset and acquire
+			try:
+				status = manualfocuschecker.ManualFocusChecker.acquire(self, presetdata, emtarget, channel= channel)
+			except Exception as e:
+				self.instrument.tem.PhasePlateFocus = self.x1focus
+				self.logger.error('Failed acquiring image: %s' % e)
+				self.setComaStig0()
+				return 'error'
 			if self.settings['tableau type'] == 'image shift series-lpp defocused':
 				self.instrument.tem.PhasePlateFocus = self.x1focus
 			imagedata = self.imagedata
 			# get these values once
-			if not self.rpixelsize or not self.ht or not self.cs:
-				self.rpixelsize = self.btcalclient.getImageReciprocalPixelSize(imagedata)['x']
-				self.ht = imagedata['scope']['high tension']
-				self.cs = imagedata['scope']['tem']['cs']
 			self.setImage(imagedata['image'], 'Image')
 			self.instrument.tem.ImageShift = oldbt
 			angle = anglelist[i]
@@ -339,9 +342,8 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 			s = 'failed'
 		return self._addTextToImageArray(binned, s)
 
-	def makeBinnedPowerAndAddCTFlabel(self, image, ctfresult, binning=1, defocus=None):
-		powimage = imagefun.power(image)
-		binned = imagefun.bin(powimage, binning)
+	def makeBinnedImageAndAddCTFlabel(self, image, ctfresult, binning=1, defocus=None):
+		binned = imagefun.bin(image, binning)
 		try:
 			s = 'def=%.2f um, phi=%.1f deg' % ((ctfresult['defocus1']+ctfresult['defocus2'])*1e-4/2, ctfresult['extra_phase_shift'])
 		except:
