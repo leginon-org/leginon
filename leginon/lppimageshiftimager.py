@@ -328,8 +328,10 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 			if (zoom_factor * t.shape[1])+40 > image.shape[1]:
 				zoom_factor = (image.shape[1]-40.0)/t.shape[1]
 			t = ndimage.zoom(t, zoom_factor)
-			minvalue = arraystats.min(image)
-			maxvalue = arraystats.max(image)
+			allstats = arraystats.all(image)
+			# handle cases when there are outliers
+			minvalue = max(allstats['min'], allstats['mean']-5*allstats['std'])
+			maxvalue = min(allstats['max'], allstats['mean']+5*allstats['std'])
 			t = minvalue + t * (maxvalue-minvalue)
 			imagefun.pasteInto(t, image, (20,20))
 		return image
