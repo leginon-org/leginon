@@ -138,6 +138,22 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 				self.logger.error('Preset dimension can not be split evenly. Correct Settings or preset dimension')
 				return 'error'
 
+	def makeEmTargetWithShift(self, presetdata, emtarget, delta_shift, target):
+		## check if target is simulated or not
+		if target['type'] == 'simulated':
+			newtarget = self.newSimulatedTarget(preset=presetdata)
+			newemtarget = leginondata.EMTargetData(initializer=emtarget, target=newtarget)
+		else:
+			lastnumber = self.lastTargetNumber(image=target['image'], session=self.session)
+			newnumber = lastnumber+1
+			newtarget = leginondata.AcquisitionImageTargetData(initializer=target, number=newnumber)
+			newemtarget = leginondata.EMTargetData(initializer=emtarget, target=newtarget)
+		old_shift = emtarget['image shift']
+		new_shift = {'x': old_shift['x'] + delta_shift['x'], 'y': old_shift['y'] + delta_shift['y']}
+		newemtarget['image shift'] = new_shift
+		newemtarget.insert(force=True)
+		return newemtarget
+
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		'''
 		this replaces Acquisition.acquire()
@@ -166,54 +182,41 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 		self.initTableau()
 		ht = self.instrument.tem.HighTension
 
-		## first target is the one given, the remaining are created now
-		emtargetlist = []
-		emtargetlist.append(emtarget)
-		for i in range(len(shiftlist)-1):
-			## check if target is simulated or not
-			if target['type'] == 'simulated':
-				newtarget = self.newSimulatedTarget(preset=presetdata)
-				newemtarget = leginondata.EMTargetData(initializer=emtarget, target=newtarget)
-			else:
-				lastnumber = self.lastTargetNumber(image=target['image'], session=self.session)
-				newnumber = lastnumber+1
-				newtarget = leginondata.AcquisitionImageTargetData(initializer=target, number=newnumber)
-				newemtarget = leginondata.EMTargetData(initializer=emtarget, target=newtarget)
-
-			bt = shiftlist[i+1]
-			oldbt = emtarget['image shift']
-			newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
-			newemtarget['image shift'] = newbt
-			newemtarget.insert(force=True)
-			emtargetlist.append(newemtarget)
-
-		displace = []
 		for i,bt in enumerate(shiftlist):
-			emtarget = emtargetlist[i]
+			## first target is the one given, the remaining are created now
+			if i == 0:
+				# No shift
+				newemtarget = emtarget
+			else:
+				newemtarget = self.makeEmTargetWithShift(presetdata, emtarget,bt, target)
 			if i == 0:
 				channel = 0
 			else:
 				channel = 1
 			# image shift is set by emtarget
-			newbt = emtarget['image shift']
+			newbt = newemtarget['image shift']
 			self.logger.info('New image shift um: %.4f, %.4f' % (newbt['x']*1e6,newbt['y']*1e6,))
 			self.x1focus = self.instrument.tem.PhasePlateFocus
 			if self.settings['tableau type'] == 'image shift series-lpp defocused':
 				self.instrument.tem.PhasePlateFocus = self.x1focus - 0.005
+			# TODO: set optics not in emtarget such as xtilt here.
 			# actual move by emtarget/preset and acquire
 			try:
-				status = manualfocuschecker.ManualFocusChecker.acquire(self, presetdata, emtarget, channel= channel)
+				status = manualfocuschecker.ManualFocusChecker.acquire(self, presetdata, newemtarget, channel= channel)
 			except Exception as e:
+				# skip the rest of the shiftlist
 				self.instrument.tem.PhasePlateFocus = self.x1focus
 				self.logger.error('Failed acquiring image: %s' % e)
 				self.setComaStig0()
 				return 'error'
+			# successful acquire
 			if self.settings['tableau type'] == 'image shift series-lpp defocused':
 				self.instrument.tem.PhasePlateFocus = self.x1focus
 			imagedata = self.imagedata
-			# get these values once
+			#
 			self.setImage(imagedata['image'], 'Image')
-			self.instrument.tem.ImageShift = oldbt
+			# reset image shift
+			self.instrument.tem.ImageShift = emtarget['image shift']
 			angle = anglelist[i]
 			rad = radlist[i]
 
