@@ -860,6 +860,8 @@ class TEMPanel(wx.Panel, ParameterMixin):
 				bindControl(self, self.onControl, control)
 			except ValueError:
 				pass
+			except RuntimeError:
+				pass
 
 	def setParameters(self, parameters, parametermap=None):
 		ParameterMixin.setParameters(self, parameters, parametermap)
@@ -893,6 +895,8 @@ class CCDCameraPanel(wx.Panel, ParameterMixin):
 			try:
 				bindControl(self, self.onControl, control)
 			except ValueError:
+				pass
+			except RuntimeError:
 				pass
 		self.Bind(EVT_CONFIGURATION_CHANGED, self.onCamConfig,
 							self.szcamconfig.parameters['Camera configuration'])

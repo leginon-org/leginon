@@ -68,6 +68,7 @@ class AppionLoop(appionScript.AppionScript):
 		os.chdir(self.params['rundir'])
 		self.stats['startimage'] = time.time()
 		self.preLoopFunctions()
+		self.setWaitSleepMin(1.0)
 		### start the loop
 		self.notdone=True
 		self.badprocess = False

@@ -360,7 +360,7 @@ if (!empty($ctfdata)) {
 				continue;	
 			if (preg_match('%defocus%i', $k))
 				$display = format_micro_number($v);
-			elseif ($v-floor($v)) 
+			elseif (is_float($v)) 
 				$display = format_sci_number($v,4,true);
 			elseif ($k=='path') {
 				$graphpath = $v.'/opimages';
