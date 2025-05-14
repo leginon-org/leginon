@@ -273,12 +273,12 @@ class Prediction(object):
 								  tilt,
 									n_smooth_fit)
 			damping = self.derivativeDamping(tilt_group.delta_xys)
-			debug_print('tilt_group delta', tilt_group.delta_xys)
-			debug_print('dirivative dampling', damping)
-			debug_print('original prediction x,y', x, y)
+			debug_print('tilt_group delta %s ' % tilt_group.delta_xys)
+			debug_print('dirivative dampling %s ' % damping)
+			debug_print('original prediction x,y= %.2f %.2f' % (x, y))
 			x = x + damping * (tilt_group.delta_xys[-1]['x'])
 			y = y + damping * (tilt_group.delta_xys[-1]['y'])
-			debug_print('combined with damping of last delta', x, y)
+			debug_print('combined with damping of last delta %.2f %.2f' % (x, y))
 			## calculate optical axis tilt and offset
 			mintilt, maxtilt = self.getMinMaxTiltsOfTiltSeriesList(current_group_index)
 			if (abs(maxtilt) < math.radians(30) and abs(mintilt) < math.radians(30)):
