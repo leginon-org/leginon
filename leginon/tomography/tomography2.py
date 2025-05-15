@@ -226,7 +226,7 @@ class Tomography2(Tomography):
 			offsetdata = self.researchTargetOffset(targetlist)									# (1)
 			if not offsetdata:										# somehow couldn't find offsetdata
 				self.logger.info('Could not find TomoTargetOffsetData for target: %i' % target.dbid)
-				self.markTargetsFailed(good_targets, 'failed')
+				self.markTargetsFailed(good_targets)
 				# This will go back to ~ line 325 in processTargetList in targetwatcher.py
 				# Targetlist status will be reported as success. A bit strange??
 				return

@@ -348,7 +348,7 @@ class Collection2(Collection):
 			if image_data is None:
 				self.logger.info('Image not acquired, aborting series...')
 				self.finalize()
-				raise Fail
+				raise RuntimeError('Failed to acquire image')
 			else:
 				self.logger.info('Image acquired.')
 
