@@ -111,7 +111,7 @@ class TomoScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
         self.widgets['focus target offset'] = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6)
         self.widgets['track target offset'] = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6)
         
-        self.widgets['tomo beam diameter'] = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6, chars=6)
+        self.widgets['tomo beam diameter'] = leginon.gui.wx.Entry.FloatEntry(self, -1, min=0.0, chars=6)
         self.widgets['focus beam diameter'] = leginon.gui.wx.Entry.FloatEntry(self, -1, min=0.0, chars=6)
         self.widgets['track beam diameter'] = leginon.gui.wx.Entry.FloatEntry(self, -1, min=0.0, chars=6)
         
