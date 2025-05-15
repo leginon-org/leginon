@@ -241,9 +241,11 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		required_bin = self.binning['x']
 		this_bin_files = []
 		for f in files:
+			if f[:3] != 'bin':
+				continue
 			try:
 				this_bin = int(f[3])
-			except ValueError:
+			except (ValueError,IndexError):
 				# ignore those not named as bin*
 				continue
 			if mag not in self.current_image_count:
