@@ -108,12 +108,12 @@ class TomoScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
                                                         'Place focus target automatically')
         #self.widgets['auto track target'] = wx.CheckBox(self,-1,
         #                                                'Place tracking target automatically')
-        self.widgets['focus target offset'] = leginon.gui.wx.Entry.FloatEntry(self, -1) 
-        self.widgets['track target offset'] = leginon.gui.wx.Entry.FloatEntry(self, -1)
+        self.widgets['focus target offset'] = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6)
+        self.widgets['track target offset'] = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6)
         
-        self.widgets['tomo beam diameter'] = leginon.gui.wx.Entry.FloatEntry(self, -1)
-        self.widgets['focus beam diameter'] = leginon.gui.wx.Entry.FloatEntry(self, -1) 
-        self.widgets['track beam diameter'] = leginon.gui.wx.Entry.FloatEntry(self, -1)
+        self.widgets['tomo beam diameter'] = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6, chars=6)
+        self.widgets['focus beam diameter'] = leginon.gui.wx.Entry.FloatEntry(self, -1, min=0.0, chars=6)
+        self.widgets['track beam diameter'] = leginon.gui.wx.Entry.FloatEntry(self, -1, min=0.0, chars=6)
         
         self.widgets['stretch tomo beam'] = wx.CheckBox(self,-1,
                                                 'Stretch tomo beam size along tilt axis')
@@ -149,29 +149,29 @@ class TomoScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
                         wx.ALIGN_CENTER_VERTICAL)
         
         focus_label = wx.StaticText(self, -1, 'focus target offset in meters')
-        sz.Add(focus_label, (8, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT,10)
+        sz.Add(focus_label, (8, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT|wx.FIXED_MINSIZE,10)
         sz.Add(self.widgets['focus target offset'], (8, 1), (1, 1), 
-               wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+               wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
         
         track_label = wx.StaticText(self, -1, 'track target offset in meters')
         sz.Add(track_label, (9, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT,10)
         sz.Add(self.widgets['track target offset'], (9, 1), (1, 1),
-                        wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+                        wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
         
         tomo_beam_label = wx.StaticText(self, -1, 'diameter of tomo beam in meters')
-        sz.Add(tomo_beam_label, (10, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT,10)
+        sz.Add(tomo_beam_label, (10, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT|wx.FIXED_MINSIZE,10)
         sz.Add(self.widgets['tomo beam diameter'], (10, 1), (1, 1),
-                        wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+                        wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
         
         focus_beam_label = wx.StaticText(self, -1, 'diameter of focus beam in meters')
         sz.Add(focus_beam_label, (11, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT,10)
         sz.Add(self.widgets['focus beam diameter'], (11, 1), (1, 1),
-                        wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+                        wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
         
         track_beam_label = wx.StaticText(self, -1, 'diameter of track beam in meters')
         sz.Add(track_beam_label, (12, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT,10)
         sz.Add(self.widgets['track beam diameter'], (12, 1), (1, 1),
-                        wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+                        wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
         sz.Add(self.widgets['stretch tomo beam'], (13, 0), (1, 1),
                         wx.ALIGN_CENTER_VERTICAL)

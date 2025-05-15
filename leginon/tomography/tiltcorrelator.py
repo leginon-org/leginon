@@ -67,7 +67,7 @@ class Correlator(object):
 		if shape[0] == shape[1] and (shape[0] % int(self.correlation_binning)) == 0:
 			return array
 		minsize = min(shape)
-		worksize = (min(shape) // int(self.correlation_binning)) * self.correlation_binning
+		worksize = int((min(shape) // int(self.correlation_binning)) * self.correlation_binning)
 		offsety = (shape[0] - worksize) // 2
 		endy = offsety + worksize
 		offsetx = (shape[1] - worksize) // 2
