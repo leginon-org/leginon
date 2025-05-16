@@ -125,7 +125,7 @@ class Tomography2(Tomography):
 		else:
 			return None								# Should be able to find targetoffset
 	
-	def newFocusTargetForImageFromTarget(self, imagedata, target, offset):
+	def newFocusTargetForImageFromTarget(self, imagedata, target, offset, number):
 		# (1) Get position of acquisition target.
 		# (2) Apply offset.
 		# (3) Make new 
@@ -133,24 +133,28 @@ class Tomography2(Tomography):
 		drow = target['delta row'] + offset[0]
 		targetdata = self.newTarget(image=imagedata, scope=imagedata['scope'], \
 								camera=imagedata['camera'], preset=imagedata['preset'], \
-								drow=drow, dcol=dcol, session=self.session, type='focus')
+								drow=drow, dcol=dcol, session=self.session, type='focus', number=number)
 		return targetdata
 
 
 	def makeNewFocusTarget(self, target, offset, targetlist):
+		"""
+		A new focus target is made per acquisition target.
+		"""
 		# (1) Get parent image.
 		# (2) Get and publish new version of parent image. 
 		# (3) Make new focus target attach to targetlist.
+		number = target['number']
 		parentimage = target.special_getitem('image',readimages=False,dereference=True)			# (1) 
 		newimagedata = self.copyImage(parentimage)												# (2) 
-		focus_td = self.newFocusTargetForImageFromTarget(newimagedata, target, offset)			# (3)		# (3)
-		focus_td['list'] = targetlist															
+		focus_td = self.newFocusTargetForImageFromTarget(newimagedata, target, offset, number)			# (3)
+		focus_td['list'] = targetlist
 		return focus_td
 
 	def markTargetsFailed(self, targets):
 		for target in targets:
 			self.reportTargetStatus(target, 'failed')
-				
+
 	def copyImage(self, oldimage):
 		# copied from targetrepeater
 		imagedata = leginon.leginondata.AcquisitionImageData()
