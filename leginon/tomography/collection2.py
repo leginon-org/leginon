@@ -39,6 +39,7 @@ class Collection2(Collection):
 		self.offset = None
 		self.trackpreset = None
 		self.fulltrack = False
+		self.save_track_images = False
 		
 	def initialize(self):
 		self.logger.info('Initializing...')
@@ -48,8 +49,8 @@ class Collection2(Collection):
 
 		self.prediction.fitdata = self.settings['fit data points'], self.settings['fit data points2']
 		self.tilt_series = leginon.tomography.tiltseries.TiltSeries(self.node, self.settings,
-												 self.session, self.preset,
-												 self.target, self.emtarget)
+									self.session, self.preset, self.target,
+									self.emtarget, self.save_track_images)
 		self.tilt_series.save()
 
 		if self.settings['use lpf']:
@@ -212,6 +213,7 @@ class Collection2(Collection):
 				self.prediction.setCurrentTiltGroup(seq[0])
 				ispredict = self.prediction.ispredict()							# can we rely on prediction? 
 					
+				has_new_trackingImg = False
 				if seq_index == 0:	
 					self.logger.info('Starting tilt angle: %g degrees.' % math.degrees(tilt))
 					self.tilt(tilt)
@@ -219,6 +221,7 @@ class Collection2(Collection):
 					predicted_position['z'] = self.preset['defocus']/image_pixel_size # assumes that eucentric error z0 is 0.  
 					self.update_istot(seq0,position0)	
 					self.trackingImg = self.getTrackingImg(seq0)			# get first tracking image
+					has_new_trackingImg = True
 					self.reset_ntrack(seq)			
 					self.correlator[seq[0]+2].reset()							# clear buffer
 					# The next line adds the first tracking image to the correlator and returns None. 
@@ -240,7 +243,7 @@ class Collection2(Collection):
 					self.tilt(tilt)
 					# acquire tracking image, correlate with previous tracking image. 		
 					tracked_shift = self.track(tilt,seq)						# this is in pixels for exposure mag. 
-
+					has_new_trackingImg = True
 					#position = {'x':sum(istot['x']),'y':sum(istot['x'])}
 
 					predicted_position = {}
@@ -272,6 +275,7 @@ class Collection2(Collection):
 					# determine if we need to take a tracking image
 					if self.dotrackimg(seq):
 						self.trackingImg = self.getTrackingImg(seq)
+						has_new_trackingImg = True
 						trackingcorrelation_image = self.correlator[seq[0]+2].correlate(self.trackingImg,\
 							self.settings['use tilt'], channel=channel, wiener=False, taper=0)	
 						self.reset_ntrack(seq)
@@ -374,6 +378,8 @@ class Collection2(Collection):
 			while True:
 				try:
 					tilt_series_image_data = self.tilt_series.saveImage(image_data)
+					if self.save_track_images and has_new_trackingImg:
+						tilt_series_track_image_data = self.tilt_series.saveTrackingImage(self.trackingImg, self.trackpreset)
 					break
 				except Exception as e:
 					self.logger.warning('Retrying save image: %s.' % (e,))

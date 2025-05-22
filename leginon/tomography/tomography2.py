@@ -33,7 +33,8 @@ class Tomography2(Tomography):
 		'cosine dose': True,
 		'full track': False,
 		'tolerance': 0.05,
-		'maxfitpoints': 10
+		'maxfitpoints': 10,
+		'save track images': False,
 	})
 	panelclass = leginon.gui.wx.tomography.Tomography.Panel2
 
@@ -105,6 +106,7 @@ class Tomography2(Tomography):
 			collect.trackpreset = \
 				self.presetsclient.getPresetByName(self.settings['track preset'])
 			collect.fulltrack = self.settings['full track']
+			collect.save_track_images = self.settings['save track images']
 		return collect
 	
 	def loadPredictionInfo(self):	

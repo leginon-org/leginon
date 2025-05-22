@@ -2777,6 +2777,7 @@ class Tomography2SettingsData(TomographySettingsData):
 			('full track', bool),
 			('tolerance', float),
 			('maxfitpoints', int),
+			('save track images', bool),
 		)
 	typemap = classmethod(typemap)
 class TomographySimuSettingsData(AcquisitionSettingsData):
@@ -2834,6 +2835,7 @@ class TiltSeriesData(InSessionData):
 			('tilt step', float),
 			('tilt order', str),
 			('number', int),
+			('is_tracking', bool),
 		)
 	typemap = classmethod(typemap)
 
