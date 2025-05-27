@@ -794,3 +794,15 @@ class SimDiffrGlacios(SimDiffrTEM):
 			1100,
 			2750,
 		]
+
+class SimEFKriosXL(SimTEM300):
+	name = 'SimEF-KriosXL'
+	def __init__(self):
+		SimTEM300.__init__(self)
+		self.high_tension = 300000.0
+		self.magnifications = [
+			99,
+			930,
+			3600,
+			88000,
+		]
