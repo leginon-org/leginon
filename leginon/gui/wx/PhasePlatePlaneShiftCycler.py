@@ -59,11 +59,14 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		self.widgets['use cycler'] = \
 				wx.CheckBox(self, -1, 'Cycle through the sequence of shifts on LPP plane below')
 		sizer.Add(self.widgets['use cycler'], (0,0), (1,5), wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, bordersize)
+		self.widgets['two d scan'] = \
+				wx.CheckBox(self, -1, 'Two dimensional scan')
+		sizer.Add(self.widgets['two d scan'], (1,0), (1,5), wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
 		label = wx.StaticText(self, -1, 'List of Values to Collect')
-		sizer.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(label, (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.widgets['shift sequence'] = Entry(self, -1, chars=15, style=wx.ALIGN_RIGHT)
-		sizer.Add(self.widgets['shift sequence'], (1,2),(1,3), wx.EXPAND|wx.ALL, bordersize)
+		sizer.Add(self.widgets['shift sequence'], (2,2),(1,3), wx.EXPAND|wx.ALL, bordersize)
 		sizer.AddGrowableCol(4)
 
 		# projection
@@ -87,7 +90,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		szvector.Add(self.widgets['y projection'],
 								(0, 4), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		sizer.Add(szvector, (2,1), (1,5), wx.EXPAND|wx.ALL, bordersize)
+		sizer.Add(szvector, (3,1), (1,5), wx.EXPAND|wx.ALL, bordersize)
 		# scale
 		self.widgets['shift scale'] = FloatEntry(self, -1,
 										min=0.0, allownone=False, chars=6, value='1.0')
@@ -101,7 +104,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		szscale.Add(wx.StaticText(self, -1, 'before applying to scope'),
 								(0, 2), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(szscale, (3,1), (1,3), wx.EXPAND|wx.ALL, bordersize)
+		sizer.Add(szscale, (4,1), (1,3), wx.EXPAND|wx.ALL, bordersize)
 
 		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 

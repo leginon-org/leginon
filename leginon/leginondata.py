@@ -2430,6 +2430,7 @@ class PhasePlatePlaneShiftCyclerSettingsData(AcquisitionSettingsData):
 			('shift scale', float),
 			('x projection', float),
 			('y projection', float),
+			('two d scan', bool),
 		)
 	typemap = classmethod(typemap)
 
