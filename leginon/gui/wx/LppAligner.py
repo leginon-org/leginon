@@ -82,10 +82,12 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		sizer = wx.GridBagSizer(5, 5)
+		self.widgets['xlpp'] = wx.CheckBox(self, -1,'Crossed Lpp is used')
+		sizer.Add(self.widgets['xlpp'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.widgets['acquire type'] = Choice(self, -1, choices=self.node.acquire_types)
 		label = wx.StaticText(self, -1, 'acquire image(s) for:')
-		sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.widgets['acquire type'], (0, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.widgets['acquire type'], (1, 1), (1, 1), wx.ALIGN_CENTER)
 
 		# view offset
 		self.widgets['global view offset'] = FloatEntry(self, -1, allownone=False, chars=6, value='0.0')
@@ -95,25 +97,31 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		bt_sizer.Add(wx.StaticText(self, -1, ' (scope api unit)'), (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Parallel Illumination Offset value in view:')
-		sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(bt_sizer, (1, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(bt_sizer, (2, 1), (1, 1), wx.ALIGN_CENTER)
 		#
 		cmpsizer = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Compressed View:')
 		cmpsizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		# compression rotation
-		label = wx.StaticText(self, -1, 'Image Rotation:')
-		self.widgets['rotation'] = FloatEntry(self, -1, allownone=False, chars=6, value='0.0')
+		label = wx.StaticText(self, -1, 'Image Rotation for lpp1:')
+		self.widgets['rotation1'] = FloatEntry(self, -1, allownone=False, chars=6, value='0.0')
 		cmpsizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		cmpsizer.Add(self.widgets['rotation'], (1, 1), (1, 1), wx.ALIGN_CENTER)
+		cmpsizer.Add(self.widgets['rotation1'], (1, 1), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'degrees')
 		cmpsizer.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Image Rotation for lpp2:')
+		self.widgets['rotation2'] = FloatEntry(self, -1, allownone=False, chars=6, value='0.0')
+		cmpsizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		cmpsizer.Add(self.widgets['rotation2'], (2, 1), (1, 1), wx.ALIGN_CENTER)
+		label = wx.StaticText(self, -1, 'degrees')
+		cmpsizer.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		# compression ratio
 		self.widgets['compress ratio'] = IntEntry(self, -1, min=1, allownone=False, chars=4, value='8')
 		label = wx.StaticText(self, -1, 'Compression ratio:')
-		cmpsizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		cmpsizer.Add(self.widgets['compress ratio'], (2, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(cmpsizer, (2, 1), (3, 3), wx.ALIGN_CENTER)
+		cmpsizer.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		cmpsizer.Add(self.widgets['compress ratio'], (3, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(cmpsizer, (3, 1), (3, 3), wx.ALIGN_CENTER)
 
 		fitsizer = wx.GridBagSizer(5, 4)
 		bordersize = 3
@@ -137,19 +145,25 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 	def createAcquireOnNodeReferenceSizer(self):
 		savesizer = wx.GridBagSizer(5, 4)
 		bordersize = 3
-		subsizer = wx.GridBagSizer(5, 4)
-		label = wx.StaticText(self, -1, 'x:')
 		label = wx.StaticText(self, -1, 'xtilt change to move by one standing wave wavelength:')
 		savesizer.Add(label, (0, 0), (1, 4), wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'x:')
+		label = wx.StaticText(self, -1, 'lpp1 x:')
 		savesizer.Add(label, (1, 1), (1, 1), wx.ALIGN_RIGHT)
-		self.widgets['wave xtilt vector x'] = FloatEntry(self, -1, allownone=False, chars=8, value='0.0')
-		savesizer.Add(self.widgets['wave xtilt vector x'], (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'y:')
+		self.widgets['wave xtilt vector x1'] = FloatEntry(self, -1, allownone=False, chars=8, value='0.0')
+		savesizer.Add(self.widgets['wave xtilt vector x1'], (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'lpp1 y:')
 		savesizer.Add(label, (1, 3), (1, 1), wx.ALIGN_RIGHT)
-		self.widgets['wave xtilt vector y'] = FloatEntry(self, -1, allownone=False, chars=8, value='0.0')
-		savesizer.Add(self.widgets['wave xtilt vector y'], (1, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-
+		self.widgets['wave xtilt vector y1'] = FloatEntry(self, -1, allownone=False, chars=8, value='0.0')
+		savesizer.Add(self.widgets['wave xtilt vector y1'], (1, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		# 
+		label = wx.StaticText(self, -1, 'lpp2 x:')
+		savesizer.Add(label, (2, 1), (1, 1), wx.ALIGN_RIGHT)
+		self.widgets['wave xtilt vector x2'] = FloatEntry(self, -1, allownone=False, chars=8, value='0.0')
+		savesizer.Add(self.widgets['wave xtilt vector x2'], (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'lpp2 y:')
+		savesizer.Add(label, (2, 3), (1, 1), wx.ALIGN_RIGHT)
+		self.widgets['wave xtilt vector y2'] = FloatEntry(self, -1, allownone=False, chars=8, value='0.0')
+		savesizer.Add(self.widgets['wave xtilt vector y2'], (2, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		return savesizer
 
 if __name__ == '__main__':

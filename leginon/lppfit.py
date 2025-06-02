@@ -7,6 +7,14 @@ from scipy.optimize import curve_fit
 from pyami import mrc, numpil
 from leginon import lattice
 
+def show_array(arr):
+	import matplotlib.pyplot as plt
+	d = 3
+	vmin = arr.mean() - d * arr.std()
+	vmax = arr.mean() + d * arr.std()
+	plt.imshow(arr, cmap='grey', vmin=vmin, vmax=vmax)
+	plt.show()
+
 def makeRotatedLineProfile(arr, rot_angle):
 	"""
 	Return 1D array of intensity profile of LPP fringe with these steps:
@@ -18,13 +26,23 @@ def makeRotatedLineProfile(arr, rot_angle):
 	on the rotation angle, while the center of the profile represents the center
 	of the input position.
 	"""
+	if rot_angle >= 45:
+		while rot_angle >=45:
+			arr = nd.rotate(arr, 90,mode='nearest') # angle in degrees
+			rot_angle -= 90
+	elif rot_angle <=-45:
+		while rot_angle <=-45:
+			arr = nd.rotate(arr, 90,mode='nearest') # angle in degrees
+			rot_angle += 90
 	shape0 = arr.shape
 	if rot_angle != 0:
 		arr = nd.rotate(arr, rot_angle,mode='nearest') # angle in degrees
+		if __name__ == '__main__':
+			show_array(arr)
 		rot_shape = arr.shape
 		# remove any part that comes from nearest fill
-		bad = (int(math.tan(rot_angle*math.pi/180.0)*rot_shape[1]),
-				int(math.tan(rot_angle*math.pi/180.0)*rot_shape[0]))
+		bad = (abs(int(math.tan(rot_angle*math.pi/180.0)*rot_shape[1])),
+				abs(int(math.tan(rot_angle*math.pi/180.0)*rot_shape[0])))
 		arr = arr[bad[0]:-bad[0],bad[1]:-bad[1]]
 	final = numpy.sum(arr, axis=1)
 	return final
@@ -176,7 +194,22 @@ def run_fringe_fit(a, rotation_angle_degrees=5.0):
 	phase_shift_to_max_degrees = 180.0 * convert_phase(phase_fit) / math.pi
 	if __name__=='__main__':
 		show_fringe_fit_results(x_data, y_data, x_center, amp_fit, freq_fit, phase_fit, offset_fit)
-	return amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_to_max_degrees
+	return {
+			'image_rotation': rotation_angle_degrees,
+			'wave_amp': amp_fit,
+			'wave_freq': freq_fit,
+			'wave_phase': phase_fit,
+			'value_offset': offset_fit,
+			'wave_period': period_fit,
+			'phase_shift_to_max': phase_shift_to_max_degrees,
+	}
+
+def run_2d_fringe_fit(a, rotations=(-10.0,90.0)):
+	fit_results = {}
+	for i, angle in enumerate(rotations):
+		axis = i+1
+		fit_results[axis] = run_fringe_fit(a, rotation_angle_degrees=angle)
+	return fit_results
 
 def convertPhasesToContinuous(x1_data, z_data):
 	x1_list = x1_data.tolist()
@@ -242,5 +275,7 @@ if __name__=='__main__':
 		sys.exit(1)
 	a = mrc.read(mrc_path)
 	# test fitting with display
-	amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_to_max_degrees = run_fringe_fit(a, 5.0)
-	print(phase_fit, phase_shift_to_max_degrees)
+	results = run_2d_fringe_fit(a, (90.0,-190.0))
+	keys = results.keys()
+	for k in keys:
+		print(k, results[k])

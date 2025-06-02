@@ -425,8 +425,10 @@ class CalibrationData(InSessionData):
 class LppCalibrationData(CalibrationData):
 	def typemap(cls):
 		return CalibrationData.typemap() + (
-			('wave xtilt vector x', float),
-			('wave xtilt vector y', float),
+			('wave xtilt vector x0', float),
+			('wave xtilt vector x1', float),
+			('wave xtilt vector y0', float),
+			('wave xtilt vector y1', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -2250,13 +2252,17 @@ class MoverParamsData(Data):
 class LppAlignerSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
+			('xlpp',bool),
 			('global view offset', float),
 			('compress ratio', int),
-			('rotation', float), # degrees
+			('rotation1', float), # degrees
+			('rotation2', float), # degrees
 			('acquire type', str),
 			('phase plate defocus sequence', str), #Issue #5687
-			('wave xtilt vector x', float),
-			('wave xtilt vector y', float),
+			('wave xtilt vector x1', float),
+			('wave xtilt vector x2', float),
+			('wave xtilt vector y1', float),
+			('wave xtilt vector y2', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -2279,8 +2285,10 @@ class LppOnNodeRefData(InSessionData):
 			('tem', InstrumentData),
 			('ccdcamera', InstrumentData),
 			('reference', AcquisitionImageData),
-			('rotation', float), # degrees
-			('phase shift', float),
+			('lpp1 rotation', float), # degrees
+			('lpp1 phase shift', float),
+			('lpp2 rotation', float), # degrees
+			('lpp2 phase shift', float),
 			('delta lpp focus', float),
 		)
 	typemap = classmethod(typemap)
@@ -2288,7 +2296,8 @@ class LppOnNodeRefData(InSessionData):
 class LppFitResultData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
-			('axis', int), # axis of lpp cavity default=0
+			('axis', int), # axis of lpp cavity default=1
+			('axis rotation', float), # image rotation for fitting in degrees
 			('on node ref', LppOnNodeRefData), # on-node reference
 			('amp', float), # lpp modulation intensiity amplitude
 			('offset', float), # modulation intensity offset
