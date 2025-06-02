@@ -425,10 +425,11 @@ class CalibrationData(InSessionData):
 class LppCalibrationData(CalibrationData):
 	def typemap(cls):
 		return CalibrationData.typemap() + (
-			('wave xtilt vector x0', float),
-			('wave xtilt vector x1', float),
-			('wave xtilt vector y0', float),
-			('wave xtilt vector y1', float),
+			('xlpp', bool),
+			('lpp1 wave xtilt vector x', float),
+			('lpp1 wave xtilt vector y', float),
+			('lpp2 wave xtilt vector x', float),
+			('lpp2 wave xtilt vector y', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -2259,10 +2260,10 @@ class LppAlignerSettingsData(AcquisitionSettingsData):
 			('rotation2', float), # degrees
 			('acquire type', str),
 			('phase plate defocus sequence', str), #Issue #5687
-			('wave xtilt vector x1', float),
-			('wave xtilt vector x2', float),
-			('wave xtilt vector y1', float),
-			('wave xtilt vector y2', float),
+			('lpp1 wave xtilt vector x', float),
+			('lpp1 wave xtilt vector y', float),
+			('lpp2 wave xtilt vector x', float),
+			('lpp2 wave xtilt vector y', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -2285,6 +2286,7 @@ class LppOnNodeRefData(InSessionData):
 			('tem', InstrumentData),
 			('ccdcamera', InstrumentData),
 			('reference', AcquisitionImageData),
+			('xlpp', bool),
 			('lpp1 rotation', float), # degrees
 			('lpp1 phase shift', float),
 			('lpp2 rotation', float), # degrees

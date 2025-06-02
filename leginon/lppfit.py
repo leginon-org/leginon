@@ -229,6 +229,7 @@ def convertPhasesToContinuous(x1_data, z_data):
 	return z_data
 
 def calculateOnPlaneOnNode(data, is_over_focus=False, display=False):
+	print(data)
 	start, end = 0, data.shape[0]
 	# on-plane phase plate focus is popt[0]
 	x_data = data[start:end,0]

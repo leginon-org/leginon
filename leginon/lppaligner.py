@@ -35,10 +35,10 @@ class LppAligner(acquisition.Acquisition):
 		'acquire type':'single off-plane image',
 		#'phase plate defocus sequence': '(-0.002,-0.0025,-0.003,-0.004)',
 		'phase plate defocus sequence': '(-0.002,-0.003,-0.004)',
-		'wave xtilt vector x1': 0.0,
-		'wave xtilt vector y1': 0.000165,
-		'wave xtilt vector x2': 0.000165,
-		'wave xtilt vector y2': 0.0,
+		'lpp1 wave xtilt vector x': 0.0,
+		'lpp1 wave xtilt vector y': 0.000165,
+		'lpp2 wave xtilt vector x': 0.000165,
+		'lpp2 wave xtilt vector y': 0.0,
 	})
 
 	eventinputs = acquisition.Acquisition.eventinputs
@@ -71,6 +71,8 @@ class LppAligner(acquisition.Acquisition):
 		self.xt0 = self.instrument.tem.PhasePlatePlaneShift
 		self.new_f0 = self.f0
 		self.new_phase_shifts = {1:0.0}
+		self.on_node_slopes = {1:0.0}
+		self.second_order_amps = {1:0.0}
 		if self.settings['acquire type'] == 'global view':
 			self.setParallelIlluminationOffsetToScope('global')
 
@@ -101,6 +103,9 @@ class LppAligner(acquisition.Acquisition):
 		return final
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
+		self.lpp_axes = [1]
+		if self.settings['xlpp']:
+			self.lpp_axes.append(2)
 		if self.settings['acquire type'] == 'single off-plane image':
 			self._acquireAlignImage(presetdata, emtarget, attempt, target, channel)
 		elif self.settings['acquire type'] == 'on-node reference':
@@ -168,11 +173,9 @@ class LppAligner(acquisition.Acquisition):
 		self.resetLppFocus()
 		results = {}
 		try:
-			self.lpp_axes = [1]
 			r1 = lppfit.run_fringe_fit(myimage, self.settings['rotation1'])
 			results= {1:r1}
 			if self.settings['xlpp']:
-				self.lpp_axes.append(2)
 				r2 = lppfit.run_fringe_fit(myimage, self.settings['rotation2'])
 				results[2] = r2
 		except Exception as e:
@@ -232,7 +235,9 @@ class LppAligner(acquisition.Acquisition):
 		if self.x1_defocus_series[0] < 0:
 			# always starts from value closest to f0
 			self.x1_defocus_series.reverse()
-		data = []
+		data = {}
+		for k in self.lpp_axes:
+			data[k] = []
 		for i, df in enumerate(self.x1_defocus_series):
 			self.series_id = i+1 #base 1
 			try:
@@ -249,7 +254,6 @@ class LppAligner(acquisition.Acquisition):
 					self.acquirePublishDisplayWait(*args)
 				myimage = self.imagedata['image']
 			except Exception as e:
-				print(e)
 				self.logger.error('failed to acquire image, aborting: %s' % e)
 				self.resetLppFocus()
 				break
@@ -259,8 +263,10 @@ class LppAligner(acquisition.Acquisition):
 						r = lppfit.run_2d_fringe_fit(myimage, (self.settings['rotation1'], self.settings['rotation2']))
 					else:
 						r = {1:lppfit.run_fringe_fit(myimage, self.settings['rotation1'])}
-					k = 1
-					data.append((new_f, r[k]['wave_period'], r[k]['phase_shift_to_max']))
+					for k in r.keys():
+						data[k].append((new_f, r[k]['wave_period'], r[k]['phase_shift_to_max']))
+						print('focus, period, phase_shift_to_apply')
+						print(numpy.array(data))
 				except Exception as e:
 					self.logger.warning('failed fitting, skipping: %s' % e)
 				finally:
@@ -268,12 +274,14 @@ class LppAligner(acquisition.Acquisition):
 		is_failed = self.resetComaCorrection()
 		if is_failed:
 			self.player.pause()
-		print('focus, period, phase_shift_to_apply')
-		print(numpy.array(data))
+		new_f0 = {} # sequence of new_f0 at each axis
 		try:
-			self.new_f0, self.new_phase_shifts, self.on_node_slope, self.second_order_amp = lppfit.calculateOnPlaneOnNode(numpy.array(data), is_over_focus=False)
-			self.logger.info('Calculated LPP x1 lens at %.8f, phase shift needed at %s' % (self.new_f0, self.new_phase_shifts))
+			for k in data.keys():
+				new_f0[k], self.new_phase_shifts[k], self.on_node_slopes[k], self.second_order_amps[k] = lppfit.calculateOnPlaneOnNode(numpy.array(data[k]), is_over_focus=False)
+				self.logger.info('Calculated LPP x1 lens at %.8f, phase shift needed at %s' % (new_f0[k], self.new_phase_shifts[k]))
+			self.new_f0 = sum(new_f0.values())
 		except Exception as e:
+			raise
 			self.logger.error('Error calculating on-plane and on-node values: %s' % e)
 			return status
 
@@ -284,8 +292,8 @@ class LppAligner(acquisition.Acquisition):
 			for k in self.lpp_axes:
 				self.new_xtilt = self.instrument.tem.PhasePlatePlaneShift
 				c = 1/360.0
-				self.new_xtilt['x'] += self.new_phase_shifts[k]*c*self.settings['wave xtilt vector x%s' % k]
-				self.new_xtilt['y'] += self.new_phase_shifts[k]*c*self.settings['wave xtilt vector y%s' % k]
+				self.new_xtilt['x'] += self.new_phase_shifts[k]*c*self.settings['lpp%s wave xtilt vector x' % k]
+				self.new_xtilt['y'] += self.new_phase_shifts[k]*c*self.settings['lpp%s wave xtilt vector y' % k]
 			self.logger.info('Calculated LPP new xtilt as %s' % (self.new_xtilt))
 			self.instrument.tem.PhasePlatePlaneShift = self.new_xtilt
 			self.logger.info('Set LPP x1 lens to %.8f, x-tilt to x:%.6f,y:%6f' % (self.new_f0, self.new_xtilt['x'],self.new_xtilt['y']))
@@ -299,14 +307,17 @@ class LppAligner(acquisition.Acquisition):
 		currentpreset = self.presetsclient.getCurrentPreset()
 		tem = currentpreset['tem']
 		ccdcamera = currentpreset['ccdcamera']
-		results = leginondata.LppCalibrationData(session=self.session, tem=tem, ccdcamera=ccdcamera).query(results=1)
+		results = leginondata.LppCalibrationData(session=self.session, tem=tem, ccdcamera=ccdcamera, xlpp=self.settings['xlpp']).query(results=1)
 		if results:
 			r = results[0]
-			if r['wave xtilt vector x'] == self.settings['wave xtilt vector x'] and r['wave xtilt vector y'] == self.settings['wave xtilt vector y']:
-				return
-		q = leginondata.LppCalibrationData(session=self.session, tem=tem, ccdcamera=ccdcamera)
-		q['wave xtilt vector x'] = self.settings['wave xtilt vector x']
-		q['wave xtilt vector y'] = self.settings['wave xtilt vector y']
+			# only save once ???
+			if r['lpp1 wave xtilt vector x'] == self.settings['lpp1 wave xtilt vector x'] and r['lpp1 wave xtilt vector y'] == self.settings['lpp1 wave xtilt vector y']:
+				if r['lpp2 wave xtilt vector x'] == self.settings['lpp2 wave xtilt vector x'] and r['lpp2 wave xtilt vector y'] == self.settings['lpp2 wave xtilt vector y']:
+					return
+		q = leginondata.LppCalibrationData(session=self.session, tem=tem, ccdcamera=ccdcamera, xlpp=self.settings['xlpp'])
+		for k in self.lpp_axes:
+			q['lpp%d wave xtilt vector x' % k] = self.settings['lpp%d wave xtilt vector x' % k]
+			q['lpp%d wave xtilt vector y' % k] = self.settings['lpp%d wave xtilt vector y' % k]
 		q.insert(force=True)
 		self.logger.info('Lpp standing wave xtilt vector saved')
 
