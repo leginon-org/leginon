@@ -3082,6 +3082,7 @@ class AlignZLPSettingsData(ReferenceTimerSettingsData):
 class LppAlignTimerSettingsData(ReferenceTimerSettingsData):
 	def typemap(cls):
 		return ReferenceTimerSettingsData.typemap() + (
+			('xlpp', bool),
 		)
 	typemap = classmethod(typemap)
 

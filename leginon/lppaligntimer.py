@@ -14,6 +14,9 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 	settingsclass = leginondata.LppAlignTimerSettingsData
 	# defaultsettings are not the same as the parent class.  Therefore redefined.
 	defaultsettings = dict(referencetimer.ReferenceTimer.defaultsettings)
+	defaultsettings.update (
+		{'xlpp': False}
+	)
 	eventinputs = referencetimer.ReferenceTimer.eventinputs + [event.AlignLppPublishEvent, event.FixLppAlignmentEvent]
 	panelclass = leginon.gui.wx.LppAlignTimer.LppAlignTimerPanel
 	requestdata = leginondata.AlignLppRequestData
@@ -83,17 +86,20 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		Execute without moving. Used in testing and handling the
 		request after moving and set preset. request_data is not used.
 		'''
+		self.lpp_axes = [1]
+		if self.settings['xlpp']:
+			self.lpp_axes.append(2)
 		preset = self.presets_client.getCurrentPreset()
 		tem = preset['tem']
 		ccdcamera = preset['ccdcamera']
-		xtilt_results = leginondata.LppCalibrationData(tem=tem, ccdcamera=ccdcamera).query(results=1)
-		ref_results = leginondata.LppOnNodeRefData(tem=tem,ccdcamera=ccdcamera).query(results=1)
+		xtilt_results = leginondata.LppCalibrationData(tem=tem, ccdcamera=ccdcamera, xlpp=self.settings['xlpp']).query(results=1)
+		ref_results = leginondata.LppOnNodeRefData(tem=tem,ccdcamera=ccdcamera, xlpp=self.settings['xlpp']).query(results=1)
 		if not ref_results or not xtilt_results:
 			self.logger.error('No reference or xtilt cycle calibration for on-node lpp alignment.')
 			return
 		refdata = ref_results[0]
 		self.logger.info('Using %s as the reference' % refdata['reference']['filename'])
-		self.xtilt_cycle = xtilt_results[0]
+		self.xtilt_cal = xtilt_results[0]
 		delta_f = refdata['delta lpp focus']
 		measure_preset = self.makeMeasurePreset(refdata['reference']['preset'])
 		self._setRequestPreset(refdata['reference']['preset']['name'])
@@ -119,19 +125,28 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		try:
 			myimage = self.imagedata['image']
 			self.setImage(myimage, 'Image')
-			amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_needed = lppfit.run_fringe_fit(myimage, refdata['rotation'])
+			if self.settings['xlpp']:
+					r = lppfit.run_2d_fringe_fit(myimage, (refdata['lpp1 rotation'], refdata['lpp2 rotation']))
+			else:
+					r = {1:lppfit.run_fringe_fit(myimage, refdata['lpp1 rotation'])}
 		except Exception as e:
 			self.logger.warning('failed fitting, skipping: %s' % e)
 			return
+		self.new_phase_shifts = {}
 		try:
 			# phase shift represent correction needed, so it needs to reverse sign.
-			phase_diff = -(phase_shift_needed - refdata['phase shift'])
-			self.new_phase_shift = lppfit.convert_phase_degrees(phase_diff)
+			phases = []
+			for k in r.keys():
+				phase_shift_needed = r[k]['phase_shift_to_max']
+				phase_diff = -(phase_shift_needed - refdata['lpp%d phase shift' % k])
+				self.new_phase_shifts[k] = lppfit.convert_phase_degrees(phase_diff)
+				phases.append('%.2f' % self.new_phase_shifts[k])
 		except Exception as e:
 			self.logger.error('Error calculating on-node values: %s' % e)
-		self.logger.info('phase shift correction = %.5f' % self.new_phase_shift)
+			return
+		self.logger.info('phase shift correction = (%s)' % ', '.join(phases))
 		#saving
-		self.saveLppFitMeasurement(refdata, self.imagedata, amp_fit, offset_fit, period_fit, phase_shift_needed, self.new_phase_shift)
+		self.saveLppFitMeasurement(refdata, self.imagedata, r, self.new_phase_shifts)
 		self.setOnPlaneOnNode()
 		return
 
@@ -170,19 +185,3 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		self.logger.info('phase plate focus reset to %.8f' % self.f0)
 		self.instrument.tem.PhasePlatePlaneShift = self.xt0
 
-	def setOnPlaneOnNode(self):
-		try:
-			if self.new_f0 != self.f0:
-				self.instrument.tem.PhasePlateFocus = self.new_f0
-			# set xtilt
-			self.new_xtilt = self.instrument.tem.PhasePlatePlaneShift
-			c = 1/360.0
-			self.new_xtilt['x'] += self.new_phase_shift*c*self.xtilt_cycle['wave xtilt vector x']
-			self.new_xtilt['y'] += self.new_phase_shift*c*self.xtilt_cycle['wave xtilt vector y']
-			self.logger.info('Calculated LPP new xtilt as %s' % (self.new_xtilt))
-			self.instrument.tem.PhasePlatePlaneShift = self.new_xtilt
-			self.logger.info('Set LPP x1 lens to %.8f, x-tilt to x:%.6f,y:%6f' % (self.new_f0, self.new_xtilt['x'],self.new_xtilt['y']))
-		except Exception as e:
-			self.logger.error('Error setting on-plane and on-node values')
-			self.resetLppFocus()
-			raise

@@ -68,7 +68,7 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		threading.Thread(target=self.node.xTiltFromScope).start()
 
 	def onSetOnPlaneOnNode(self, evt):
-		threading.Thread(target=self.node.setOnPlaneOnNode).start()
+		threading.Thread(target=self.node.guiSetOnPlaneOnNode).start()
 
 class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):

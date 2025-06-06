@@ -275,8 +275,10 @@ if __name__=='__main__':
 		print('Error: file not accessibale')
 		sys.exit(1)
 	a = mrc.read(mrc_path)
+	angle1 = float(input('lpp1 wavevector angle in degrees:'))
+	angle2 = float(input('lpp1 wavevector angle in degrees:'))
 	# test fitting with display
-	results = run_2d_fringe_fit(a, (90.0,-190.0))
+	results = run_2d_fringe_fit(a, (angle1,angle2))
 	keys = results.keys()
 	for k in keys:
 		print(k, results[k])

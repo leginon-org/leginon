@@ -723,49 +723,5 @@ class Node(correctorclient.CorrectorClient):
 		evt = leginon.gui.wx.Events.UserVerificationUpdatedEvent(self.panel, state)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
-	def saveLppFitMeasurement(self, refdata, imagedata, fit_results, applied_phase_shifts):
-		"""
-		Save Lpp fringe fitting results and display in viewer.
-		"""
-		r = fit_results
-		for k in r.keys():
-			q = leginondata.LppFitResultData(session=self.session)
-			q['on node ref'] = refdata
-			q['axis'] = k
-			q['axis rotation'] = r[k]['image_rotation'] # rotation for fitting in degrees
-			q['amp'] = r[k]['wave_amp'] #modulation amplitude
-			q['offset'] = r[k]['value_offset'] # modulation intensity offset
-			q['period'] = r[k]['wave_period'] #peak to peak distance in pixels
-			q['phase shift'] = r[k]['phase_shift_to_max'] # fitting result
-			q['image'] = imagedata
-			q['phase shift correction'] = applied_phase_shifts[k] # phase shift applied to bring lpp on node.
-			q.insert()
-		self.saveLppFitInImageComment(imagedata, r, False)
-
-	def saveLppFitInImageComment(self, imagedata, r, is_on_node_ref=False):
-		# save image comment
-		periods = []
-		phis = []
-		for k in r.keys():
-			periods.append('%.1f' % r[k]['wave_period'])
-			phis.append('%.1f' % r[k]['phase_shift_to_max'])
-		n = len(list(r.keys()))
-		if n > 1:
-			period_text = '('+','.join(periods)+')'
-			phi_text = '('+','.join(phis)+')'
-			text = 'p-p %s pixels and phi %s degrees' % (period_text, phi_text)
-		elif n == 1:
-			period_text = periods[0]
-			phi_text = phis[0]
-			text = 'p-p %s pixels and phi %s degrees' % (period_text, phi_text)
-		else:
-			text = 'failed fringe fitting'
-		if is_on_node_ref:
-			text = 'On-node ref '+text
-		# put result in comment
-		q = leginondata.ImageCommentData(session=self.session, image=imagedata)
-		q['comment'] = text
-		q.insert()
-
 ## module global for storing start times
 start_times = {}

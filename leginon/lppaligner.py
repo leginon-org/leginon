@@ -116,7 +116,7 @@ class LppAligner(acquisition.Acquisition):
 			self._acquireFocusSeries(presetdata, emtarget, attempt, target, channel)
 
 	def _acquireAlignImage(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
-		ref_results = leginondata.LppOnNodeRefData(tem=presetdata['tem'],ccdcamera=presetdata['ccdcamera']).query(results=1)
+		ref_results = leginondata.LppOnNodeRefData(tem=presetdata['tem'],ccdcamera=presetdata['ccdcamera'], xlpp=self.settings['xlpp']).query(results=1)
 		if not ref_results:
 			self.need_save_reference = True
 			raise NoReferenceError('No reference for on-node lpp alignment found.')
@@ -208,6 +208,7 @@ class LppAligner(acquisition.Acquisition):
 				reference=self.imagedata,
 				tem=self.imagedata['scope']['tem'],
 				ccdcamera=self.imagedata['camera']['ccdcamera'],
+				xlpp=self.settings['xlpp'],
 		)
 		q['delta lpp focus'] = delta_f
 		for k in r.keys():
@@ -285,22 +286,12 @@ class LppAligner(acquisition.Acquisition):
 			self.logger.error('Error calculating on-plane and on-node values: %s' % e)
 			return status
 
-	def setOnPlaneOnNode(self):
-		try:
-			self.instrument.tem.PhasePlateFocus = self.new_f0
-			# set xtilt
-			for k in self.lpp_axes:
-				self.new_xtilt = self.instrument.tem.PhasePlatePlaneShift
-				c = 1/360.0
-				self.new_xtilt['x'] += self.new_phase_shifts[k]*c*self.settings['lpp%s wave xtilt vector x' % k]
-				self.new_xtilt['y'] += self.new_phase_shifts[k]*c*self.settings['lpp%s wave xtilt vector y' % k]
-			self.logger.info('Calculated LPP new xtilt as %s' % (self.new_xtilt))
-			self.instrument.tem.PhasePlatePlaneShift = self.new_xtilt
-			self.logger.info('Set LPP x1 lens to %.8f, x-tilt to x:%.6f,y:%6f' % (self.new_f0, self.new_xtilt['x'],self.new_xtilt['y']))
-		except Exception as e:
-			self.logger.error('Error setting on-plane and on-node values')
-			self.resetLppFocus()
-			raise
+	def guiSetOnPlaneOnNode(self):
+		'''
+		set on-plane and on-node and save the xtilt calibration
+		'''
+		self.xtilt_cal = self.settings
+		self.setOnPlaneOnNode()
 		self.saveLppCalibration()
 
 	def saveLppCalibration(self):
@@ -310,7 +301,7 @@ class LppAligner(acquisition.Acquisition):
 		results = leginondata.LppCalibrationData(session=self.session, tem=tem, ccdcamera=ccdcamera, xlpp=self.settings['xlpp']).query(results=1)
 		if results:
 			r = results[0]
-			# only save once ???
+			# only save once if unchanged
 			if r['lpp1 wave xtilt vector x'] == self.settings['lpp1 wave xtilt vector x'] and r['lpp1 wave xtilt vector y'] == self.settings['lpp1 wave xtilt vector y']:
 				if r['lpp2 wave xtilt vector x'] == self.settings['lpp2 wave xtilt vector x'] and r['lpp2 wave xtilt vector y'] == self.settings['lpp2 wave xtilt vector y']:
 					return
