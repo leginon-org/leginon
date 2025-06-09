@@ -285,6 +285,7 @@ $icethicknesspresets = $leginondata->getIceThicknessPresets($expId);
 	echo "<tr>";
 	foreach($icethicknesspresets as $preset) {
 		echo "<td>";
+		echo "Preset: ".$preset['name'];
 		echo "<a href='icegraph.php?Id=$expId&vdata=1&preset=".$preset['name']."'>[data]</a>";
 		echo "<a href='icegraph.php?Id=$expId&vs=1&preset=".$preset['name']."'>[sql]</a><br>";
 		echo "<a href='icegraph.php?Id=$expId&preset=".$preset['name']."'>";
@@ -386,6 +387,7 @@ $icethicknessobj = $leginondata->getObjIceThickness($expId); # see if anything w
 	echo "<tr>";
 	foreach($icethicknesspresets as $preset) {
 		echo "<td>";
+		echo "Preset: ".$preset['name'];
 		echo "<a href='holeice_to_alsice_graph.php?Id=$expId&vdata=1&preset=".$preset['name']."'>[data]</a>";
 		echo "<a href='holeice_to_alsice_graph.php?Id=$expId&vs=1&preset=".$preset['name']."'>[sql]</a><br>";
 		echo "<a href='holeice_to_alsice_graph.php?Id=$expId&w=1024&h=512&preset=".$preset['name']."'>";
@@ -419,6 +421,7 @@ if (!empty($imageshiftpresets)) {
 		echo "</td></tr>";
 		echo "<tr>";
 		echo "<td>";
+		echo "Preset: ".$preset['name'];
 		echo "<a href='imageshiftgraph.php?Id=$expId&vdata=1&preset=".$preset['name']."'>[data]</a>";
 		echo "<a href='imageshiftgraph.php?Id=$expId&vs=1&preset=".$preset['name']."'>[sql]</a><br>";
 		echo "<a href='imageshiftgraph.php?Id=$expId&preset=".$preset['name']."'>";
@@ -509,9 +512,56 @@ $defocusresults = $leginondata->getFocusResultData($expId, 'both','all','ok');
 ?>
 </td>
 </tr>
+<?php
+$xpresets = $leginondata->getImageShiftPresets($expId);
+echo "<tr>";
+echo "<td colspan='2'>";
+echo divtitle("Laser Phase Plate");
+if (!empty($xpresets)) {
+	echo "<table border='0'>\n";
+	echo "<tr>";
+		echo "<td>";
+		echo "<a href='lppreport.php?Id=$expId'>report &raquo;</a>";
+		echo "</td>";
+	echo "</tr>";
+	foreach($xpresets as $preset) {
+		$stats = $leginondata->getImageScopeXYValues($expId,$preset['name'],'phase plate plane shift',True);
+		if (!$stats['x']['stddev']) continue;
+		echo "<tr><td colspan='2'>";
+		foreach (array_keys($stats) as $key) 
+			printf('%s mean= %.2f stddev= %.2f </br>',$key, $stats[$key]['avg']*1e6,$stats[$key]['stddev']*1e6);
+		echo "</td></tr>";
+		echo "<tr>";
+		echo "<td>";
+		echo "Preset: ".$preset['name'];
+		echo "<a href='xtiltgraph.php?Id=$expId&vdata=1&preset=".$preset['name']."'>[data]</a>";
+		echo "<a href='xtiltgraph.php?Id=$expId&vs=1&preset=".$preset['name']."'>[sql]</a>";
+		$allxlink = "<a href='lppdata.php?Id=$expId&preset=".$preset['name']."&vdata=1'>\n";
+		$allxlink .= "[all lpp-related scope data]</a></h3>\n";
+		echo $allxlink ;
+		echo "<a href='xtiltgraph.php?Id=$expId&preset=".$preset['name']."'>";
+		echo "<br>";
+		echo "<img border='0' src='xtiltgraph.php?Id=$expId&w=256&preset=".$preset['name']."'>";
+		echo "</a>\n";
+		echo "</td>\n";
+		echo "<td>";
+		echo "<a href='xtiltgraph.php?Id=$expId&hg=1&haxis=x&vdata=1&preset=".$preset['name']."'>[data]</a>";
+		echo "<a href='xtiltgraph.php?Id=$expId&hg=1&haxis=x&vs=1&preset=".$preset['name']."'>[sql]</a><br>";
+		echo "<a href='xtiltgraph.php?Id=$expId&hg=1&haxis=x&preset=".$preset['name']."'>";
+		echo "<img border='0' src='xtiltgraph.php?Id=$expId&hg=1&haxis=x&w=256&preset=".$preset['name']."'>";
+		echo "</a>\n";
+		echo "</td>\n";
+		echo "</tr>\n";
+	}
+	echo "</table>\n";
+} else echo "no LPP information available";
+	echo "</td>";
+?>
+</tr>
 <tr>
 <td colspan="2">
 <?php
+//Comments
 $comments = $leginondata->getComments($expId);
 if (!empty($comments)) {
 	echo divtitle("Comments");
