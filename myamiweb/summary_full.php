@@ -513,7 +513,7 @@ $defocusresults = $leginondata->getFocusResultData($expId, 'both','all','ok');
 </td>
 </tr>
 <?php
-$xpresets = $leginondata->getImageShiftPresets($expId);
+$xpresets = $leginondata->getDataTypes($expId);
 echo "<tr>";
 echo "<td colspan='2'>";
 echo divtitle("Laser Phase Plate");
@@ -524,8 +524,8 @@ if (!empty($xpresets)) {
 		echo "<a href='lppreport.php?Id=$expId'>report &raquo;</a>";
 		echo "</td>";
 	echo "</tr>";
-	foreach($xpresets as $preset) {
-		$stats = $leginondata->getImageScopeXYValues($expId,$preset['name'],'phase plate plane shift',True);
+	foreach($xpresets as $preset_name) {
+		$stats = $leginondata->getImageScopeXYValues($expId,$presetname,'phase plate plane shift',True);
 		if (!$stats['x']['stddev']) continue;
 		echo "<tr><td colspan='2'>";
 		foreach (array_keys($stats) as $key) 
@@ -533,22 +533,22 @@ if (!empty($xpresets)) {
 		echo "</td></tr>";
 		echo "<tr>";
 		echo "<td>";
-		echo "Preset: ".$preset['name'];
-		echo "<a href='xtiltgraph.php?Id=$expId&vdata=1&preset=".$preset['name']."'>[data]</a>";
-		echo "<a href='xtiltgraph.php?Id=$expId&vs=1&preset=".$preset['name']."'>[sql]</a>";
-		$allxlink = "<a href='lppdata.php?Id=$expId&preset=".$preset['name']."&vdata=1'>\n";
+		echo "Preset: ".$preset_name;
+		echo "<a href='xtiltgraph.php?Id=$expId&vdata=1&preset=".$preset_name."'>[data]</a>";
+		echo "<a href='xtiltgraph.php?Id=$expId&vs=1&preset=".$preset_name."'>[sql]</a>";
+		$allxlink = "<a href='lppdata.php?Id=$expId&preset=".$preset_name."&vdata=1'>\n";
 		$allxlink .= "[all lpp-related scope data]</a></h3>\n";
 		echo $allxlink ;
-		echo "<a href='xtiltgraph.php?Id=$expId&preset=".$preset['name']."'>";
+		echo "<a href='xtiltgraph.php?Id=$expId&w=512&preset=".$preset_name."'>";
 		echo "<br>";
-		echo "<img border='0' src='xtiltgraph.php?Id=$expId&w=256&preset=".$preset['name']."'>";
+		echo "<img border='0' src='xtiltgraph.php?Id=$expId&w=256&preset=".$preset_name."'>";
 		echo "</a>\n";
 		echo "</td>\n";
 		echo "<td>";
-		echo "<a href='xtiltgraph.php?Id=$expId&hg=1&haxis=x&vdata=1&preset=".$preset['name']."'>[data]</a>";
-		echo "<a href='xtiltgraph.php?Id=$expId&hg=1&haxis=x&vs=1&preset=".$preset['name']."'>[sql]</a><br>";
-		echo "<a href='xtiltgraph.php?Id=$expId&hg=1&haxis=x&preset=".$preset['name']."'>";
-		echo "<img border='0' src='xtiltgraph.php?Id=$expId&hg=1&haxis=x&w=256&preset=".$preset['name']."'>";
+		echo "<a href='xtiltgraph.php?Id=$expId&hg=1&haxis=x&vdata=1&preset=".$preset_name."'>[data]</a>";
+		echo "<a href='xtiltgraph.php?Id=$expId&hg=1&haxis=x&vs=1&preset=".$preset_name."'>[sql]</a><br>";
+		echo "<a href='xtiltgraph.php?Id=$expId&hg=1&haxis=x&preset=".$preset_name."'>";
+		echo "<img border='0' src='xtiltgraph.php?Id=$expId&hg=1&haxis=x&w=256&preset=".$preset_name."'>";
 		echo "</a>\n";
 		echo "</td>\n";
 		echo "</tr>\n";

@@ -39,6 +39,7 @@ if ($histogram == true && $histaxis == 'x')
 $dbemgraph= new dbemgraph($imageshiftdata, $axes[0], $axes[1]);
 $dbemgraph->lineplot=False;
 $dbemgraph->title=$fieldname." for preset $preset";
+$dbemgraph->xaxistitle=$axes[0]." scope unit (x 1000)";
 $dbemgraph->yaxistitle=$axes[1]." scope unit (x 1000)";
 
 if ($viewdata) {
@@ -47,10 +48,14 @@ if ($viewdata) {
 if ($histogram) {
 	$dbemgraph->histogram=true;
 }
-
 $dbemgraph->scalex(1e-3);
 $dbemgraph->scaley(1e-3);
-$dbemgraph->dim($width,$height);
+if (!$histogram) {
+	$dbemgraph->proportion(0.04, false);
+	$dbemgraph->dim($width,$width);
+} else {
+	$dbemgraph->dim($width,$height);
+}
 $dbemgraph->graph();
 
 ?>
