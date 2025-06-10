@@ -86,9 +86,10 @@ class PhasePlatePlaneShiftCycler(acquisition.Acquisition):
 			x_unit_shift = self.xy['x']*self.settings['shift scale']
 			y_unit_shift = self.xy['y']*self.settings['shift scale']
 			x_value = self.parent_shift['x'] + self.c_shift*x_unit_shift + self.r_shift*y_unit_shift
-			y_value = self.parent_shift['y'] + self.c_shift*y_unit_shift - self.r_shift*x_unit_shift
+			y_value = self.parent_shift['y'] - self.c_shift*y_unit_shift + self.r_shift*x_unit_shift
 			getattr(self.instrument.tem,'set%s' % self.scope_attr)({'x':x_value,'y':y_value})
-			self.logger.info('%s sent: %s' % (self.shift_name.capitalize(),{'x':x_value,'y':y_value}))
+			m = '%s sent: %s' % (self.shift_name.capitalize(),{'x':x_value,'y':y_value})
+			self.logger.info(m)
 			self.iter += 1
 			super(PhasePlatePlaneShiftCycler, self).processTargetData(targetdata, attempt)
 		else:
