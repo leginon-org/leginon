@@ -560,8 +560,8 @@ class TargetHandler(object):
 		try:
 			self.instrument.tem.PhasePlateFocus = self.new_f0
 			# set xtilt
+			self.new_xtilt = self.instrument.tem.PhasePlatePlaneShift
 			for k in self.lpp_axes:
-				self.new_xtilt = self.instrument.tem.PhasePlatePlaneShift
 				c = 1/360.0
 				for axis in ('x','y'):
 					self.new_xtilt[axis] += self.new_phase_shifts[k]*c*self.xtilt_cal['lpp%d wave xtilt vector %s' % (k,axis)]
