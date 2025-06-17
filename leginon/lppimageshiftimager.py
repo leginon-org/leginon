@@ -42,7 +42,9 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 		'startangle': 0,
 		'tableau type': 'image shift series-lpp defocused',
 		'tableau binning': 2,
-		'fringe rotation': 3, # degrees
+		'xlpp': False,
+		'fringe rotation1': -3, # degrees
+		'fringe rotation2': 87.7, # degrees
 	})
 
 	eventinputs = manualfocuschecker.ManualFocusChecker.eventinputs
@@ -259,8 +261,18 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 	
 	def fitLppFringes(self,imagedata):
 		myimage = imagedata['image']
+		results = {}
 		try:
-			amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_needed = lppfit.run_fringe_fit(myimage, self.settings['fringe rotation'])
+			r1 = lppfit.run_fringe_fit(myimage, self.settings['fringe rotation1'])
+			results= {1:r1}
+			if self.settings['xlpp']:
+				r2 = lppfit.run_fringe_fit(myimage, self.settings['fringe rotation2'])
+				results[2] = r2
+			k = 1
+			self.saveLppFitMeasurement(None, imagedata, results, {1:None})
+			self.saveLppFitInImageComment(imagedata, results, True)
+			period_fit = results[k]['wave_period']
+			phase_shift_needed = results[k]['phase_shift_to_max']
 			shiftinfo = {'period': period_fit, 'phase_shift': phase_shift_needed}
 			return shiftinfo
 		except Exception as e:

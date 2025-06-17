@@ -2276,7 +2276,9 @@ class LppImageShiftImagerSettingsData(AcquisitionSettingsData):
 			('startangle', float),
 			('tableau type', str),
 			('tableau binning', int),
-			('fringe rotation', float),
+			('xlpp', bool),
+			('fringe rotation1', float),
+			('fringe rotation2', float),
 		)
 	typemap = classmethod(typemap)
 
