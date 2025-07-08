@@ -1662,6 +1662,7 @@ class NavigatorSettingsData(SettingsData):
 			('final image shift', bool),
 			('background readout', bool),
 			('preexpose', bool),
+			('move without reacquire', bool),
 		)
 	typemap = classmethod(typemap)
 
