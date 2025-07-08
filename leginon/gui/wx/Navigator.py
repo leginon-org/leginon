@@ -372,9 +372,13 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		# error checking and correction
 		self.widgets['check calibration'] = wx.CheckBox(self, -1,
 																										'Measure move error')
+		# no reacquire
+		self.widgets['move without reacquire'] = wx.CheckBox(self, -1,
+				'Move without reacquire')
 		sz = wx.GridBagSizer(5, 10)
 		sz.Add(szpausetime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['check calibration'], (1, 0), (1, 1))
+		sz.Add(self.widgets['move without reacquire'], (2, 0), (1, 1))
 		return sz
 
 	def addSettings(self):
