@@ -2533,6 +2533,11 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		"""
 		measure defocus correction by estimating CTF on two images.
 		"""
+		phase_search = list(phase_search)
+		# backward compatible where old settings has Null in database
+		for index in (0,1):
+			if phase_search[index] is None:
+				phase_search[index] = 0.0
 		self.abortevent.clear()
 		if image0 is None:
 			imagedata0 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
@@ -2549,7 +2554,7 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		rpixel = self.getImageReciprocalPixelSize(imagedata0)['x']
 		if s0/rpixel > 0.125*imagedata0['camera']['dimension']['x']:
 			# bring it to underfocus if it is low overfocus
-			delta_defoc = - 2 * defocus_avg0
+			delta_defoc = - 2.5 * defocus_avg0
 		else:
 			# not to go too much further if it is high underfocus
 			delta_defoc = - defocus_avg0*0.5
