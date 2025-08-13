@@ -73,6 +73,8 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			'drift threshold': 3e-10,
 			'recheck drift': False,
 			'reset defocus': None,
+			'phase search max': 0,
+			'phase search min': 0,
 		}
 		self.manualplayer = player.Player(callback=self.onManualPlayer)
 		manualfocuschecker.ManualFocusChecker.__init__(self, id, session, managerlocation, **kwargs)
