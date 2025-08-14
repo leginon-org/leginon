@@ -557,7 +557,6 @@ class Navigator(node.Node):
 		try:
 			self.logger.info('Acquiring...')
 			imagedata = self.acquireCorrectedCameraImageData(channel=channel,force_no_frames=True)
-			self.logger.info('Acquired')
 		except:
 			self.logger.error('unable to get corrected image')
 			self._restoreSaveFrames()
@@ -567,6 +566,7 @@ class Navigator(node.Node):
 			self.logger.error('Acquire image failed')
 			self._restoreSaveFrames()
 			return
+		self.logger.info('Acquired')
 
 		self._restoreSaveFrames()
 		self.newImage(imagedata)
@@ -745,6 +745,8 @@ class Navigator(node.Node):
 		self.logger.info('Send %s preset to scope' % (presetname,))
 		self.setStatus('processing')
 		self.presetsclient.toScope(presetname)
+		if self.presetsclient.stage_targeting_failed:
+			self.logger.error('Preset sending failed. Check parameters')
 		self.setStatus('idle')
 		self.panel.onSendPresetDone()
 
