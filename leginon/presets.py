@@ -168,12 +168,17 @@ class PresetsClient(object):
 			self.node.remote_pmlock.setUnlock()
 
 	def presetchanged(self, ievent):
-		self.currentpreset = ievent['preset']
-		name = self.currentpreset['name']
+		has_error = ievent['has_error']
+		if ievent['preset'] is not None:
+			self.currentpreset = ievent['preset']
+			name = self.currentpreset['name']
+		else:
+			name = ievent['name']
 
-		# update node's instruments to match new preset
-		self.node.instrument.setTEM(self.currentpreset['tem']['name'])
-		self.node.instrument.setCCDCamera(self.currentpreset['ccdcamera']['name'])
+		if not has_error:
+			# update node's instruments to match new preset
+			self.node.instrument.setTEM(self.currentpreset['tem']['name'])
+			self.node.instrument.setCCDCamera(self.currentpreset['ccdcamera']['name'])
 
 		# if waiting for this event, then set the threading event
 		if name in self.pchanged:
@@ -408,7 +413,9 @@ class PresetsManager(node.Node):
 							# Avoid unknown bug with JEOL scopes:
 							#can not read pre-existing image shift offset at this point
 							self.logger.info('Jeol hack: pre-existing image shift offset dy=0,0')
-					self._cycleToScope(pname)
+					has_error = self._cycleToScope(pname)
+					if has_error:
+						raise PresetChangeError('error in _cycleToScope')
 					if ievent['keep image shift']:
 						self.logger.info('Keeping pre-existing image shift offset')
 						# send image shift offset to scope
@@ -421,13 +428,16 @@ class PresetsManager(node.Node):
 					self.targetToScope(pname, emtarget)
 			except PresetChangeValueError:
 				self.logger.error('preset request to "%s" value error' % (pname))
+				succeed = False
 				break
-			except PresetChangeError:
+			except (PresetChangeError, Exception) as e:
+				succeed = False
 				if i < failtries-1:
 					# retry since this is often communication error that can be recovered.
 					self.logger.warning('preset request to "%s" failed, waiting %d seconds to try again' % (pname,failwait))
 					time.sleep(failwait)
 				else:
+					self.logger.error('preset request to "%s" error: %s' % (pname,e))
 					self.logger.error('preset request to "%s" failed %d times' % (pname,failtries))
 			else:
 				self.logger.info('Preset changed to "%s"' % pname)
@@ -436,6 +446,7 @@ class PresetsManager(node.Node):
 
 		if not succeed:
 			self.logger.error('preset request to "%s" failed %d times' % (pname,failtries))
+			self.outputEvent(event.PresetChangedEvent(name=pname, preset=None, has_error=True))
 
 		if tmplock:
 						self.unlock(ievent['node'])
@@ -803,7 +814,7 @@ class PresetsManager(node.Node):
 
 	def cycleToScope(self, presetname):
 		self.setStatus('processing')
-		self._cycleToScope(presetname)
+		has_error = self._cycleToScope(presetname)
 		self.setStatus('idle')
 		self.panel.presetsEvent()
 
@@ -815,16 +826,18 @@ class PresetsManager(node.Node):
 		   that have the same magnification
 		magonly = True:  all presets in cycle (except for final) 
 		   will only send magnification to TEM
+		return has_error
 		'''
 		errstr = 'Preset cycle failed: %s'
 		if not self.settings['cycle']:
 			if dofinal:
 				try:
 					self.toScope(presetname, final=True)
-				except PresetChangeError:
-					pass
+				except Exception:
+					self.outputEvent(event.PresetChangedEvent(name=presetname, preset=None, has_error=True))
+					return True
 			self.beep()
-			return
+			return False
 
 		order = list(self.presets.keys())
 		magonly = self.settings['mag only']
@@ -833,7 +846,7 @@ class PresetsManager(node.Node):
 		if presetname not in order:
 			estr = 'final preset %s not in cycle order list' % (presetname,)
 			self.logger.error(errstr % estr)
-			return
+			return True
 
 		### check if this is the first time a preset
 		### has been set for this PresetManager instance
@@ -844,7 +857,7 @@ class PresetsManager(node.Node):
 			try:
 				self.toScope(presetname, final=False)
 			except PresetChangeError:
-				return
+				return True
 			force = True
 		else:
 			force = False
@@ -853,7 +866,7 @@ class PresetsManager(node.Node):
 		if currentname not in order:
 			estr = 'current preset %s not in cycle order list' % (currentname,)
 			self.logger.error(errstr % estr)
-			return
+			return True
 
 		thiscycle = self.createCycleList(currentname, presetname, magshortcut)
 		
@@ -879,16 +892,17 @@ class PresetsManager(node.Node):
 			try:
 				self.toScope(pname, magonly, final=False)
 			except PresetChangeError:
-				return
+				return True
 
 		## final preset change
 		if dofinal:
 			try:
 				self.toScope(thiscycle[-1], final=True)
 			except PresetChangeError:
-				return
+				return True
 			self.logger.info('Cycle completed')
 		self.beep()
+		return False
 
 	def createCycleList(self, current, final, magshortcut, reverse=False):
 		order = list(self.presets.keys())
@@ -1084,7 +1098,7 @@ class PresetsManager(node.Node):
 			return
 
 		if self.currentpreset is None or self.currentpreset['name'] != presetname:
-			self._cycleToScope(presetname)
+			has_error = self._cycleToScope(presetname)
 
 		if self.currentpreset is None or self.currentpreset['name'] != presetname:
 			e = 'cannot go to preset \'%s\'' % presetname
@@ -1352,7 +1366,7 @@ class PresetsManager(node.Node):
 				return
 
 			if self.currentpreset is None or self.currentpreset['name'] != presetname:
-				self._cycleToScope(presetname)
+				has_error = self._cycleToScope(presetname)
 
 			if self.currentpreset is None or self.currentpreset['name'] != presetname:
 				e	= 'cannot go to preset \'%s\'' % presetname
@@ -1502,7 +1516,7 @@ class PresetsManager(node.Node):
 		## first cycle through presets before sending the final one
 		if self.currentpreset is None or self.currentpreset['name'] != newpresetname:
 			self.blankOn()
-			self._cycleToScope(newpresetname, dofinal=False)
+			has_error = self._cycleToScope(newpresetname, dofinal=False)
 
 		self.logger.info('Going to target and to preset %s' % (newpresetname,))
 
