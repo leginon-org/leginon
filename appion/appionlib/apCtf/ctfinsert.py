@@ -18,7 +18,7 @@ radian_suspects = 0
 
 #====================
 #====================
-def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir, fftpath=None, fftfreq=None):
+def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir, acerun=False, fftpath=None, fftfreq=None):
 	"""
 	function to insert CTF values in database
 	"""
@@ -45,11 +45,17 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir, fftpath=None, 
 		ctfvalues['extra_phase_shift'] = 0.0
 
 	if isvalid is True:
-		oldctfvalues = ctfvalues.copy()
-		ctfvalues = runCTFdisplayTools(imgdata, ctfvalues, opimagedir, fftpath, fftfreq)
-		# check if image creation failed
-		if ctfvalues is None:
-			ctfvalues = oldctfvalues
+		if acerun is True:
+			oldctfvalues = ctfvalues.copy()
+			ctfvalues = runCTFdisplayTools(imgdata, ctfvalues, opimagedir, fftpath, fftfreq)
+			# check if image creation failed
+			if ctfvalues is None:
+				ctfvalues = oldctfvalues
+		else:
+			ctfvalues['graph3'] = os.path.basename(ctfvalues['graph1'])
+			ctfvalues['graph4'] = os.path.basename(ctfvalues['graph2'])
+			ctfvalues['graph1'] = os.path.basename(ctfvalues['graph1'])
+			ctfvalues['graph2'] = os.path.basename(ctfvalues['graph2'])
 
 	### clean rundir from all entries:
 	if not rundir.endswith("/"):

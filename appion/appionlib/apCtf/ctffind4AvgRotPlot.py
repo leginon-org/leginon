@@ -141,6 +141,7 @@ def createPlot(avgrotfile):
 	if scaleFactor < 1:
 		scaleFactor = 1
 
+	pyplot.clf()  # clear before running!
 	#pyplot.plot(xdatasq, datasets[1], label='Amplitude Spectra')
 	pyplot.plot(xdatasq, datasets[2]*scaleFactor, label='Power Spectra', alpha=0.7)
 	pyplot.plot(xdatasq, datasets[3], label='CTF Model')
