@@ -1164,6 +1164,7 @@ class particledata {
 	function getCtfInfoFromImageId($imageId, $order=false, $method='', $acerunId='') {
 		$phase_shift_select = $this->getPhaseShiftString('c');
 		$local_plot_select = ($this->mysql->FieldExists('ApCtfData','localplot')) ? "c.localplot, ": "";
+		$sample_thickness_select = ($this->mysql->FieldExists('ApCtfData','sample_thickness')) ? "c.sample_thickness, ": "";
 		$q =	"select "
 			."c.`DEF_id`, "
 			."c.`REF|leginondata|AcquisitionImageData|image`, "
@@ -1194,6 +1195,7 @@ class particledata {
 			."c.`resolution_80_percent` , "
 			."c.`resolution_50_percent` , "
 			."c.`ctffind4_resolution` , "
+			.$sample_thickness_select
 			."(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
 			."from ApCtfData c "
 			."left join(ApAceRunData r, ApPathData p) "

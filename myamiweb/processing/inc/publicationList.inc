@@ -456,6 +456,17 @@ $PUBLICATIONS['ctffind4'] = array(
 'doi' => '10.1016/j.jsb.2015.08.008',
 'pages' => '216-21');
 
+
+$PUBLICATIONS['ctffind5'] = array(
+'title' => 'CTFFIND5 provides improved insight into quality, tilt and thickness of TEM samples.',
+'year' => '2024',
+'authorlist' => 'Elferich J, Kong L, Zottig X, Grigorieff N.',
+'journal' => 'eLife',
+'volume' => '13',
+'pmid' => '39704651',
+'pmcid' => '11661789',
+'doi' => '10.7554/eLife.97227.2');
+
 $PUBLICATIONS['topaz'] = array(
 		'title' => 'Positive-unlabeled convolutional neural networks for particle picking in cryo-electron micrographs',
 		'year' => '2018',
