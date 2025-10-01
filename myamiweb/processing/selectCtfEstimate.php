@@ -50,6 +50,19 @@ echo " <p>CTFFIND uses a robust grid search algorithm to find the optimal "
 	."</p>\n";
 echo "</td></tr>\n";
 
+/*
+** CTFFIND5
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=CtfFind5'>CTFFIND v5</a></h3>\n";
+echo " <p>CTFFIND5 uses a robust grid search algorithm to find the optimal "
+	."CTF parameters. Can also estimate sample tilt and ice thickness. "
+	." "
+	."</p>\n";
+echo "</td></tr>\n";
 
 
 /*
