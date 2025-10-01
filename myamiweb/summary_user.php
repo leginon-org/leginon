@@ -225,11 +225,11 @@ if ($ptcl) {
 		echo "<img border='0' width='360' height='360' src='processing/ctfgraph.php?"
 			."w=640&h=360&hg=0&expId=$expId&s=1&f=astig_distribution' alt='please wait...'></a>\n";
 
-		echo "<h3>CTF Resolution at 0.5 cutoff</h3>";
-		echo "<a href='processing/ctfgraph.php?hg=1&expId=$expId&s=1&xmin=1&xmax=30&"
-			."f=resolution_50_percent&w=1920&h=1080'>\n";
+		echo "<h3>Tilt Angle determined by CTFFIND 5 </h3>";
+		echo "<a href='processing/ctfgraph.php?hg=1&expId=$expId&s=1&xmin=0&xmax=90&"
+			."f=tilt_angle&w=1920&h=1080'>\n";
 		echo "<img border='0' width='640' height='360' src='processing/ctfgraph.php?"
-			."w=640&h=360&hg=1&expId=$expId&s=1&xmin=1&xmax=30&f=resolution_50_percent' "
+			."w=640&h=360&hg=1&expId=$expId&s=1&xmin=0&xmax=90&f=tilt_angle' "
 			."alt='please wait...'></a>\n";
 	} else {
 		echo "no CTF information available";
@@ -468,6 +468,7 @@ $numframes = intval(round($presetdata['exposure time']/$presetdata['frame time']
 $numimages = $maxpresetarray['nb'];
 $defmin = number_format(-1e6*$defdata['maxdef'], 1);
 $defmax = number_format(-1e6*$defdata['mindef'], 1);
+$use_energy_filter = $presetdata['energy filter'];
 
 echo opendivbubble();
 
@@ -475,6 +476,10 @@ echo "<p style='font-size: 125%'>";
 
 echo "$microscope operated at $kv kV with a $camera imaging system collected at ${mag}X nominal magnification.
 The calibrated pixel size of $pixelsize &Aring; was used for processing.";
+if ($use_energy_filter >0) {
+	$slitwidth = number_format($presetdata['energy filter width'],0);
+	echo " Zero-loss images were taken using an energy filter slit width of $slitwidth eV.";
+}
 
 echo "</p><br/><p style='font-size: 125%'>";
 
@@ -483,6 +488,21 @@ rate of $dosepersec e<sup>-</sup>/&Aring;<sup>2</sup>/s with a total exposure of
 for an accumulated dose of $totaldose e<sup>-</sup>/&Aring;<sup>2</sup>. Intermediate frames were recorded
 every $frametime seconds for a total of $numframes frames per micrograph. A total of $numimages images were
 collected at a nominal defocus range of $defmin &ndash; $defmax &mu;m.";
+echo " Ice thickness was determined as described in (Rice et al, 2018) and (Cheng et al, 2021).";
+
+echo "</p><p style='font-size: 125%'>";
+echo "On-the-fly processing was performed using MotionCor2 v 1.6.4 (Zheng et al, 2017) and CTFFIND4 v 4.1.14 (Rohou et al, 2015) or CTFFIND5 v. 5.0.2 (Elferich et al, 2024) under control of Appion (Lander et al, 2009).";
+echo "</p>";
+echo "<p style='font-size: 125%'><br/><b>References</b></p>";
+echo "<p>";
+echo "Cheng A, Negro C, Bruhn JF, et al. Leginon: New features and applications. Protein Sci. 2021;30(1):136-150. doi:10.1002/pro.3967<br>";
+echo "Elferich J, Kong L, Zottig X, and Grigorieff N. eLife v13. doi:10.7554/eLife.97227.2 <br>";
+echo "Lander GC, Stagg SM, Voss NR, et al. Appion: an integrated, database-driven pipeline to facilitate EM image processing. J Struct Biol. 2009;166(1):95-102. doi:10.1016/j.jsb.2009.01.002 <br>";
+echo "Rice WJ, Cheng A, Noble AJ, et al. Routine determination of ice thickness for cryo-EM grids. J Struct Biol. 2018;204(1):38-44. doi:10.1016/j.jsb.2018.06.007 <br>";
+echo "Rohou A, Grigorieff N. CTFFIND4: Fast and accurate defocus estimation from electron micrographs. J Struct Biol. 2015;192(2):216-221. doi:10.1016/j.jsb.2015.08.008 <br>";
+echo "Suloway C, Pulokas J, Fellmann D, et al. Automated molecular microscopy: the new Leginon system. J Struct Biol. 2005;151(1):41-60. doi:10.1016/j.jsb.2005.03.010 <br>";
+echo "Zheng SQ, Palovcak E, Armache JP, Verba KA, Cheng Y, Agard DA. MotionCor2: anisotropic correction of beam-induced motion for improved cryo-electron microscopy. Nat Methods. 2017;14(4):331-332. doi:10.1038/nmeth.4193 <br>";
+
 
 echo "</p>";
 echo "</div>";
