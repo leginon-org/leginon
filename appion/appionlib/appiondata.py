@@ -477,10 +477,12 @@ class ApCtfData(Data):
 			('localCTFstarfile', str), # local CTF output file
 			('ctfvalues_file', str),  # used for ace2correct
 			('cross_correlation', float),  # direct from ctffind/ctftilt
-			('tilt_angle', float),  # from ctftilt
-			('tilt_axis_angle', float),  # from ctftilt
+			('tilt_angle', float),  # from ctftilt or CTFFIND5
+			('tilt_axis_angle', float),  # from ctftilt or CTFFIND5  
 			('mat_file', str),  # from ACE1
 			('extra_phase_shift', float), #phase plate phase shift addition (radians)
+#                        ('sample_thickness',float),  # sample thickness from CTFFIND5, in nm
+# uncomment above line if saving CTFFIND5-determined sample thickness
 		)
 	typemap = classmethod(typemap)
 
