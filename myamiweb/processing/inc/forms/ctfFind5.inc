@@ -10,24 +10,24 @@ require_once "basicLoopForm.inc";
 require_once "ddstackSelectTable.inc";
 require_once "dbDefocusTable.inc";
 
-class CtfFind4 extends BasicLoopForm
+class CtfFind5 extends BasicLoopForm
 {
 	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $fieldsize='1024',
-								$resmin='50', $resmax='4', $defstep='0.1', $numstep='25', $dast='0.05', $bestdb=true, $nominal='', $parallel=true, $useDDStack=false, $ddstackid=false, $phase_plate=false, $min_phase_shift=10, $max_phase_shift=170, $phase_search_step=10, $num_frame_avg=7, $acerun=false) 
+								$resmin='50', $resmax='4', $defstep='0.1', $numstep='25', $dast='0.05', $bestdb=true, $nominal='', $parallel=true, $useDDStack=false, $ddstackid=false, $phase_plate=false, $min_phase_shift=10, $max_phase_shift=170, $phase_search_step=10, $num_frame_avg=7, $sample_tilt=true, $sample_thickness=true, $brute_force=false, $refine_2d=true,$nodes_low=30,$nodes_high=3.0,$downweight_nodes=false, $rounded_nodes=false, $acerun=false) 
 	{
 		parent::__construct($expId, $extraHTML);
 		
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
 		// Set the publications to be references on the web pages
-		$pubList = array('ctffind4');
+		$pubList = array('ctffind5');
 		$this->setPublications( $pubList );
 		$this->setJobType( 'ctfestimate' );
 		$this->setOutputDirectory( 'ctf' );
-		$this->setBaseRunName( 'ctffind4run' );
-		$this->setTitle( 'CTFFIND v4 Launcher' );
-		$this->setHeading( 'CTF Estimation with CTFFIND v4' );
-		$this->setExeFile( 'ctffind4.py' );
+		$this->setBaseRunName( 'ctffind5run' );
+		$this->setTitle( 'CTFFIND v5 Launcher' );
+		$this->setHeading( 'CTF Estimation with CTFFIND v5' );
+		$this->setExeFile( 'ctffind5.py' );
 		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Appion_Processing" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
@@ -55,6 +55,14 @@ class CtfFind4 extends BasicLoopForm
 		$params->addParam( "min_phase_shift", $min_phase_shift, "Minimun Phase Shift in search (degrees)" );
 		$params->addParam( "max_phase_shift", $max_phase_shift, "Maximun Phase Shift in search (degrees)" );
 		$params->addParam( "phase_search_step", $phase_search_step, "Initial Phase Shift Search Step (degrees)" );
+		$params->addParam( "sample_tilt", $sample_tilt, "Determine sample tilt (Much slower)" );
+		$params->addParam( "sample_thickness", $sample_thickness, "Determine sample thickness" );
+		$params->addParam( "brute_force_1D", $brute_force, "Use brute force 1D refinement for thickness" );
+		$params->addParam( "2D_refinement", $refine_2d, "Use 2D refinement for thickness" );
+		$params->addParam( "low_resolution_nodes", $nodes_low, "Low resolution limit for node search (A)");
+		$params->addParam( "high_resolution_nodes", $nodes_high, "High resolution limit for node search (A)" );
+		$params->addParam( "downweight", $downweight_nodes, "Downweight nodes for thickness search" );
+		$params->addParam( "rounded_square", $rounded_square, "Use rounded square nodes for thickness search" );
 		$params->addParam( "num_frame_avg", $num_frame_avg, "Number of Frames to average" );
 		$params->addParam( "acerun", $acerun, "Run ACE CTF determination as well" );
 		
@@ -102,6 +110,14 @@ class CtfFind4 extends BasicLoopForm
 		$html.= $params->insertTextField( "min_phase_shift", $fieldSize );
 		$html.= $params->insertTextField( "max_phase_shift", $fieldSize );
 		$html.= $params->insertTextField( "phase_search_step", $fieldSize );
+		$html.= $params->insertCheckboxField( "sample_tilt" );
+		$html.= $params->insertCheckboxField( "sample_thickness" );
+		$html.= $params->insertCheckboxField( "brute_force_1D" );
+		$html.= $params->insertCheckboxField( "2D_refinement" );
+		$html.= $params->insertTextField( "low_resolution_nodes", $fieldSize );
+		$html.= $params->insertTextField( "high_resolution_nodes", $fieldSize );
+		$html.= $params->insertCheckboxField( "downweight" );
+		$html.= $params->insertCheckboxField( "rounded_square" );
 		$html.= $params->insertCheckboxField( "acerun" );
 
 		
