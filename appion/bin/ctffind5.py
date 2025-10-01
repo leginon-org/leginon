@@ -24,10 +24,14 @@ from appionlib.apCtf import ctffind4AvgRotPlot
 class ctfEstimateLoop(appionLoop2.AppionLoop):
 	"""
 	appion Loop function that
-	CTFFIND 4 was written by Alexis Rohou.
-	Appion is Compatible with CTFFIND version 4.1.5
+	CTFFIND 5 is part of the cisTEM package.
+	Appion is Compatible with CTFFIND version 5.0.2
 	http://emg.nysbc.org/redmine/projects/appion/wiki/Package_executable_alias_name_in_Appion
 	to estimate the CTF in images
+	# NOTE: If you want to save sample thickness to database, uncomment lines 425, 440, and 441.
+	# You can still determine it without saving to database, but there will be no way to see what it calculated.
+	# From my testing, it seems to give slightly better resolution results if thickness is determined.
+	# However, if it determines a very wrong thickness (negative or near infinite), the power spectrum it makes may look strange.
 	"""
 
 	#======================
@@ -58,6 +62,10 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="DD stack ID", metavar="#")
 		self.parser.add_option("--num_frame_avg", dest="num_frame_avg", type="int",default=7,
 				help="Average number of moive frames for movie stack CTF refinement")
+		self.parser.add_option("--lowres", "--low_resolution_nodes", dest="low_res_nodes", type="float", default=30.0,
+			help="low resolution limit for nodes", metavar="#")
+		self.parser.add_option("--hires", "--high_resolution_nodes", dest="hi_res_nodes", type="float", default=3.0,
+			help="high resolution limit for nodes", metavar="#")
 
 
 		## true/false
@@ -67,8 +75,21 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			action="store_true", help="Find additionalphase shift")
 		self.parser.add_option("--exhaust", "--exhaustive-search", dest="exhaustiveSearch", default=False,
 			action="store_true", help="Conduct an exhaustive search of the astigmatism of the CTF")
+		self.parser.add_option("--thickness", "--sample_thickness", dest="sample_thickness", default=False,
+			action="store_true", help="Determine sample thickness ")
+		self.parser.add_option("--tilt", "--sample_tilt", dest="sample_tilt", default=False,
+			action="store_true", help="Determine sample tilt")
+		self.parser.add_option("--bruteforce", "--brute_force_1D", dest="brute_force_1D", default=False,
+			action="store_true", help="Use brute force 1D search for thickness")
+		self.parser.add_option("--2D_refine", "--2D_refinement", dest="2D_refinement", default=False,
+			action="store_true", help="Use 2D refinement for thickness")
+		self.parser.add_option("--rounded", "--rounded_square", dest="rounded_square", default=False,
+			action="store_true", help="Use rounded square for nodes")
+		self.parser.add_option("--downweight", "--downweight-nodes", dest="downweight_nodes", default=False,
+			action="store_true", help="Downweight nodes for thickness")
 		self.parser.add_option("--acerun", "--run-ace-ctf", dest="acerun", default=False,
 			action="store_true", help="Run ACE CTF determination as well as CTFFIND")
+
 		
 	#======================
 	def checkConflicts(self):
@@ -105,7 +126,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def getCtfProgPath(self):
-		exename = "ctffind4"
+		exename = "ctffind5"
 		ctfprgmexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 		if not os.path.isfile(ctfprgmexe):
 			ctfprgmexe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
@@ -140,11 +161,29 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 	def getPhaseParamValue(self):
 		return self.getYesNoParamValue('shift_phase')
 
+	def getSampleTiltValue(self):
+		return self.getYesNoParamValue('sample_tilt')
+
+	def getSampleThicknessValue(self):
+		return self.getYesNoParamValue('sample_thickness')
+
+	def getBruteForceValue(self):
+		return self.getYesNoParamValue('brute_force_1D')
+
+	def get2DRefinementValue(self):
+		return self.getYesNoParamValue('2D_refinement')
+
+	def getRoundedSquareValue(self):
+		return self.getYesNoParamValue('rounded_square')
+
+	def getDownweightNodesValue(self):
+		return self.getYesNoParamValue('downweight_nodes')
+
 	def getYesNoParamValue(self, key):
-		phaseparam = 'no'
+		param = 'no'
 		if self.params[key]:
-			phaseparam = 'yes'
-		return phaseparam
+			param = 'yes'
+		return param
 
 	def getKnownAstigValue(self):
 		return 'no'
@@ -160,28 +199,40 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 	#======================
 	def processImage(self, imgdata):
 		"""
-		Input and output matches ctffind 4.1.5
-		time ./ctffind4 << eof
-		Input image file name                  [input.mrc] : 15aug13neil2_14jul14d_05sq_012hl_02ed-a.mrc
-		Output diagnostic filename
-		[diagnostic_output.mrc]                            : 15aug13neil2_14jul14d_05sq_012hl_02ed-a-pow.mrc
-		Pixel size                                   [1.0] : 2.7
-		Acceleration voltage                       [300.0] : 300 
-		Spherical aberration                         [2.7] : 2.7
-		Amplitude contrast                          [0.07] : 0.07
-		Size of power spectrum to compute            [512] : 512
-		Minimum resolution                          [30.0] : 20
-		Maximum resolution                           [5.0] : 5
-		Minimum defocus                           [5000.0] : 
-		Maximum defocus                          [50000.0] : 
-		Defocus search step                        [500.0] : 
-		Do you know what astigmatism is present       [no] : 
-		Slower, more exhaustive search                [no] : 
-		Use a restraint on astigmatism               [yes] : 
-		Expected (tolerated) astigmatism           [100.0] : 
-		Find additional phase shift?                  [no] : 
-		Do you want to set expert options?            [no] : 
-		"""
+		Input and output matches ctffind 5.0.2
+	time ./ctffind5 << eof
+Input image file name
+[25jul01c_p81b1g4_ch1_00030sq_00004hl_00034enn-a.mrc] : 25jul01c_p81b1g4_ch1_00030sq_00004hl_00035enn-a.mrc 
+Output diagnostic image file name
+[25jul01c_p81b1g4_ch1_00030sq_00004hl_00034enn-a-pow.mrc] : 25jul01c_p81b1g4_ch1_00030sq_00004hl_00035enn-a-pow.mrc
+Pixel size [1.101]                                 : 1.101
+Acceleration voltage [200]                         : 200
+Spherical aberration [2.7]                         : 2.7
+Amplitude contrast [0.07]                          : 0.07
+Size of amplitude spectrum to compute [768]        : 768
+Minimum resolution [20]                            : 20
+Maximum resolution [5]                             : 5
+Minimum defocus [5000.0]                           : 5000
+Maximum defocus [50000.0]                          : 40000
+Defocus search step [100.0]                        : 100
+Do you know what astigmatism is present? [no]      : 
+Slower, more exhaustive search? [no]               : 
+Use a restraint on astigmatism? [yes]              : 
+Expected (tolerated) astigmatism [200.0]           : 800
+Find additional phase shift? [no]                  : 
+Determine sample tilt? [yes]                       : yes
+Determine samnple thickness? [yes]                 : yes
+Use brute force 1D search? [no]                    : no
+Use 2D refinement? [no]                            :yes 
+Low resolution limit for nodes [30.0]              : 30
+High resolution limit for nodes [3.0]              : 3
+Use rounded square for nodes? [No]                 : no
+Downweight nodes? [No]                             : no
+Do you want to set expert options? [no]            : no
+"""
+
+
+
 		paramInputOrder = ['input',]
 		if self.params['ddstackid']:
 			paramInputOrder.extend(['is_movie','num_frame_avg'])
@@ -191,6 +242,10 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		# finalize paramInputOrder
 		if self.params['shift_phase']:
 			paramInputOrder.extend(['min_phase_shift','max_phase_shift','phase_search_step'])
+		paramInputOrder.extend( ['sample_tilt', 'sample_thickness',]) #add ctffind5 parameters
+
+                if self.params['sample_thickness']:
+                        paramInputOrder.extend(['brute_force_1D','2D_refinement','low_res_nodes','hi_res_nodes','rounded_square','downweight_nodes'])
 		paramInputOrder.append('expert_opts')
 		paramInputOrder.append('newline')
 
@@ -273,6 +328,15 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			'min_phase_shift': math.radians(self.params['min_phase_shift']),
 			'max_phase_shift': math.radians(self.params['max_phase_shift']), 
 			'phase_search_step': math.radians(self.params['phase_search_step']),
+                        # For CTFFIND5 tilt and thickness
+                        'sample_tilt': self.getSampleTiltValue(), #self.params['sample_tilt'],
+                        'sample_thickness': self.getSampleThicknessValue(), #self.params['sample_thickness'],
+                        'brute_force_1D': self.getBruteForceValue(), #self.params['brute_force_1D'],
+                        '2D_refinement': self.get2DRefinementValue(), #self.params['2D_refinement'],
+                        'low_res_nodes': self.params['low_res_nodes'],
+                        'hi_res_nodes': self.params['hi_res_nodes'],
+                        'rounded_square': self.getRoundedSquareValue(), #self.params['rounded_square'],
+                        'downweight_nodes': self.getDownweightNodesValue(), #self.params['downweight_nodes'],
 			'expert_opts': 'no',
 			'newline': '\n',
 			# For movie
@@ -318,7 +382,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		tdiff = time.time()-t0
 		apDisplay.printMsg("ctf estimation completed in "+apDisplay.timeString(tdiff))
 		if tdiff < 1.0:
-			apDisplay.printError("Failed to run CTFFIND4 program...")
+			apDisplay.printError("Failed to run CTFFIND5 program...")
 
 		### cannot run ctffind_plot_results.sh on CentOS 6
 		# This script requires gnuplot version >= 4.6, but you have version 4.2
@@ -343,6 +407,10 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 				self.setBadImage(imgdata)
 				return
 
+## Columns: #1 - micrograph number; #2 - defocus 1 [Angstroms]; #3 - defocus 2; #4 - azimuth of astigmatism; #5 - additional phase shift [radians]; #6 - cross correlation; #7 - spacing (in Angstroms) up to which CTF rings were fit successfully; #8 - Estimated tilt axis angle; #9 - Estimated tilt angle ; #10 Estimated sample thickness (in Angstroms)
+# 1.000000 14380.079102 14146.207031 67.006456 0.000000 0.050019 7.130980 260.724121 6.030597 1478.704346
+
+
 			self.ctfvalues = {
 				'imagenum': int(float(bits[0])),
 				'defocus2':	float(bits[1])*1e-10,
@@ -352,6 +420,12 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 				'amplitude_contrast': inputparams['ampcontrast'],
 				'cross_correlation':	float(bits[5]),
 				'ctffind4_resolution':	self.convertCtffind4Resolution(bits[6]),
+                                'tilt_axis_angle': float(bits[7]),  #match name from ctftilt data
+                                'tilt_angle': float(bits[8]),       #match name from ctftilt data
+                               # 'sample_thickness': float(bits[9])/10,  #convert to nm for consistency 
+				# remove comment above to save CTFFIND5 determined sample thickness to database (requires ability to chane database)
+				# I find it is helpeful to determine it but it is often not accurate -- sometimes negative values or very large to infinite values
+				# ALS or energy filter determination is more consistent so it is not necessary to save it if it causes issues.
 				'defocusinit':	bestdef*1e-10,
 				'cs': self.params['cs'],
 				'volts': imgdata['scope']['high tension'],
@@ -363,6 +437,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			apDisplay.printWarning("Invalid %s"%(ctfproglog))
 			self.setBadImage(imgdata)
 			return
+                # if abs(self.ctfvalues['sample_thickness']) == float('inf'):
+                #    self.ctfvalues['sample_thickness']=0  #ctffind5 sometimes gives infinite values for thickness, causes trouble for database
+		# uncomment previous 2 lines if saving the thickness to database.
 
 		logf.close()  #
 		os.remove(ctfproglog) #no need to keep this ctf log file
@@ -377,6 +454,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		self.ctfvalues['graph1'] = outputjpg
 
 		##convert avgrot file to a PNG
+                #avgrot file appears to have same format in CTFFIND5 as did CTFFIND4
 		avgrotfile = apDisplay.short(imgdata['filename'])+"-pow_avrot.txt"
 		outputpng = ctffind4AvgRotPlot.createPlot(avgrotfile)
 		shutil.move(outputpng, os.path.join(self.powerspecdir, outputpng))
