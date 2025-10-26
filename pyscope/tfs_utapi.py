@@ -84,7 +84,7 @@ if not SIMULATION:
 	from optics.v1 import focus_pb2 as foc_p
 	from optics.v1 import illumination_pb2 as illu_p
 	from optics.v1 import magnification_pb2 as mag_p
-	from optics.v2 import stigmator_pb2 as stig_p
+	from optics.v2 import stigmators_pb2 as stig_p
 	from optics.v1 import x_lens_alignments_pb2 as xaln_p
 	from column.v1 import column_mode_pb2 as cm_p
 	from column.v1 import normalization_pb2 as norm_p
@@ -109,7 +109,7 @@ if not SIMULATION:
 	from optics.v1 import illumination_pb2_grpc as illu_pg
 	from optics.v1 import magnification_pb2_grpc as mag_pg
 	from optics.v1 import optics_pb2_grpc as optics_pg
-	from optics.v2 import stigmator_pb2_grpc as stig_pg
+	from optics.v2 import stigmators_pb2_grpc as stig_pg
 	from optics.v1 import x_lens_alignments_pb2_grpc as xaln_pg
 	from column.v1 import column_mode_pb2_grpc as cm_pg
 	from column.v1 import normalization_pb2_grpc as norm_pg
