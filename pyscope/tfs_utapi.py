@@ -26,7 +26,7 @@ def getFeiConfig(optionname,itemname=None):
 			return None
 		return configs[optionname][itemname]
 
-def printModuleDebug(self,msg):
+def printModuleDebug(msg):
 	if getFeiConfig('debug','all'):
 		print(msg)
 
@@ -65,7 +65,7 @@ def connectToFEITemScripting():
 	Connects to the COM server
 	'''
 	global connection
-	printModuleDebug('connection call', connection)
+	printModuleDebug('connection call %s' % connection)
 	connection = get_feitem()
 	return connection
 
@@ -180,7 +180,7 @@ def _response_to_dict(response):
 	return json_format.MessageToDict(response)
 
 def _get_by_request(stub,attr_name,request):
-	printModuleDebug('_get_by_request',stub, attr_name, request)
+	printModuleDebug('_get_by_request stub=%s, attr=%s, req=%s' % (stub, attr_name, request))
 	my_attr = getattr(stub,attr_name)
 	try:
 		# perform my_attr action on the request and convert to list and dict
@@ -189,7 +189,7 @@ def _get_by_request(stub,attr_name,request):
 		handleRpcError(rpc_error)
 
 def _set_by_request(stub, attr_name, request):
-	printModuleDebug('_set_by_request',stub, attr_name, request)
+	printModuleDebug('_set_by_request stub=%s, attr=%s, req=%s' % (stub, attr_name, request))
 	my_attr = getattr(stub,attr_name)
 	try:
 		# perform my_attr action on the request
@@ -1193,7 +1193,6 @@ class Krios(tem.TEM):
 		"""
 		temscripting version until utapi has proper values.
 		"""
-		value['x'] = float(connection.instr.Illumination.RotationCenter.X)
 		value = {'condenser': {'x': None, 'y': None},
 							'objective': {'x': None, 'y': None},
 							'diffraction': {'x': None, 'y': None}}
