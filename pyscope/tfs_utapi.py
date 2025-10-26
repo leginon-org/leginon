@@ -132,7 +132,7 @@ if not SIMULATION:
 	bstop_stub = bstop_pg.BeamStopperControlServiceStub(channel)
 	apmc_stub = apmc_pg.ApertureMechanismControlServiceStub(channel)
 	defl_stub = defl_pg.DeflectorsServiceStub(channel)
-	defl_aln_stub = defl_aln_pg.DeflectorsServiceStub(channel)
+	defl_aln_stub = defl_aln_pg.DeflectorsAlignmentsServiceStub(channel)
 	foc_stub = foc_pg.FocusServiceStub(channel)
 	illu_stub = illu_pg.IlluminationServiceStub(channel)
 	mag_stub = mag_pg.MagnificationServiceStub(channel)
