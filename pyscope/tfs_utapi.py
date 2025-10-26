@@ -16,6 +16,20 @@ import comtypes.client
 # a clean class instance at import
 connection = FEITemScriptingConnection()
 
+def getFeiConfig(optionname,itemname=None):
+	if optionname not in list(configs.keys()):
+		return None
+	if itemname is None:
+		return configs[optionname]
+	else:
+		if itemname not in configs[optionname]:
+			return None
+		return configs[optionname][itemname]
+
+def printModuleDebug(self,msg):
+	if getFeiConfig('debug','all'):
+		print(msg)
+
 def chooseTEMScriptingName():
 	return 'TEMScripting.Instrument.1'
 
@@ -36,9 +50,9 @@ def get_feitem():
 	if connection.instr is None:
 		try:
 			comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
-			print('coinitializeEx comtypes')
+			printModuleDebug('coinitializeEx comtypes')
 		except:
-			print('coinitialize comtypes')
+			printModuleDebug('coinitialize comtypes')
 			comtypes.CoInitialize()
 		type_name = chooseTEMScriptingName()
 		connection.instr = comtypes.client.CreateObject(type_name)
@@ -51,7 +65,7 @@ def connectToFEITemScripting():
 	Connects to the COM server
 	'''
 	global connection
-	print('connection call', connection)
+	printModuleDebug('connection call', connection)
 	connection = get_feitem()
 	return connection
 
@@ -66,6 +80,7 @@ if not SIMULATION:
 	from utapi_types.v1 import vector_pb2 as vctr_p
 	from optics.v1 import aperture_mechanism_control_pb2 as apmc_p
 	from optics.v1 import deflectors_pb2 as defl_p
+	from optics.v1 import deflectors_alignments_pb2 as defl_aln_p
 	from optics.v1 import focus_pb2 as foc_p
 	from optics.v1 import illumination_pb2 as illu_p
 	from optics.v1 import magnification_pb2 as mag_p
@@ -89,6 +104,7 @@ if not SIMULATION:
 	from optics.v1 import beam_stopper_control_pb2_grpc as bstop_pg
 	from optics.v1 import aperture_mechanism_control_pb2_grpc as apmc_pg
 	from optics.v1 import deflectors_pb2_grpc as defl_pg
+	from optics.v1 import deflectors_alignments_pb2_grpc as defl_aln_pg
 	from optics.v1 import focus_pb2_grpc as foc_pg
 	from optics.v1 import illumination_pb2_grpc as illu_pg
 	from optics.v1 import magnification_pb2_grpc as mag_pg
@@ -116,6 +132,7 @@ if not SIMULATION:
 	bstop_stub = bstop_pg.BeamStopperControlServiceStub(channel)
 	apmc_stub = apmc_pg.ApertureMechanismControlServiceStub(channel)
 	defl_stub = defl_pg.DeflectorsServiceStub(channel)
+	defl_aln_stub = defl_aln_pg.DeflectorsServiceStub(channel)
 	foc_stub = foc_pg.FocusServiceStub(channel)
 	illu_stub = illu_pg.IlluminationServiceStub(channel)
 	mag_stub = mag_pg.MagnificationServiceStub(channel)
@@ -163,7 +180,7 @@ def _response_to_dict(response):
 	return json_format.MessageToDict(response)
 
 def _get_by_request(stub,attr_name,request):
-	print('_get_by_request',stub, attr_name, request)
+	printModuleDebug('_get_by_request',stub, attr_name, request)
 	my_attr = getattr(stub,attr_name)
 	try:
 		# perform my_attr action on the request and convert to list and dict
@@ -172,7 +189,7 @@ def _get_by_request(stub,attr_name,request):
 		handleRpcError(rpc_error)
 
 def _set_by_request(stub, attr_name, request):
-	print('_set_by_request',stub, attr_name, request)
+	printModuleDebug('_set_by_request',stub, attr_name, request)
 	my_attr = getattr(stub,attr_name)
 	try:
 		# perform my_attr action on the request
@@ -325,10 +342,10 @@ class Krios(tem.TEM):
 		self.logger = Logger()
 		self.stage_logger = Logger()
 		# loading fei.cfg
-		self.correctedstage = self.getFeiConfig('stage','do_stage_xyz_backlash')
-		self.corrected_alpha_stage = self.getFeiConfig('stage','do_stage_alpha_backlash')
-		self.alpha_backlash_delta = self.getFeiConfig('stage','stage_alpha_backlash_angle_delta')
-		self.normalize_all_after_setting = self.getFeiConfig('optics','force_normalize_all_after_setting')
+		self.correctedstage = getFeiConfig('stage','do_stage_xyz_backlash')
+		self.corrected_alpha_stage = getFeiConfig('stage','do_stage_alpha_backlash')
+		self.alpha_backlash_delta = getFeiConfig('stage','stage_alpha_backlash_angle_delta')
+		self.normalize_all_after_setting = getFeiConfig('optics','force_normalize_all_after_setting')
 		# logging
 		if self.getDebugAll():
 			self.logger.setLevel(3)
@@ -345,21 +362,11 @@ class Krios(tem.TEM):
 			print('unable to initialize Advanced Scriptiong interface, %s' % e)
 			self.adv_instr = None
 
-	def getFeiConfig(self,optionname,itemname=None):
-		if optionname not in list(configs.keys()):
-			return None
-		if itemname is None:
-			return configs[optionname]
-		else:
-			if itemname not in configs[optionname]:
-				return None
-			return configs[optionname][itemname]
-
 	def getDebugAll(self):
-		return self.getFeiConfig('debug','all')
+		return getFeiConfig('debug','all')
 
 	def getDebugStage(self):
-		return self.getFeiConfig('debug','stage')
+		return getFeiConfig('debug','stage')
 
 	def getBeamstopPosition(self):
 		self.logger.debug('---getBeamstopPosition---')
@@ -494,11 +501,11 @@ class Krios(tem.TEM):
 
 	def getColdFegBeamCurrent(self):
 		my_device = 'BeamCurrent'
-		return set._getFegValue(my_device)
+		return self._getFegValue(my_device)
 
 	def getExtractorVoltage(self):
 		my_device = 'ExtractorVoltage'
-		return set._getFegValue(my_device)
+		return self._getFegValue(my_device)
 	
 	def hasColdFeg(self):
 		try:
@@ -515,7 +522,7 @@ class Krios(tem.TEM):
 		r = _get_by_request(flash_stub, 'GetFlashingAdvised', my_request)
 
 	def getFlashingAdvised(self, flash_type):
-		advised_only = self.getFeiConfig('source','flash_cold_feg_only_if_advised')
+		advised_only = getFeiConfig('source','flash_cold_feg_only_if_advised')
 		try:
 			flash_type_constant = self.cold_feg_flash_types[flash_type]
 			r = self._getFlashingAdvised(flash_type_constant)
@@ -843,7 +850,7 @@ class Krios(tem.TEM):
 					print('normalize all')
 				self.normalizeLens('all')
 		# wabble around the value for precision tuning
-		need_lpp_norm_diam = self.getFeiConfig('optics','maximum_beam_diameter_for_local_intensity_normalization')
+		need_lpp_norm_diam = getFeiConfig('optics','maximum_beam_diameter_for_local_intensity_normalization')
 		if prev != value and value <= need_lpp_norm_diam and req_key_name !='intensity':
 			# This does not work with non-titan column since 10% intensity change is likely too big.
 			for v in (value*0.9, value*1.1):
@@ -851,7 +858,7 @@ class Krios(tem.TEM):
 				time.sleep(1)
 			self._setIllumination(req_key_name, value)
 		# sleep for intensity change
-		extra_sleep = self.getFeiConfig('camera','extra_protector_sleep_time')
+		extra_sleep = getFeiConfig('camera','extra_protector_sleep_time')
 		if self.need_normalize_all and extra_sleep:
 			time.sleep(extra_sleep)
 		
@@ -939,7 +946,7 @@ class Krios(tem.TEM):
 
 	def _getAllDeflectors(self):
 		try:
-			my_request = getattr(defl_p,'DeflectorsSettingsRequest')()
+			my_request = getattr(defl_p,'GetDeflectorsSettingsRequest')()
 			return _get_by_request(defl_stub, 'GetDeflectorsSettings', my_request)
 		except Exception as e:
 			self.logger.error('Error getting deflector values: %s' %e)
@@ -954,11 +961,7 @@ class Krios(tem.TEM):
 			# small move is ignored.
 			return
 		v_req = vctr_p.Vector(x=vector['x'],y=vector['y'])
-		# some request attribute name starts with set.
-		if req_key_name.startswith('x_') or req_key_name.startswith('align_beam'):
-			req_attr_name = 'Set%sRequest' % my_device
-		else:
-			req_attr_name = '%sRequest' % my_device
+		req_attr_name = 'Set%sRequest' % my_device
 		my_request = getattr(defl_p,req_attr_name)
 		kwargs = {}
 		kwargs[req_key_name]=v_req
@@ -1070,7 +1073,7 @@ class Krios(tem.TEM):
 		"""
 		r = self._getAllDeflectors()
 		result = _get_vector_xy(r,'diffractionShift')
-		if result['x'] is None:
+		if result is None or result['x'] is None:
 			return {'x':0,'y':0}
 		return result
 
@@ -1186,6 +1189,86 @@ class Krios(tem.TEM):
 		my_request = my_request(**kwargs)
 		_set_by_request(stig_stub,'Set%s' % my_device, my_request)
 
+	def getStigmator(self):
+		"""
+		temscripting version until utapi has proper values.
+		"""
+		value['x'] = float(connection.instr.Illumination.RotationCenter.X)
+		value = {'condenser': {'x': None, 'y': None},
+							'objective': {'x': None, 'y': None},
+							'diffraction': {'x': None, 'y': None}}
+		try:
+
+			value['condenser']['x'] = \
+				float(connection.instr.Illumination.CondenserStigmator.X)
+			value['condenser']['y'] = \
+				float(connection.instr.Illumination.CondenserStigmator.Y)
+		except:
+			# use the default value None if values not float
+			pass
+		try:
+			value['objective']['x'] = \
+				float(connection.instr.Projection.ObjectiveStigmator.X)
+			value['objective']['y'] = \
+				float(connection.instr.Projection.ObjectiveStigmator.Y)
+		except:
+			# use the default value None if values not float
+			pass
+		try:
+			value['diffraction']['x'] = \
+				float(connection.instr.Projection.DiffractionStigmator.X)
+			value['diffraction']['y'] = \
+				float(connection.instr.Projection.DiffractionStigmator.Y)
+		except:
+			# use the default value None if values not float
+			# this is known to happen in newer version of std Scripting
+			# in imaging mode
+			pass
+		return value
+
+	def setStigmator(self, stigs, relative = 'absolute'):
+		for key in list(stigs.keys()):
+			if key == 'condenser':
+				stigmator = connector.instr.Illumination.CondenserStigmator
+			elif key == 'objective':
+				stigmator = connector.instr.Projection.ObjectiveStigmator
+			elif key == 'diffraction':
+				stigmator = connector.instr.Projection.DiffractionStigmator
+			else:
+				raise ValueError
+
+			if relative == 'relative':
+				try:
+					stigs[key]['x'] += stigmator.X
+				except KeyError:
+					pass
+				try:
+					stigs[key]['y'] += stigmator.Y
+				except KeyError:
+					pass
+			elif relative == 'absolute':
+				pass
+			else:
+				raise ValueError
+
+			try:
+				stigmator.X = stigs[key]['x']
+			except KeyError:
+					pass
+			try:
+				stigmator.Y = stigs[key]['y']
+			except KeyError:
+					pass
+
+			if key == 'condenser':
+				connector.instr.Illumination.CondenserStigmator = stigmator
+			elif key == 'objective':
+				connector.instr.Projection.ObjectiveStigmator = stigmator
+			elif key == 'diffraction':
+				connector.instr.Projection.DiffractionStigmator = stigmator
+			else:
+				raise ValueError
+	
 	def _getFocusSettings(self):
 		my_request = getattr(foc_p,'FocusSettingsRequest')()
 		return _get_by_request(foc_stub, 'GetFocusSettings', my_request)
@@ -1223,7 +1306,7 @@ class Krios(tem.TEM):
 		else:
 			raise ValueError
 		# normalize by always sending to eucentric focus according to tfs first
-		norm_focus = self.getFeiConfig('optics','normalizing_focus_value')
+		norm_focus = getFeiConfig('optics','normalizing_focus_value')
 		if norm_focus is None:
 			norm_focus = 0.0
 		self.setFocus(norm_focus)
@@ -1487,16 +1570,16 @@ class Krios(tem.TEM):
 			print('took extra %.1f seconds to get to ready status' % (donetime))
 
 	def getMinimumStageMovement(self):
-		return self.getFeiConfig('stage','minimum_stage_movement')
+		return getFeiConfig('stage','minimum_stage_movement')
 
 	def getXYZStageBacklashDelta(self):
-		value = self.getFeiConfig('stage','xyz_stage_backlash_delta')
+		value = getFeiConfig('stage','xyz_stage_backlash_delta')
 		if value is None:
 			value = 0
 		return value
 
 	def getXYStageRelaxDistance(self):
-		relax = self.getFeiConfig('stage','xy_stage_relax_distance')
+		relax = getFeiConfig('stage','xy_stage_relax_distance')
 		if relax is None:
 			relax = 0
 		return relax
@@ -1526,7 +1609,7 @@ class Krios(tem.TEM):
 		return mapped_limits
 
 	def getStageLimits(self):
-		limits = self.getFeiConfig('stage','stage_limits')
+		limits = getFeiConfig('stage','stage_limits')
 		if limits is None:
 			return self._getStageLimits()
 		else:
