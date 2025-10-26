@@ -79,12 +79,12 @@ if not SIMULATION:
 	from utapi_types.v1 import utapi_response_pb2 as urp
 	from utapi_types.v1 import vector_pb2 as vctr_p
 	from optics.v1 import aperture_mechanism_control_pb2 as apmc_p
-	from optics.v1 import deflectors_pb2 as defl_p
+	from optics.v2 import deflectors_pb2 as defl_p
 	from optics.v1 import deflectors_alignments_pb2 as defl_aln_p
 	from optics.v1 import focus_pb2 as foc_p
 	from optics.v1 import illumination_pb2 as illu_p
 	from optics.v1 import magnification_pb2 as mag_p
-	from optics.v1 import stigmator_pb2 as stig_p
+	from optics.v2 import stigmator_pb2 as stig_p
 	from optics.v1 import x_lens_alignments_pb2 as xaln_p
 	from column.v1 import column_mode_pb2 as cm_p
 	from column.v1 import normalization_pb2 as norm_p
@@ -103,13 +103,13 @@ if not SIMULATION:
 	# used to create stub for access
 	from optics.v1 import beam_stopper_control_pb2_grpc as bstop_pg
 	from optics.v1 import aperture_mechanism_control_pb2_grpc as apmc_pg
-	from optics.v1 import deflectors_pb2_grpc as defl_pg
+	from optics.v2 import deflectors_pb2_grpc as defl_pg
 	from optics.v1 import deflectors_alignments_pb2_grpc as defl_aln_pg
 	from optics.v1 import focus_pb2_grpc as foc_pg
 	from optics.v1 import illumination_pb2_grpc as illu_pg
 	from optics.v1 import magnification_pb2_grpc as mag_pg
 	from optics.v1 import optics_pb2_grpc as optics_pg
-	from optics.v1 import stigmator_pb2_grpc as stig_pg
+	from optics.v2 import stigmator_pb2_grpc as stig_pg
 	from optics.v1 import x_lens_alignments_pb2_grpc as xaln_pg
 	from column.v1 import column_mode_pb2_grpc as cm_pg
 	from column.v1 import normalization_pb2_grpc as norm_pg
@@ -137,7 +137,7 @@ if not SIMULATION:
 	illu_stub = illu_pg.IlluminationServiceStub(channel)
 	mag_stub = mag_pg.MagnificationServiceStub(channel)
 	optics_stub =  optics_pg.OpticsServiceStub(channel)
-	stig_stub = stig_pg.StigmatorServiceStub(channel)
+	stig_stub = stig_pg.StigmatorsServiceStub(channel)
 	xaln_stub = xaln_pg.XLensAlignmentsServiceStub(channel)
 	cm_stub = cm_pg.ColumnModeServiceStub(channel)
 	norm_stub = norm_pg.NormalizationServiceStub(channel)
@@ -1135,8 +1135,8 @@ class Krios(tem.TEM):
 
 	def _getAllStigmators(self):
 		try:
-			my_request = getattr(stig_p,'StigmatorSettingsRequest')()
-			return _get_by_request(stig_stub, 'GetStigmatorSettings', my_request)
+			my_request = getattr(stig_p,'GetStigmatorsSettingsRequest')()
+			return _get_by_request(stig_stub, 'GetStigmatorsSettings', my_request)
 		except Exception as e:
 			self.logger.error('Error getting stigmator values: %s' %e)
 			return {}
@@ -1183,91 +1183,12 @@ class Krios(tem.TEM):
 			# small move is ignored.
 			return
 		v_req = vctr_p.Vector(x=vector['x'],y=vector['y'])
-		my_request = getattr(stig_p,'%sRequest' % my_device)
+		my_request = getattr(stig_p,'Set%sRequest' % my_device)
 		kwargs = {}
 		kwargs[req_key_name]=v_req
 		my_request = my_request(**kwargs)
 		_set_by_request(stig_stub,'Set%s' % my_device, my_request)
 
-	def getStigmator(self):
-		"""
-		temscripting version until utapi has proper values.
-		"""
-		value = {'condenser': {'x': None, 'y': None},
-							'objective': {'x': None, 'y': None},
-							'diffraction': {'x': None, 'y': None}}
-		try:
-
-			value['condenser']['x'] = \
-				float(connection.instr.Illumination.CondenserStigmator.X)
-			value['condenser']['y'] = \
-				float(connection.instr.Illumination.CondenserStigmator.Y)
-		except:
-			# use the default value None if values not float
-			pass
-		try:
-			value['objective']['x'] = \
-				float(connection.instr.Projection.ObjectiveStigmator.X)
-			value['objective']['y'] = \
-				float(connection.instr.Projection.ObjectiveStigmator.Y)
-		except:
-			# use the default value None if values not float
-			pass
-		try:
-			value['diffraction']['x'] = \
-				float(connection.instr.Projection.DiffractionStigmator.X)
-			value['diffraction']['y'] = \
-				float(connection.instr.Projection.DiffractionStigmator.Y)
-		except:
-			# use the default value None if values not float
-			# this is known to happen in newer version of std Scripting
-			# in imaging mode
-			pass
-		return value
-
-	def setStigmator(self, stigs, relative = 'absolute'):
-		for key in list(stigs.keys()):
-			if key == 'condenser':
-				stigmator = connector.instr.Illumination.CondenserStigmator
-			elif key == 'objective':
-				stigmator = connector.instr.Projection.ObjectiveStigmator
-			elif key == 'diffraction':
-				stigmator = connector.instr.Projection.DiffractionStigmator
-			else:
-				raise ValueError
-
-			if relative == 'relative':
-				try:
-					stigs[key]['x'] += stigmator.X
-				except KeyError:
-					pass
-				try:
-					stigs[key]['y'] += stigmator.Y
-				except KeyError:
-					pass
-			elif relative == 'absolute':
-				pass
-			else:
-				raise ValueError
-
-			try:
-				stigmator.X = stigs[key]['x']
-			except KeyError:
-					pass
-			try:
-				stigmator.Y = stigs[key]['y']
-			except KeyError:
-					pass
-
-			if key == 'condenser':
-				connector.instr.Illumination.CondenserStigmator = stigmator
-			elif key == 'objective':
-				connector.instr.Projection.ObjectiveStigmator = stigmator
-			elif key == 'diffraction':
-				connector.instr.Projection.DiffractionStigmator = stigmator
-			else:
-				raise ValueError
-	
 	def _getFocusSettings(self):
 		my_request = getattr(foc_p,'FocusSettingsRequest')()
 		return _get_by_request(foc_stub, 'GetFocusSettings', my_request)
