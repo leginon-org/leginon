@@ -23,6 +23,8 @@ from leginon import tableau
 from leginon import player
 import leginon.gui.wx.BeamTiltCalibrator
 import time
+from datetime import datetime
+import json
 
 class Abort(Exception):
 	pass
@@ -233,6 +235,13 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 					self.checkAbort()
 				tdict[axis] = tdata
 				xydict[axis] = data
+			"""
+			# dump json file of the data collected
+			json_str = json.dumps([tdict,xydict])
+			timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+			with open("bis_ab_%s.json" % timestamp_str, "w") as f:
+				f.write(json_str)
+			"""
 			matrices, ab0s = self.calculateImageShiftAberrationMatrix(tdict,xydict)
 		except ValueError as e:
 			self.logger.warning('Aborting calibration....')
