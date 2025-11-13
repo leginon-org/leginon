@@ -198,7 +198,7 @@ class Navigator(node.Node):
 		check = self.settings['check calibration']
 		no_reacquire = self.settings['move without reacquire']
 		self.currentpreset = self.presetsclient.getCurrentPreset()
-		if self.newimagedata['preset']['name'] != self.currentpreset['name']:
+		if 'preset' in self.newimagedata.keys() and self.newimagedata['preset']['name'] != self.currentpreset['name']:
 			self.logger.warning('preset of the image will be applied to the scope')
 		status = self.move(deltarow, deltacol, movetype, precision, accept_precision, check, final_imageshift=final_imageshift)
 
