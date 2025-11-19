@@ -504,7 +504,7 @@ class CentosInstallation(object):
 		self.writeToLog("--- Start install Eman1")
 		cwd = os.getcwd()
 		
-		fileLocation = "https://github.com/leginon-org/appion-redmine-files/blob/main/eman-linux-x86_64-cluster-1.9.tar.gz"
+		fileLocation = "https://github.com/leginon-org/appion-redmine-files/raw/heads/main/eman-linux-x86_64-cluster-1.9.tar.gz"
 			fileName = "eman-linux-x86_64-cluster-1.9.tar.gz"
 
 		# download the tar file and unzip it
@@ -551,7 +551,7 @@ class CentosInstallation(object):
 	def installSpider(self):
 		self.writeToLog("--- Start install Spider")
 		
-		fileLocation = "https://github.com/leginon-org/appion-redmine-files/blob/main/spidersmall.18.10.tar.gz"
+		fileLocation = "https://github.com/leginon-org/appion-redmine-files/raw/heads/main/spidersmall.18.10.tar.gz"
 		fileName = "spidersmall.18.10.tar.gz"
 
 		# download the tar file and unzip it
@@ -614,7 +614,7 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 		
 		dirName = "Xmipp-2.4-src"
 		tarFileName = dirName + ".tar.gz"
-		tarFileLocation = "https://github.com/leginon-org/appion-redmine-files/blob/main/" + tarFileName
+		tarFileLocation = "https://github.com/leginon-org/appion-redmine-files/raw/heads/main/" + tarFileName
 
 		# download the source code tar file and unzip it
 		command = "wget -c " + tarFileLocation
@@ -767,7 +767,7 @@ endif''')
 		cwd = os.getcwd()
 		protomoVer = "protomo-2.4.1"
 		zipFileName = protomoVer + ".zip"
-		zipFileLocation = "https://github.com/leginon-org/appion-redmine-files/blob/main/" + zipFileName
+		zipFileLocation = "https://github.com/leginon-org/appion-redmine-files/raw/heads/main/" + zipFileName
 		
 		# download the source code tar file and unzip it
 		command = "wget -c " + zipFileLocation
@@ -845,7 +845,7 @@ endif
 		self.writeToLog("--- Start install Frealign")
 		
 		fileName = "frealign_v8.09_110505.tar.gz"
-		fileLocation = "https://github.com/leginon-org/appion-redmine-files/blob/main/" + fileName
+		fileLocation = "https://github.com/leginon-org/appion-redmine-files/raw/heads/main/" + fileName
 
 		# download the tar file and unzip it
 		command = "wget -c " + fileLocation
