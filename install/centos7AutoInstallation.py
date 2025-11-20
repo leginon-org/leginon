@@ -288,7 +288,7 @@ class CentosInstallation(object):
 
 	def processServerExtraPythonPackageInstall(self):
 		self.runCommand("yum install -y python3-pip")
-		command = "wget -c https://emg.nysbc.org/redmine/projects/leginon/repository/revisions/myami-python3/raw/requirements.txt" 
+		command = "wget -c https://raw.githubusercontent.com/leginon-org/leginon/myami-python3/requirements.txt" 
 		self.runCommand(command)
 		self.runCommand("pip3 install -r ./requirements.txt")		
 
