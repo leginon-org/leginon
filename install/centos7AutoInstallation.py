@@ -119,7 +119,7 @@ class CentosInstallation(object):
 		
 		if not returnValue:
 			print("========================")
-			print("ERROR: Please disable SELinux before running this auto installation. Visit https://emg.nysbc.org/redmine/projects/appion/wiki/Install_Appion_and_Leginon_using_the_auto-installation_tool .")
+			print("ERROR: Please disable SELinux before running this auto installation. Visit Documnetation site under /Install_Appion_and_Leginon_using_the_auto-installation_tool .")
 			print("Exiting installation...")
 			print("========================")
 			return False
@@ -313,7 +313,7 @@ class CentosInstallation(object):
 		self.runCommand("systemctl enable httpd")
 		self.openFirewallPort(80)
 		
-		#this is for tiltgroup_wrangler_cli.py https://emg.nysbc.org/redmine/issues/12047
+		#this is for tiltgroup_wrangler_cli.py https://github.com/leginon-org/leginon-redmine-archive/issues/12047
 		#optional: only used in CTF report page. Can be removed, if this step fails.
 		tiltgroup_wrangler_cli = os.path.join(self.gitMyamiDir, "programs","tiltgroup_wrangler","tiltgroup_wrangler_cli.py")
 		self.runCommand("cp %s /usr/local/bin" % (tiltgroup_wrangler_cli))		 
@@ -504,12 +504,7 @@ class CentosInstallation(object):
 		self.writeToLog("--- Start install Eman1")
 		cwd = os.getcwd()
 		
-		# select 32 or 64 bit file to download
-		if self.machine == "i686" or self.machine == "i386" :
-			fileLocation = "https://emg.nysbc.org/redmine/attachments/download/632/eman-linux-x86-cluster-1.9.tar.gz"
-			fileName = "eman-linux-x86-cluster-1.9.tar.gz"
-		else :
-			fileLocation = "https://emg.nysbc.org/redmine/attachments/download/631/eman-linux-x86_64-cluster-1.9.tar.gz"
+		fileLocation = "https://github.com/leginon-org/appion-redmine-files/raw/heads/main/eman-linux-x86_64-cluster-1.9.tar.gz"
 			fileName = "eman-linux-x86_64-cluster-1.9.tar.gz"
 
 		# download the tar file and unzip it
@@ -556,7 +551,7 @@ class CentosInstallation(object):
 	def installSpider(self):
 		self.writeToLog("--- Start install Spider")
 		
-		fileLocation = "https://emg.nysbc.org/redmine/attachments/download/638/spidersmall.18.10.tar.gz"
+		fileLocation = "https://github.com/leginon-org/appion-redmine-files/raw/heads/main/spidersmall.18.10.tar.gz"
 		fileName = "spidersmall.18.10.tar.gz"
 
 		# download the tar file and unzip it
@@ -619,7 +614,7 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 		
 		dirName = "Xmipp-2.4-src"
 		tarFileName = dirName + ".tar.gz"
-		tarFileLocation = "https://emg.nysbc.org/redmine/attachments/download/636/" + tarFileName
+		tarFileLocation = "https://github.com/leginon-org/appion-redmine-files/raw/heads/main/" + tarFileName
 
 		# download the source code tar file and unzip it
 		command = "wget -c " + tarFileLocation
@@ -710,9 +705,9 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		use_local = "/usr/local"
 		cwd = cwd = os.getcwd()
 
-		ffmpegName = "ffmpeg-git-32bit-static"
+		ffmpegName = "ffmpeg-3.4.2-64bit-static"
 		ffmpegtarFileName = ffmpegName + ".tar.xz"
-		ffmpegtarFileLocation = "https://emg.nysbc.org/redmine/attachments/download/4674/ffmpeg-git-32bit-static.tar.xz"
+		ffmpegtarFileLocation = "https://www.johnvansickle.com/ffmpeg/old-releases/" + ffmpegtarFileName
 
 		command = "wget -c " + ffmpegtarFileLocation
 		self.runCommand(command)
@@ -721,9 +716,9 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		print("-------------Done downloading ffmpeg with wget.------------")
 
 
-		#ffmpeg tar is compilied daily at http://johnvansickle.com/ffmpeg/. The git static version compiled on 11/11/2015 was used for this ffmpeg installation. The extracted folder name contains the datestamp; make sure to change the datestamp in the extracted folder name if using a newer version of ffmpeg from the johnvansickle site.
+		#ffmpeg tar is compilied daily at http://johnvansickle.com/ffmpeg/. The static version at 3.4.2 release was used for this ffmpeg installation. The extracted folder name contains the release version; make sure to change the datestamp in the extracted folder name if using a newer version of ffmpeg from the johnvansickle site.
 
-		self.runCommand("mv ffmpeg-git-20151111-32bit-static ffmpeg")
+		self.runCommand("mv %s ffmpeg" % (ffmpegName,))
 		newDir = os.path.join(use_local,"ffmpeg")
 		command = "mv ffmpeg "+newDir
 		self.runCommand(command)
@@ -772,7 +767,7 @@ endif''')
 		cwd = os.getcwd()
 		protomoVer = "protomo-2.4.1"
 		zipFileName = protomoVer + ".zip"
-		zipFileLocation = "https://emg.nysbc.org/redmine/attachments/download/4147/" + zipFileName
+		zipFileLocation = "https://github.com/leginon-org/appion-redmine-files/raw/heads/main/" + zipFileName
 		
 		# download the source code tar file and unzip it
 		command = "wget -c " + zipFileLocation
@@ -849,8 +844,8 @@ endif
 	def installFrealign(self):
 		self.writeToLog("--- Start install Frealign")
 		
-		fileLocation = "https://emg.nysbc.org/redmine/attachments/download/740/frealign_v8.09_110505.tar.gz"
 		fileName = "frealign_v8.09_110505.tar.gz"
+		fileLocation = "https://github.com/leginon-org/appion-redmine-files/raw/heads/main/" + fileName
 
 		# download the tar file and unzip it
 		command = "wget -c " + fileLocation
@@ -861,7 +856,6 @@ endif
 		
 		# move the unzipped folder to a global location
 		shutil.move("frealign_v8.09", "/usr/local/")
-		#self.runCommand("mv -v spider /usr/local/")
 
 		# select 32 or 64 bit file to install
 		if self.machine == "i686" or self.machine == "i386" :
@@ -1286,12 +1280,9 @@ endif
 		
 	
 	def downloadSampleImages(self):
-	   
-		getImageCmd = "wget -P/tmp/images https://emg.nysbc.org/redmine/attachments/download/112/06jul12a_00015gr_00028sq_00004hl_00002en.mrc https://emg.nysbc.org/redmine/attachments/download/113/06jul12a_00015gr_00028sq_00023hl_00002en.mrc https://emg.nysbc.org/redmine/attachments/download/114/06jul12a_00015gr_00028sq_00023hl_00004en.mrc https://emg.nysbc.org/redmine/attachments/download/115/06jul12a_00022gr_00013sq_00002hl_00004en.mrc https://emg.nysbc.org/redmine/attachments/download/116/06jul12a_00022gr_00013sq_00003hl_00005en.mrc https://emg.nysbc.org/redmine/attachments/download/109/06jul12a_00022gr_00037sq_00025hl_00004en.mrc https://emg.nysbc.org/redmine/attachments/download/110/06jul12a_00022gr_00037sq_00025hl_00005en.mrc https://emg.nysbc.org/redmine/attachments/download/111/06jul12a_00035gr_00063sq_00012hl_00004en.mrc"
 
-		print(getImageCmd)
-		proc = subprocess.Popen(getImageCmd, shell=True)
-		proc.wait()
+		print('Disabled: SampleImages are no longer available due to limit in file size on github')
+		return
 
 	def checkRegistrationKey(self):
 		# used sha-1. This has been deprecated as of python 2.5.
