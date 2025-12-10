@@ -1,11 +1,14 @@
 # Leginon/Appion for cryo-EM
 database-oriented data acquisition and preprocessing
 
-Mirrored repository of https://emg.nysbc.org/git/myami
+* Mirrored repository of https://emg.nysbc.org/git/myami
 For earlier project issues, pleasse see read-only https://github.com/leginon-org/leginon-redmine-archive
-For documentation, please visit https://emg.nysbc.org/redmine/projects/leginon
 
-Future development will be released here.
+* Future development will be released here.
+
+
+## Documentation
+For documentation, please visit [https://sumslogs.github.io/leginon_wiki/leginon/](https://sumslogs.github.io/leginon_wiki/leginon/)
 
 ## License
 [Apache 2.0](./LICENSE)
