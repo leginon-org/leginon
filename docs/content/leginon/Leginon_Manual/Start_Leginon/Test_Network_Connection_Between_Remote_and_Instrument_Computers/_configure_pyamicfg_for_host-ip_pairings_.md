@@ -1,0 +1,5 @@
+---
+redirect_to: leginon/Leginon_Manual/Start_Leginon/Test_Network_Connection_Between_Remote_and_Instrument_Computers/Configure_pyamicfg_for_host-ip_pairings
+---
+
+This page has been moved to [Configure_pyamicfg_for_host-ip_pairings](/leginon/Leginon_Manual/Start_Leginon/Test_Network_Connection_Between_Remote_and_Instrument_Computers/Configure_pyamicfg_for_host-ip_pairings).

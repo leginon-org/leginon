@@ -1,0 +1,3 @@
+FEI tecnai series scope has an internal calibration performed through Tecnai GUI to decouple image shift from beam shift, making it possible to request an image shift without movement of the beam, and vice versa. As the result, we refer to image shift as the movement of image only.
+
+For non-FEI scopes the decoupling need to be done inside Leginon to achieve the decoupling. This is done by coupling [image shift calibration](/leginon/Leginon_Manual/Leginon_Calibrations_Application/Image_Shift_matrix_calibration) and [beam shift calibration](/leginon/Leginon_Manual/Leginon_Calibrations_Application/Beam_Shift_matrix_calibration). Therefore, to move by Image-Beam Shift matrix, both image shift and beam shift matrix need to be calibrated.

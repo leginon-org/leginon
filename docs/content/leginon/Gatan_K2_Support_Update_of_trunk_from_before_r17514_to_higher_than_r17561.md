@@ -1,0 +1,5 @@
+---
+redirect_to: leginon/Gatan_K2_Support_Update_of_trunk_from_before_17514_to_higher_than_17561
+---
+
+This page has been moved to [Gatan_K2_Support_Update_of_trunk_from_before_17514_to_higher_than_17561](/leginon/Gatan_K2_Support_Update_of_trunk_from_before_17514_to_higher_than_17561).

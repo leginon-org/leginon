@@ -1,0 +1,2 @@
+-   Changes to location of and content in instruments.cfg (see update/installation docs for details)
+-   Support for DirectElectron cameras: DE12 direct detector and its off-axis survey camera.

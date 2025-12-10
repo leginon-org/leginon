@@ -1,0 +1,5 @@
+---
+redirect_to: leginon/Leginon_Manual/Leginon_Calibrations_Application/Lens_Aberration_Correction_Calibration_for_Beam-Image_Shift_Targeting/Download_beam-image_shift_values_for_Relion_3_beam-tilt_refinement
+---
+
+This page has been moved to [Download_beam-image_shift_values_for_Relion_3_beam-tilt_refinement](/leginon/Leginon_Manual/Leginon_Calibrations_Application/Lens_Aberration_Correction_Calibration_for_Beam-Image_Shift_Targeting/Download_beam-image_shift_values_for_Relion_3_beam-tilt_refinement).

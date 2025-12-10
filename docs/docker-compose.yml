@@ -1,0 +1,20 @@
+services:
+  mkdocs:
+    build: .
+    container_name: leginon-docs
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount repo root so git-revision-date-localized plugin works
+      - ..:/repo
+    working_dir: /repo/docs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DB_HOST=host.docker.internal
+    # Allow container to access host MySQL server
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: bash -c bash #mkdocs serve --dev-addr=0.0.0.0:8000
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    restart: unless-stopped

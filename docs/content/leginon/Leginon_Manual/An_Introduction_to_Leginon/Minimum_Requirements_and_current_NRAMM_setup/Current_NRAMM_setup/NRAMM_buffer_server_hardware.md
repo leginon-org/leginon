@@ -1,0 +1,8 @@
+-   Network:
+    -   To local network: 1x Dual 10GE SFP+ cards (2 ports)
+    -   To the camera computer: 10 GB Fiber direct connection - SFP+ optical module for 10GBASE-LR
+    -   To gpfs RAID: inifiniband - ConnectX-3 VPI adapter card, dual-port QSFP, FDR IB (56Gb/s) / 40GigE, PCIe 3.0 x8 8GT/s
+-   CPU: 2U Dual 2.1GHz Intel E5-2620 v4
+-   Memory: 128GB memory (8x 16GB)
+-   Storage: 9x 8TB 7.2K SATA drives, 1x 120GB SSD drive
+-   GPU: 2x NVIDIA PNY GeForce GTX 1080.

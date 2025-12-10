@@ -1,0 +1,5 @@
+---
+redirect_to: leginon/Leginon_Manual/Start_Leginon/Test_Network_Connection_Between_Remote_and_Instrument_Computers
+---
+
+This page has been moved to [Test_Network_Connection_Between_Remote_and_Instrument_Computers](/leginon/Leginon_Manual/Start_Leginon/Test_Network_Connection_Between_Remote_and_Instrument_Computers).

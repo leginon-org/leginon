@@ -1,0 +1,5 @@
+---
+redirect_to: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Direct_Electron_DE-12_direct_detection_device_support/DE_raw_frame_saving
+---
+
+This page has been moved to [DE_raw_frame_saving](/leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Direct_Electron_DE-12_direct_detection_device_support/DE_raw_frame_saving).

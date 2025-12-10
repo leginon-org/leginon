@@ -1,0 +1,5 @@
+---
+redirect_to: leginon/Leginon_Manual/Leginon_System_version_33/New_User_Features_33/Slack_notification_for_Leginon_errors/Activate_Slack_notifications_in_Leginon
+---
+
+This page has been moved to [Activate_Slack_notifications_in_Leginon](/leginon/Leginon_Manual/Leginon_System_version_33/New_User_Features_33/Slack_notification_for_Leginon_errors/Activate_Slack_notifications_in_Leginon).

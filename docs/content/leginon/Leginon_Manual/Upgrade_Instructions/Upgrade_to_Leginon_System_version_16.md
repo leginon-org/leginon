@@ -1,0 +1,10 @@
+1.  [Update from v1.1 and v1.2 NOT AVAILABLE](/leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_16/Update_from_v11_and_v12_NOT_AVAILABLE)
+2.  [Update from v1.3-Follow v1.4 update after performing these](/leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_16/Update_from_v13-Follow_v14_update_after_performing_these)
+3.  [Update from v1.4](/leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_16/Update_from_v14)
+4.  [How to Update from v1.5 (Linux)](/leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_16/How_to_Update_from_v15_Linux)
+5.  [Import the new (1.6) applications included with Leginon](/leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_16/Import_the_new_16_applications_included_with_Leginon)
+6.  [How to Update from v1.5 (Window)](/leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_16/How_to_Update_from_v15_Window)
+7.  [Additional work at the computer controlling the microscope and camera (Window)](/leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_16/Additional_work_at_the_computer_controlling_the_microscope_and_camera_Window)
+8.  [Recommended Application Preference Changes when updated from version 1.5](/leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_1_6/Recommended_Application_Preference_Changes_when_updated_from_version_15)
+
+[Upgrade to Leginon System version 2.0 from version 1.6 >](/leginon/Upgrade_to_Leginon_System_version_20_from_version_16)

@@ -1,0 +1,2 @@
+-   [Setup falcon4 eer](/leginon/Leginon_Manual/New_User_Features_36/Falcon_4_EER_integration/Setup_falcon4_eer)
+-   [Import falcon4 gain reference from TFS program](/leginon/Leginon_Manual/New_User_Features_36/Falcon_4_EER_integration/Import_falcon4_gain_reference_from_TFS_program)

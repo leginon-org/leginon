@@ -1,0 +1,2 @@
+-   This tool will validate web documents: http://validator.w3.org/check
+-   A very complete list of tools for web performance: http://samsaffron.com/archive/2012/03/23/sam-s-ultimate-web-performance-tools-and-resources

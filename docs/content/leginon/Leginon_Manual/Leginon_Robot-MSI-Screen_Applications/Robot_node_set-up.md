@@ -1,0 +1,3 @@
+Robot node uses Robot2 class which commnunicates to the robot controller through database and robot server specific to the avialable grid-loading robot or robots. The grid tray and grids will not appear unless they are registered in the database. For consistent run, Default Z Position in its settings should be set according to the aproximate eucentric height for the holder used.
+
+[< Register the grids in the database](/leginon/Leginon_Manual/Leginon_Robot-MSI-Screen_Applications/Upload_Grids) | [1st Pass application >](/leginon/Leginon_Manual/Leginon_Robot-MSI-Screen_Applications/1st_Pass_application)

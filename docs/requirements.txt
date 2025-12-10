@@ -1,0 +1,10 @@
+mkdocs>=1.5.0
+mkdocs-material>=9.5.0
+mkdocs-redirects>=1.2.0
+pymdown-extensions>=10.7.0
+mkdocs-git-revision-date-localized-plugin>=1.2.0
+mkdocs-minify-plugin>=0.8.0
+mkdocs-site-urls>=0.3.1
+pymdown-extensions>=10.0
+pyyaml>=6.0.0
+pymysql>=1.1.0

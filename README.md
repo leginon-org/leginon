@@ -8,7 +8,7 @@ For earlier project issues, pleasse see read-only https://github.com/leginon-org
 
 
 ## Documentation
-For documentation, please visit [https://sumslogs.github.io/leginon_wiki/leginon/](https://sumslogs.github.io/leginon_wiki/leginon/)
+For documentation, please visit [https://leginon-org.github.io/leginon/](https://leginon-org.github.io/leginon/)
 
 ## License
 [Apache 2.0](./LICENSE)

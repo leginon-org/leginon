@@ -1,0 +1,12 @@
+CMOS-based direct detection device (DDD) is a new generation of digital camera that can be used with electron microscope. DE-12 and DE-20 from Direct Electron are supported
+
+## [Installation and Setup](/leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Direct_Electron_DE-12_direct_detection_device_support/Adding_DE-12_to_Leginon)
+
+
+* [DE direct detector introduction](/leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Direct_Electron_DE-12_direct_detection_device_support/DE-12_introduction) Please read this!!!
+* [Acquiring summed frame image thru Leginon](/leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Direct_Electron_DE-12_direct_detection_device_support/Acquiring_summed_frame_image_thru_Leginon)
+* [Triggering raw frame saving](/leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Direct_Electron_DE-12_direct_detection_device_support/DE_raw_frame_saving)
+* [Transferring raw frame images](/leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Direct_Electron_DE-12_direct_detection_device_support/DDD_raw_frame_file_transfer) off the solid-state drive of DE camera computer during data collection to a network drive.
+* [Compiling corrected movie stack](/leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/Make_DDD_movie_stack) with Appion using bright and dark images acquired in Leginon
+
+

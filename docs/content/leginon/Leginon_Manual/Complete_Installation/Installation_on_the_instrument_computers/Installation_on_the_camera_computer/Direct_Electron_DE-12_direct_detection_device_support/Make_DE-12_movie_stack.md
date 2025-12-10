@@ -1,0 +1,5 @@
+---
+redirect_to: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Direct_Electron_DE-12_direct_detection_device_support/Make_DE_movie_stack
+---
+
+This page has been moved to [Make_DE_movie_stack](/leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Direct_Electron_DE-12_direct_detection_device_support/Make_DE_movie_stack).

@@ -1,0 +1,5 @@
+---
+redirect_to: appion/Appion_Manual/Complete_Installation/Additional_Database_Server_Setup_after_Web_Server_Installation
+---
+
+This page has been moved to [Additional_Database_Server_Setup_after_Web_Server_Installation](/appion/Appion_Manual/Complete_Installation/Additional_Database_Server_Setup_after_Web_Server_Installation).

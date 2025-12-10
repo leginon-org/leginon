@@ -1,0 +1,5 @@
+Many of the preferences are matched to the function of the nodes and therefore are more like configuration. Starting from v1.5, the [default preferences](/leginon/Leginon_Manual/Preferences_Setup/Initial_MSI_application_preference_setup) are loaded during the installation ready for standard MSI operation assuming the use of example preset names and properties. A separate Chapter called "[Initial MSI application preference setup](/leginon/Leginon_Manual/Preferences_Setup/Initial_MSI_application_preference_setup)" gives the details of these settings if you are interested. As a new user, you don't have to know what is in it if you don't deviate from standard operation.
+
+If you change your settings to the point that the application no longer run, you may [revert](/leginon/Leginon_Manual/Administration_Tools/Default_Settings) the settings back to your institute default.
+
+[< Pre-MSI Set-up](/leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Pre-MSI_Set-up) | [Special Operation Preference setup >](/leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Special_Operation_Preference_setup)

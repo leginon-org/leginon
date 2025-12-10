@@ -1,0 +1,1 @@
+The main use of K2 Summit is in Counted or Super-resolution mode in combination with dose fractionation (frame saving). The counting detection is achieved by very fast internal frame rate and hardware image processing that locates the the single incident electron event in that low dose image, and the addition of these electron counts at given pixel over the output frame time.

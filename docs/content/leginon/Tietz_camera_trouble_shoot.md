@@ -1,0 +1,3 @@
+When Leginon initializes the camera, a program called CAMC4 should start automatically in the backgound. This is confirmed by the little camera icon showing up in the system tray in the lower right of the screen. Also, task manager can be started to confirm CAMC4 is running. Sometimes problems occur if more than one CAMC4 is running at the same time, so task manager will help identify this.
+
+If Leginon is not initializing the camera or not getting proper images, you should first test image acquisition using TVIPS software to make sure it is not a hardware issue. Use TCL or there is a test program called TestMFCCamera that can acquire an image and test the CAMC4 operation.

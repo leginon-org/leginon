@@ -1,0 +1,6 @@
+1.  [Install supporting packages](/appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_supporting_packages)
+2.  [Download Appion/Leginon Files](/appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Download_Appion_Files)
+3.  [Install Appion/Leginon Packages](/appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_Appion_Packages)
+4.  [Perform system check](/appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Perform_system_check)
+5.  [Configure leginon.cfg](/appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Configure_leginoncfg)
+6.  [Configure sinedon.cfg](/appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Configure_sinedoncfg)

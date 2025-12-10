@@ -1,0 +1,3 @@
+Appion allows you to use and pass data between multiple image processing packages from one integrated user interface. The image processing packages must be installed on your computer so that Appion can interface with them. You do not need to have all the packages installed for Appion to run, but you must have the packages installed that support the specific operations you wish to execute.
+
+[< Configure .appion.cfg](/appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Configure_appioncfg) | [Install MotionCor2 >](/appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_External_Packages/Install_MotionCor2)

@@ -1,0 +1,5 @@
+---
+redirect_to: leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_2x_from_version_16/How_to_Update_from_v16_Microscope_Windows_Computer
+---
+
+This page has been moved to [How_to_Update_from_v16_(Microscope_Windows_Computer)](/leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_2x_from_version_16/How_to_Update_from_v16_Microscope_Windows_Computer).

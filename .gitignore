@@ -40,4 +40,5 @@ slack/build
 #Eclipse project files
 .project
 .pydevproject
-
+# IntelliJ IDE
+.idea/

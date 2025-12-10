@@ -1,0 +1,135 @@
+A copy of this page is available at: [TiltPicker Usage](/tiltpicker/TiltPicker_Usage)
+
+## BUG TRACKING 
+
+TiltPicker bugs are now tracked via the AMI redmine server, visit
+http://emg.nysbc.org/redmine/projects/tiltpicker/
+to file any bugs
+
+## YOUTUBE MOVIE
+
+I just made a screen capture video on how to use it. It is available is low resolution on youtube:
+
+http://www.youtube.com/watch?v=cw1osPBY_JM
+
+or you can [download the full screen version](http://emg.nysbc.org/redmine/attachments/download/549/tiltpicker.ogm).
+
+I recommend using VLC to watch it:
+
+http://www.videolan.org/vlc/
+
+## LAUNCHING THE PROGRAM
+
+To run the program, type:
+```bash
+$ ./ApTiltPicker.py --1 image1.mrc --2 image2.mrc -p tiltpicks.spi
+# 'tiltpicks.spi' is optional. I left an example in the tiltpicker folder. You must run the program in the tiltpicker folder. To run the example type:
+$ ./runPicker.sh
+```
+
+If all works the picker will open up and you'll have two images of ribosomes.
+
+## STEP BY STEP TUTORIAL
+
+-   Start TiltPicker
+    -   Extract TiltPicker, on command line type:
+
+tar -zxf tiltpicker-2.0.tgz
+
+Go to tiltpicker directory, on command line type:
+
+cd tiltpicker
+
+Display TiltPicker help, on command line type:
+
+./ApTiltPicker.py -h
+
+Open TiltPicker, on command line type:
+
+./ApTiltPicker.py -l data/rawu048b.jpg -r data/rawu049b.jpg -t 50.0
+
+------------------------------------------------------------------------
+
+-   Initialize picking:
+    -   Maximize window
+    -   Set correct zoom for images, if necessary
+    -   Center the middle bar, if necessary
+    -   Manually pick 5 partcle pairs from each image
+    -   Save picks to a file, file will then auto-save all subsequent picks
+
+------------------------------------------------------------------------
+
+-   Initialize alignment:
+    -   Hit the **Apply** button, circles will NOT match crosses
+    -   Find theta (tilt angle)
+        -   Hit **Theta...** button
+        -   Hit **Run**
+        -   This number should match the value from Goniometer
+        -   Hit **Apply** to accept this value
+    -   Optimize inplane rotation angles and shift
+        -   **Refine** means this parameter will be optimized
+        -   **Lock** means this parameter is locked and will NOT be optimized
+        -   Hit **Optimize...**
+        -   Hit **Run** a few times
+        -   Hit **Apply**
+    -   Use **Mask** button to only look at overlapping regions, overlap % is shown on status bar
+    -   Hit **Auto Optimize**, it automatically performs theta, optimize, and mask in a single click
+    -   If you look at the Terminal, it will tell you how many optimization rounds were performed
+
+------------------------------------------------------------------------
+
+-   Transfer pick particles
+    -   Pick a single particle in only one image.
+    -   Use transfer or **Xfer picks** button --- this automatically transfers the pick to the
+
+------------------------------------------------------------------------
+
+-   DoG pick particles
+    -   Measure particle size using ruler tool (at top), Use 1X zoom in to get accurate value
+    -   Sometimes it is best to use a 10% lower estimate for the diameter, e.g., use 30 if you measure 34
+    -   You can run DoG picker with wrong contrast and reject picks
+    -   Run DoG picker with correct contrast
+    -   Show terminal
+    -   Accept picks
+    -   If not enough picks were made lower the threshold
+    -   Look at DoG map images
+    -   If the peaks are not crisp dot and more like fuzzy balls, try reducing the particle diameter
+
+------------------------------------------------------------------------
+
+-   Clean up particle picks
+    -   Use clear bad picks button
+    -   Use polygon tool
+    -   Auto optimize
+    -   Use cutoff button to remove picks below a threshold
+    -   Add more picks
+    -   Save and quit
+
+## BUTTON DOCUMENTATION
+
+Notes:
+
+1.  The underlined letter on the button means that you can use the Alt button (Option on a Mac) and that letter to push the button.
+2.  If the button name is followed by three dots '...', it means a pop up window will be displayed for more input.
+3.  All buttons are also availale at the top menu
+
+(from left to right)
+
+-   Apply (Alt-A) --- Displays picked particle locations from one image in the other image as circles
+
+
+-   Theta... (Alt-T) --- Determine the tilt angle difference between images independent of tilt axis rotation (positive, untilted on left; negative, untilted on right)
+-   Optimize... (Alt-O) --- Perform least squares refinement of all alignment parameters
+-   Mask (Alt-M) --- Hide non-overlapping regions in the images (based on alignment parameters)
+-   Auto Optimize (Alt-Z) --- Automatically perform above 3 steps: Theta, Optimize, and Mask in single click
+
+
+-   Rm Worst Picks (Alt-W) --- Remove the worst picks by alignment error highlighted by a yellow plus (+) symbol
+-   Cutoff... (Alt-C) --- Remove the worst picks by specifying an alignment error
+-   Xfer picks (Alt-X) --- Transfer picks from one image to the other based on the alignment parameters
+-   Rm Polygon (Alt-P) --- Remove all points located within a drawn polygon from both images, good for large pieces of crud
+-   Reset... --- Reset all parameters and remove all picks, i.e., start over.
+
+
+-   Dog Pick... (Alt-D) --- Run automated particle picker. Requires an estimate of the size of the particle (in pixels)
+-   Quit (Alt-Q) --- Quit the program

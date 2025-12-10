@@ -1,0 +1,5 @@
+---
+redirect_to: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/Gatan_K2_installation_and_setup/Install_SerialEM_DigitalMicrograph_plugin
+---
+
+This page has been moved to [Install_SerialEM_DigitalMicrograph_plugin](/leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/Gatan_K2_installation_and_setup/Install_SerialEM_DigitalMicrograph_plugin).

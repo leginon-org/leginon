@@ -1,0 +1,1252 @@
+site_name: Myami Documentation
+repo_url: https://github.com/leginon-org/leginon
+repo_name: leginon-org/leginon
+docs_dir: content
+site_dir: build
+site_url: https://leginon-org.github.io/leginon/
+site_description: Documentation for Leginon, Appion
+theme:
+  name: material
+  palette:
+    # Palette toggle for light mode (default)
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.indexes
+    - navigation.path
+    - navigation.top
+    - search.suggest
+    - search.highlight
+  icon:
+    repo: fontawesome/brands/github
+  logo: https://avatars.githubusercontent.com/u/159507882?s=128
+plugins:
+  - search
+  - site-urls:
+      prefix: "/"
+  - redirects:
+      redirect_maps: { 'index.md': 'leginon/index.md' }
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+
+markdown_extensions:
+  - toc
+  - tables
+  - fenced_code
+  - codehilite
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/leginon-org/leginon
+      name: Leginon on Github
+
+nav:
+  - Appion:
+    - Overview: appion/index.md
+    - Appion Manual:
+      - appion/Appion_Manual.md
+      - An Introduction to Appion:
+        - appion/Appion_Manual/An_Introduction_to_Appion.md
+        - Authors: appion/Appion_Manual/An_Introduction_to_Appion/Authors.md
+        - What is Appion: appion/Appion_Manual/An_Introduction_to_Appion/What_is_Appion.md
+      - Appion User Guide:
+        - appion/Appion_Manual/Appion_User_Guide.md
+        - Administration Tools Guide: appion/Appion_Manual/Appion_User_Guide/Administration_Tools_Guide.md
+        - Appion Processing:
+          - appion/Appion_Manual/Appion_User_Guide/Appion_Processing.md
+          - Ab Initio Reconstruction:
+            - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Ab_Initio_Reconstruction.md
+            - EMAN Common Lines: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Ab_Initio_Reconstruction/EMAN_Common_Lines.md
+            - IMAGIC Angular Reconstitution: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Ab_Initio_Reconstruction/IMAGIC_Angular_Reconstitution.md
+            - OTR Volume: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Ab_Initio_Reconstruction/OTR_Volume.md
+            - RCT Volume: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Ab_Initio_Reconstruction/RCT_Volume.md
+          - CTF Estimation:
+            - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/CTF_Estimation.md
+            - Ace 2 Estimation: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/CTF_Estimation/Ace_2_Estimation.md
+            - Ace Estimation:
+              - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/CTF_Estimation/Ace_Estimation.md
+              - Ace script: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/CTF_Estimation/Ace_Estimation/Ace_script.md
+              - Aceman: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/CTF_Estimation/Ace_Estimation/Aceman.md
+            - CtfFind Estimation: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/CTF_Estimation/CtfFind_Estimation.md
+            - Phase plate CTF Estimation: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/CTF_Estimation/Phase_plate_CTF_Estimation.md
+          - Common Workflow:
+            - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Common_Workflow.md
+            - Quality Assessment: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Common_Workflow/Quality_Assessment.md
+            - Random-Conical Tilt (RCT) Reconstruction workflow: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Common_Workflow/Random-Conical_Tilt_RCT_Reconstruction_workflow.md
+            - Step by Step Guide: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Common_Workflow/Step_by_Step_Guide.md
+            - Trimer processing workflow: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Common_Workflow/Trimer_processing_workflow.md
+          - CryoSPARC: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/CryoSPARC.md
+          - Direct Detector Frame Processing:
+            - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Direct_Detector_Frame_Processing.md
+            - Catch up DD frame alignment: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Direct_Detector_Frame_Processing/Catch_up_DD_frame_alignment.md
+            - GainDark correction of the raw frame with or without drift correction: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Direct_Detector_Frame_Processing/GainDark_correction_of_the_raw_frame_with_or_without_drift_correction.md
+          - IMAGIC Multi Reference Alignment: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/IMAGIC_Multi_Reference_Alignment.md
+          - Image Assessment:
+            - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Image_Assessment.md
+            - Multi Img Assessment: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Image_Assessment/Multi_Img_Assessment.md
+            - Run Image Rejector: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Image_Assessment/Run_Image_Rejector.md
+            - Web Img Assessment: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Image_Assessment/Web_Img_Assessment.md
+          - Import Tools:
+            - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Import_Tools.md
+            - EMDB to Model: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Import_Tools/EMDB_to_Model.md
+            - PDB to Model: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Import_Tools/PDB_to_Model.md
+            - PDB tp Model: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Import_Tools/PDB_tp_Model.md
+            - Upload Model: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Import_Tools/Upload_Model.md
+            - Upload More Images:
+              - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Import_Tools/Upload_More_Images.md
+              - Upload image grouping: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Import_Tools/Upload_More_Images/Upload_image_grouping.md
+            - Upload Particles: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Import_Tools/Upload_Particles.md
+            - Upload Stack: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Import_Tools/Upload_Stack.md
+            - Upload Template: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Import_Tools/Upload_Template.md
+          - Particle Alignment:
+            - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Alignment.md
+            - Run Alignment:
+              - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Alignment/Run_Alignment.md
+              - Ed's Iteration Alignment: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Alignment/Run_Alignment/Eds_Iteration_Alignment.md
+              - Spider Reference-based Alignment: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Alignment/Run_Alignment/Spider_Reference-based_Alignment.md
+              - Spider Reference-free Alignment: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Alignment/Run_Alignment/Spider_Reference-free_Alignment.md
+              - Xmipp Maximum Likelihood Alignment: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Alignment/Run_Alignment/Xmipp_Maximum_Likelihood_Alignment.md
+              - Xmipp Reference-based Maximum Likelihood Alignment: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Alignment/Run_Alignment/Xmipp_Reference-based_Maximum_Likelihood_Alignment.md
+            - Run Feature Analysis:
+              - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Alignment/Run_Feature_Analysis.md
+              - Spider Coran Classification: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Alignment/Run_Feature_Analysis/Spider_Coran_Classification.md
+              - Xmipp Kerden Self-Organizing Map: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Alignment/Run_Feature_Analysis/Xmipp_Kerden_Self-Organizing_Map.md
+              - Xmipp Rotational Kerden Self-Organizing Map: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Alignment/Run_Feature_Analysis/Xmipp_Rotational_Kerden_Self-Organizing_Map.md
+            - Run Particle Clustering:
+              - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Alignment/Run_Particle_Clustering.md
+              - Hierarchical or K-means Clustering: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Alignment/Run_Particle_Clustering/Hierarchical_or_K-means_Clustering.md
+          - Particle Selection:
+            - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Selection.md
+            - Dog Picking: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Selection/Dog_Picking.md
+            - Manual Picking: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Selection/Manual_Picking.md
+            - Random Conical Tilt Picking:
+              - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Selection/Random_Conical_Tilt_Picking.md
+              - Align and Edit Tilt Pairs: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Selection/Random_Conical_Tilt_Picking/Align_and_Edit_Tilt_Pairs.md
+              - Auto Align Tilt Pairs: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Selection/Random_Conical_Tilt_Picking/Auto_Align_Tilt_Pairs.md
+            - Template Picking: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Particle_Selection/Template_Picking.md
+          - Processing Cluster Login: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Processing_Cluster_Login.md
+          - Refine Reconstruction:
+            - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Refine_Reconstruction.md
+            - EMAN Refinement: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Refine_Reconstruction/EMAN_Refinement.md
+            - Frealign Refinement: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Refine_Reconstruction/Frealign_Refinement.md
+            - IMAGIC Refinement: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Refine_Reconstruction/IMAGIC_Refinement.md
+            - Refinement Post-processing Procedures: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Refine_Reconstruction/Refinement_Post-processing_Procedures.md
+            - SPIDER Refinement: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Refine_Reconstruction/SPIDER_Refinement.md
+          - Region Mask Creation:
+            - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Region_Mask_Creation.md
+            - Crud Finding: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Region_Mask_Creation/Crud_Finding.md
+            - Manual Masking: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Region_Mask_Creation/Manual_Masking.md
+            - Maskiton: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Region_Mask_Creation/Maskiton.md
+          - Repeat from other session: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Repeat_from_other_session.md
+          - Stacks:
+            - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Stacks.md
+            - More Stack Tools:
+              - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Stacks/More_Stack_Tools.md
+              - Combine Stacks: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Stacks/More_Stack_Tools/Combine_Stacks.md
+              - Convert Stack into Particle Picks: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Stacks/More_Stack_Tools/Convert_Stack_into_Particle_Picks.md
+              - Jumpers SubStack: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Stacks/More_Stack_Tools/Jumpers_SubStack.md
+              - View Stacks:
+                - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Stacks/More_Stack_Tools/View_Stacks.md
+                - Center Particles: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Stacks/More_Stack_Tools/View_Stacks/Center_Particles.md
+                - Create Substack: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Stacks/More_Stack_Tools/View_Stacks/Create_Substack.md
+                - Filter by MeanStdev: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Stacks/More_Stack_Tools/View_Stacks/Filter_by_MeanStdev.md
+                - Sort Junk: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Stacks/More_Stack_Tools/View_Stacks/Sort_Junk.md
+            - Stack Creation: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Stacks/Stack_Creation.md
+          - Synthetic Data:
+            - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Synthetic_Data.md
+            - Synthetic Dataset Creation: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Synthetic_Data/Synthetic_Dataset_Creation.md
+          - Terminology: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Terminology.md
+          - Tomography:
+            - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Tomography.md
+            - Align Tilt-Series: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Tomography/Align_Tilt-Series.md
+            - Align tilt series: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Tomography/Align_tilt_series.md
+            - Create full tomogram: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Tomography/Create_full_tomogram.md
+            - Create tomogram subvolume:
+              - appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Tomography/Create_tomogram_subvolume.md
+              - Average tomogram subvolumes: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Tomography/Create_tomogram_subvolume/Average_tomogram_subvolumes.md
+            - Upload full tomogram: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Tomography/Upload_full_tomogram.md
+          - Upload Refinement: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Upload_Refinement.md
+          - Xmipp 3 Clustering 2D Alignment: appion/Appion_Manual/Appion_User_Guide/Appion_Processing/Xmipp_3_Clustering_2D_Alignment.md
+        - Appion and Leginon Database Tools:
+          - appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools.md
+          - Administration:
+            - appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Administration.md
+            - Applications: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Administration/Applications.md
+            - Goniometer: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Administration/Goniometer.md
+            - Groups: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Administration/Groups.md
+            - Instruments: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Administration/Instruments.md
+            - Revert Settings: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Administration/Revert_Settings.md
+            - Users: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Administration/Users.md
+          - Hole Template Viewer: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Hole_Template_Viewer.md
+          - Image Viewers:
+            - appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Image_Viewers.md
+            - 2 Way Viewer: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Image_Viewers/2_Way_Viewer.md
+            - 3 Way Viewer: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Image_Viewers/3_Way_Viewer.md
+            - Common Features: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Image_Viewers/Common_Features.md
+            - Dual Viewer: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Image_Viewers/Dual_Viewer.md
+            - Image Viewer: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Image_Viewers/Image_Viewer.md
+            - RCT viewer: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Image_Viewers/RCT_viewer.md
+          - LOI - Leginon Observer Interface: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/LOI_-_Leginon_Observer_Interface.md
+          - Project DB:
+            - appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Project_DB.md
+            - Create New Project: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Project_DB/Create_New_Project.md
+            - Create a Project Processing Database: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Project_DB/Create_a_Project_Processing_Database.md
+            - Edit Project Description: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Project_DB/Edit_Project_Description.md
+            - Edit Project Owners: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Project_DB/Edit_Project_Owners.md
+            - Grid Management: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Project_DB/Grid_Management.md
+            - Share a Project Session with another User: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Project_DB/Share_a_Project_Session_with_another_User.md
+            - Unlink a Project Processing Database: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Project_DB/Unlink_a_Project_Processing_Database.md
+            - Upload Images to a new Project Session:
+              - appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Project_DB/Upload_Images_to_a_new_Project_Session.md
+              - Image pair upload for rct: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Project_DB/Upload_Images_to_a_new_Project_Session/Image_pair_upload_for_rct.md
+            - View Projects: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Project_DB/View_Projects.md
+            - View a Summary of a Project Session: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Project_DB/View_a_Summary_of_a_Project_Session.md
+          - Tomography Tool: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/Tomography_Tool.md
+          - User Management:
+            - appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/User_Management.md
+            - Enable User Authentication: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/User_Management/Enable_User_Authentication.md
+            - Logout: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/User_Management/Logout.md
+            - Modify Your Profile: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/User_Management/Modify_Your_Profile.md
+            - New User Registration: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/User_Management/New_User_Registration.md
+            - Retrieve Forgotten Password: appion/Appion_Manual/Appion_User_Guide/Appion_and_Leginon_Database_Tools/User_Management/Retrieve_Forgotten_Password.md
+        - Appion output: appion/Appion_Manual/Appion_User_Guide/Appion_output.md
+      - Complete Installation:
+        - appion/Appion_Manual/Complete_Installation.md
+        - Additional Database Server Setup after Web Server Installation: appion/Appion_Manual/Complete_Installation/Additional_Database_Server_Setup_after_Web_Server_Installation.md
+        - Changes to auto-installed appion for production usage: appion/Appion_Manual/Complete_Installation/Changes_to_auto-installed_appion_for_production_usage.md
+        - Create a Test Project:
+          - appion/Appion_Manual/Complete_Installation/Create_a_Test_Project.md
+          - Create a Processing Database: appion/Appion_Manual/Complete_Installation/Create_a_Test_Project/Create_a_Processing_Database.md
+          - Process Images: appion/Appion_Manual/Complete_Installation/Create_a_Test_Project/Process_Images.md
+        - Database Server Installation: appion/Appion_Manual/Complete_Installation/Database_Server_Installation.md
+        - Download additional Software (CentOS Specific): appion/Appion_Manual/Complete_Installation/Download_additional_Software_CentOS_Specific.md
+        - File Server Setup Considerations: appion/Appion_Manual/Complete_Installation/File_Server_Setup_Considerations.md
+        - Install using the auto-installation tool: appion/Appion_Manual/Complete_Installation/Install_using_the_auto-installation_tool.md
+        - Installation Troublshooting Guide: appion/Appion_Manual/Complete_Installation/Installation_Troublshooting_Guide.md
+        - Installing Appion with an existing Leginon installation: appion/Appion_Manual/Complete_Installation/Installing_Appion_with_an_existing_Leginon_installation.md
+        - Instructions for installing CentOS on your computer: appion/Appion_Manual/Complete_Installation/Instructions_for_installing_CentOS_on_your_computer.md
+        - Instructions for installing Fedora on your computer: appion/Appion_Manual/Complete_Installation/Instructions_for_installing_Fedora_on_your_computer.md
+        - Processing Server Installation:
+          - appion/Appion_Manual/Complete_Installation/Processing_Server_Installation.md
+          - Compile FindEM:
+            - appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Compile_FindEM.md
+            - Install FindEM from source: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Compile_FindEM/Install_FindEM_from_source.md
+          - Compile Radermacher: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Compile_Radermacher.md
+          - Configure appioncfg: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Configure_appioncfg.md
+          - Configure leginoncfg: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Configure_leginoncfg.md
+          - Configure sinedoncfg: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Configure_sinedoncfg.md
+          - Download Appion Files: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Download_Appion_Files.md
+          - Explanation of Sample Names: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Explanation_of_Sample_Names.md
+          - Install Ace2:
+            - appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_Ace2.md
+            - Compile Ace2 from source: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_Ace2/Compile_Ace2_from_source.md
+          - Install Appion Packages: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_Appion_Packages.md
+          - Install EMAN: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_EMAN.md
+          - Install EM Hole Finder: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_EM_Hole_Finder.md
+          - Install External Packages:
+            - appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_External_Packages.md
+            - Install MotionCor2: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_External_Packages/Install_MotionCor2.md
+          - Install Imod: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_Imod.md
+          - Install Protomo: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_Protomo.md
+          - Install Protomo2: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_Protomo2.md
+          - Install SIMPLE: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_SIMPLE.md
+          - Install SPIDER: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_SPIDER.md
+          - Install UCSF Chimera: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_UCSF_Chimera.md
+          - Install Xmipp: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_Xmipp.md
+          - Install dosefgpu driftcorr:
+            - appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_dosefgpu_driftcorr.md
+            - Install motioncor2 shared: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_dosefgpu_driftcorr/Install_motioncor2_shared.md
+          - Install supporting packages: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Install_supporting_packages.md
+          - Perform system check: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Perform_system_check.md
+          - Test Appion: appion/Appion_Manual/Complete_Installation/Processing_Server_Installation/Test_Appion.md
+        - Security Considerations: appion/Appion_Manual/Complete_Installation/Security_Considerations.md
+        - Select Linux distribution to use: appion/Appion_Manual/Complete_Installation/Select_Linux_distribution_to_use.md
+        - Setup Remote Processing:
+          - appion/Appion_Manual/Complete_Installation/Setup_Remote_Processing.md
+          - ClusterPhpSettings: appion/Appion_Manual/Complete_Installation/Setup_Remote_Processing/ClusterPhpSettings.md
+          - Configure web server to submit job to local cluster: appion/Appion_Manual/Complete_Installation/Setup_Remote_Processing/Configure_web_server_to_submit_job_to_local_cluster.md
+          - Configure web server to submit jobs: appion/Appion_Manual/Complete_Installation/Setup_Remote_Processing/Configure_web_server_to_submit_jobs.md
+          - Install SSH module for PHP: appion/Appion_Manual/Complete_Installation/Setup_Remote_Processing/Install_SSH_module_for_PHP.md
+          - Setup job submission server: appion/Appion_Manual/Complete_Installation/Setup_Remote_Processing/Setup_job_submission_server.md
+          - Testing job submission: appion/Appion_Manual/Complete_Installation/Setup_Remote_Processing/Testing_job_submission.md
+        - Web Server Installation:
+          - appion/Appion_Manual/Complete_Installation/Web_Server_Installation.md
+          - Check php information: appion/Appion_Manual/Complete_Installation/Web_Server_Installation/Check_php_information.md
+          - Configure Operating System: appion/Appion_Manual/Complete_Installation/Web_Server_Installation/Configure_Operating_System.md
+          - Configure phpini: appion/Appion_Manual/Complete_Installation/Web_Server_Installation/Configure_phpini.md
+          - Differences between Linux flavors: appion/Appion_Manual/Complete_Installation/Web_Server_Installation/Differences_between_Linux_flavors.md
+          - Download Appion and Leginon Files: appion/Appion_Manual/Complete_Installation/Web_Server_Installation/Download_Appion_and_Leginon_Files.md
+          - Install Apache Web Server: appion/Appion_Manual/Complete_Installation/Web_Server_Installation/Install_Apache_Web_Server.md
+          - Install Redux image server: appion/Appion_Manual/Complete_Installation/Web_Server_Installation/Install_Redux_image_server.md
+          - Install SSH module for PHP webserver: appion/Appion_Manual/Complete_Installation/Web_Server_Installation/Install_SSH_module_for_PHP_webserver.md
+          - Install Web Server Prerequisites: appion/Appion_Manual/Complete_Installation/Web_Server_Installation/Install_Web_Server_Prerequisites.md
+          - Install phpMyAdmin: appion/Appion_Manual/Complete_Installation/Web_Server_Installation/Install_phpMyAdmin.md
+          - Install the MRC PHP Extension:
+            - appion/Appion_Manual/Complete_Installation/Web_Server_Installation/Install_the_MRC_PHP_Extension.md
+            - Troubleshooting Notes: appion/Appion_Manual/Complete_Installation/Web_Server_Installation/Install_the_MRC_PHP_Extension/Troubleshooting_Notes.md
+          - Install the Web Interface:
+            - appion/Appion_Manual/Complete_Installation/Web_Server_Installation/Install_the_Web_Interface.md
+            - Install the Web Interface Advanced: appion/Appion_Manual/Complete_Installation/Web_Server_Installation/Install_the_Web_Interface/Install_the_Web_Interface_Advanced.md
+          - Potential Problems: appion/Appion_Manual/Complete_Installation/Web_Server_Installation/Potential_Problems.md
+          - Start NFS: appion/Appion_Manual/Complete_Installation/Web_Server_Installation/Start_NFS.md
+      - Upgrade Instructions:
+        - appion/Appion_Manual/Upgrade_Instructions.md
+        - Minor release update: appion/Appion_Manual/Upgrade_Instructions/Minor_release_update.md
+        - Upgrade From 20x: appion/Appion_Manual/Upgrade_Instructions/Upgrade_From_20x.md
+        - Upgrade From 21x: appion/Appion_Manual/Upgrade_Instructions/Upgrade_From_21x.md
+        - Upgrade From 22-redux: appion/Appion_Manual/Upgrade_Instructions/Upgrade_From_22-redux.md
+        - Upgrade From 22x: appion/Appion_Manual/Upgrade_Instructions/Upgrade_From_22x.md
+        - Upgrade From 30 or above:
+          - appion/Appion_Manual/Upgrade_Instructions/Upgrade_From_30_or_above.md
+          - New support package requirement for 33: appion/Appion_Manual/Upgrade_Instructions/Upgrade_From_30_or_above/New_support_package_requirement_for_33.md
+      - Version Change Log:
+        - appion/Appion_Manual/Version_Change_Log.md
+        - Version 32 Change Log: appion/Appion_Manual/Version_Change_Log/Version_32_Change_Log.md
+    - Developers guide:
+      - appion/Developers_guide.md
+      - AMI Eclipse Quick Start Guide:
+        - appion/Developers_guide/AMI_Eclipse_Quick_Start_Guide.md
+        - Example config file: appion/Developers_guide/AMI_Eclipse_Quick_Start_Guide/Example_config_file.md
+      - Adding refine python parts: appion/Developers_guide/Adding_refine_python_parts.md
+      - Adding refine runjob: appion/Developers_guide/Adding_refine_runjob.md
+      - Appion Testing: appion/Developers_guide/Appion_Testing.md
+      - Appion tricks: appion/Developers_guide/Appion_tricks.md
+      - CSS notes: appion/Developers_guide/CSS_notes.md
+      - Cluster job overview: appion/Developers_guide/Cluster_job_overview.md
+      - Coding Best Practices:
+        - appion/Developers_guide/Coding_Best_Practices.md
+        - Code Review Guide:
+          - appion/Developers_guide/Coding_Best_Practices/Code_Review_Guide.md
+          - Code development process: appion/Developers_guide/Coding_Best_Practices/Code_Review_Guide/Code_development_process.md
+          - Purpose of Code Reviews: appion/Developers_guide/Coding_Best_Practices/Code_Review_Guide/Purpose_of_Code_Reviews.md
+      - Common variables used: appion/Developers_guide/Common_variables_used.md
+      - Error Handling: appion/Developers_guide/Error_Handling.md
+      - General Best Practices: appion/Developers_guide/General_Best_Practices.md
+      - Git: appion/Developers_guide/Git.md
+      - How to add a launch page: appion/Developers_guide/How_to_add_a_launch_page.md
+      - How to add a new refinement method: appion/Developers_guide/How_to_add_a_new_refinement_method.md
+      - How to add an AppionLoop GUI page: appion/Developers_guide/How_to_add_an_AppionLoop_GUI_page.md
+      - How to test upload images with your own sandbox: appion/Developers_guide/How_to_test_upload_images_with_your_own_sandbox.md
+      - Javascript notes: appion/Developers_guide/Javascript_notes.md
+      - MySQL Notes:
+        - appion/Developers_guide/MySQL_Notes.md
+        - Mysql Nested Subqueries Problem: appion/Developers_guide/MySQL_Notes/Mysql_Nested_Subqueries_Problem.md
+      - Myami code diagram: appion/Developers_guide/Myami_code_diagram.md
+      - Object Oriented Programming: appion/Developers_guide/Object_Oriented_Programming.md
+      - PHP notes: appion/Developers_guide/PHP_notes.md
+      - Python notes: appion/Developers_guide/Python_notes.md
+      - Refine Refactor documentation: appion/Developers_guide/Refine_Refactor_documentation.md
+      - 'Setup Local Databases ': appion/Developers_guide/Setup_Local_Databases_.md
+      - Subversion: appion/Developers_guide/Subversion.md
+      - Test datasets at AMI: appion/Developers_guide/Test_datasets_at_AMI.md
+      - Useful shell commands: appion/Developers_guide/Useful_shell_commands.md
+      - Using basicReportinc: appion/Developers_guide/Using_basicReportinc.md
+    - Miscellaneous:
+        - EMG Redmine Quick Start Guide:
+          - appion/EMG_Redmine_Quick_Start_Guide.md
+          - Issue Workflow Tutorial: appion/EMG_Redmine_Quick_Start_Guide/Issue_Workflow_Tutorial.md
+          - Wiki Tips: appion/EMG_Redmine_Quick_Start_Guide/Wiki_Tips.md
+        - Install Appion and Leginon using the auto-installation tool share:
+          - appion/Install_Appion_and_Leginon_using_the_auto-installation_tool_share.md
+          - Reconfigure the database: appion/Install_Appion_and_Leginon_using_the_auto-installation_tool_share/Reconfigure_the_database.md
+          - Regkey request: appion/Install_Appion_and_Leginon_using_the_auto-installation_tool_share/Regkey_request.md
+        - Processing Server External Packages Installation:
+          - appion/Processing_Server_External_Packages_Installation.md
+          - External Package requirement of Appion scripts: appion/Processing_Server_External_Packages_Installation/External_Package_requirement_of_Appion_scripts.md
+          - Package executable alias name in Appion:
+            - appion/Processing_Server_External_Packages_Installation/Package_executable_alias_name_in_Appion.md
+            - Package alias table: appion/Processing_Server_External_Packages_Installation/Package_executable_alias_name_in_Appion/Package_alias_table.md
+        - CentOS6 installation:
+          - appion/CentOS6_installation.md
+          - Install Free-Hand Test:
+            - appion/CentOS6_installation/Install_Free-Hand_Test.md
+            - FreeHand compile: appion/CentOS6_installation/Install_Free-Hand_Test/FreeHand_compile.md
+        - Download Appion Files Shared:
+          - appion/Download_Appion_Files_Shared.md
+          - Currrent myami release: appion/Download_Appion_Files_Shared/Currrent_myami_release.md
+        - Install supporting packages Shared:
+          - appion/Install_supporting_packages_Shared.md
+          - Extra supporting package table: appion/Install_supporting_packages_Shared/Extra_supporting_package_table.md
+        - Linux distribution recommendation:
+          - appion/Linux_distribution_recommendation.md
+          - Link to ubuntu: appion/Linux_distribution_recommendation/Link_to_ubuntu.md
+        - Web Server Installation on CentOS 6:
+          - appion/Web_Server_Installation_on_CentOS_6.md
+          - Current myami release checkout: appion/Web_Server_Installation_on_CentOS_6/Current_myami_release_checkout.md
+        - 2010 Appion Developer Workshop:
+          - appion/2010_Appion_Developer_Workshop.md
+          - 2010 ADWAdd a new option to a program: appion/2010_Appion_Developer_Workshop/2010_ADWAdd_a_new_option_to_a_program.md
+          - 2010 ADWCreate an alignment program from scratch: appion/2010_Appion_Developer_Workshop/2010_ADWCreate_an_alignment_program_from_scratch.md
+          - 2010 ADWOrganization of the PHP programs: appion/2010_Appion_Developer_Workshop/2010_ADWOrganization_of_the_PHP_programs.md
+          - 2010 ADWOrganization of the Python programs: appion/2010_Appion_Developer_Workshop/2010_ADWOrganization_of_the_Python_programs.md
+          - 2010 ADWCreate an image uploader program from scratch: appion/2010_ADWCreate_an_image_uploader_program_from_scratch.md
+        - 2 Way Viewer Shared: appion/2_Way_Viewer_Shared.md
+        - Alignment SubStacks: appion/Alignment_SubStacks.md
+        - Appion CTF parameter definition: appion/Appion_CTF_parameter_definition.md
+        - Appion citations: appion/Appion_citations.md
+        - Appion config advanced: appion/Appion_config_advanced.md
+        - Appion forum: appion/Appion_forum.md
+        - Brignole et al 2009: appion/Brignole_et_al_2009.md
+        - Centos installation shared: appion/Centos_installation_shared.md
+        - Code Standards: appion/Code_Standards.md
+        - Configure appioncfg shared: appion/Configure_appioncfg_shared.md
+        - Configure leginoncfg 2 1: appion/Configure_leginoncfg_2_1.md
+        - Configure leginoncfg Shared: appion/Configure_leginoncfg_Shared.md
+        - Configure sinedoncfg 2 1: appion/Configure_sinedoncfg_2_1.md
+        - Configure sinedoncfg shared: appion/Configure_sinedoncfg_shared.md
+        - Convert Mass into Volume: appion/Convert_Mass_into_Volume.md
+        - Create Appion Session: appion/Create_Appion_Session.md
+        - DB Migration Process: appion/DB_Migration_Process.md
+        - Database Server Installation Shared: appion/Database_Server_Installation_Shared.md
+        - Database Setup After Webserver initialization Shared: appion/Database_Setup_After_Webserver_initialization_Shared.md
+        - Default groups: appion/Default_groups.md
+        - Default users: appion/Default_users.md
+        - Doc test notes: appion/Doc_test_notes.md
+        - Download additional Software (Fedora Specific): appion/Download_additional_Software_Fedora_Specific.md
+        - File Formats: appion/File_Formats.md
+        - File Server Setup Considerations Shared: appion/File_Server_Setup_Considerations_Shared.md
+        - HTML notes: appion/HTML_notes.md
+        - Helical Image Processing: appion/Helical_Image_Processing.md
+        - Helical Image Processing (PHOELIX): appion/Helical_Image_Processing_PHOELIX.md
+        - Helical Processing: appion/Helical_Processing.md
+        - How to run manual picking and mask making: appion/How_to_run_manual_picking_and_mask_making.md
+        - Image Viewers Shared: appion/Image_Viewers_Shared.md
+        - Index of test scripts: appion/Index_of_test_scripts.md
+        - Install Appion Packages Shared: appion/Install_Appion_Packages_Shared.md
+        - Install Appion Packages Short Shared: appion/Install_Appion_Packages_Short_Shared.md
+        - Install Appion bin shared: appion/Install_Appion_bin_shared.md
+        - Install EMAN2: appion/Install_EMAN2.md
+        - Install EPEL shared: appion/Install_EPEL_shared.md
+        - Install Grigorieff lab software: appion/Install_Grigorieff_lab_software.md
+        - Install SSH module for PHP shared: appion/Install_SSH_module_for_PHP_shared.md
+        - Install Torque: appion/Install_Torque.md
+        - Install Torque Client: appion/Install_Torque_Client.md
+        - Install dosefgpu driftcorr shared: appion/Install_dosefgpu_driftcorr_shared.md
+        - Install myami-22 on guppy: appion/Install_myami-22_on_guppy.md
+        - Install phpMyAdmin shared: appion/Install_phpMyAdmin_shared.md
+        - Job submission vs direct Appion Script running from terminal: appion/Job_submission_vs_direct_Appion_Script_running_from_terminal.md
+        - Make a New Stack: appion/Make_a_New_Stack.md
+        - Mount NFS on a Mac: appion/Mount_NFS_on_a_Mac.md
+        - Myami on Ubuntu: appion/Myami_on_Ubuntu.md
+        - New support package requirement for 32: appion/New_support_package_requirement_for_32.md
+        - Notes from Recon meeting: appion/Notes_from_Recon_meeting.md
+        - Perform System Check Shared: appion/Perform_System_Check_Shared.md
+        - Potential job submission problems: appion/Potential_job_submission_problems.md
+        - Processing Server Installation Shared: appion/Processing_Server_Installation_Shared.md
+        - Python Coding Standards: appion/Python_Coding_Standards.md
+        - Reconstruction Parameters: appion/Reconstruction_Parameters.md
+        - Refinement Package Status: appion/Refinement_Package_Status.md
+        - Run Database Update Script: appion/Run_Database_Update_Script.md
+        - Start redux with systemd: appion/Start_redux_with_systemd.md
+        - Start with existing ANY Linux flavor OS: appion/Start_with_existing_ANY_Linux_flavor_OS.md
+        - Start with existing CentOS installation: appion/Start_with_existing_CentOS_installation.md
+        - Test Appion Shared: appion/Test_Appion_Shared.md
+        - Test page: appion/Test_page.md
+        - Testing auto-installation: appion/Testing_auto-installation.md
+        - Tom Goddard visit February 2010: appion/Tom_Goddard_visit_February_2010.md
+        - Tomo alignment appiondata: appion/Tomo_alignment_appiondata.md
+        - Troubleshooting the Web Server Shared: appion/Troubleshooting_the_Web_Server_Shared.md
+        - Upgrade from pre-20: appion/Upgrade_from_pre-20.md
+        - Use Cronus3 or Fly to view your web app: appion/Use_Cronus3_or_Fly_to_view_your_web_app.md
+        - Version200: appion/Version200.md
+        - Version210: appion/Version210.md
+        - Version220: appion/Version220.md
+        - Version230: appion/Version230.md
+        - Version300: appion/Version300.md
+        - Version future: appion/Version_future.md
+        - Web Server Installation Shared: appion/Web_Server_Installation_Shared.md
+        - What does User Authentication do to myamiweb: appion/What_does_User_Authentication_do_to_myamiweb.md
+        - Wrapper Testing: appion/Wrapper_Testing.md
+  - Leginon:
+    - Overview: leginon/index.md
+    - Leginon Manual:
+        - leginon/Leginon_Manual.md
+        - An Introduction to Leginon:
+          - leginon/Leginon_Manual/An_Introduction_to_Leginon.md
+          - Getting Started:
+            - leginon/Leginon_Manual/An_Introduction_to_Leginon/Getting_Started.md
+            - Getting Started as a Super User: leginon/Leginon_Manual/An_Introduction_to_Leginon/Getting_Started/Getting_Started_as_a_Super_User.md
+            - Getting Started as a System Administrator: leginon/Leginon_Manual/An_Introduction_to_Leginon/Getting_Started/Getting_Started_as_a_System_Administrator.md
+            - Getting Started as a basic Leginon user: leginon/Leginon_Manual/An_Introduction_to_Leginon/Getting_Started/Getting_Started_as_a_basic_Leginon_user.md
+            - Getting Started as a basic Leginon user in docbook version: leginon/Leginon_Manual/An_Introduction_to_Leginon/Getting_Started/Getting_Started_as_a_basic_Leginon_user_in_docbook_version.md
+          - Graphical User Interface: leginon/Leginon_Manual/An_Introduction_to_Leginon/Graphical_User_Interface.md
+          - Minimum Requirements and current NRAMM setup:
+            - leginon/Leginon_Manual/An_Introduction_to_Leginon/Minimum_Requirements_and_current_NRAMM_setup.md
+            - Buffer(Ingestion) Server setup: leginon/Leginon_Manual/An_Introduction_to_Leginon/Minimum_Requirements_and_current_NRAMM_setup/BufferIngestion_Server_setup.md
+            - Compatible Instrument: leginon/Leginon_Manual/An_Introduction_to_Leginon/Minimum_Requirements_and_current_NRAMM_setup/Compatible_Instrument.md
+            - Current NRAMM setup:
+              - leginon/Leginon_Manual/An_Introduction_to_Leginon/Minimum_Requirements_and_current_NRAMM_setup/Current_NRAMM_setup.md
+              - NRAMM buffer server hardware: leginon/Leginon_Manual/An_Introduction_to_Leginon/Minimum_Requirements_and_current_NRAMM_setup/Current_NRAMM_setup/NRAMM_buffer_server_hardware.md
+            - Minimum Requirements for frame-saving direct detectors: leginon/Leginon_Manual/An_Introduction_to_Leginon/Minimum_Requirements_and_current_NRAMM_setup/Minimum_Requirements_for_frame-saving_direct_detectors.md
+            - Minimum Requirements for non-frame-saving camera: leginon/Leginon_Manual/An_Introduction_to_Leginon/Minimum_Requirements_and_current_NRAMM_setup/Minimum_Requirements_for_non-frame-saving_camera.md
+            - NCCAT Hardware: leginon/Leginon_Manual/An_Introduction_to_Leginon/Minimum_Requirements_and_current_NRAMM_setup/NCCAT_Hardware.md
+            - SEMC file storage policy: leginon/Leginon_Manual/An_Introduction_to_Leginon/Minimum_Requirements_and_current_NRAMM_setup/SEMC_file_storage_policy.md
+          - Supported Instrument:
+            - leginon/Leginon_Manual/An_Introduction_to_Leginon/Supported_Instrument.md
+            - JEOL 1230 installation specifics: leginon/Leginon_Manual/An_Introduction_to_Leginon/Supported_Instrument/JEOL_1230_installation_specifics.md
+          - Terminology: leginon/Leginon_Manual/An_Introduction_to_Leginon/Terminology.md
+          - What is the Leginon System: leginon/Leginon_Manual/An_Introduction_to_Leginon/What_is_the_Leginon_System.md
+        - Administration Tools:
+          - leginon/Leginon_Manual/Administration_Tools.md
+          - Applications: leginon/Leginon_Manual/Administration_Tools/Applications.md
+          - Calibrations: leginon/Leginon_Manual/Administration_Tools/Calibrations.md
+          - Default Settings: leginon/Leginon_Manual/Administration_Tools/Default_Settings.md
+          - Goniometer: leginon/Leginon_Manual/Administration_Tools/Goniometer.md
+          - More about Groups: leginon/Leginon_Manual/Administration_Tools/More_about_Groups.md
+          - More about User Tools: leginon/Leginon_Manual/Administration_Tools/More_about_User_Tools.md
+          - Recommandation for setup at a new institute: leginon/Leginon_Manual/Administration_Tools/Recommandation_for_setup_at_a_new_institute.md
+          - Set up for a new regular user: leginon/Leginon_Manual/Administration_Tools/Set_up_for_a_new_regular_user.md
+          - Steps involved in the installation: leginon/Leginon_Manual/Administration_Tools/Steps_involved_in_the_installation.md
+        - Camera length calibration: leginon/Leginon_Manual/Camera_length_calibration.md
+        - Complete Installation:
+          - leginon/Leginon_Manual/Complete_Installation.md
+          - Additional Database Server Setup after Web Server Installation: leginon/Leginon_Manual/Complete_Installation/Additional_Database_Server_Setup_after_Web_Server_Installation.md
+          - Autoinstaller for CentOS: leginon/Leginon_Manual/Complete_Installation/Autoinstaller_for_CentOS.md
+          - Backup Practices: leginon/Leginon_Manual/Complete_Installation/Backup_Practices.md
+          - DD Frame Alignment Server Installation: leginon/Leginon_Manual/Complete_Installation/DD_Frame_Alignment_Server_Installation.md
+          - Database Server Installation: leginon/Leginon_Manual/Complete_Installation/Database_Server_Installation.md
+          - Database Server Setup to allow connection from the instruments: leginon/Leginon_Manual/Complete_Installation/Database_Server_Setup_to_allow_connection_from_the_instruments.md
+          - File Server Setup Considerations: leginon/Leginon_Manual/Complete_Installation/File_Server_Setup_Considerations.md
+          - Four Parts of the Leginon System: leginon/Leginon_Manual/Complete_Installation/Four_Parts_of_the_Leginon_System.md
+          - Installation on the instrument computers:
+            - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers.md
+            - Installation on the camera computer:
+              - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer.md
+              - Ceta camera support: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Ceta_camera_support.md
+              - Direct Electron DE-12 direct detection device support:
+                - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Direct_Electron_DE-12_direct_detection_device_support.md
+                - Acquiring summed frame image thru Leginon: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Direct_Electron_DE-12_direct_detection_device_support/Acquiring_summed_frame_image_thru_Leginon.md
+                - Adding DE-12 to Leginon: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Direct_Electron_DE-12_direct_detection_device_support/Adding_DE-12_to_Leginon.md
+                - DDD raw frame file transfer: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Direct_Electron_DE-12_direct_detection_device_support/DDD_raw_frame_file_transfer.md
+                - DE-12 introduction: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Direct_Electron_DE-12_direct_detection_device_support/DE-12_introduction.md
+                - DE raw frame saving: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Direct_Electron_DE-12_direct_detection_device_support/DE_raw_frame_saving.md
+                - Make DE movie stack: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Direct_Electron_DE-12_direct_detection_device_support/Make_DE_movie_stack.md
+                - Using DE DDD in Leginon: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Direct_Electron_DE-12_direct_detection_device_support/Using_DE_DDD_in_Leginon.md
+              - Eagle camera installation and setup: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Eagle_camera_installation_and_setup.md
+              - Falcon-Orius Combination Installation Notes: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Falcon-Orius_Combination_Installation_Notes.md
+              - Falcon 3 support: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Falcon_3_support.md
+              - Falcon camera support:
+                - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Falcon_camera_support.md
+                - Falcon Orius combo installation and setup:
+                  - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Falcon_camera_support/Falcon_Orius_combo_installation_and_setup.md
+                  - Comtypes installation: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Falcon_camera_support/Falcon_Orius_combo_installation_and_setup/Comtypes_installation.md
+                - Falcon acquire image: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Falcon_camera_support/Falcon_acquire_image.md
+                - Falcon gain correction:
+                  - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Falcon_camera_support/Falcon_gain_correction.md
+                  - Falcon raw frame saving configuration xml: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Falcon_camera_support/Falcon_gain_correction/Falcon_raw_frame_saving_configuration_xml.md
+                - Falcon raw frame saving: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Falcon_camera_support/Falcon_raw_frame_saving.md
+                - Leginon settings modification for Falcon camera: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Falcon_camera_support/Leginon_settings_modification_for_Falcon_camera.md
+                - Using Falcon Orius combo in Leginon: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Falcon_camera_support/Using_Falcon_Orius_combo_in_Leginon.md
+              - Gatan K2 Summit Support:
+                - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support.md
+                - Gatan K2 Installation Notes: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/Gatan_K2_Installation_Notes.md
+                - Gatan K2 Installation Pyscope Test:
+                  - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/Gatan_K2_Installation_Pyscope_Test.md
+                  - Pyscope test k2 save frames: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/Gatan_K2_Installation_Pyscope_Test/Pyscope_test_k2_save_frames.md
+                - Gatan K2 installation and setup:
+                  - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/Gatan_K2_installation_and_setup.md
+                  - Install SerialEM DigitalMicrograph plugin: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/Gatan_K2_installation_and_setup/Install_SerialEM_DigitalMicrograph_plugin.md
+                  - Older k2 dmsem configuration: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/Gatan_K2_installation_and_setup/Older_k2_dmsem_configuration.md
+                  - Semccd installation: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/Gatan_K2_installation_and_setup/Semccd_installation.md
+                - K2 Summit introduction: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/K2_Summit_introduction.md
+                - K2 calibration: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/K2_calibration.md
+                - Make DDD movie stack:
+                  - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/Make_DDD_movie_stack.md
+                  - Make movie stack with darkbrightnormgain references yourself without LeginonAppion libraries: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/Make_DDD_movie_stack/Make_movie_stack_with_darkbrightnormgain_references_yourself_without_LeginonAppion_libraries.md
+                - Using Gatan K2 Summit in Leginon:
+                  - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/Using_Gatan_K2_Summit_in_Leginon.md
+                  - K2 acquire image: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/Using_Gatan_K2_Summit_in_Leginon/K2_acquire_image.md
+                  - K2 camera sensitivity: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/Using_Gatan_K2_Summit_in_Leginon/K2_camera_sensitivity.md
+                  - K2 gain correction: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/Using_Gatan_K2_Summit_in_Leginon/K2_gain_correction.md
+                  - K2 raw frame saving: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K2_Summit_Support/Using_Gatan_K2_Summit_in_Leginon/K2_raw_frame_saving.md
+              - Gatan K3 installation and setup:
+                - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K3_installation_and_setup.md
+                - Gatan K3 Installation Pyscope Test: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K3_installation_and_setup/Gatan_K3_Installation_Pyscope_Test.md
+                - Gatan K3 Instrumentscfg: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_K3_installation_and_setup/Gatan_K3_Instrumentscfg.md
+              - Gatan on Windows-32:
+                - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_on_Windows-32.md
+                - Gatan on Windows-32 with TecnaiCCDdll: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_on_Windows-32/Gatan_on_Windows-32_with_TecnaiCCDdll.md
+                - Gatan on Windows with semccddll:
+                  - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_on_Windows-32/Gatan_on_Windows_with_semccddll.md
+                  - Dm camera configuration: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_on_Windows-32/Gatan_on_Windows_with_semccddll/Dm_camera_configuration.md
+                  - Gatan UltraScan dmsem Installation Pyscope Test:
+                    - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_on_Windows-32/Gatan_on_Windows_with_semccddll/Gatan_UltraScan_dmsem_Installation_Pyscope_Test.md
+                    - Pyscope test result array: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_on_Windows-32/Gatan_on_Windows_with_semccddll/Gatan_UltraScan_dmsem_Installation_Pyscope_Test/Pyscope_test_result_array.md
+              - Instrumentcfg setup on FEI scope where K2 fakes another camera in order to control the shutter: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Instrumentcfg_setup_on_FEI_scope_where_K2_fakes_another_camera_in_order_to_control_the_shutter.md
+              - Tietz camera installation and setup: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Tietz_camera_installation_and_setup.md
+              - Tietz camera installation and setup using EM-MENU: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Tietz_camera_installation_and_setup_using_EM-MENU.md
+            - Installation on the microscope computer 30:
+              - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_microscope_computer_30.md
+              - FEI Talos installation specifics: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_microscope_computer_30/FEI_Talos_installation_specifics.md
+              - FEI TecnaiTitan installation specifics:
+                - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_microscope_computer_30/FEI_TecnaiTitan_installation_specifics.md
+                - Setup feicfg: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_microscope_computer_30/FEI_TecnaiTitan_installation_specifics/Setup_feicfg.md
+                - Unable to initializ Tecnai interface error:
+                  - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_microscope_computer_30/FEI_TecnaiTitan_installation_specifics/Unable_to_initializ_Tecnai_interface_error.md
+                  - Find and register a dll file as command components in Windows: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_microscope_computer_30/FEI_TecnaiTitan_installation_specifics/Unable_to_initializ_Tecnai_interface_error/Find_and_register_a_dll_file_as_command_components_in_Windows.md
+              - JEOLCOM installation specifics:
+                - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_microscope_computer_30/JEOLCOM_installation_specifics.md
+                - JEOL External3 setup: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_microscope_computer_30/JEOLCOM_installation_specifics/JEOL_External3_setup.md
+                - Leginon Operation for JEM scopes: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_microscope_computer_30/JEOLCOM_installation_specifics/Leginon_Operation_for_JEM_scopes.md
+                - Setup and Calibration for jeolcfg:
+                  - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_microscope_computer_30/JEOLCOM_installation_specifics/Setup_and_Calibration_for_jeolcfg.md
+                  - J2100f k2 preset design: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_microscope_computer_30/JEOLCOM_installation_specifics/Setup_and_Calibration_for_jeolcfg/J2100f_k2_preset_design.md
+                  - J3200 de20 preset design: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_microscope_computer_30/JEOLCOM_installation_specifics/Setup_and_Calibration_for_jeolcfg/J3200_de20_preset_design.md
+            - Trouble shooting with Python IDLE: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Trouble_shooting_with_Python_IDLE.md
+            - Windows General Package Requirement:
+              - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Windows_General_Package_Requirement.md
+              - Git for windows cloning: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Windows_General_Package_Requirement/Git_for_windows_cloning.md
+              - Git for windows installation: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Windows_General_Package_Requirement/Git_for_windows_installation.md
+              - Windows myami svn checkout: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Windows_General_Package_Requirement/Windows_myami_svn_checkout.md
+            - Windows Installation All:
+              - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Windows_Installation_All.md
+              - Set pythonpath environment variable for local myami sandbox: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Windows_Installation_All/Set_pythonpath_environment_variable_for_local_myami_sandbox.md
+            - Windows Myami Configuration: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Windows_Myami_Configuration.md
+            - Windows Package Requirement 30: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Windows_Package_Requirement_30.md
+            - Windows Setup After Software Installation: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Windows_Setup_After_Software_Installation.md
+          - Installation on the microscope computer:
+            - leginon/Leginon_Manual/Complete_Installation/Installation_on_the_microscope_computer.md
+            - Auoit program script compilation: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_microscope_computer/Auoit_program_script_compilation.md
+          - Network Configuration:
+            - leginon/Leginon_Manual/Complete_Installation/Network_Configuration.md
+            - An example of working port-forwarding configuration: leginon/Leginon_Manual/Complete_Installation/Network_Configuration/An_example_of_working_port-forwarding_configuration.md
+            - Ports used by Leginon: leginon/Leginon_Manual/Complete_Installation/Network_Configuration/Ports_used_by_Leginon.md
+          - Next Steps: leginon/Leginon_Manual/Complete_Installation/Next_Steps.md
+          - Possible Computer Set-up Configurations: leginon/Leginon_Manual/Complete_Installation/Possible_Computer_Set-up_Configurations.md
+          - Processing Server Installation:
+            - leginon/Leginon_Manual/Complete_Installation/Processing_Server_Installation.md
+            - Compile Ace2: leginon/Leginon_Manual/Complete_Installation/Processing_Server_Installation/Compile_Ace2.md
+            - Compile FindEM: leginon/Leginon_Manual/Complete_Installation/Processing_Server_Installation/Compile_FindEM.md
+            - Compile Radermacher: leginon/Leginon_Manual/Complete_Installation/Processing_Server_Installation/Compile_Radermacher.md
+            - Configure leginoncfg: leginon/Leginon_Manual/Complete_Installation/Processing_Server_Installation/Configure_leginoncfg.md
+            - Configure sinedoncfg: leginon/Leginon_Manual/Complete_Installation/Processing_Server_Installation/Configure_sinedoncfg.md
+            - Create simulated instrumentscfg: leginon/Leginon_Manual/Complete_Installation/Processing_Server_Installation/Create_simulated_instrumentscfg.md
+            - Download Leginon Files: leginon/Leginon_Manual/Complete_Installation/Processing_Server_Installation/Download_Leginon_Files.md
+            - Explanation of Sample Names: leginon/Leginon_Manual/Complete_Installation/Processing_Server_Installation/Explanation_of_Sample_Names.md
+            - Install External Packages: leginon/Leginon_Manual/Complete_Installation/Processing_Server_Installation/Install_External_Packages.md
+            - Install Leginon Packages: leginon/Leginon_Manual/Complete_Installation/Processing_Server_Installation/Install_Leginon_Packages.md
+            - Install Xmipp: leginon/Leginon_Manual/Complete_Installation/Processing_Server_Installation/Install_Xmipp.md
+            - Install supporting packages: leginon/Leginon_Manual/Complete_Installation/Processing_Server_Installation/Install_supporting_packages.md
+            - Perform system check: leginon/Leginon_Manual/Complete_Installation/Processing_Server_Installation/Perform_system_check.md
+            - Test Appion: leginon/Leginon_Manual/Complete_Installation/Processing_Server_Installation/Test_Appion.md
+          - Select Linux distribution to use:
+            - leginon/Leginon_Manual/Complete_Installation/Select_Linux_distribution_to_use.md
+            - Instructions for installing CentOS on your computer: leginon/Leginon_Manual/Complete_Installation/Select_Linux_distribution_to_use/Instructions_for_installing_CentOS_on_your_computer.md
+          - Web Server Installation:
+            - leginon/Leginon_Manual/Complete_Installation/Web_Server_Installation.md
+            - Check php information:
+              - leginon/Leginon_Manual/Complete_Installation/Web_Server_Installation/Check_php_information.md
+              - Start NFS: leginon/Leginon_Manual/Complete_Installation/Web_Server_Installation/Check_php_information/Start_NFS.md
+            - Configure Operating System: leginon/Leginon_Manual/Complete_Installation/Web_Server_Installation/Configure_Operating_System.md
+            - Configure phpini: leginon/Leginon_Manual/Complete_Installation/Web_Server_Installation/Configure_phpini.md
+            - Differences between Linux flavors: leginon/Leginon_Manual/Complete_Installation/Web_Server_Installation/Differences_between_Linux_flavors.md
+            - Install Apache Web Server: leginon/Leginon_Manual/Complete_Installation/Web_Server_Installation/Install_Apache_Web_Server.md
+            - Install Redux image server: leginon/Leginon_Manual/Complete_Installation/Web_Server_Installation/Install_Redux_image_server.md
+            - Install Web Server Prerequisites: leginon/Leginon_Manual/Complete_Installation/Web_Server_Installation/Install_Web_Server_Prerequisites.md
+            - Install phpMyAdmin: leginon/Leginon_Manual/Complete_Installation/Web_Server_Installation/Install_phpMyAdmin.md
+            - Install the MRC PHP Extension: leginon/Leginon_Manual/Complete_Installation/Web_Server_Installation/Install_the_MRC_PHP_Extension.md
+            - Install the Web Interface:
+              - leginon/Leginon_Manual/Complete_Installation/Web_Server_Installation/Install_the_Web_Interface.md
+              - Install the Web Interface Advanced: leginon/Leginon_Manual/Complete_Installation/Web_Server_Installation/Install_the_Web_Interface/Install_the_Web_Interface_Advanced.md
+            - Potential Problems: leginon/Leginon_Manual/Complete_Installation/Web_Server_Installation/Potential_Problems.md
+          - What is in this Chapter: leginon/Leginon_Manual/Complete_Installation/What_is_in_this_Chapter.md
+          - Where to register and download Leginon: leginon/Leginon_Manual/Complete_Installation/Where_to_register_and_download_Leginon.md
+          - Windows Installation: leginon/Leginon_Manual/Complete_Installation/Windows_Installation.md
+        - Create and Edit Applications:
+          - leginon/Leginon_Manual/Create_and_Edit_Applications.md
+          - '"Calibrations" Application': leginon/Leginon_Manual/Create_and_Edit_Applications/Calibrations_Application.md
+          - '"MSI-Edge" Application': leginon/Leginon_Manual/Create_and_Edit_Applications/MSI-Edge_Application.md
+          - '"MSI-T" Application': leginon/Leginon_Manual/Create_and_Edit_Applications/MSI-T_Application.md
+          - '"MSI-Tomography" Application': leginon/Leginon_Manual/Create_and_Edit_Applications/MSI-Tomography_Application.md
+          - '"MSI-raster" Application': leginon/Leginon_Manual/Create_and_Edit_Applications/MSI-raster_Application.md
+          - '"Manual" Application': leginon/Leginon_Manual/Create_and_Edit_Applications/Manual_Application.md
+          - Create Leginon "Simple Application": leginon/Leginon_Manual/Create_and_Edit_Applications/Create_Leginon_Simple_Application.md
+          - Edit an existing application as an xml file: leginon/Leginon_Manual/Create_and_Edit_Applications/Edit_an_existing_application_as_an_xml_file.md
+          - Import Export Application Settings as json file: leginon/Leginon_Manual/Create_and_Edit_Applications/Import_Export_Application_Settings_as_json_file.md
+          - Reload and Edit an existing application: leginon/Leginon_Manual/Create_and_Edit_Applications/Reload_and_Edit_an_existing_application.md
+          - Use the Application Editor to create Leginon applications: leginon/Leginon_Manual/Create_and_Edit_Applications/Use_the_Application_Editor_to_create_Leginon_applications.md
+        - Data Collection Setup Examples:
+          - leginon/Leginon_Manual/Data_Collection_Setup_Examples.md
+          - "19 \xC5 mouse mFth1 recombinant apoferritin image-shift data collection with image-shift aberration-correction ": "leginon/Leginon_Manual/Data_Collection_Setup_Examples/19_\xC5\
+              _mouse_mFth1_recombinant_apoferritin_image-shift_data_collection_with_image-shift_aberration-correction_.md"
+          - "Sub-3\xC5 proteasome stage-shift data collection":
+            - "leginon/Leginon_Manual/Data_Collection_Setup_Examples/Sub-3\xC5_proteasome_stage-shift_data_collection.md"
+            - Krios-K2-TSRI Presets: "leginon/Leginon_Manual/Data_Collection_Setup_Examples/Sub-3\xC5\
+                _proteasome_stage-shift_data_collection/Krios-K2-TSRI_Presets.md"
+        - Database migrating exportimport scripts: leginon/Leginon_Manual/Database_migrating_exportimport_scripts.md
+        - Frequent Asked Questions:
+          - leginon/Leginon_Manual/Frequent_Asked_Questions.md
+          - How does Leginon Name the Files: leginon/Leginon_Manual/Frequent_Asked_Questions/How_does_Leginon_Name_the_Files.md
+          - What is the definition of ice thickness in the hole finders: leginon/Leginon_Manual/Frequent_Asked_Questions/What_is_the_definition_of_ice_thickness_in_the_hole_finders.md
+          - Why does the first Grid Image Not Numbered 00001: leginon/Leginon_Manual/Frequent_Asked_Questions/Why_does_the_first_Grid_Image_Not_Numbered_00001.md
+        - How to Update from v32 (Instrument Windows Computer):
+          - leginon/Leginon_Manual/How_to_Update_from_v32_Instrument_Windows_Computer.md
+          - Tecnai to fei Instrumentscfg change: leginon/Leginon_Manual/How_to_Update_from_v32_Instrument_Windows_Computer/Tecnai_to_fei_Instrumentscfg_change.md
+        - How to Update from v34 (Linux):
+          - leginon/Leginon_Manual/How_to_Update_from_v34_Linux.md
+          - How to Update from v34 (Instrument Windows Computer): leginon/Leginon_Manual/How_to_Update_from_v34_Linux/How_to_Update_from_v34_Instrument_Windows_Computer.md
+        - How to Update from v35 (Instrument Windows Computer): leginon/Leginon_Manual/How_to_Update_from_v35_Instrument_Windows_Computer.md
+        - How to Update from v35 (Linux): leginon/Leginon_Manual/How_to_Update_from_v35_Linux.md
+        - Installation Troubleshooting:
+          - leginon/Leginon_Manual/Installation_Troubleshooting.md
+          - Administration Tool problems: leginon/Leginon_Manual/Installation_Troubleshooting/Administration_Tool_problems.md
+          - Getting Help: leginon/Leginon_Manual/Installation_Troubleshooting/Getting_Help.md
+          - InstallationUpdate problems: leginon/Leginon_Manual/Installation_Troubleshooting/InstallationUpdate_problems.md
+          - Network problems: leginon/Leginon_Manual/Installation_Troubleshooting/Network_problems.md
+          - Test run operation problems: leginon/Leginon_Manual/Installation_Troubleshooting/Test_run_operation_problems.md
+          - Troubles with Calibrations: leginon/Leginon_Manual/Installation_Troubleshooting/Troubles_with_Calibrations.md
+          - Troubles with Imaging: leginon/Leginon_Manual/Installation_Troubleshooting/Troubles_with_Imaging.md
+        - Instrument Set-up:
+          - leginon/Leginon_Manual/Instrument_Set-up.md
+          - Calibrations required on FEI microscopes:
+            - leginon/Leginon_Manual/Instrument_Set-up/Calibrations_required_on_FEI_microscopes.md
+            - HM Beam Shift Image Shift Calibration: leginon/Leginon_Manual/Instrument_Set-up/Calibrations_required_on_FEI_microscopes/HM_Beam_Shift_Image_Shift_Calibration.md
+            - TEM Scripting Beam Tilt Calibration:
+              - leginon/Leginon_Manual/Instrument_Set-up/Calibrations_required_on_FEI_microscopes/TEM_Scripting_Beam_Tilt_Calibration.md
+              - Running get beamtiltscalepy: leginon/Leginon_Manual/Instrument_Set-up/Calibrations_required_on_FEI_microscopes/TEM_Scripting_Beam_Tilt_Calibration/Running_get_beamtiltscalepy.md
+          - Calibrations required on the microscope alone before starting Leginon:
+            - leginon/Leginon_Manual/Instrument_Set-up/Calibrations_required_on_the_microscope_alone_before_starting_Leginon.md
+            - Calibration required on JEOL: leginon/Leginon_Manual/Instrument_Set-up/Calibrations_required_on_the_microscope_alone_before_starting_Leginon/Calibration_required_on_JEOL.md
+          - Good Alignments Save Time: leginon/Leginon_Manual/Instrument_Set-up/Good_Alignments_Save_Time.md
+          - Leginon image orientation: leginon/Leginon_Manual/Instrument_Set-up/Leginon_image_orientation.md
+          - Low dose shutter configuration for Gatan camera in Digital Micrograph program: leginon/Leginon_Manual/Instrument_Set-up/Low_dose_shutter_configuration_for_Gatan_camera_in_Digital_Micrograph_program.md
+          - Microscope Set-up Checklist: leginon/Leginon_Manual/Instrument_Set-up/Microscope_Set-up_Checklist.md
+          - Tietz camera configuration: leginon/Leginon_Manual/Instrument_Set-up/Tietz_camera_configuration.md
+        - Instrument Usage Specifics:
+          - leginon/Leginon_Manual/Instrument_Usage_Specifics.md
+          - Instrument Selection:
+            - leginon/Leginon_Manual/Instrument_Usage_Specifics/Instrument_Selection.md
+            - Camera Configuration:
+              - leginon/Leginon_Manual/Instrument_Usage_Specifics/Instrument_Selection/Camera_Configuration.md
+              - Saving frames from direct detectors: leginon/Leginon_Manual/Instrument_Usage_Specifics/Instrument_Selection/Camera_Configuration/Saving_frames_from_direct_detectors.md
+        - Lacey Carbon Application:
+          - leginon/Leginon_Manual/Lacey_Carbon_Application.md
+          - RasterFC Finder node set-up: leginon/Leginon_Manual/Lacey_Carbon_Application/RasterFC_Finder_node_set-up.md
+          - RasterFC Lacey carbon rastering:
+            - leginon/Leginon_Manual/Lacey_Carbon_Application/RasterFC_Lacey_carbon_rastering.md
+            - Creating the Application from existing MSI-Raster Application: leginon/Leginon_Manual/Lacey_Carbon_Application/RasterFC_Lacey_carbon_rastering/Creating_the_Application_from_existing_MSI-Raster_Application.md
+          - Using MSI-T application to collect Lacey Carbon support data: leginon/Leginon_Manual/Lacey_Carbon_Application/Using_MSI-T_application_to_collect_Lacey_Carbon_support_data.md
+        - Leginon "Calibrations" Application:
+          - leginon/Leginon_Manual/Leginon_Calibrations_Application.md
+          - Apply Extra rotation: leginon/Leginon_Manual/Leginon_Calibrations_Application/Apply_Extra_rotation.md
+          - Autofocus Calibration with Beam Tilt Node: leginon/Leginon_Manual/Leginon_Calibrations_Application/Autofocus_Calibration_with_Beam_Tilt_Node.md
+          - Beam Shift matrix calibration: leginon/Leginon_Manual/Leginon_Calibrations_Application/Beam_Shift_matrix_calibration.md
+          - Beam Size Calibration: leginon/Leginon_Manual/Leginon_Calibrations_Application/Beam_Size_Calibration.md
+          - Bright and Dark reference images:
+            - leginon/Leginon_Manual/Leginon_Calibrations_Application/Bright_and_Dark_reference_images.md
+            - Using image shift matrix calibration to refine image shift scale in jeolcfg: leginon/Leginon_Manual/Leginon_Calibrations_Application/Bright_and_Dark_reference_images/Using_image_shift_matrix_calibration_to_refine_image_shift_scale_in_jeolcfg.md
+          - Calibration without presets: leginon/Leginon_Manual/Leginon_Calibrations_Application/Calibration_without_presets.md
+          - Check Phase Plate Patches:
+            - leginon/Leginon_Manual/Leginon_Calibrations_Application/Check_Phase_Plate_Patches.md
+            - Generate Phase Plate Condition Map: leginon/Leginon_Manual/Leginon_Calibrations_Application/Check_Phase_Plate_Patches/Generate_Phase_Plate_Condition_Map.md
+            - Inspect the phase plate slot at low magnification: leginon/Leginon_Manual/Leginon_Calibrations_Application/Check_Phase_Plate_Patches/Inspect_the_phase_plate_slot_at_low_magnification.md
+          - Checking Matrix and Modeled Stage Position Calibration:
+            - leginon/Leginon_Manual/Leginon_Calibrations_Application/Checking_Matrix_and_Modeled_Stage_Position_Calibration.md
+            - Test stage position targeting reproducibility: leginon/Leginon_Manual/Leginon_Calibrations_Application/Checking_Matrix_and_Modeled_Stage_Position_Calibration/Test_stage_position_targeting_reproducibility.md
+          - Creating Presets for the first time: leginon/Leginon_Manual/Leginon_Calibrations_Application/Creating_Presets_for_the_first_time.md
+          - Dose (Camera Sensitivity) Calibration: leginon/Leginon_Manual/Leginon_Calibrations_Application/Dose_Camera_Sensitivity_Calibration.md
+          - Efficient way to calibrate matrixes for all mags in the same projection mode: leginon/Leginon_Manual/Leginon_Calibrations_Application/Efficient_way_to_calibrate_matrixes_for_all_mags_in_the_same_projection_mode.md
+          - Grids for Calibration: leginon/Leginon_Manual/Leginon_Calibrations_Application/Grids_for_Calibration.md
+          - Image Beam Compensation Calibration: leginon/Leginon_Manual/Leginon_Calibrations_Application/Image_Beam_Compensation_Calibration.md
+          - Image Shift matrix calibration:
+            - leginon/Leginon_Manual/Leginon_Calibrations_Application/Image_Shift_matrix_calibration.md
+            - Refine IMAGE SHIFT SCALE in jeolcfg: leginon/Leginon_Manual/Leginon_Calibrations_Application/Image_Shift_matrix_calibration/Refine_IMAGE_SHIFT_SCALE_in_jeolcfg.md
+          - Importance of making calibrations: leginon/Leginon_Manual/Leginon_Calibrations_Application/Importance_of_making_calibrations.md
+          - Lens Aberration Correction Calibration for Beam-Image Shift Targeting:
+            - leginon/Leginon_Manual/Leginon_Calibrations_Application/Lens_Aberration_Correction_Calibration_for_Beam-Image_Shift_Targeting.md
+            - Download beam-image shift values for Relion 3 beam-tilt refinement: leginon/Leginon_Manual/Leginon_Calibrations_Application/Lens_Aberration_Correction_Calibration_for_Beam-Image_Shift_Targeting/Download_beam-image_shift_values_for_Relion_3_beam-tilt_refinement.md
+            - Using Leginon manual tools to calibrate beam-image shift aberration correction: leginon/Leginon_Manual/Leginon_Calibrations_Application/Lens_Aberration_Correction_Calibration_for_Beam-Image_Shift_Targeting/Using_Leginon_manual_tools_to_calibrate_beam-image_shift_aberration_correction.md
+            - Using TFS AutoCTF to calibrate beam-image shift aberration correction: leginon/Leginon_Manual/Leginon_Calibrations_Application/Lens_Aberration_Correction_Calibration_for_Beam-Image_Shift_Targeting/Using_TFS_AutoCTF_to_calibrate_beam-image_shift_aberration_correction.md
+          - Modeled Stage Position calibration: leginon/Leginon_Manual/Leginon_Calibrations_Application/Modeled_Stage_Position_calibration.md
+          - Pixel Size Calibration: leginon/Leginon_Manual/Leginon_Calibrations_Application/Pixel_Size_Calibration.md
+          - Stage Position matrix calibration:
+            - leginon/Leginon_Manual/Leginon_Calibrations_Application/Stage_Position_matrix_calibration.md
+            - Scaling Stage Position Matrix: leginon/Leginon_Manual/Leginon_Calibrations_Application/Stage_Position_matrix_calibration/Scaling_Stage_Position_Matrix.md
+          - Startup Calibrations: leginon/Leginon_Manual/Leginon_Calibrations_Application/Startup_Calibrations.md
+        - Leginon "MSI-Edge" Application:
+          - leginon/Leginon_Manual/Leginon_MSI-Edge_Application.md
+          - Edge Hole Finder Set-up: leginon/Leginon_Manual/Leginon_MSI-Edge_Application/Edge_Hole_Finder_Set-up.md
+          - Exposure Targeting Set-up for MSI-Edge: leginon/Leginon_Manual/Leginon_MSI-Edge_Application/Exposure_Targeting_Set-up_for_MSI-Edge.md
+          - Hole Targeting Set-up for MSI-Edge: leginon/Leginon_Manual/Leginon_MSI-Edge_Application/Hole_Targeting_Set-up_for_MSI-Edge.md
+          - Summary of this application: leginon/Leginon_Manual/Leginon_MSI-Edge_Application/Summary_of_this_application.md
+        - Leginon "MSI-RCT" and MSI-RCT raster" Applications:
+          - leginon/Leginon_Manual/Leginon_MSI-RCT_and_MSI-RCT_raster_Applications.md
+          - Best grids for RCT: leginon/Leginon_Manual/Leginon_MSI-RCT_and_MSI-RCT_raster_Applications/Best_grids_for_RCT.md
+          - Presets for MSI-RCT applications: leginon/Leginon_Manual/Leginon_MSI-RCT_and_MSI-RCT_raster_Applications/Presets_for_MSI-RCT_applications.md
+          - RCT calibration: leginon/Leginon_Manual/Leginon_MSI-RCT_and_MSI-RCT_raster_Applications/RCT_calibration.md
+          - RCT node set-up: leginon/Leginon_Manual/Leginon_MSI-RCT_and_MSI-RCT_raster_Applications/RCT_node_set-up.md
+          - RCT run protocol from a user: leginon/Leginon_Manual/Leginon_MSI-RCT_and_MSI-RCT_raster_Applications/RCT_run_protocol_from_a_user.md
+          - Summary of this application - MSI-RCT:
+            - leginon/Leginon_Manual/Leginon_MSI-RCT_and_MSI-RCT_raster_Applications/Summary_of_this_application_-_MSI-RCT.md
+            - Good negative stained images for RCT: leginon/Leginon_Manual/Leginon_MSI-RCT_and_MSI-RCT_raster_Applications/Summary_of_this_application_-_MSI-RCT/Good_negative_stained_images_for_RCT.md
+        - Leginon "MSI-T" Application:
+          - leginon/Leginon_Manual/Leginon_MSI-T_Application.md
+          - Creating Hole Template: leginon/Leginon_Manual/Leginon_MSI-T_Application/Creating_Hole_Template.md
+          - Exposure Targeting Set-up for MSI-T: leginon/Leginon_Manual/Leginon_MSI-T_Application/Exposure_Targeting_Set-up_for_MSI-T.md
+          - Exposure Targeting Set-up for MSI-T for Four holes:
+            - leginon/Leginon_Manual/Leginon_MSI-T_Application/Exposure_Targeting_Set-up_for_MSI-T_for_Four_holes.md
+            - New Exposure Targeting Set-up in MSI-T for Multiple holes: leginon/Leginon_Manual/Leginon_MSI-T_Application/Exposure_Targeting_Set-up_for_MSI-T_for_Four_holes/New_Exposure_Targeting_Set-up_in_MSI-T_for_Multiple_holes.md
+          - Hole Targeting Set-up for MSI-T: leginon/Leginon_Manual/Leginon_MSI-T_Application/Hole_Targeting_Set-up_for_MSI-T.md
+          - Queuing Option - MSI-T: leginon/Leginon_Manual/Leginon_MSI-T_Application/Queuing_Option_-_MSI-T.md
+          - Summary of this application - MSI-T: leginon/Leginon_Manual/Leginon_MSI-T_Application/Summary_of_this_application_-_MSI-T.md
+        - Leginon "MSI-T-Tilt" Application:
+          - leginon/Leginon_Manual/Leginon_MSI-T-Tilt_Application.md
+          - MSI-T-Tilt Installation: leginon/Leginon_Manual/Leginon_MSI-T-Tilt_Application/MSI-T-Tilt_Installation.md
+          - MSI-T-Tilt Operation: leginon/Leginon_Manual/Leginon_MSI-T-Tilt_Application/MSI-T-Tilt_Operation.md
+          - Summary of this application - MSI-T-Tilt: leginon/Leginon_Manual/Leginon_MSI-T-Tilt_Application/Summary_of_this_application_-_MSI-T-Tilt.md
+        - Leginon "MSI-Tomography" Application:
+          - leginon/Leginon_Manual/Leginon_MSI-Tomography_Application.md
+          - Fitting the tilt axis model: leginon/Leginon_Manual/Leginon_MSI-Tomography_Application/Fitting_the_tilt_axis_model.md
+          - Full Protocol on a F30 with an energy filter: leginon/Leginon_Manual/Leginon_MSI-Tomography_Application/Full_Protocol_on_a_F30_with_an_energy_filter.md
+          - Reading the tomography graphs: leginon/Leginon_Manual/Leginon_MSI-Tomography_Application/Reading_the_tomography_graphs.md
+          - Running the application: leginon/Leginon_Manual/Leginon_MSI-Tomography_Application/Running_the_application.md
+          - Set-up Before Running: leginon/Leginon_Manual/Leginon_MSI-Tomography_Application/Set-up_Before_Running.md
+          - Summary of this application - MSI-Tomo: leginon/Leginon_Manual/Leginon_MSI-Tomography_Application/Summary_of_this_application_-_MSI-Tomo.md
+          - Using "MSI-SimuTomography" Application for debugging: leginon/Leginon_Manual/Leginon_MSI-Tomography_Application/Using_MSI-SimuTomography_Application_for_debugging.md
+        - Leginon "MSI-raster" Application:
+          - leginon/Leginon_Manual/Leginon_MSI-raster_Application.md
+          - Improving Autofocusing: leginon/Leginon_Manual/Leginon_MSI-raster_Application/Improving_Autofocusing.md
+          - Queuing Option - MSI-raster: leginon/Leginon_Manual/Leginon_MSI-raster_Application/Queuing_Option_-_MSI-raster.md
+          - Raster finder nodes set-up: leginon/Leginon_Manual/Leginon_MSI-raster_Application/Raster_finder_nodes_set-up.md
+          - Summary of this application - MSI-raster: leginon/Leginon_Manual/Leginon_MSI-raster_Application/Summary_of_this_application_-_MSI-raster.md
+        - Leginon "Manual Application":
+          - leginon/Leginon_Manual/Leginon_Manual_Application.md
+          - Advanced Features: leginon/Leginon_Manual/Leginon_Manual_Application/Advanced_Features.md
+          - Running "Manual" Application: leginon/Leginon_Manual/Leginon_Manual_Application/Running_Manual_Application.md
+          - Startup: leginon/Leginon_Manual/Leginon_Manual_Application/Startup.md
+          - The Application: leginon/Leginon_Manual/Leginon_Manual_Application/The_Application.md
+          - Using the Web viewer:
+            - leginon/Leginon_Manual/Leginon_Manual_Application/Using_the_Web_viewer.md
+            - 2 Way Viewer: leginon/Leginon_Manual/Leginon_Manual_Application/Using_the_Web_viewer/2_Way_Viewer.md
+            - 3 Way Viewer: leginon/Leginon_Manual/Leginon_Manual_Application/Using_the_Web_viewer/3_Way_Viewer.md
+            - Common Features: leginon/Leginon_Manual/Leginon_Manual_Application/Using_the_Web_viewer/Common_Features.md
+            - Dual Viewer: leginon/Leginon_Manual/Leginon_Manual_Application/Using_the_Web_viewer/Dual_Viewer.md
+            - Image Tools: leginon/Leginon_Manual/Leginon_Manual_Application/Using_the_Web_viewer/Image_Tools.md
+            - Image Viewer: leginon/Leginon_Manual/Leginon_Manual_Application/Using_the_Web_viewer/Image_Viewer.md
+        - Leginon "Robot-MSI-Screen" Applications:
+          - leginon/Leginon_Manual/Leginon_Robot-MSI-Screen_Applications.md
+          - 1st Pass application: leginon/Leginon_Manual/Leginon_Robot-MSI-Screen_Applications/1st_Pass_application.md
+          - 2nd Pass application: leginon/Leginon_Manual/Leginon_Robot-MSI-Screen_Applications/2nd_Pass_application.md
+          - Evaluation application: leginon/Leginon_Manual/Leginon_Robot-MSI-Screen_Applications/Evaluation_application.md
+          - Operation: leginon/Leginon_Manual/Leginon_Robot-MSI-Screen_Applications/Operation.md
+          - Robot node set-up: leginon/Leginon_Manual/Leginon_Robot-MSI-Screen_Applications/Robot_node_set-up.md
+          - Summary of this application - Robot-MSI-Screen: leginon/Leginon_Manual/Leginon_Robot-MSI-Screen_Applications/Summary_of_this_application_-_Robot-MSI-Screen.md
+          - Upload Grids: leginon/Leginon_Manual/Leginon_Robot-MSI-Screen_Applications/Upload_Grids.md
+        - Leginon "RobotMSI-Section" Application:
+          - leginon/Leginon_Manual/Leginon_RobotMSI-Section_Application.md
+          - Other special preference set-up: leginon/Leginon_Manual/Leginon_RobotMSI-Section_Application/Other_special_preference_set-up.md
+          - Raster Generation node set-up: leginon/Leginon_Manual/Leginon_RobotMSI-Section_Application/Raster_Generation_node_set-up.md
+          - Summary of this application - RobotMSI: leginon/Leginon_Manual/Leginon_RobotMSI-Section_Application/Summary_of_this_application_-_RobotMSI.md
+          - Tips on Operation: leginon/Leginon_Manual/Leginon_RobotMSI-Section_Application/Tips_on_Operation.md
+        - Leginon System version 31:
+          - leginon/Leginon_Manual/Leginon_System_version_31.md
+          - New User Features 31:
+            - leginon/Leginon_Manual/Leginon_System_version_31/New_User_Features_31.md
+            - Child Imaging Area and Beam Diameter Display in TargetFinder Nodes: leginon/Leginon_Manual/Leginon_System_version_31/New_User_Features_31/Child_Imaging_Area_and_Beam_Diameter_Display_in_TargetFinder_Nodes.md
+          - Pyscope Changes 31: leginon/Leginon_Manual/Leginon_System_version_31/Pyscope_Changes_31.md
+        - Leginon System version 32:
+          - leginon/Leginon_Manual/Leginon_System_version_32.md
+          - New User Features 32: leginon/Leginon_Manual/Leginon_System_version_32/New_User_Features_32.md
+          - Pyscope Changes 32:
+            - leginon/Leginon_Manual/Leginon_System_version_32/Pyscope_Changes_32.md
+            - JEOL scope support: leginon/Leginon_Manual/Leginon_System_version_32/Pyscope_Changes_32/JEOL_scope_support.md
+        - Leginon System version 33:
+          - leginon/Leginon_Manual/Leginon_System_version_33.md
+          - New User Features 33:
+            - leginon/Leginon_Manual/Leginon_System_version_33/New_User_Features_33.md
+            - 'How often should the phase plate moved to the next patch ': leginon/Leginon_Manual/Leginon_System_version_33/New_User_Features_33/How_often_should_the_phase_plate_moved_to_the_next_patch_.md
+            - Ice Thickness Measurement using Energy Filter:
+              - leginon/Leginon_Manual/Leginon_System_version_33/New_User_Features_33/Ice_Thickness_Measurement_using_Energy_Filter.md
+              - Introduction and description of method: leginon/Leginon_Manual/Leginon_System_version_33/New_User_Features_33/Ice_Thickness_Measurement_using_Energy_Filter/Introduction_and_description_of_method.md
+              - Notes on Use: leginon/Leginon_Manual/Leginon_System_version_33/New_User_Features_33/Ice_Thickness_Measurement_using_Energy_Filter/Notes_on_Use.md
+              - Parameters needed: leginon/Leginon_Manual/Leginon_System_version_33/New_User_Features_33/Ice_Thickness_Measurement_using_Energy_Filter/Parameters_needed.md
+            - MSI-PP Appplication: leginon/Leginon_Manual/Leginon_System_version_33/New_User_Features_33/MSI-PP_Appplication.md
+            - Slack notification for Leginon errors:
+              - leginon/Leginon_Manual/Leginon_System_version_33/New_User_Features_33/Slack_notification_for_Leginon_errors.md
+              - Activate Slack notifications in Leginon: leginon/Leginon_Manual/Leginon_System_version_33/New_User_Features_33/Slack_notification_for_Leginon_errors/Activate_Slack_notifications_in_Leginon.md
+            - Special Beam Tilt Calibration for Phase Plate: leginon/Leginon_Manual/Leginon_System_version_33/New_User_Features_33/Special_Beam_Tilt_Calibration_for_Phase_Plate.md
+            - Volta Phase Plate Usage:
+              - leginon/Leginon_Manual/Leginon_System_version_33/New_User_Features_33/Volta_Phase_Plate_Usage.md
+              - Phase Plate Aligner Node Class:
+                - leginon/Leginon_Manual/Leginon_System_version_33/New_User_Features_33/Volta_Phase_Plate_Usage/Phase_Plate_Aligner_Node_Class.md
+                - Phase Plate Aligner Tool Bar: leginon/Leginon_Manual/Leginon_System_version_33/New_User_Features_33/Volta_Phase_Plate_Usage/Phase_Plate_Aligner_Node_Class/Phase_Plate_Aligner_Tool_Bar.md
+              - Volta Phase Plate Control Installation Reguirements: leginon/Leginon_Manual/Leginon_System_version_33/New_User_Features_33/Volta_Phase_Plate_Usage/Volta_Phase_Plate_Control_Installation_Reguirements.md
+          - PyScope Changes 33: leginon/Leginon_Manual/Leginon_System_version_33/PyScope_Changes_33.md
+        - Leginon System version 34: leginon/Leginon_Manual/Leginon_System_version_34.md
+        - Leginon System version 35: leginon/Leginon_Manual/Leginon_System_version_35.md
+        - Leginon System version 36:
+          - leginon/Leginon_Manual/Leginon_System_version_36.md
+          - Pyscope Changes 36: leginon/Leginon_Manual/Leginon_System_version_36/Pyscope_Changes_36.md
+          - Sinedon Changes 36: leginon/Leginon_Manual/Leginon_System_version_36/Sinedon_Changes_36.md
+        - Leginon System version 37:
+          - leginon/Leginon_Manual/Leginon_System_version_37.md
+          - New User Features: leginon/Leginon_Manual/Leginon_System_version_37/New_User_Features_37.md
+        - Leginon System version pymysql:
+          - leginon/Leginon_Manual/Leginon_System_version_pymysql.md
+          - Install pymysql on Windows PC: leginon/Leginon_Manual/Leginon_System_version_pymysql/Install_pymysql_on_Windows_PC.md
+        - Multi-Scale Imaging Applications in General:
+          - leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General.md
+          - Adding a new focus sequence to a focus node: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Adding_a_new_focus_sequence_to_a_focus_node.md
+          - Fix beam shift during data collection: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Fix_beam_shift_during_data_collection.md
+          - Flavors of MSI applications: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Flavors_of_MSI_applications.md
+          - Initial MSI application preferences: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Initial_MSI_application_preferences.md
+          - Iterative Stage Movement:
+            - leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Iterative_Stage_Movement.md
+            - Determine Target Tolerance and Acceptable Tolerance: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Iterative_Stage_Movement/Determine_Target_Tolerance_and_Acceptable_Tolerance.md
+          - MSI Operation:
+            - leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/MSI_Operation.md
+            - ' Setup Auto Square Finder using example targets': leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/MSI_Operation/_Setup_Auto_Square_Finder_using_example_targets.md
+          - MSI Quick-start: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/MSI_Quick-start.md
+          - MSI set up in more details: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/MSI_set_up_in_more_details.md
+          - Monitor Progress of Queued Targets: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Monitor_Progress_of_Queued_Targets.md
+          - Multi-Scale Imaging Concept: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Multi-Scale_Imaging_Concept.md
+          - Optimizing Autofocus: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Optimizing_Autofocus.md
+          - Pre-MSI Set-up:
+            - leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Pre-MSI_Set-up.md
+            - EF-TEM Krios-K2-Ceta Presets: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Pre-MSI_Set-up/EF-TEM_Krios-K2-Ceta_Presets.md
+          - Queuing Example 1 - Exposure Targeting: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Queuing_Example_1_-_Exposure_Targeting.md
+          - Queuing Example 2 - Hole Targeting only: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Queuing_Example_2_-_Hole_Targeting_only.md
+          - Queuing Example 3 - Both Exposure and Hole Targeting: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Queuing_Example_3_-_Both_Exposure_and_Hole_Targeting.md
+          - Queuing option: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Queuing_option.md
+          - Special Operation Preference setup: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Special_Operation_Preference_setup.md
+          - Special Operation setup: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Special_Operation_setup.md
+          - Summary of MSI applications: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Summary_of_MSI_applications.md
+          - Ways of Moving to Targets in Nodes that acquire images inside MSI:
+            - leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Ways_of_Moving_to_Targets_in_Nodes_that_acquire_images_inside_MSI.md
+            - Image Beam Shift matrix calibration: leginon/Leginon_Manual/Multi-Scale_Imaging_Applications_in_General/Ways_of_Moving_to_Targets_in_Nodes_that_acquire_images_inside_MSI/Image_Beam_Shift_matrix_calibration.md
+        - New User Features 34:
+          - leginon/Leginon_Manual/New_User_Features_34.md
+          - Auto hole finding for stitched square: leginon/Leginon_Manual/New_User_Features_34/Auto_hole_finding_for_stitched_square.md
+          - Black Stripe Detection: leginon/Leginon_Manual/New_User_Features_34/Black_Stripe_Detection.md
+          - Falcon III integration: leginon/Leginon_Manual/New_User_Features_34/Falcon_III_integration.md
+          - Full support of K2K3 LZW compressed tiff file saving and processing: leginon/Leginon_Manual/New_User_Features_34/Full_support_of_K2K3_LZW_compressed_tiff_file_saving_and_processing.md
+          - K3 integration: leginon/Leginon_Manual/New_User_Features_34/K3_integration.md
+          - Tomography dose symmetrical tilt scheme: leginon/Leginon_Manual/New_User_Features_34/Tomography_dose_symmetrical_tilt_scheme.md
+        - New User Features 35:
+          - leginon/Leginon_Manual/New_User_Features_35.md
+          - Aperture selection through tem controller: leginon/Leginon_Manual/New_User_Features_35/Aperture_selection_through_tem_controller.md
+          - Continuous tilt electron diffraction recording:
+            - leginon/Leginon_Manual/New_User_Features_35/Continuous_tilt_electron_diffraction_recording.md
+            - AutoIt program and script compilation: leginon/Leginon_Manual/New_User_Features_35/Continuous_tilt_electron_diffraction_recording/AutoIt_program_and_script_compilation.md
+            - Setup Ceta to use Advanced TEM Scripting: leginon/Leginon_Manual/New_User_Features_35/Continuous_tilt_electron_diffraction_recording/Setup_Ceta_to_use_Advanced_TEM_Scripting.md
+            - Setup Diffraction mode TEM instrument: leginon/Leginon_Manual/New_User_Features_35/Continuous_tilt_electron_diffraction_recording/Setup_Diffraction_mode_TEM_instrument.md
+            - Setup df preset: leginon/Leginon_Manual/New_User_Features_35/Continuous_tilt_electron_diffraction_recording/Setup_df_preset.md
+            - Setup movie upload with diffrtransferpy: leginon/Leginon_Manual/New_User_Features_35/Continuous_tilt_electron_diffraction_recording/Setup_movie_upload_with_diffrtransferpy.md
+            - TIA raw data conversion: leginon/Leginon_Manual/New_User_Features_35/Continuous_tilt_electron_diffraction_recording/TIA_raw_data_conversion.md
+            - ' MSI-Diffr application ': leginon/Leginon_Manual/New_User_Features_35/Continuous_tilt_electron_diffraction_recording/_MSI-Diffr_application_.md
+          - K3 fast return with 8x8 statistic image: leginon/Leginon_Manual/New_User_Features_35/K3_fast_return_with_8x8_statistic_image.md
+          - Tivips f416 electron diffraction recording:
+            - leginon/Leginon_Manual/New_User_Features_35/Tivips_f416_electron_diffraction_recording.md
+            - Create Leginon view port: leginon/Leginon_Manual/New_User_Features_35/Tivips_f416_electron_diffraction_recording/Create_Leginon_view_port.md
+        - New User Features 36:
+          - leginon/Leginon_Manual/New_User_Features_36.md
+          - Appion autoRelauncher: leginon/Leginon_Manual/New_User_Features_36/Appion_autoRelauncher.md
+          - Falcon 4 EER integration:
+            - leginon/Leginon_Manual/New_User_Features_36/Falcon_4_EER_integration.md
+            - Import falcon4 gain reference from TFS program: leginon/Leginon_Manual/New_User_Features_36/Falcon_4_EER_integration/Import_falcon4_gain_reference_from_TFS_program.md
+            - Setup falcon4 eer: leginon/Leginon_Manual/New_User_Features_36/Falcon_4_EER_integration/Setup_falcon4_eer.md
+          - Multi-grid autoscreening:
+            - leginon/Leginon_Manual/New_User_Features_36/Multi-grid_autoscreening.md
+            - Check list for each autoscreening run: leginon/Leginon_Manual/New_User_Features_36/Multi-grid_autoscreening/Check_list_for_each_autoscreening_run.md
+            - First-time autoscreening setup:
+              - leginon/Leginon_Manual/New_User_Features_36/Multi-grid_autoscreening/First-time_autoscreening_setup.md
+              - Settings for Target Sampling: leginon/Leginon_Manual/New_User_Features_36/Multi-grid_autoscreening/First-time_autoscreening_setup/Settings_for_Target_Sampling.md
+              - Setup Ptolemy CLI for exposure targeting: leginon/Leginon_Manual/New_User_Features_36/Multi-grid_autoscreening/First-time_autoscreening_setup/Setup_Ptolemy_CLI_for_exposure_targeting.md
+              - Setup Ptolemy CLI shell script: leginon/Leginon_Manual/New_User_Features_36/Multi-grid_autoscreening/First-time_autoscreening_setup/Setup_Ptolemy_CLI_shell_script.md
+            - MSI-Ptolemy API information for developers: leginon/Leginon_Manual/New_User_Features_36/Multi-grid_autoscreening/MSI-Ptolemy_API_information_for_developers.md
+            - MSI-Ptolemy application: leginon/Leginon_Manual/New_User_Features_36/Multi-grid_autoscreening/MSI-Ptolemy_application.md
+            - Ptolemy installation and setup: leginon/Leginon_Manual/New_User_Features_36/Multi-grid_autoscreening/Ptolemy_installation_and_setup.md
+            - Run autoscreenpy: leginon/Leginon_Manual/New_User_Features_36/Multi-grid_autoscreening/Run_autoscreenpy.md
+            - Trouble shooting Ptolemy hole finding: leginon/Leginon_Manual/New_User_Features_36/Multi-grid_autoscreening/Trouble_shooting_Ptolemy_hole_finding.md
+          - Tilt-wrangler launcher in appion: leginon/Leginon_Manual/New_User_Features_36/Tilt-wrangler_launcher_in_appion.md
+        - Node Descriptions:
+          - leginon/Leginon_Manual/Node_Descriptions.md
+          - Acquisition: leginon/Leginon_Manual/Node_Descriptions/Acquisition.md
+          - AlignZeroLoss: leginon/Leginon_Manual/Node_Descriptions/AlignZeroLoss.md
+          - BeamFixer: leginon/Leginon_Manual/Node_Descriptions/BeamFixer.md
+          - Beam Tilt Calibrator: leginon/Leginon_Manual/Node_Descriptions/Beam_Tilt_Calibrator.md
+          - Beam Tilt Imager: leginon/Leginon_Manual/Node_Descriptions/Beam_Tilt_Imager.md
+          - Click Target Finder: leginon/Leginon_Manual/Node_Descriptions/Click_Target_Finder.md
+          - Corrector: leginon/Leginon_Manual/Node_Descriptions/Corrector.md
+          - Dose Calibrator: leginon/Leginon_Manual/Node_Descriptions/Dose_Calibrator.md
+          - Drift Manager: leginon/Leginon_Manual/Node_Descriptions/Drift_Manager.md
+          - FFT Maker: leginon/Leginon_Manual/Node_Descriptions/FFT_Maker.md
+          - Focuser: leginon/Leginon_Manual/Node_Descriptions/Focuser.md
+          - Gon Modeler: leginon/Leginon_Manual/Node_Descriptions/Gon_Modeler.md
+          - Hole Depth: leginon/Leginon_Manual/Node_Descriptions/Hole_Depth.md
+          - Hole Finder: leginon/Leginon_Manual/Node_Descriptions/Hole_Finder.md
+          - JAHC Hole Finder (Template Hole Finder): leginon/Leginon_Manual/Node_Descriptions/JAHC_Hole_Finder_Template_Hole_Finder.md
+          - Manual Acquisition: leginon/Leginon_Manual/Node_Descriptions/Manual_Acquisition.md
+          - Matlab Target Finder: leginon/Leginon_Manual/Node_Descriptions/Matlab_Target_Finder.md
+          - Matrix Calibrator: leginon/Leginon_Manual/Node_Descriptions/Matrix_Calibrator.md
+          - Mosaic Click Target Finder: leginon/Leginon_Manual/Node_Descriptions/Mosaic_Click_Target_Finder.md
+          - Navigator: leginon/Leginon_Manual/Node_Descriptions/Navigator.md
+          - Pixel Size Calibrator: leginon/Leginon_Manual/Node_Descriptions/Pixel_Size_Calibrator.md
+          - Presets Manager: leginon/Leginon_Manual/Node_Descriptions/Presets_Manager.md
+          - RCT: leginon/Leginon_Manual/Node_Descriptions/RCT.md
+          - Raster Filter: leginon/Leginon_Manual/Node_Descriptions/Raster_Filter.md
+          - Raster Finder: leginon/Leginon_Manual/Node_Descriptions/Raster_Finder.md
+          - Robot: leginon/Leginon_Manual/Node_Descriptions/Robot.md
+          - RobotAtlasTargetFinder: leginon/Leginon_Manual/Node_Descriptions/RobotAtlasTargetFinder.md
+          - TEM Controller: leginon/Leginon_Manual/Node_Descriptions/TEM_Controller.md
+          - The EM node: leginon/Leginon_Manual/Node_Descriptions/The_EM_node.md
+          - Tomography: leginon/Leginon_Manual/Node_Descriptions/Tomography.md
+          - 'Transform Manager ': leginon/Leginon_Manual/Node_Descriptions/Transform_Manager_.md
+        - Preferences Setup:
+          - leginon/Leginon_Manual/Preferences_Setup.md
+          - Initial MSI application preference setup: leginon/Leginon_Manual/Preferences_Setup/Initial_MSI_application_preference_setup.md
+          - Krios Leginon Preferences: leginon/Leginon_Manual/Preferences_Setup/Krios_Leginon_Preferences.md
+          - MSI-Tomography Preferences:
+            - leginon/Leginon_Manual/Preferences_Setup/MSI-Tomography_Preferences.md
+            - Set up dose parameters in Tomography: leginon/Leginon_Manual/Preferences_Setup/MSI-Tomography_Preferences/Set_up_dose_parameters_in_Tomography.md
+          - Robot MSI-Section preference set-up: leginon/Leginon_Manual/Preferences_Setup/Robot_MSI-Section_preference_set-up.md
+        - PyScope Changes 34: leginon/Leginon_Manual/PyScope_Changes_34.md
+        - PyScope Changes 35:
+          - leginon/Leginon_Manual/PyScope_Changes_35.md
+          - Direct assignment of frame fliprotation in dmsemcfg for Gatan K2 and K3 cameras: leginon/Leginon_Manual/PyScope_Changes_35/Direct_assignment_of_frame_fliprotation_in_dmsemcfg_for_Gatan_K2_and_K3_cameras.md
+          - Falcon 4 support: leginon/Leginon_Manual/PyScope_Changes_35/Falcon_4_support.md
+          - Hitachi 7800 support:
+            - leginon/Leginon_Manual/PyScope_Changes_35/Hitachi_7800_support.md
+            - Hitachi install:
+              - leginon/Leginon_Manual/PyScope_Changes_35/Hitachi_7800_support/Hitachi_install.md
+              - Setup and Calibration for hhtcfg and focus offset: leginon/Leginon_Manual/PyScope_Changes_35/Hitachi_7800_support/Hitachi_install/Setup_and_Calibration_for_hhtcfg_and_focus_offset.md
+            - Hitachi setup: leginon/Leginon_Manual/PyScope_Changes_35/Hitachi_7800_support/Hitachi_setup.md
+            - Leginon Operation for HT7800: leginon/Leginon_Manual/PyScope_Changes_35/Hitachi_7800_support/Leginon_Operation_for_HT7800.md
+        - Start Leginon:
+          - leginon/Leginon_Manual/Start_Leginon.md
+          - Run Leginon Client on the Instrument Computers: leginon/Leginon_Manual/Start_Leginon/Run_Leginon_Client_on_the_Instrument_Computers.md
+          - Start Leginon at your main working station remotely: leginon/Leginon_Manual/Start_Leginon/Start_Leginon_at_your_main_working_station_remotely.md
+          - 'Start leginon what is next ': leginon/Leginon_Manual/Start_Leginon/Start_leginon_what_is_next_.md
+          - Test Leginon on the Computer Controlling the Microscope: leginon/Leginon_Manual/Start_Leginon/Test_Leginon_on_the_Computer_Controlling_the_Microscope.md
+          - Test Leginon with Simulator: leginon/Leginon_Manual/Start_Leginon/Test_Leginon_with_Simulator.md
+          - Test Network Connection Between Remote and Instrument Computers:
+            - leginon/Leginon_Manual/Start_Leginon/Test_Network_Connection_Between_Remote_and_Instrument_Computers.md
+            - Configure pyamicfg for host-ip pairings: leginon/Leginon_Manual/Start_Leginon/Test_Network_Connection_Between_Remote_and_Instrument_Computers/Configure_pyamicfg_for_host-ip_pairings.md
+            - Reorder the network connections: leginon/Leginon_Manual/Start_Leginon/Test_Network_Connection_Between_Remote_and_Instrument_Computers/Reorder_the_network_connections.md
+        - Trouble shooting:
+          - leginon/Leginon_Manual/Trouble_shooting.md
+          - Aborting targets that are not yet being processed: leginon/Leginon_Manual/Trouble_shooting/Aborting_targets_that_are_not_yet_being_processed.md
+          - Do and Do Not in leginon: leginon/Leginon_Manual/Trouble_shooting/Do_and_Do_Not_in_leginon.md
+          - General operation problems: leginon/Leginon_Manual/Trouble_shooting/General_operation_problems.md
+          - Getting Help - 2: leginon/Leginon_Manual/Trouble_shooting/Getting_Help_-_2.md
+          - Hardware Troubles: leginon/Leginon_Manual/Trouble_shooting/Hardware_Troubles.md
+          - Load mysqldumped databases: leginon/Leginon_Manual/Trouble_shooting/Load_mysqldumped_databases.md
+          - Mysqldump of your database: leginon/Leginon_Manual/Trouble_shooting/Mysqldump_of_your_database.md
+          - Pausing and Aborting during data collection: leginon/Leginon_Manual/Trouble_shooting/Pausing_and_Aborting_during_data_collection.md
+          - Restarting procedure to continue data acquisition: leginon/Leginon_Manual/Trouble_shooting/Restarting_procedure_to_continue_data_acquisition.md
+          - Troubles with Calibrations - Troubleshooting: leginon/Leginon_Manual/Trouble_shooting/Troubles_with_Calibrations_-_Troubleshooting.md
+          - Troubles with Focusing and Drift Check: leginon/Leginon_Manual/Trouble_shooting/Troubles_with_Focusing_and_Drift_Check.md
+          - Troubles with Imaging - Troubleshooting: leginon/Leginon_Manual/Trouble_shooting/Troubles_with_Imaging_-_Troubleshooting.md
+          - Troubles with Targeting: leginon/Leginon_Manual/Trouble_shooting/Troubles_with_Targeting.md
+          - Troubles with Tomography: leginon/Leginon_Manual/Trouble_shooting/Troubles_with_Tomography.md
+        - Upgrade Instructions:
+          - leginon/Leginon_Manual/Upgrade_Instructions.md
+          - How to Update from v22 (Instrument Windows Computer): leginon/Leginon_Manual/Upgrade_Instructions/How_to_Update_from_v22_Instrument_Windows_Computer.md
+          - PyScope Changes 21: leginon/Leginon_Manual/Upgrade_Instructions/PyScope_Changes_21.md
+          - Update within the same version using git: leginon/Leginon_Manual/Upgrade_Instructions/Update_within_the_same_version_using_git.md
+          - Update within the same version using svn: leginon/Leginon_Manual/Upgrade_Instructions/Update_within_the_same_version_using_svn.md
+          - Upgrade to Leginon System trunk version from version 22: leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_trunk_version_from_version_22.md
+          - Upgrade to Leginon System version 16:
+            - leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_16.md
+            - Additional work at the computer controlling the microscope and camera (Window): leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_16/Additional_work_at_the_computer_controlling_the_microscope_and_camera_Window.md
+            - How to Update from v15 (Linux): leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_16/How_to_Update_from_v15_Linux.md
+            - How to Update from v15 (Window): leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_16/How_to_Update_from_v15_Window.md
+            - Import the new (16) applications included with Leginon: leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_16/Import_the_new_16_applications_included_with_Leginon.md
+            - Recommended Application Preference Changes when updated from version 15 update: leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_16/Recommended_Application_Preference_Changes_when_updated_from_version_15_update.md
+            - Update from v11 and v12 NOT AVAILABLE: leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_16/Update_from_v11_and_v12_NOT_AVAILABLE.md
+            - Update from v13-Follow v14 update after performing these: leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_16/Update_from_v13-Follow_v14_update_after_performing_these.md
+            - Update from v14: leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_16/Update_from_v14.md
+          - Upgrade to Leginon System version 21 from version 16: leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_21_from_version_16.md
+          - Upgrade to Leginon System version 21 from version 20:
+            - leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_21_from_version_20.md
+            - How to Update from v20 (Linux): leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_21_from_version_20/How_to_Update_from_v20_Linux.md
+            - How to Update from v20 (Microscope Windows Computer): leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_21_from_version_20/How_to_Update_from_v20_Microscope_Windows_Computer.md
+          - Upgrade to Leginon System version 22 from version 21:
+            - leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_22_from_version_21.md
+            - Check Cs value match before using Leginon after update: leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_22_from_version_21/Check_Cs_value_match_before_using_Leginon_after_update.md
+            - How to Update from v21 (Linux): leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_22_from_version_21/How_to_Update_from_v21_Linux.md
+            - How to Update from v21 (Microscope Windows Computer): leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_22_from_version_21/How_to_Update_from_v21_Microscope_Windows_Computer.md
+          - Upgrade to Leginon System version 2x from version 16:
+            - leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_2x_from_version_16.md
+            - How to Update from v16 (Linux): leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_2x_from_version_16/How_to_Update_from_v16_Linux.md
+            - How to Update from v16 (Microscope Windows Computer): leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_2x_from_version_16/How_to_Update_from_v16_Microscope_Windows_Computer.md
+            - Preparation before Using v2x Routinely: leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_2x_from_version_16/Preparation_before_Using_v2x_Routinely.md
+          - Upgrade to Leginon System version 30 from version 22:
+            - leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_30_from_version_22.md
+            - How to Update from v22 (Linux): leginon/Leginon_Manual/Upgrade_Instructions/Upgrade_to_Leginon_System_version_30_from_version_22/How_to_Update_from_v22_Linux.md
+        - Upgrade to Leginon System version 31 from version 30:
+          - leginon/Leginon_Manual/Upgrade_to_Leginon_System_version_31_from_version_30.md
+          - How to Update from v30 (Instrument Windows Computer): leginon/Leginon_Manual/Upgrade_to_Leginon_System_version_31_from_version_30/How_to_Update_from_v30_Instrument_Windows_Computer.md
+          - How to Update from v30 (Linux): leginon/Leginon_Manual/Upgrade_to_Leginon_System_version_31_from_version_30/How_to_Update_from_v30_Linux.md
+        - Upgrade to Leginon System version 32 from version 31:
+          - leginon/Leginon_Manual/Upgrade_to_Leginon_System_version_32_from_version_31.md
+          - How to Update from v31 (Linux):
+            - leginon/Leginon_Manual/Upgrade_to_Leginon_System_version_32_from_version_31/How_to_Update_from_v31_Linux.md
+            - How to Update from v31 (Instrument Windows Computer): leginon/Leginon_Manual/Upgrade_to_Leginon_System_version_32_from_version_31/How_to_Update_from_v31_Linux/How_to_Update_from_v31_Instrument_Windows_Computer.md
+        - Upgrade to Leginon System version 33 from version 32:
+          - leginon/Leginon_Manual/Upgrade_to_Leginon_System_version_33_from_version_32.md
+          - How to Update from v32 (Linux): leginon/Leginon_Manual/Upgrade_to_Leginon_System_version_33_from_version_32/How_to_Update_from_v32_Linux.md
+        - Upgrade to Leginon System version 34 from version 33:
+          - leginon/Leginon_Manual/Upgrade_to_Leginon_System_version_34_from_version_33.md
+          - How to Update from v33 (Instrument Windows Computer): leginon/Leginon_Manual/Upgrade_to_Leginon_System_version_34_from_version_33/How_to_Update_from_v33_Instrument_Windows_Computer.md
+          - How to Update from v33 (Linux): leginon/Leginon_Manual/Upgrade_to_Leginon_System_version_34_from_version_33/How_to_Update_from_v33_Linux.md
+        - Upgrade to Leginon System version 35 from version 34: leginon/Leginon_Manual/Upgrade_to_Leginon_System_version_35_from_version_34.md
+        - Upgrade to Leginon System version 36 from version 35: leginon/Leginon_Manual/Upgrade_to_Leginon_System_version_36_from_version_35.md
+        - Using FEI Titan Krios in Leginon:
+          - leginon/Leginon_Manual/Using_FEI_Titan_Krios_in_Leginon.md
+          - Auto Nitrogen Filler Triggering: leginon/Leginon_Manual/Using_FEI_Titan_Krios_in_Leginon/Auto_Nitrogen_Filler_Triggering.md
+        - Using Project Management Tools:
+          - leginon/Leginon_Manual/Using_Project_Management_Tools.md
+          - Add a new project: leginon/Leginon_Manual/Using_Project_Management_Tools/Add_a_new_project.md
+          - Add a new project for test: leginon/Leginon_Manual/Using_Project_Management_Tools/Add_a_new_project_for_test.md
+          - Edit an existing project: leginon/Leginon_Manual/Using_Project_Management_Tools/Edit_an_existing_project.md
+          - Go to project tools page: leginon/Leginon_Manual/Using_Project_Management_Tools/Go_to_project_tools_page.md
+          - Grid management: leginon/Leginon_Manual/Using_Project_Management_Tools/Grid_management.md
+          - Installation: leginon/Leginon_Manual/Using_Project_Management_Tools/Installation.md
+          - Recommendataion-Dividing projects by long-term goal: leginon/Leginon_Manual/Using_Project_Management_Tools/Recommendataion-Dividing_projects_by_long-term_goal.md
+          - Share an experiment session with a non-owner user: leginon/Leginon_Manual/Using_Project_Management_Tools/Share_an_experiment_session_with_a_non-owner_user.md
+        - Version Change Log:
+          - leginon/Leginon_Manual/Version_Change_Log.md
+          - Leginon System version 1 6:
+            - leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_1_6.md
+            - Bug Fixes: leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_1_6/Bug_Fixes.md
+            - Known Bugs: leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_1_6/Known_Bugs.md
+            - New Project Web Tool Features: leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_1_6/New_Project_Web_Tool_Features.md
+            - New User Features: leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_1_6/New_User_Features.md
+            - New dbemtool Web Tool Features (151): leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_1_6/New_dbemtool_Web_Tool_Features_151.md
+            - PyScope Change: leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_1_6/PyScope_Change.md
+            - Recommended Application Preference Changes when updated from version 15: leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_1_6/Recommended_Application_Preference_Changes_when_updated_from_version_15.md
+            - Updated Applications (All): leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_1_6/Updated_Applications_All.md
+          - Leginon System version 20:
+            - leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_20.md
+            - Bug Fixes 20: leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_20/Bug_Fixes_20.md
+            - Known Bugs 20: leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_20/Known_Bugs_20.md
+            - New User Features 20: leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_20/New_User_Features_20.md
+            - New Web Tool Features 20: leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_20/New_Web_Tool_Features_20.md
+            - PyScope Changes 20: leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_20/PyScope_Changes_20.md
+          - Leginon System version 21:
+            - leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_21.md
+            - Known Bugs 21: leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_21/Known_Bugs_21.md
+            - New User Features 21: leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_21/New_User_Features_21.md
+            - New Web Tool Features 21: leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_21/New_Web_Tool_Features_21.md
+          - Leginon System version 22:
+            - leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_22.md
+            - New User Features 22: leginon/Leginon_Manual/Version_Change_Log/Leginon_System_version_22/New_User_Features_22.md
+    - Leginon Developer Guide:
+      - leginon/Leginon_Developer_Guide.md
+      - Fake calibrations for Leginon simulator: leginon/Leginon_Developer_Guide/Fake_calibrations_for_Leginon_simulator.md
+      - Numextension: leginon/Leginon_Developer_Guide/Numextension.md
+      - 'Premade Realistic-looking calibration and images for simulation ': leginon/Leginon_Developer_Guide/Premade_Realistic-looking_calibration_and_images_for_simulation_.md
+      - Setup simulator with VMware: leginon/Leginon_Developer_Guide/Setup_simulator_with_VMware.md
+    - Miscellaneous:
+        - TiltPicker:
+            - Overview: tiltpicker/Wiki.md
+            - Installation: tiltpicker/Wiki/TiltPicker_Installation.md
+            - Usage: tiltpicker/Wiki/TiltPicker_Usage.md
+            - FAQ: tiltpicker/Wiki/TiltPicker_FAQ.md
+            - Changelog: tiltpicker/Wiki/TiltPicker_Changelog.md
+        - Windows External Package installers:
+          - leginon/Windows_External_Package_installers.md
+          - Windows 32 External Package Installers: leginon/Windows_External_Package_installers/Windows_32_External_Package_Installers.md
+        - Leginon System version beta:
+          - leginon/Leginon_System_version_beta.md
+          - New User Features beta: leginon/Leginon_System_version_beta/New_User_Features_beta.md
+          - Pyscope Changes beta: leginon/Leginon_System_version_beta/Pyscope_Changes_beta.md
+        - Leginon System version 30:
+          - leginon/Leginon_System_version_30.md
+          - New User Features 30: leginon/Leginon_System_version_30/New_User_Features_30.md
+          - Pyscope Changes 30: leginon/Leginon_System_version_30/Pyscope_Changes_30.md
+        - Windows Camera Package Requirement:
+          - leginon/Windows_Camera_Package_Requirement.md
+          - Protobuf installation instruction: leginon/Windows_Camera_Package_Requirement/Protobuf_installation_instruction.md
+          - SerialEM SEMCCD-GMS plugins: leginon/Windows_Camera_Package_Requirement/SerialEM_SEMCCD-GMS_plugins.md
+        - Redux:
+          - leginon/Redux.md
+          - Using Redux to serve images on myamiweb:
+            - leginon/Redux/Using_Redux_to_serve_images_on_myamiweb.md
+            - Start redux with systemd: leginon/Redux/Using_Redux_to_serve_images_on_myamiweb/Start_redux_with_systemd.md
+        - "Sub-3\xC5 proteasome image-shift data collection":
+          - "leginon/Sub-3\xC5_proteasome_image-shift_data_collection.md"
+          - Krios1-K2-NYSBC: "leginon/Sub-3\xC5_proteasome_image-shift_data_collection/Krios1-K2-NYSBC.md"
+          - Scaling Stage Position Matrix Calibration: "leginon/Sub-3\xC5_proteasome_image-shift_data_collection/Scaling_Stage_Position_Matrix_Calibration.md"
+        - Using Leginon at Scripps: leginon/Using_Leginon_at_Scripps.md
+        - Acquisitionpy: leginon/Acquisitionpy.md
+        - Add a new project shared: leginon/Add_a_new_project_shared.md
+        - Add host: leginon/Add_host.md
+        - Alternative reduxd installation on file server: leginon/Alternative_reduxd_installation_on_file_server.md
+        - Authors: leginon/Authors.md
+        - Bug Fixes 21: leginon/Bug_Fixes_21.md
+        - Bug Fixes 30: leginon/Bug_Fixes_30.md
+        - CAMC ini setup: leginon/CAMC_ini_setup.md
+        - Comtypes installer: leginon/Comtypes_installer.md
+        - Configure leginoncfg 2 1: leginon/Configure_leginoncfg_2_1.md
+        - Configure sinedoncfg 2 1: leginon/Configure_sinedoncfg_2_1.md
+        - Creating a new Leginon node: leginon/Creating_a_new_Leginon_node.md
+        - DE-12 Installation Pyscope Test: leginon/DE-12_Installation_Pyscope_Test.md
+        - Download Appion and Leginon Files: leginon/Download_Appion_and_Leginon_Files.md
+        - EM Workshop - Leginon Users Group: leginon/EM_Workshop_-_Leginon_Users_Group.md
+        - Eucentric focus: leginon/Eucentric_focus.md
+        - Extra supporting package table: leginon/Extra_supporting_package_table.md
+        - Faraday Cup Measurment Notes: leginon/Faraday_Cup_Measurment_Notes.md
+        - Forum conversion: leginon/Forum_conversion.md
+        - Gatan K2 Instruments cfg: leginon/Gatan_K2_Instruments_cfg.md
+        - Gatan K2 Support Update of trunk from before 17514 to higher than 17561: leginon/Gatan_K2_Support_Update_of_trunk_from_before_17514_to_higher_than_17561.md
+        - Grid management shared: leginon/Grid_management_shared.md
+        - How to Update from v22-redux (Linux): leginon/How_to_Update_from_v22-redux_Linux.md
+        - Install Leginon-only Packages: leginon/Install_Leginon-only_Packages.md
+        - Install SSH module for PHP webserver: leginon/Install_SSH_module_for_PHP_webserver.md
+        - Installation on the microscope computer 21: leginon/Installation_on_the_microscope_computer_21.md
+        - Installing comtypes: leginon/Installing_comtypes.md
+        - Instrumentcfg for DE-12: leginon/Instrumentcfg_for_DE-12.md
+        - Instrumentscfg for 21: leginon/Instrumentscfg_for_21.md
+        - Instrumentscfg for 22: leginon/Instrumentscfg_for_22.md
+        - Instrumentscfg for 30: leginon/Instrumentscfg_for_30.md
+        - Instrumentscfg for falcon orius: leginon/Instrumentscfg_for_falcon_orius.md
+        - JEOL setup: leginon/JEOL_setup.md
+        - Krios1-K2-NYSBC-large shift: leginon/Krios1-K2-NYSBC-large_shift.md
+        - Leginon Brainstorm: leginon/Leginon_Brainstorm.md
+        - Link to ubuntu: leginon/Link_to_ubuntu.md
+        - Linux distribution recommendation: leginon/Linux_distribution_recommendation.md
+        - Locate global config directory on Windows: leginon/Locate_global_config_directory_on_Windows.md
+        - MSI Quick-start for DD only: leginon/MSI_Quick-start_for_DD_only.md
+        - Manual Focusing Tool: leginon/Manual_Focusing_Tool.md
+        - More about Groups shared: leginon/More_about_Groups_shared.md
+        - Mosaic Target Maker: leginon/Mosaic_Target_Maker.md
+        - Packages installed by pysetupsh: leginon/Packages_installed_by_pysetupsh.md
+        - PyScope Changes 22: leginon/PyScope_Changes_22.md
+        - Recommandation for setup at a new institute shared: leginon/Recommandation_for_setup_at_a_new_institute_shared.md
+        - Reference session: leginon/Reference_session.md
+        - Reload atlas: leginon/Reload_atlas.md
+        - Revert Settings: leginon/Revert_Settings.md
+        - Set up for a new regular user shared: leginon/Set_up_for_a_new_regular_user_shared.md
+        - Special Instructions for FEI Eagle Camera: leginon/Special_Instructions_for_FEI_Eagle_Camera.md
+        - Steps involved in the installation shared: leginon/Steps_involved_in_the_installation_shared.md
+        - Strange dimension cameras: leginon/Strange_dimension_cameras.md
+        - Testing auto-installation: leginon/Testing_auto-installation.md
+        - Testing pyscope instrument: leginon/Testing_pyscope_instrument.md
+        - Tietz camera trouble shoot: leginon/Tietz_camera_trouble_shoot.md
+        - Trouble shooting semccd socket connection: leginon/Trouble_shooting_semccd_socket_connection.md
+        - Upgrade to Leginon System version 30 from version 22-redux: leginon/Upgrade_to_Leginon_System_version_30_from_version_22-redux.md
+        - Using Leginon on a system where the microscope and camera are controlled by different computers: leginon/Using_Leginon_on_a_system_where_the_microscope_and_camera_are_controlled_by_different_computers.md
+        - Using imcache to cache mrc images as jpeg images of the default size on myamiweb: leginon/Using_imcache_to_cache_mrc_images_as_jpeg_images_of_the_default_size_on_myamiweb.md
+        - Windows 32 External Package Installers Common: leginon/Windows_32_External_Package_Installers_Common.md
+        - Windows Microscope Package Requirement: leginon/Windows_Microscope_Package_Requirement.md
+        - Windows Myami Package installers: leginon/Windows_Myami_Package_installers.md
+
+

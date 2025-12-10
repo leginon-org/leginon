@@ -1,0 +1,5 @@
+---
+redirect_to: leginon/Leginon_Manual/Leginon_Calibrations_Application/Check_Phase_Plate_Patches/Inspect_the_phase_plate_slot_at_low_magnification
+---
+
+This page has been moved to [Inspect_the_phase_plate_slot_at_low_magnification](/leginon/Leginon_Manual/Leginon_Calibrations_Application/Check_Phase_Plate_Patches/Inspect_the_phase_plate_slot_at_low_magnification).

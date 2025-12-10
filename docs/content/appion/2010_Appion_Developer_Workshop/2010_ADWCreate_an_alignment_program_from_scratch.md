@@ -1,0 +1,13 @@
+-   Problem statement: We want to add EMAN's [refine2d.py](http://blake.bcm.tmc.edu/eman/eman1/progs/refine2d.py.html) into the pipeline
+-   Create a new python program:
+    -   determine what the inputs are and what is required
+        -   iterations
+        -   number of classes
+        -   ~~number of processors~~ auto set
+        -   input stack file
+        -   low/high pass filters
+        -   binning
+        -   limit number of particles
+    -   run the program
+    -   uploading to the database
+-   Create new php interface

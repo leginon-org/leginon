@@ -1,0 +1,5 @@
+---
+redirect_to: leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_on_Windows-32/Gatan_on_Windows_with_semccddll
+---
+
+This page has been moved to [Gatan_on_Windows_with_semccddll](/leginon/Leginon_Manual/Complete_Installation/Installation_on_the_instrument_computers/Installation_on_the_camera_computer/Gatan_on_Windows-32/Gatan_on_Windows_with_semccddll).

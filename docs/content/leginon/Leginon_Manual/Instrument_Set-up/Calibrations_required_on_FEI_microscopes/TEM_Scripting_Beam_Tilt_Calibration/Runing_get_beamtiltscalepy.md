@@ -1,0 +1,5 @@
+---
+redirect_to: leginon/Leginon_Manual/Instrument_Set-up/Calibrations_required_on_FEI_microscopes/TEM_Scripting_Beam_Tilt_Calibration/Running_get_beamtiltscalepy
+---
+
+This page has been moved to [Running_get_beamtiltscalepy](/leginon/Leginon_Manual/Instrument_Set-up/Calibrations_required_on_FEI_microscopes/TEM_Scripting_Beam_Tilt_Calibration/Running_get_beamtiltscalepy).
