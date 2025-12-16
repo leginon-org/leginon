@@ -87,6 +87,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'PhasePlatePlaneShift', 'type': 'property'},
 		{'name': 'PhasePlatePlaneTilt', 'type': 'property'},
 		{'name': 'PhasePlateFocus', 'type': 'property'},
+		{'name': 'XLens1Focus', 'type': 'property'},
 
 		######## methods
 		{'name': 'filmExposure', 'type': 'method'},
@@ -213,10 +214,10 @@ class TEM(baseinstrument.BaseInstrument):
 		return self.setImageShift(vector, relative)
 
 	def getPhasePlateFocus(self):
-		return None
+		return self.getParallelIlluminationOffset()
 
 	def setPhasePlateFocus(self, value):
-		return
+		return self.setParallelIlluminationOffset(value)
 
 	def getImageBeamTilt(self):
 		return self.getBeamTilt()
@@ -440,3 +441,10 @@ class TEM(baseinstrument.BaseInstrument):
 								'b':(math.radians(-90),math.radians(90)), # no limit
 		}
 		return limits
+
+	def getXLens1Focus(self):
+		return None
+
+	def setXLens1Focus(self, value):
+		# do nothing.
+		pass

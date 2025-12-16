@@ -1778,11 +1778,19 @@ class KriosXL(Krios):
 	def setPhasePlatePlaneTilt(self, vector, relative = 'absolute'):
 		return self.setXDeflectorShift(vector, relative)
 
-	def getPhasePlateFocus(self):
+	def getXLens1Focus(self):
 		return self.getXLensAlignment(1)
 
-	def setPhasePlateFocus(self, value, relative = 'absolute'):
+	def setXLens1Focus(self, value, relative = 'absolute'):
 		return self.setXLensAlignment(1, value, relative)
+
+	def getPhasePlateFocus(self):
+		return self.getParallelIlluminationOffset()
+
+	def setPhasePlateFocus(self, value, relative = 'absolute'):
+		if relative != 'absolute':
+			raise ValueError('set with %s mode is not implemented' % relative)
+		return self.setParallelIlluminationOffset(value)
 
 class EFKrios(Krios):
 	name = 'EF-Krios'
@@ -1810,9 +1818,17 @@ class EFKriosXL(EFKrios):
 	def setPhasePlatePlaneTilt(self, vector, relative = 'absolute'):
 		return self.setXDeflectorShift(vector, relative)
 
-	def getPhasePlateFocus(self):
+	def getXLens1Focus(self):
 		return self.getXLensAlignment(1)
 
-	def setPhasePlateFocus(self, value, relative = 'absolute'):
+	def setXLens1Focus(self, value, relative = 'absolute'):
 		return self.setXLensAlignment(1, value, relative)
+
+	def getPhasePlateFocus(self):
+		return self.getParallelIlluminationOffset()
+
+	def setPhasePlateFocus(self, value, relative = 'absolute'):
+		if relative != 'absolute':
+			raise ValueError('set with %s mode is not implemented' % relative)
+		return self.setParallelIlluminationOffset(value)
 

@@ -207,6 +207,7 @@ scope_params = (
 	('phase plate plane shift', dict),
 	('phase plate plane tilt', dict),
 	('phase plate focus', float),
+	('xlens1 focus', float),
 	('corrected stage position', int),
 	('stage position', dict),
 	('holder type', str),

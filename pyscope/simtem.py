@@ -806,3 +806,11 @@ class SimEFKriosXL(SimTEM300):
 			3600,
 			88000,
 		]
+		self.xlens1_focus = 0.3
+
+	def getXLens1Focus(self):
+		return self.xlens1_focus
+
+	def setXLens1Focus(self, value):
+		self.xlens1_focus = value
+
