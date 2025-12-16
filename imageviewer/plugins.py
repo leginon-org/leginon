@@ -466,8 +466,8 @@ class TargetsPlugin(Plugin):
         for i, (x, y) in enumerate(self.targets):
             x = int(round(scale*x))
             y = int(round(scale*y))
-            x = x - self.bitmapsize.width/2 + px
-            y = y - self.bitmapsize.height/2 + py
+            x = x - self.bitmapsize.width//2 + px
+            y = y - self.bitmapsize.height//2 + py
             region.Union(x, y, w, h)
             self.targetoffsets.append(wx.Rect(x, y, w, h))
 

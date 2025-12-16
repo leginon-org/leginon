@@ -2942,6 +2942,45 @@ class leginondata {
 		return $r[0];
 	}
 
+	function getImageScopeValues($sessionId, $preset="", $scaler_fieldnames=array('intensity',), $xy_fieldnames=array('image shift',), $stats=false) {
+		$wherepreset=($preset) ? "AND `p`.name='$preset'" : "";
+		$select_q = "";
+		foreach ($scaler_fieldnames as $fieldname) {
+			$displayname = str_replace(' ','_',$fieldname);
+			$select_q.= ",`s`.`".$fieldname."` AS `".$displayname."` ";
+		};
+		foreach ($xy_fieldnames as $fieldname) {
+			$displayname= str_replace(' ','_',$fieldname);
+			$select_q.= ",`s`.`SUBD|".$fieldname."|x` AS `".$displayname."_x` ";
+			$select_q.= ",`s`.`SUBD|".$fieldname."|y` AS `".$displayname."_y` ";
+			// pass also stage position z values
+			$qz = ($fieldname == 'stage position') ? ",`s`.`SUBD|".$fieldname."|z` AS `".$displayname."_z` ":"";
+			$select_q.= $qz;
+		};
+		$displayname = str_replace(' ','_',$fieldname);
+		$q="SELECT "
+		."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) AS `unix_timestamp`, "
+		."`a`.`DEF_timestamp` AS `timestamp`, "
+		."`p`.`name`, "
+		."a.`DEF_id` AS image_id, "
+		."CONCAT(`a`.`filename`,'.mrc') AS filename "
+		.$select_q
+		."FROM "
+		."`AcquisitionImageData` AS `a` "
+		."LEFT JOIN `PresetData` AS `p` "
+		."ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
+		."LEFT JOIN `ScopeEMData` AS `s` "
+		."ON (`s`.`DEF_id`=`a`.`REF|ScopeEMData|scope`) "
+		."WHERE "
+		."`a`.`REF|SessionData|session`=$sessionId "
+		.$wherepreset;
+		if ($stats) {
+			$statsarray = array('v'=>$this->getStats($displayname, $q));
+			return $statsarray;
+		}
+		return $this->mysql->getSQLResult($q);
+	}
+
 	function getImageScopeXYValues($sessionId, $preset="", $fieldname='image shift',$stats=false) {
 		$wherepreset=($preset) ? "AND `p`.name='$preset'" : "";
 		$displayname = str_replace(' ','_',$fieldname);

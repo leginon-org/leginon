@@ -10,6 +10,11 @@ import leginon.gui.wx.Reference
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
+		return self._ScrolledSettings(self)
+
+	def _ScrolledSettings(self,parent):
+		# This "private call" ensures that the class in this module is loaded
+		# instead of the one in module containing the parent class
 		return ScrolledSettings(self,self.scrsize,False)
 
 class ScrolledSettings(leginon.gui.wx.Reference.ScrolledSettings):

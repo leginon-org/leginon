@@ -532,7 +532,7 @@ class TomoTargetImagePanel(TargetImagePanel):
 		x=radm*n.cos(the)*c-s*radn*n.sin(the)+col;
 		y=radm*n.cos(the)*s+c*radn*n.sin(the)+row;
 		#p= radm*n.cos(the)*c-s*radn*n.sin(the)+col,radm*n.cos(the)*s+c*radn*n.sin(the)+row)
-		for i,j in zip(x,y):
+		for i,j in zip(x.astype(int),y.astype(int)):
 			dc.DrawPoint(i,j)
 
 	def getTargetMap(self):

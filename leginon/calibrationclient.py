@@ -12,13 +12,14 @@
 # $Locker:  $
 
 from leginon import node, leginondata, event
+from leginon import ctffun
 import numpy
 import numpy.linalg
 import scipy
 import pyami.quietscipy
 import scipy.ndimage
 import math
-from pyami import correlator, peakfinder, arraystats, imagefun, fftfun, numpil, ellipse
+from pyami import correlator, peakfinder, arraystats, imagefun, fftfun, numpil, ellipse, mrc
 import time
 import sys
 import threading
@@ -2522,6 +2523,77 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 		ix,iy = numpy.dot(minv, (gonx,gony))
 
 		return iy,ix
+
+class CtfCalibrationClient(PixelSizeCalibrationClient):
+	def __init__(self, node):
+		CalibrationClient.__init__(self, node)
+		self.ctfclient = ctffun.GctffindClient(self.node)
+
+	def measureCtf(self, delta_defocus, correct_tilt=False, stig=False, settle=0.0, image0=None, phase_search=(0,0)):
+		"""
+		measure defocus correction by estimating CTF on two images.
+		"""
+		phase_search = list(phase_search)
+		# backward compatible where old settings has Null in database
+		for index in (0,1):
+			if phase_search[index] is None:
+				phase_search[index] = 0.0
+		self.abortevent.clear()
+		if image0 is None:
+			imagedata0 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
+			self.displayImage(imagedata0['image'])
+		else:
+			# last imagedata from drift check.
+			imagedata0 = image0
+		defocus0 = self.instrument.tem.Defocus
+		defocus_avg0, ctfvalues0 = self.measureImageCtf(imagedata0, phase_search)
+		# adjust by pixelsize
+		ht = imagedata0['scope']['high tension']
+		cs = imagedata0['scope']['tem']['cs']
+		s0 = fftfun.calculateFirstNode(ht,defocus_avg0,cs)
+		rpixel = self.getImageReciprocalPixelSize(imagedata0)['x']
+		if s0/rpixel > 0.125*imagedata0['camera']['dimension']['x']:
+			# bring it to underfocus if it is low overfocus
+			delta_defoc = - 2.5 * defocus_avg0
+		else:
+			# not to go too much further if it is high underfocus
+			delta_defoc = - defocus_avg0*0.5
+		self.node.logger.info('add underfocus by %.2f um for the second image' % (abs(delta_defoc*1e6)))
+		# second image
+		defocus1 = self.instrument.tem.Defocus + delta_defoc
+		self.instrument.tem.Defocus = defocus1
+		time.sleep(settle)
+		imagedata1 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
+		defocus_avg1, ctfvalues1 = self.measureImageCtf(imagedata1, phase_search)
+
+		# reset
+		self.instrument.tem.Defocus = defocus0
+		# determine sign of the ctf defocus
+		defocus0_is_over_focus = False
+		if defocus_avg1 - defocus_avg0 < 0:
+			defocus0_is_over_focus = True
+		else:
+			if defocus_avg1 < abs(delta_defoc):
+				defocus0_is_over_focus = False
+		sign = -1 if defocus0_is_over_focus else 1
+		self.node.logger.info('correction sign of the first image is %d' % sign)
+		result = {'defocus': defocus_avg0*sign, 'min': 0.0}
+		result['stigx'] = None
+		result['stigy'] = None
+		return result
+
+	def measureImageCtf(self, imagedata, phase_search=(0,0)):
+		if not imagedata['filename']:
+			imagedata['filename']='temp'
+			mrc.write(imagedata['image'],'%s/temp.mrc' % (imagedata['session']['image path']))
+		im = imagedata['image']
+		self.displayImage(im)
+		ctfvalues = self.ctfclient.runFromImageData(imagedata, phase_search=phase_search)
+		self.node.logger.info('estimated ctf: def1,def2,angle_astig: %.2f um, %.2f um, %.1f degrees' % (ctfvalues['defocus1']*1e-4, ctfvalues['defocus2']*1e-4, ctfvalues['angle_astigmatism']))
+		defocus_avg1 = 1e-10*(ctfvalues['defocus1']+ctfvalues['defocus2'])/2.0
+		if max(phase_search) > min(phase_search):
+			self.node.logger.info('estimated phase shift: %.2f degrees' % ctfvalues['extra_phase_shift'])
+		return defocus_avg1, ctfvalues
 
 class EucentricFocusClient(CalibrationClient):
 	def __init__(self, node):

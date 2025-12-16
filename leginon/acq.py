@@ -207,8 +207,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.DriftMonitorRequestEvent, 
 											event.FixBeamEvent,
 											event.FixAlignmentEvent,
+											event.FixLppAlignmentEvent,
 											event.FixConditionEvent,
 											event.AlignZeroLossPeakPublishEvent,
+											event.AlignLppPublishEvent,
 											event.ScreenCurrentLoggerPublishEvent,
 											event.PhasePlatePublishEvent,
 											event.NodeBusyNotificationEvent,
@@ -292,6 +294,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		app = evt['application']
 		self.targetfinder_from = appclient.getLastNodeThruBinding(app,self.name,'ImageTargetListPublishEvent','TargetFinder')
 		self.alignzlp_bound = appclient.getNextNodeThruBinding(app,self.name,'AlignZeroLossPeakPublishEvent','AlignZeroLossPeak')
+		self.alignlpp_bound = appclient.getNextNodeThruBinding(app,self.name,'AlignLppPublishEvent','LppAlignTimer')
 		self.phaseplate_bound = appclient.getNextNodeThruBinding(app,self.name,'PhasePlatePublishEvent','PhasePlateAligner')
 		self.screencurrent_bound = appclient.getNextNodeThruBinding(app,self.name,'ScreenCurrentLoggerPublishEvent','ScreenCurrentLogger')
 
@@ -465,6 +468,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 					self.logger.warning('Energy filter activated but can not tune without binding to Align ZLP')
 					self.alignzlp_warned = True	
 
+	def tuneLpp(self, presetname):
+		presetdata = self.presetsclient.getPresetByName(presetname)
+		if not presetdata:
+			return
+		if type(self.alignlpp_bound)==type({}) and self.alignlpp_bound['is_direct_bound']:
+			self.alignLpp(presetname)
+
 	def monitorScreenCurrent(self, presetname):
 		presetdata = self.presetsclient.getPresetByName(presetname)
 		if not presetdata:
@@ -492,6 +502,17 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(request_data, database=True, pubevent=True, wait=True)
 		self.setStatus('processing')
 
+	def alignLpp(self, preset_name):
+		'''
+		Send align Lpp request
+		'''
+		self.setStatus('waiting')
+		request_data = leginondata.AlignLppRequestData()
+		request_data['session'] = self.session
+		request_data['preset'] = preset_name
+		self.publish(request_data, database=True, pubevent=True, wait=True)
+		self.setStatus('processing')
+
 	def measureScreenCurrent(self, preset_name): 
 		'''
 		Send screen current measurement request
@@ -508,6 +529,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		zlp_preset_name = self.settings['preset order'][-1]
 		self.logger.info('Tuning before processing a target')
 		self.tuneEnergyFilter(zlp_preset_name)
+		self.tuneLpp(zlp_preset_name) # preset_name is not used but tem/ccdcamera must be set
 		self.monitorScreenCurrent(zlp_preset_name)
 
 	def validateSettings(self):

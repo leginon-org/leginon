@@ -7,7 +7,7 @@
 #
 from leginon import acq as acquisition
 from leginon import node, leginondata
-from leginon import calibrationclient
+from leginon import calibrationclient, lppfit, targetwatcher
 import threading
 from leginon import event
 import time
@@ -19,6 +19,9 @@ import copy
 import leginon.gui.wx.LppAligner
 from leginon import player
 
+class NoReferenceBypass(targetwatcher.BypassException):
+	pass
+
 class LppAligner(acquisition.Acquisition):
 	panelclass = leginon.gui.wx.LppAligner.Panel
 	settingsclass = leginondata.LppAlignerSettingsData
@@ -26,7 +29,16 @@ class LppAligner(acquisition.Acquisition):
 	defaultsettings.update({
 		'global view offset':0.0,
 		'compress ratio':8,
-		'rotation':0.0,
+		'xlpp':False,
+		'rotation1':0.0,
+		'rotation2':90.0,
+		'acquire type':'single off-plane image',
+		#'phase plate defocus sequence': '(-0.002,-0.0025,-0.003,-0.004)',
+		'phase plate defocus sequence': '(-0.002,-0.003,-0.004)',
+		'lpp1 wave xtilt vector x': 0.0,
+		'lpp1 wave xtilt vector y': 0.000165,
+		'lpp2 wave xtilt vector x': 0.000165,
+		'lpp2 wave xtilt vector y': 0.0,
 	})
 
 	eventinputs = acquisition.Acquisition.eventinputs
@@ -37,6 +49,9 @@ class LppAligner(acquisition.Acquisition):
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
 		self.deltaz = 0.0
 		self.v0 = 0.0
+		self.series_id = 1
+		self.xt_cycle = 0.000165
+		self.acquire_types = ['single off-plane image','on-node reference','global view','lpp defocus series']
 
 	def setParallelIlluminationOffsetToScope(self,view_type='on-plane'):
 		errstr = 'paralllel illumination offset to instrument failed: %s'
@@ -52,11 +67,19 @@ class LppAligner(acquisition.Acquisition):
 	def preAcquire(self, presetdata, emtarget=None, channel=None, reduce_pause=False):
 		super(LppAligner,self).preAcquire(presetdata, emtarget, channel, reduce_pause)
 		self.v0 = self.instrument.tem.ParallelIlluminationOffset
-		self.setParallelIlluminationOffsetToScope('global')
+		self.f0 = self.instrument.tem.PhasePlateFocus
+		self.xt0 = self.instrument.tem.PhasePlatePlaneShift
+		self.new_f0 = self.f0
+		self.new_phase_shifts = {1:0.0}
+		self.on_node_slopes = {1:0.0}
+		self.second_order_amps = {1:0.0}
+		if self.settings['acquire type'] == 'global view':
+			self.setParallelIlluminationOffsetToScope('global')
 
 	def resetParallelIlluminationOffset(self):
 		self.instrument.tem.ParallelIlluminationOffset = self.v0
 		self.logger.info('Lpp set back to pre acquisition value of (c3 offset,x1): %7.4f' % self.v0)
+
 	def compress(self, arr, rot_angle,ratio):
 		shape0 = arr.shape
 		arr = nd.rotate(arr, rot_angle,mode='nearest') # angle in degrees
@@ -80,6 +103,225 @@ class LppAligner(acquisition.Acquisition):
 		return final
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
+		self.lpp_axes = [1]
+		if self.settings['xlpp']:
+			self.lpp_axes.append(2)
+		if self.settings['acquire type'] == 'single off-plane image':
+			self._acquireAlignImage(presetdata, emtarget, attempt, target, channel)
+		elif self.settings['acquire type'] == 'on-node reference':
+			self._acquireOnNodeReference(presetdata, emtarget, attempt, target, channel)
+		elif self.settings['acquire type'] == 'global view':
+			self._acquireGlobal(presetdata, emtarget, attempt, target, channel)
+		else:
+			self._acquireFocusSeries(presetdata, emtarget, attempt, target, channel)
+
+	def _acquireAlignImage(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
+		ref_results = leginondata.LppOnNodeRefData(tem=presetdata['tem'],ccdcamera=presetdata['ccdcamera'], xlpp=self.settings['xlpp']).query(results=1)
+		if not ref_results:
+			self.need_save_reference = True
+			raise NoReferenceError('No reference for on-node lpp alignment found.')
+		refdata = ref_results[0]
+		delta_f = refdata['delta lpp focus']
+		# acquire image with new_f
+		try:
+			status, r = self._acquireOffPlaneImage(presetdata, emtarget, attempt, target, channel, delta_f)
+		except Exception as e:
+			self.logger.error('Failed. off plane alignment not valid: %s' % e)
+			return 'error'
+		try:
+			# phase shift represent correction needed, so it needs to reverse sign.
+			for k in r.keys():
+				phase_shift_needed = r[k]['phase_shift_to_max']
+				phase_diff = -(phase_shift_needed - refdata['lpp%d phase shift' % k])
+				self.new_phase_shifts[k] = lppfit.convert_phase_degrees(phase_diff)
+		except Exception as e:
+			self.logger.error('Error calculating on-node values: %s' % e)
+			status = 'error'
+			return status
+		self.logger.info('phase shift correction = %s' % self.new_phase_shifts)
+		self.saveLppFitMeasurement(refdata, self.imagedata, r, self.new_phase_shifts)
+		return status
+
+	def _acquireOffPlaneImage(self, presetdata, emtarget=None, attempt=None, target=None, channel=None, lpp_delta_focus=None):
+		'''
+		save an image used as reference.
+		'''
+		#
+		reduce_pause = self.onTarget
+		status = self.moveAndPreset(presetdata, emtarget)
+		if status == 'error':
+			self.logger.warning('Move failed. skipping acquisition at this target')
+			return status
+		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
+		args = (presetdata, emtarget, defaultchannel)
+		try:
+			lpp_focus = self.f0 + lpp_delta_focus
+			self.logger.info('phase plate focus set to %.8f' % lpp_focus)
+			self.instrument.tem.PhasePlateFocus = lpp_focus
+			time.sleep(self.settings['pause time'])
+			if self.settings['background']:
+				self.clearCameraEvents()
+				t = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
+				t.start()
+				self.waitExposureDone()
+			else:
+				self.acquirePublishDisplayWait(*args)
+			myimage = self.imagedata['image']
+		except Exception as e:
+			self.logger.error('failed to acquire image, aborting: %s' % e)
+			raise RuntimeError('Acquisition Failed: %e' % e)
+		self.resetLppFocus()
+		results = {}
+		try:
+			r1 = lppfit.run_fringe_fit(myimage, self.settings['rotation1'])
+			results= {1:r1}
+			if self.settings['xlpp']:
+				r2 = lppfit.run_fringe_fit(myimage, self.settings['rotation2'])
+				results[2] = r2
+		except Exception as e:
+			self.logger.warning('failed fitting, skipping: %s' % e)
+			is_failed = self.resetComaCorrection()
+			raise RuntimeError('Lpp Fitting failed: %e' % e)
+		is_failed = self.resetComaCorrection()
+		if is_failed:
+			self.player.pause()
+		return status, results
+
+	def _acquireOnNodeReference(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
+		'''
+		save an image used as reference.
+		'''
+		self.x1_defocus_series = list(eval(self.settings['phase plate defocus sequence'])) #defocus in tfs unit
+		self.x1_defocus_series.sort()
+		if self.x1_defocus_series[0] < 0:
+			# always starts from value closest to f0
+			self.x1_defocus_series.reverse()
+		delta_f = self.x1_defocus_series[-1]
+		try:
+			status, r = self._acquireOffPlaneImage(presetdata, emtarget, attempt, target, channel, delta_f)
+		except Exception as e:
+			self.logger.error('Failed. on-node reference not saved: %s' % e)
+			return
+
+		q = leginondata.LppOnNodeRefData(
+				session=self.session,
+				reference=self.imagedata,
+				tem=self.imagedata['scope']['tem'],
+				ccdcamera=self.imagedata['camera']['ccdcamera'],
+				xlpp=self.settings['xlpp'],
+		)
+		q['delta lpp focus'] = delta_f
+		for k in r.keys():
+			q['lpp%d rotation' % k] = r[k]['image_rotation']
+			q['lpp%d phase shift' % k] = r[k]['phase_shift_to_max']
+			self.logger.info('reference lpp%d phase shift saved at %.1f.' % (k,r[k]['phase_shift_to_max']))
+		q.insert(force=True)
+		self.saveLppFitInImageComment(self.imagedata, r, True)
+
+	def _acquireFocusSeries(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
+		'''
+		this replaces Acquisition.acquire()
+		Instead of acquiring an image, we acquire a series of phase plate focus and use
+		them to correct the on-plane and on-node condition
+		'''
+		reduce_pause = self.onTarget
+		status = self.moveAndPreset(presetdata, emtarget)
+		if status == 'error':
+			self.logger.warning('Move failed. skipping acquisition at this target')
+			return status
+		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
+		args = (presetdata, emtarget, defaultchannel)
+		self.x1_defocus_series = list(eval(self.settings['phase plate defocus sequence'])) #defocus in tfs unit
+		self.x1_defocus_series.sort()
+		if self.x1_defocus_series[0] < 0:
+			# always starts from value closest to f0
+			self.x1_defocus_series.reverse()
+		data = {}
+		for k in self.lpp_axes:
+			data[k] = []
+		for i, df in enumerate(self.x1_defocus_series):
+			self.series_id = i+1 #base 1
+			try:
+				new_f = self.f0 + df
+				self.logger.info('phase plate focus set to %.8f' % new_f)
+				self.instrument.tem.PhasePlateFocus = new_f
+				time.sleep(self.settings['pause time'])
+				if self.settings['background']:
+					self.clearCameraEvents()
+					t = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
+					t.start()
+					self.waitExposureDone()
+				else:
+					self.acquirePublishDisplayWait(*args)
+				myimage = self.imagedata['image']
+			except Exception as e:
+				self.logger.error('failed to acquire image, aborting: %s' % e)
+				self.resetLppFocus()
+				break
+			finally:
+				try:
+					if self.settings['xlpp']:
+						r = lppfit.run_2d_fringe_fit(myimage, (self.settings['rotation1'], self.settings['rotation2']))
+					else:
+						r = {1:lppfit.run_fringe_fit(myimage, self.settings['rotation1'])}
+					for k in r.keys():
+						data[k].append((new_f, r[k]['wave_period'], r[k]['phase_shift_to_max']))
+						print('focus, period, phase_shift_to_apply')
+						print(numpy.array(data))
+				except Exception as e:
+					self.logger.warning('failed fitting, skipping: %s' % e)
+				finally:
+					self.resetLppFocus()
+		is_failed = self.resetComaCorrection()
+		if is_failed:
+			self.player.pause()
+		new_f0 = {} # sequence of new_f0 at each axis
+		try:
+			for k in data.keys():
+				new_f0[k], self.new_phase_shifts[k], self.on_node_slopes[k], self.second_order_amps[k] = lppfit.calculateOnPlaneOnNode(numpy.array(data[k]), is_over_focus=False)
+				self.logger.info('Calculated LPP x1 lens at %.8f, phase shift needed at %s' % (new_f0[k], self.new_phase_shifts[k]))
+			self.new_f0 = sum(new_f0.values())
+		except Exception as e:
+			raise
+			self.logger.error('Error calculating on-plane and on-node values: %s' % e)
+			return status
+
+	def guiSetOnPlaneOnNode(self):
+		'''
+		set on-plane and on-node and save the xtilt calibration
+		'''
+		self.xtilt_cal = self.settings
+		self.setOnPlaneOnNode()
+		self.saveLppCalibration()
+
+	def saveLppCalibration(self):
+		currentpreset = self.presetsclient.getCurrentPreset()
+		tem = currentpreset['tem']
+		ccdcamera = currentpreset['ccdcamera']
+		results = leginondata.LppCalibrationData(session=self.session, tem=tem, ccdcamera=ccdcamera, xlpp=self.settings['xlpp']).query(results=1)
+		if results:
+			r = results[0]
+			# only save once if unchanged
+			if r['lpp1 wave xtilt vector x'] == self.settings['lpp1 wave xtilt vector x'] and r['lpp1 wave xtilt vector y'] == self.settings['lpp1 wave xtilt vector y']:
+				if r['lpp2 wave xtilt vector x'] == self.settings['lpp2 wave xtilt vector x'] and r['lpp2 wave xtilt vector y'] == self.settings['lpp2 wave xtilt vector y']:
+					return
+		q = leginondata.LppCalibrationData(session=self.session, tem=tem, ccdcamera=ccdcamera, xlpp=self.settings['xlpp'])
+		for k in self.lpp_axes:
+			q['lpp%d wave xtilt vector x' % k] = self.settings['lpp%d wave xtilt vector x' % k]
+			q['lpp%d wave xtilt vector y' % k] = self.settings['lpp%d wave xtilt vector y' % k]
+		q.insert(force=True)
+		self.logger.info('Lpp standing wave xtilt vector saved')
+
+	def resetLppFocus(self):
+		self.instrument.tem.PhasePlateFocus = self.f0
+		self.instrument.tem.PhasePlatePlaneShift = self.xt0
+
+	def setImageFilename(self, imagedata):
+		super(LppAligner, self).setImageFilename(imagedata)
+		if self.settings['acquire type'] == 'lpp defocus series':
+			imagedata['filename'] = imagedata['filename']+'_%d' % self.series_id
+
+	def _acquireGlobal(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
 		'''
 		this replaces Acquisition.acquire()
 		Instead of acquiring an image, we acquire an image and then compress along x-axis 
@@ -101,7 +343,7 @@ class LppAligner(acquisition.Acquisition):
 			else:
 				self.acquirePublishDisplayWait(*args)
 			myimage = self.imagedata['image']
-			self.cmp_image = self.compress(myimage, self.settings['rotation'], self.settings['compress ratio'])
+			self.cmp_image = self.compress(myimage, self.settings['rotation1'], self.settings['compress ratio'])
 			self.setImage(self.cmp_image, 'Compressed')
 			if self.settings['save image']:
 				self.saveCompressed()

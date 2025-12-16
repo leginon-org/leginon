@@ -44,6 +44,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		self.focus_methods = ordereddict.OrderedDict((
 			('Manual', self.manualCheckLoop),
 			('Beam Tilt', self.autoFocus),
+			('Ctf Fit', self.autoCtf),
 			('Stage Tilt', self.autoStage),
 			('None', self.noMeasure),
 		))
@@ -72,10 +73,14 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			'drift threshold': 3e-10,
 			'recheck drift': False,
 			'reset defocus': None,
+			'phase search max': 0,
+			'phase search min': 0,
 		}
 		self.manualplayer = player.Player(callback=self.onManualPlayer)
 		manualfocuschecker.ManualFocusChecker.__init__(self, id, session, managerlocation, **kwargs)
+		self.psizecalclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
+		self.ctfcalclient = calibrationclient.CtfCalibrationClient(self)
 		self.stagetiltcalclient = calibrationclient.StageTiltCalibrationClient(self)
 		self.imageshiftcalclient = calibrationclient.ImageShiftCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
@@ -268,6 +273,106 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			self.logger.info('Set beam tilt back')
 			# this beam tilt includes aberration correction
 			self.btcalclient.setBeamTilt(beamtilt0)
+			if measure_status:
+				return measure_status
+
+		if setting['stig correction'] and correction['stigx'] and correction['stigy']:
+			sx = '%.3f' % correction['stigx']
+			sy = '%.3f' % correction['stigy']
+		else:
+			sx = sy = 'N/A'
+		self.logger.info('Measured defocus: %.3e, stigx: %s, stigy: %s, min: %.2f' % (correction['defocus'], sx, sy, correction['min']))
+		defoc = correction['defocus']
+		stigx = correction['stigx']
+		stigy = correction['stigy']
+		fitmin = correction['min']
+
+		resultdata.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':fitmin, 'drift': lastdrift})
+		return 'ok'
+
+
+	def autoCtf(self, setting, emtarget, resultdata):
+		presetname = setting['preset name']
+		stiglens = 'objective'
+		## beam tilt scale
+		# relative beam tilt dict
+		presetdata = self.presetsclient.getPresetFromDB(presetname)
+		### Drift check
+		if setting['check drift']:
+			driftthresh = setting['drift threshold']
+			# move first if needed
+			# TODO: figure out how drift monitor behaves in RCT if doing this
+			self.conditionalMoveAndPreset(presetname, emtarget)
+			# apply pause time as if it is an image acquisition
+			presetdata = self.presetsclient.getPresetFromDB(presetname)
+			self.preAcquire(presetdata, emtarget, 0, reduce_pause=False)
+			self.is_firstimage = False
+			driftresult = self.checkDrift(presetname, emtarget, driftthresh, {'x':0.0,'y':0.0})
+			if setting['recheck drift'] and driftresult['status'] == 'drifted':
+				# See Issue #3990
+				self.logger.info('Drift was detected so target will be repeated')
+				return 'repeat'
+			if driftresult['status'] == 'timeout':
+				self.logger.warning('still drifting after timeout')
+				return 'aborted'
+			lastdrift = driftresult['final']
+			lastdriftimage = self.driftimage
+			self.setImage(lastdriftimage['image'], 'Image')
+
+			self.logger.info('use final drift image in focuser')
+		else:
+			lastdrift = None
+			lastdriftimage = None
+
+		## send the autofocus preset to the scope
+		## drift check may have done this already
+		self.conditionalMoveAndPreset(presetname,emtarget)
+		# apply pause time as if it is an image acquisition
+		presetdata = self.presetsclient.getPresetFromDB(presetname)
+		self.preAcquire(presetdata, emtarget, 0, reduce_pause=False)
+		self.is_firstimage = False
+
+		## set to eucentric focus if doing Z correction
+		## WARNING:  this assumes that user will not change
+		## to another focus type before doing the correction
+		focustype = setting['correction type']
+		if focustype == 'Stage Z':
+			self.logger.info('Setting eucentric focus...')
+			self.eucentricFocusToScope()
+			self.logger.info('Eucentric focus set')
+			self.eucset = True
+		else:
+			# Make sure defocus is set according to the preset
+			# Otherwise two defocus correction sequence 
+			# using the same preset would have close
+			# to zero defocus after the first correction
+			p = self.presetsclient.getCurrentPreset()
+			self.instrument.tem.Defocus = p['defocus']
+			self.eucset = False
+		self.reset = True
+		# get original beam to use to reset before return for any reason.
+		# failed in the process or not as a safety
+		focus0 = self.instrument.tem.Focus
+
+		measure_status = None
+		delta_defocus = 1e-6
+		phase_search = (setting['phase search min'],setting['phase search max'])
+		try:
+			# increased settle time from 0.25 to 0.5 for Falcon protector
+			settletime = self.settings['beam tilt settle time']
+			### FIX ME temporarily switch off tilt correction because the calculation may be wrong Issue #3030
+			correction = self.ctfcalclient.measureCtf(delta_defocus, correct_tilt=False, stig=setting['stig correction'], settle=settletime, image0=lastdriftimage, phase_search=phase_search)
+		except calibrationclient.Abort:
+			self.logger.info('Measurement of defocus and stig. has been aborted')
+			measure_status = 'aborted'
+		except calibrationclient.NoCalibrationError as e:
+			self.logger.error('Measurement failed without calibration: %s' % e)
+			measure_status = 'aborted'
+			# any other exception
+		except Exception as e:
+			self.logger.error('Other error: %s' % e)
+			measure_status = 'aborted'
+		finally:
 			if measure_status:
 				return measure_status
 
