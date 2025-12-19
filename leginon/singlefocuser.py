@@ -436,6 +436,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			else:
 				self.eucset = False
 		else:
+			logmessage = 'Focus measurement change = %s (change limit = %s to %s)' % (defoc, delta_min, delta_max)
 			self.logger.info(logmessage)
 
 		### validate stig correction

@@ -2559,7 +2559,7 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 			# not to go too much further if it is high underfocus
 			delta_defoc = - defocus_avg0*0.5
 		self.node.logger.info('add underfocus by %.2f um for the second image' % (abs(delta_defoc*1e6)))
-		# second image
+		# second image should always be underfocus
 		defocus1 = self.instrument.tem.Defocus + delta_defoc
 		self.instrument.tem.Defocus = defocus1
 		time.sleep(settle)
@@ -2577,7 +2577,17 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 				defocus0_is_over_focus = False
 		sign = -1 if defocus0_is_over_focus else 1
 		self.node.logger.info('correction sign of the first image is %d' % sign)
-		result = {'defocus': defocus_avg0*sign, 'min': 0.0}
+		# failure as either confidence (0-1.0) are low 
+		if 'confidence' not in ctfvalues0.keys() or 'confidence' not in ctfvalues1.keys() or ctfvalues0['confidence'] < 1e-7 or ctfvalues0['confidence']+ctfvalues1['confidence'] < 1e-3:
+			residual = 9.999e8
+		else:
+			residual = 1/ctfvalues0['confidence']
+		# failure as defocus not separated by 80% of delta
+		measured_under_focus_delta = defocus_avg1 - defocus_avg0*sign
+		self.node.logger.info('measured underfocus delta is %.2f um' % (measured_under_focus_delta*1e6))
+		if measured_under_focus_delta < 0.8 * delta_defoc or measured_under_focus_delta > 1.2 * delta_defoc:
+			residual = 9.999e8
+		result = {'defocus': defocus_avg0*sign, 'min': residual}
 		result['stigx'] = None
 		result['stigy'] = None
 		return result
@@ -2593,6 +2603,7 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		defocus_avg1 = 1e-10*(ctfvalues['defocus1']+ctfvalues['defocus2'])/2.0
 		if max(phase_search) > min(phase_search):
 			self.node.logger.info('estimated phase shift: %.2f degrees' % ctfvalues['extra_phase_shift'])
+		print(ctfvalues)
 		return defocus_avg1, ctfvalues
 
 class EucentricFocusClient(CalibrationClient):
