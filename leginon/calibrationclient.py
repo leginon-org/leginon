@@ -2558,7 +2558,7 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		else:
 			# not to go too much further if it is high underfocus
 			delta_defoc = - defocus_avg0*0.5
-		self.node.logger.info('add underfocus by %.2f um for the second image' % (abs(delta_defoc*1e6)))
+		self.node.logger.info('add underfocus by %.2f um for the second image' % (-delta_defoc*1e6))
 		# second image should always be underfocus
 		defocus1 = self.instrument.tem.Defocus + delta_defoc
 		self.instrument.tem.Defocus = defocus1
@@ -2585,7 +2585,7 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		# failure as defocus not separated by 80% of delta
 		measured_under_focus_delta = defocus_avg1 - defocus_avg0*sign
 		self.node.logger.info('measured underfocus delta is %.2f um' % (measured_under_focus_delta*1e6))
-		if measured_under_focus_delta < 0.8 * delta_defoc or measured_under_focus_delta > 1.2 * delta_defoc:
+		if measured_under_focus_delta > -0.8 * delta_defoc or measured_under_focus_delta < -1.2 * delta_defoc:
 			residual = 9.999e8
 		result = {'defocus': defocus_avg0*sign, 'min': residual}
 		result['stigx'] = None
