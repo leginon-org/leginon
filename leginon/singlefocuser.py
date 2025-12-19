@@ -437,7 +437,10 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			else:
 				self.eucset = False
 		else:
-			logmessage = 'Focus measurement change = %s (change limit = %s to %s)' % (defoc, delta_min, delta_max)
+			if not self.eucset:
+				logmessage = 'Focus measurement change = %s (change limit = %s to %s)' % (defoc, delta_min, delta_max)
+			else:
+				logmessage = 'Focus measurement set eucentric focus change = %.3f um' % (defoc*1e6,)
 			self.logger.info(logmessage)
 
 		### validate stig correction
