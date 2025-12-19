@@ -86,6 +86,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		self.euclient = calibrationclient.EucentricFocusClient(self)
 		self.focus_sequence = self.researchFocusSequence()
 		self.setFocusSequence(self.focus_sequence, self.session['user']['username']=='administrator', init=True)
+		self.eucset = False
 
 	def validatePresets(self):
 		### check normal manualfocuschecker presets
@@ -426,7 +427,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		### check change limit
 		delta_min = setting['delta min']
 		delta_max = setting['delta max']
-		if not (delta_min <= abs(defoc) <= delta_max):
+		if not self.eucset and not (delta_min <= abs(defoc) <= delta_max):
 			status = 'invalid'
 			validdefocus = False
 			logmessage = 'Focus measurement failed: change = %s (change limit = %s to %s)' % (defoc, delta_min, delta_max)
