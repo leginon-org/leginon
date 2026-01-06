@@ -512,6 +512,67 @@ class TargetHandler(object):
 		active = self.getListsInQueue(self.targetlistqueue)
 		return len(active)
 
+	def saveLppFitMeasurement(self, refdata, imagedata, fit_results, applied_phase_shifts):
+		"""
+		Save Lpp fringe fitting results and display in viewer. Shared by LppAlign and LppAlignTimer classes
+		"""
+		r = fit_results
+		for k in r.keys():
+			q = leginondata.LppFitResultData(session=self.session)
+			q['on node ref'] = refdata
+			q['axis'] = k
+			q['axis rotation'] = r[k]['image_rotation'] # rotation for fitting in degrees
+			q['amp'] = r[k]['wave_amp'] #modulation amplitude
+			q['offset'] = r[k]['value_offset'] # modulation intensity offset
+			q['period'] = r[k]['wave_period'] #peak to peak distance in pixels
+			q['phase shift'] = r[k]['phase_shift_to_max'] # fitting result
+			q['image'] = imagedata
+			q['phase shift correction'] = applied_phase_shifts[k] # phase shift applied to bring lpp on node.
+			q.insert()
+		self.saveLppFitInImageComment(imagedata, r, False)
+
+	def saveLppFitInImageComment(self, imagedata, r, is_on_node_ref=False):
+		# save image comment
+		periods = []
+		phis = []
+		for k in r.keys():
+			periods.append('%.1f' % r[k]['wave_period'])
+			phis.append('%.1f' % r[k]['phase_shift_to_max'])
+		n = len(list(r.keys()))
+		if n > 1:
+			period_text = '('+','.join(periods)+')'
+			phi_text = '('+','.join(phis)+')'
+			text = 'p-p %s pixels and phi %s degrees' % (period_text, phi_text)
+		elif n == 1:
+			period_text = periods[0]
+			phi_text = phis[0]
+			text = 'p-p %s pixels and phi %s degrees' % (period_text, phi_text)
+		else:
+			text = 'failed fringe fitting'
+		if is_on_node_ref:
+			text = 'On-node ref '+text
+		# put result in comment
+		q = leginondata.ImageCommentData(session=self.session, image=imagedata)
+		q['comment'] = text
+		q.insert()
+
+	def setOnPlaneOnNode(self):
+		try:
+			self.instrument.tem.PhasePlateFocus = self.new_f0
+			# set xtilt
+			self.new_xtilt = self.instrument.tem.PhasePlatePlaneShift
+			for k in self.lpp_axes:
+				c = 1/360.0
+				for axis in ('x','y'):
+					self.new_xtilt[axis] += self.new_phase_shifts[k]*c*self.xtilt_cal['lpp%d wave xtilt vector %s' % (k,axis)]
+			self.logger.info('Calculated LPP new xtilt as %s' % (self.new_xtilt))
+			self.instrument.tem.PhasePlatePlaneShift = self.new_xtilt
+			self.logger.info('Set LPP x1 lens to %.8f, x-tilt to x:%.6f,y:%6f' % (self.new_f0, self.new_xtilt['x'],self.new_xtilt['y']))
+		except Exception as e:
+			self.logger.error('Error setting on-plane and on-node values')
+			self.resetLppFocus()
+			raise
+
 class TargetWaitHandler(TargetHandler):
 	eventinputs = TargetHandler.eventinputs + [event.TargetListDoneEvent]
 	def __init__(self):

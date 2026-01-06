@@ -1176,13 +1176,13 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				tilts['x'].append(cftilt[(0,0)])
 				tilts['y'].append(cftilt[(1,1)])
 				comatilt = {'x':cftilt[(0,0)],'y':cftilt[(1,1)]}
-				self.node.logger.debug("    %5.2f,  %5.2f" % (cftilt[(0,0)]*1000,cftilt[(1,1)]*1000))
+				self.node.logger.debug("\t%5.2f,  %5.2f" % (cftilt[(0,0)]*1000,cftilt[(1,1)]*1000))
 		if len(tilts['x']):
 			xarray = numpy.array(tilts['x'])
 			yarray = numpy.array(tilts['y'])
 			self.node.logger.debug("--------------------")
-			self.node.logger.debug("m   %5.2f,  %5.2f" %(xarray.mean()*1000,yarray.mean()*1000))
-			self.node.logger.debug("std %5.2f,  %5.2f" %(xarray.std()*1000,yarray.std()*1000))
+			self.node.logger.debug("m\t%5.2f,  %5.2f" %(xarray.mean()*1000,yarray.mean()*1000))
+			self.node.logger.debug("std\t%5.2f,  %5.2f" %(xarray.std()*1000,yarray.std()*1000))
 			return xarray,yarray
 
 	def transformImageShiftToBeamTilt(self, imageshift, tem, cam, ht, zero, mag):
@@ -2533,6 +2533,11 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		"""
 		measure defocus correction by estimating CTF on two images.
 		"""
+		phase_search = list(phase_search)
+		# backward compatible where old settings has Null in database
+		for index in (0,1):
+			if phase_search[index] is None:
+				phase_search[index] = 0.0
 		self.abortevent.clear()
 		if image0 is None:
 			imagedata0 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
@@ -2549,12 +2554,12 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		rpixel = self.getImageReciprocalPixelSize(imagedata0)['x']
 		if s0/rpixel > 0.125*imagedata0['camera']['dimension']['x']:
 			# bring it to underfocus if it is low overfocus
-			delta_defoc = - 2 * defocus_avg0
+			delta_defoc = - 2.5 * defocus_avg0
 		else:
 			# not to go too much further if it is high underfocus
 			delta_defoc = - defocus_avg0*0.5
-		self.node.logger.info('add underfocus by %.2f um for the second image' % (abs(delta_defoc*1e6)))
-		# second image
+		self.node.logger.info('add underfocus by %.2f um for the second image' % (-delta_defoc*1e6))
+		# second image should always be underfocus
 		defocus1 = self.instrument.tem.Defocus + delta_defoc
 		self.instrument.tem.Defocus = defocus1
 		time.sleep(settle)
@@ -2563,16 +2568,38 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 
 		# reset
 		self.instrument.tem.Defocus = defocus0
-		# determine sign of the ctf defocus
+		# determine sign of the ctf defocus correction required to reach 0.
+		# an underfocused image should have positive sign
 		defocus0_is_over_focus = False
 		if defocus_avg1 - defocus_avg0 < 0:
 			defocus0_is_over_focus = True
 		else:
 			if defocus_avg1 < abs(delta_defoc):
 				defocus0_is_over_focus = False
-		sign = -1 if defocus0_is_over_focus else 1
-		self.node.logger.info('correction sign of the first image is %d' % sign)
-		result = {'defocus': defocus_avg0*sign, 'min': 0.0}
+		sign0 = -1 if defocus0_is_over_focus else 1
+		self.node.logger.info('correction sign of the 1st image is %d' % sign0)
+		correction0 = defocus_avg0*sign0
+		sign1 = -1 if correction0 - delta_defoc < 0 else 1
+		self.node.logger.info('correction sign of the 2nd image is %d' % sign1)
+		correction1 = defocus_avg1*sign1
+		if 'confidence' not in ctfvalues0.keys() or 'confidence' not in ctfvalues1.keys():
+			self.node.error('No confidence value for the ctf fit')
+			residual = 99999.0
+		else:
+			self.node.logger.info('Confidence of the fits for the two images are (%.3f,%.3f)' % (ctfvalues0['confidence'],ctfvalues1['confidence']))
+			# failure as either confidence (0-1.0) are too low 
+			if 'confidence' not in ctfvalues0.keys() or 'confidence' not in ctfvalues1.keys() or ctfvalues0['confidence'] < 1e-7 or ctfvalues0['confidence']+ctfvalues1['confidence'] < 1e-3:
+				residual = 99999.0
+				self.node.logger.warning('Failed estimate with low confidence')
+			else:
+				residual = 1/ctfvalues0['confidence']
+		# failure as defocus not separated by 80% of delta
+		measured_correction_delta = correction1 - correction0
+		self.node.logger.info('measured correction delta is %.2f um' % (measured_correction_delta*1e6))
+		if measured_correction_delta < -0.8 * delta_defoc or measured_correction_delta > -1.2 * delta_defoc:
+			residual = 9.999e8
+			self.node.logger.warning('Failed estimate with bad correction_delta')
+		result = {'defocus': correction0, 'min': residual}
 		result['stigx'] = None
 		result['stigy'] = None
 		return result
@@ -2588,6 +2615,7 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		defocus_avg1 = 1e-10*(ctfvalues['defocus1']+ctfvalues['defocus2'])/2.0
 		if max(phase_search) > min(phase_search):
 			self.node.logger.info('estimated phase shift: %.2f degrees' % ctfvalues['extra_phase_shift'])
+		print(ctfvalues)
 		return defocus_avg1, ctfvalues
 
 class EucentricFocusClient(CalibrationClient):

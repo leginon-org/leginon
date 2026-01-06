@@ -723,25 +723,5 @@ class Node(correctorclient.CorrectorClient):
 		evt = leginon.gui.wx.Events.UserVerificationUpdatedEvent(self.panel, state)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
-	def saveLppFitMeasurement(self, refdata, imagedata, amp_fit, offset_fit, period_fit, phase_shift_needed_degrees, applied_phase_shift):
-		"""
-		Save Lpp fringe fitting results and display in viewer.
-		"""
-		q = leginondata.LppFitResultData(session=self.session)
-		q['axis'] = 0
-		q['on node ref'] = refdata
-		q['amp'] = amp_fit #modulation amplitude
-		q['offset'] = offset_fit # modulation intensity offset
-		q['period'] = period_fit #peak to peak distance in pixels
-		q['phase shift'] = phase_shift_needed_degrees # fitting result
-		q['image'] = imagedata
-		q['phase shift correction'] = applied_phase_shift # phase shift applied to bring lpp on node.
-		q.insert()
-		# put result in comment
-		q = leginondata.ImageCommentData(session=self.session, image=imagedata)
-		text = 'fitted as cosine p-p %.1f pixels and phi %.1f degrees' % (period_fit, phase_shift_needed_degrees)
-		q['comment'] = text
-		q.insert()
-
 ## module global for storing start times
 start_times = {}

@@ -42,7 +42,9 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 		'startangle': 0,
 		'tableau type': 'image shift series-lpp defocused',
 		'tableau binning': 2,
-		'fringe rotation': 3, # degrees
+		'xlpp': False,
+		'fringe rotation1': -3, # degrees
+		'fringe rotation2': 87.7, # degrees
 	})
 
 	eventinputs = manualfocuschecker.ManualFocusChecker.eventinputs
@@ -154,6 +156,27 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 		newemtarget.insert(force=True)
 		return newemtarget
 
+	def setXTiltForImageShift(self, new_bis):
+		# hack for changing matrix
+		f=open('bis_xt_matrix.txt','r')
+		lines = f.readlines()
+		f.close()
+		m = numpy.array(((1.0,0.0),(0.0,1.0)))
+		for i,l in enumerate(lines):
+			bits = l[:-1].split('\t')
+			m[i,0] = bits[0]
+			m[i,1] = bits[1]
+		delta_bis = {'x': new_bis['x']-self.bis0['x'],
+						'y': new_bis['y']-self.bis0['y'],
+					}
+		self.logger.info('delta bis (%s, %s)' % (delta_bis['x'],delta_bis['y']))
+		new_xt = self.xt0.copy()
+		self.logger.info('starting xt (%s, %s)' % (new_xt['x'],new_xt['y']))
+		for i,axis in enumerate(('x','y')):
+			new_xt[axis] += m[i,0]*delta_bis['x'] + m[i,1]*delta_bis['y']
+		self.logger.info('Set xtilt to (%s, %s)' % (new_xt['x'],new_xt['y']))
+		self.instrument.tem.PhasePlatePlaneShift = new_xt
+
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		'''
 		this replaces Acquisition.acquire()
@@ -175,6 +198,8 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 		self.setPresetMagProbeMode(presetdata, emtarget)
 
 		oldbt = self.instrument.tem.ImageShift
+		self.bis0 = oldbt
+		self.xt0 = self.instrument.tem.PhasePlatePlaneShift
 		oldstig = self.instrument.tem.Stigmator['objective']
 		shiftlist,anglelist,radlist = self.getImageShiftList()
 
@@ -194,17 +219,19 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 			else:
 				channel = 1
 			# image shift is set by emtarget
-			newbt = newemtarget['image shift']
-			self.logger.info('New image shift um: %.4f, %.4f' % (newbt['x']*1e6,newbt['y']*1e6,))
+			newbis = newemtarget['image shift']
+			self.logger.info('New image shift um: %.4f, %.4f' % (newbis['x']*1e6,newbis['y']*1e6,))
 			self.x1focus = self.instrument.tem.PhasePlateFocus
 			if self.settings['tableau type'] == 'image shift series-lpp defocused':
 				self.instrument.tem.PhasePlateFocus = self.x1focus - 0.005
 			# TODO: set optics not in emtarget such as xtilt here.
+			self.setXTiltForImageShift(newbis)
 			# actual move by emtarget/preset and acquire
 			try:
 				status = manualfocuschecker.ManualFocusChecker.acquire(self, presetdata, newemtarget, channel= channel)
 			except Exception as e:
 				# skip the rest of the shiftlist
+				self.setXTiltForImageShift(self.bis0)
 				self.instrument.tem.PhasePlateFocus = self.x1focus
 				self.logger.error('Failed acquiring image: %s' % e)
 				self.setComaStig0()
@@ -217,6 +244,7 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 			self.setImage(imagedata['image'], 'Image')
 			# reset image shift
 			self.instrument.tem.ImageShift = emtarget['image shift']
+			self.setXTiltForImageShift(self.bis0)
 			angle = anglelist[i]
 			rad = radlist[i]
 
@@ -259,8 +287,18 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 	
 	def fitLppFringes(self,imagedata):
 		myimage = imagedata['image']
+		results = {}
 		try:
-			amp_fit, freq_fit, phase_fit, offset_fit, period_fit, phase_shift_needed = lppfit.run_fringe_fit(myimage, self.settings['fringe rotation'])
+			r1 = lppfit.run_fringe_fit(myimage, self.settings['fringe rotation1'])
+			results= {1:r1}
+			if self.settings['xlpp']:
+				r2 = lppfit.run_fringe_fit(myimage, self.settings['fringe rotation2'])
+				results[2] = r2
+			k = 1
+			self.saveLppFitMeasurement(None, imagedata, results, {1:None})
+			self.saveLppFitInImageComment(imagedata, results, True)
+			period_fit = results[k]['wave_period']
+			phase_shift_needed = results[k]['phase_shift_to_max']
 			shiftinfo = {'period': period_fit, 'phase_shift': phase_shift_needed}
 			return shiftinfo
 		except Exception as e:
@@ -275,15 +313,15 @@ class LppImageShiftImager(manualfocuschecker.ManualFocusChecker):
 	def applyTiltChange(self, deltabt):
 			oldbt = self.instrument.tem.ImageShift
 			self.logger.info('Old image shift: %.4f, %.4f' % (oldbt['x'],oldbt['y'],))
-			newbt = {'x': oldbt['x'] + deltabt['x'], 'y': oldbt['y'] + deltabt['y']}
-			self.instrument.tem.ImageShift = newbt
-			self.logger.info('New image shift: %.4f, %.4f' % (newbt['x'],newbt['y'],))
+			newbis = {'x': oldbt['x'] + deltabt['x'], 'y': oldbt['y'] + deltabt['y']}
+			self.instrument.tem.ImageShift = newbis
+			self.logger.info('New image shift: %.4f, %.4f' % (newbis['x'],newbis['y'],))
 
 	def applyTiltChangeAndReacquireTableau(self,deltabt):
 			self.applyTiltChange(deltabt)
 			self.simulateTarget()
-			newbt = self.instrument.tem.ImageShift
-			self.logger.info('Final image shift: %.4f, %.4f' % (newbt['x'],newbt['y'],))
+			newbis = self.instrument.tem.ImageShift
+			self.logger.info('Final image shift: %.4f, %.4f' % (newbis['x'],newbis['y'],))
 
 	def navigate(self, xy):
 		clickrow = xy[1]

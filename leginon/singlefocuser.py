@@ -73,6 +73,8 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			'drift threshold': 3e-10,
 			'recheck drift': False,
 			'reset defocus': None,
+			'phase search max': 0,
+			'phase search min': 0,
 		}
 		self.manualplayer = player.Player(callback=self.onManualPlayer)
 		manualfocuschecker.ManualFocusChecker.__init__(self, id, session, managerlocation, **kwargs)
@@ -84,6 +86,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		self.euclient = calibrationclient.EucentricFocusClient(self)
 		self.focus_sequence = self.researchFocusSequence()
 		self.setFocusSequence(self.focus_sequence, self.session['user']['username']=='administrator', init=True)
+		self.eucset = False
 
 	def validatePresets(self):
 		### check normal manualfocuschecker presets
@@ -424,7 +427,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		### check change limit
 		delta_min = setting['delta min']
 		delta_max = setting['delta max']
-		if not (delta_min <= abs(defoc) <= delta_max):
+		if not self.eucset and not (delta_min <= abs(defoc) <= delta_max):
 			status = 'invalid'
 			validdefocus = False
 			logmessage = 'Focus measurement failed: change = %s (change limit = %s to %s)' % (defoc, delta_min, delta_max)
@@ -434,6 +437,10 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			else:
 				self.eucset = False
 		else:
+			if not self.eucset:
+				logmessage = 'Focus measurement change = %s (change limit = %s to %s)' % (defoc, delta_min, delta_max)
+			else:
+				logmessage = 'Focus measurement set eucentric focus change = %.3f um' % (defoc*1e6,)
 			self.logger.info(logmessage)
 
 		### validate stig correction

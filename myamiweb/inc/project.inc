@@ -6,7 +6,15 @@
  *	For terms of the license agreement
  *	see  http://leginon.org
  */
+// if the config file is not exist, redirect to setup wizard.
+if( !file_exists(dirname(__FILE__).'/../config.php') ){
 
+	$location = 'location:'.$_SERVER['REQUEST_URI'].'setup/index.php';
+	header($location);
+	exit();
+}
+
+require_once dirname(__FILE__).'/../config.php';
 if (ENABLE_LOGIN) {
 	require_once "inc/dbemauth.inc";
 }

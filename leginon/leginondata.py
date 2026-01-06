@@ -207,6 +207,7 @@ scope_params = (
 	('phase plate plane shift', dict),
 	('phase plate plane tilt', dict),
 	('phase plate focus', float),
+	('xlens1 focus', float),
 	('corrected stage position', int),
 	('stage position', dict),
 	('holder type', str),
@@ -425,8 +426,11 @@ class CalibrationData(InSessionData):
 class LppCalibrationData(CalibrationData):
 	def typemap(cls):
 		return CalibrationData.typemap() + (
-			('wave xtilt vector x', float),
-			('wave xtilt vector y', float),
+			('xlpp', bool),
+			('lpp1 wave xtilt vector x', float),
+			('lpp1 wave xtilt vector y', float),
+			('lpp2 wave xtilt vector x', float),
+			('lpp2 wave xtilt vector y', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1659,6 +1663,7 @@ class NavigatorSettingsData(SettingsData):
 			('final image shift', bool),
 			('background readout', bool),
 			('preexpose', bool),
+			('move without reacquire', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -2250,13 +2255,17 @@ class MoverParamsData(Data):
 class LppAlignerSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
+			('xlpp',bool),
 			('global view offset', float),
 			('compress ratio', int),
-			('rotation', float), # degrees
+			('rotation1', float), # degrees
+			('rotation2', float), # degrees
 			('acquire type', str),
 			('phase plate defocus sequence', str), #Issue #5687
-			('wave xtilt vector x', float),
-			('wave xtilt vector y', float),
+			('lpp1 wave xtilt vector x', float),
+			('lpp1 wave xtilt vector y', float),
+			('lpp2 wave xtilt vector x', float),
+			('lpp2 wave xtilt vector y', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -2269,7 +2278,9 @@ class LppImageShiftImagerSettingsData(AcquisitionSettingsData):
 			('startangle', float),
 			('tableau type', str),
 			('tableau binning', int),
-			('fringe rotation', float),
+			('xlpp', bool),
+			('fringe rotation1', float),
+			('fringe rotation2', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -2279,8 +2290,11 @@ class LppOnNodeRefData(InSessionData):
 			('tem', InstrumentData),
 			('ccdcamera', InstrumentData),
 			('reference', AcquisitionImageData),
-			('rotation', float), # degrees
-			('phase shift', float),
+			('xlpp', bool),
+			('lpp1 rotation', float), # degrees
+			('lpp1 phase shift', float),
+			('lpp2 rotation', float), # degrees
+			('lpp2 phase shift', float),
 			('delta lpp focus', float),
 		)
 	typemap = classmethod(typemap)
@@ -2288,7 +2302,8 @@ class LppOnNodeRefData(InSessionData):
 class LppFitResultData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
-			('axis', int), # axis of lpp cavity default=0
+			('axis', int), # axis of lpp cavity default=1
+			('axis rotation', float), # image rotation for fitting in degrees
 			('on node ref', LppOnNodeRefData), # on-node reference
 			('amp', float), # lpp modulation intensiity amplitude
 			('offset', float), # modulation intensity offset
@@ -2430,6 +2445,7 @@ class PhasePlatePlaneShiftCyclerSettingsData(AcquisitionSettingsData):
 			('shift scale', float),
 			('x projection', float),
 			('y projection', float),
+			('two d scan', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -3070,6 +3086,7 @@ class AlignZLPSettingsData(ReferenceTimerSettingsData):
 class LppAlignTimerSettingsData(ReferenceTimerSettingsData):
 	def typemap(cls):
 		return ReferenceTimerSettingsData.typemap() + (
+			('xlpp', bool),
 		)
 	typemap = classmethod(typemap)
 

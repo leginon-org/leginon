@@ -1033,6 +1033,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.warning('Move failed. skipping acquisition at this target')
 			return status
 
+		state =  self.pauseCheck('paused after moveAndPreset')
 		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
 		args = (presetdata, emtarget, defaultchannel)
 		try:

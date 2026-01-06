@@ -409,6 +409,7 @@ parametermapping = (
 	('phase plate plane shift', 'PhasePlatePlaneShift'),
 	('phase plate plane tilt', 'PhasePlatePlaneTilt'),
 	('phase plate focus', 'PhasePlateFocus'),
+	('xlens1 focus', 'XLens1Focus'),
 	('stage speed', 'StageSpeed'),
 	('corrected stage position', 'CorrectedStagePosition'),
 	('stage position', 'StagePosition'),
