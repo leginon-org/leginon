@@ -19,6 +19,9 @@ class Fail(Exception):
 class LoopBreaking(Exception):
 	pass
 
+class LowIntensity(Exception):
+	pass
+
 class Collection(object):
 	def __init__(self):
 		self.tilt_series = None
@@ -257,15 +260,8 @@ class Collection(object):
 		image = cam_image_data['image']
 
 		if image_mean < self.settings['mean threshold']:
-			if seq[1] < (self.settings['collection threshold']/100.0)*len(tilts):
-				# Fail too early
-				self.logger.error('Image counts below threshold (mean of %.1f, threshold %.1f), aborting series...' % (image_mean, self.settings['mean threshold']))
-				self.finalize()
-				raise Abort
-			else:
-				self.logger.warning('Image counts below threshold, aborting loop...')
-				self.restoreInstrumentState()
-				raise LoopBreaking('Image counts below threshold') 
+			self.logger.warning('Image counts below threshold (mean of %.1f, threshold %.1f)' % (image_mean, self.settings['mean threshold']))
+			raise LowIntensity
 		return cam_image_data
 
 	def saveTiltImage(self, cam_image_data):
@@ -362,6 +358,17 @@ class Collection(object):
 				tilt_series_image_data = self.saveTiltImage(cam_image_data)
 			except LoopBreaking as e:
 				break
+			except LowIntensity as e:
+				if seq[1] < (self.settings['collection threshold']/100.0)*len(sequence):
+					# Fail too early
+					self.logger.error('Below threshold too early, aborting target')
+					self.finalize()
+					raise Abort
+				else:
+					# abort just the loop. continue on the other tilt_group
+					self.logger.warning('Image counts below threshold, aborting loop...')
+					self.restoreInstrumentState()
+					break
 			except Exception:
 				raise
 

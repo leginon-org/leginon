@@ -449,8 +449,12 @@ class TargetHandler(object):
 		except Exception as e:
 			self.logger.error('getting scopedata failed: %s' % (e))
 			raise
-		self.targetlist_reset_tilt = scopedata['stage position']['a']
-		self.targetlist_z = scopedata['stage position']['z']
+		try:
+			self.targetlist_reset_tilt = scopedata['stage position']['a']
+			self.targetlist_z = scopedata['stage position']['z']
+		except TypeError as e:
+			self.logger.error('scopedata returned is None')
+			raise
 		scopedata.friendly_update(preset)
 		lastnumber = self.lastTargetNumber(session=self.session, type='simulated')
 		nextnumber = lastnumber + 1
