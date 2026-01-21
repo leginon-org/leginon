@@ -1,6 +1,7 @@
 import math
 import time
 import numpy
+import traceback
 
 from pyami import correlator, peakfinder
 
@@ -232,7 +233,8 @@ class Tomography(acquisition.Acquisition):
 		for g in range(n_groups):
 			self.initGoodPredictionInfo(presetdata, g)
 
-		collect = self.getCollectionObject(target)
+		collect = self.getCollectionObject()
+
 		collect.node = self
 		collect.session = self.session
 		collect.logger = self.logger
@@ -254,7 +256,8 @@ class Tomography(acquisition.Acquisition):
 		collect.prediction = self.prediction
 		collect.setStatus = self.setStatus
 		collect.reset_tilt = self.targetlist_reset_tilt
-		#TODO add tracking preset to this....
+
+		self.setTrackingInCollection(collect)
 
 		self.logger.info('Set stage position alpha to %.2f degrees according to targetlist' % math.degrees(self.targetlist_reset_tilt))
 		self.instrument.tem.StagePosition = {'a': self.targetlist_reset_tilt}
@@ -271,42 +274,61 @@ class Tomography(acquisition.Acquisition):
 
 		return 'ok'
 	
-	def getCollectionObject(self,target):
-		return leginon.tomography.collection.Collection()
+	def getCollectionObject(self):
+		collect = leginon.tomography.collection.Collection()
+		return collect
+
+	def setTrackingInCollection(self, collect):
+		# defined in the subclass where tracking is applicable
+		pass
 
 	def getPixelPosition(self, move_type, position=None):
+		"""
+		Returns pixel shift as if it is a target on a fake image taken with current scope and camera state
+		but with move_type at zeros.
+		"""
 		scope_data = self.instrument.getData(leginon.leginondata.ScopeEMData)
 		camera_data = self.instrument.getData(leginon.leginondata.CameraEMData)
 		if position is None:
 			position = {'x': 0.0, 'y': 0.0}
 		else:
 			scope_data[move_type] = {'x': 0.0, 'y': 0.0}
+		self.logger.debug('getPixelPosition %s move (x,y) um %.3f, %.3f' % (move_type, scope_data[move_type]['x']*1e6, scope_data[move_type]['y']*1e6))
 		client = self.calclients[move_type]
 		try:
 			pixel_position = client.itransform(position, scope_data, camera_data)
 		except leginon.calibrationclient.NoMatrixCalibrationError as e:
 			raise CalibrationError(e)
-		# invert y and position
+		# invert y
 		return {'x': pixel_position['col'], 'y': -pixel_position['row']}
 
-	def getParameterPosition(self, move_type, position=None):
+	def getParameterPosition(self, move_type, pix_position=None):
+		"""
+		Get scope state including the transformed physical position based on
+		pix_position input relative to the center of the current state
+		"""
+		# retrieve the current scope/camera state
 		scope_data = self.instrument.getData(leginon.leginondata.ScopeEMData)
 		camera_data = self.instrument.getData(leginon.leginondata.CameraEMData)
-		if position is None:
-			position = {'x': 0.0, 'y': 0.0}
+		if pix_position is None:
+			pix_position = {'x': 0.0, 'y': 0.0}
 		else:
 			scope_data[move_type] = {'x': 0.0, 'y': 0.0}
 		client = self.calclients[move_type]
-		# invert y and position
-		position = {'row': position['y'], 'col': -position['x']}
+		# invert x position
+		position = {'row': pix_position['y'], 'col': -pix_position['x']}
 		try:
 			scope_data = client.transform(position, scope_data, camera_data)
 		except leginon.calibrationclient.NoMatrixCalibrationError as e:
 			raise CalibrationError(e)
 		return scope_data[move_type]
 
-	def setPosition(self, move_type, position):
-		position = self.getParameterPosition(move_type, position)
+	def setPosition(self, move_type, pix_position):
+		"""
+		Set move_type position based on binned pix_position
+		from the center of the current scope and camera state.
+		"""
+		position = self.getParameterPosition(move_type, pix_position)
 		initializer = {move_type: position}
 		position = leginon.leginondata.ScopeEMData(initializer=initializer)
 		self.instrument.setData(position)
@@ -701,8 +723,10 @@ class Tomography(acquisition.Acquisition):
 
 			acquisition.Acquisition.processTargetData(self, *args, **kwargs)
 		except Exception as e:
-			raise
+			if self.is_testing:
+				traceback.print_exc()
 			self.logger.error('Failed to process the tomo target: %s' % e)
+			raise
 
 	def measureDefocus(self):
 		beam_tilt = 0.01
