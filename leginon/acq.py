@@ -586,7 +586,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 			# set stage z first before move
 			z = self.moveToLastFocusedStageZ(targetdata)
-			self.testprint('preset manager moved to LastFocusedStageZ %s' % (z,))
 
 			### determine how to move to target
 			try:

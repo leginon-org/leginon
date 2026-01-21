@@ -33,7 +33,11 @@ def getNodeLogger(node):
 	logger.setLevel(logging.INFO)
 	if hasattr(node, 'panel') and node.panel is not None:
 		logger.window = node.panel
-		handler = MessageLogHandler(logger.window)
+		# assign logger level to print debug if node is set to testing
+		is_testing = node.is_testing
+		if is_testing:
+			logger.setLevel(logging.DEBUG)
+		handler = MessageLogHandler(logger.window, is_testing=is_testing)
 		handler.setFormatter(logging.Formatter())
 		logger.addHandler(handler)
 	return logger
@@ -403,8 +407,9 @@ class LoggingConfigurationDialog(wx.Dialog):
 		self.tree.EnsureVisible(self.root)
 
 class MessageLogHandler(logging.Handler):
-	def __init__(self, window, level=logging.NOTSET):
+	def __init__(self, window, level=logging.NOTSET, is_testing=False):
 		self.window = window
+		self.is_testing = is_testing
 		logging.Handler.__init__(self, level)
 
 	def emit(self, record):
@@ -413,6 +418,8 @@ class MessageLogHandler(logging.Handler):
 		level = record.levelname
 		level_number = record.levelno
 		message = self.format(record)
+		if self.is_testing:
+			print('%s-%s: %s' % (self.window.node.name,level,record.msg))
 		try:	
 			# listctrl can't do this...need to activate and show with dialog
 			index = message.index('\n')

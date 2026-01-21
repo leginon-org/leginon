@@ -1562,7 +1562,7 @@ class PresetsManager(node.Node):
 			for key in list(mystage.keys()):
 				if key not in ('x','y'):
 					del mystage[key]
-		self.testprint('targetToScope used no z change')
+		self.logger.debug('targetToScope used no z change')
 
 		## offset image shift to center stage tilt axis
 		if self.settings['apply offset']:
@@ -1718,8 +1718,7 @@ class PresetsManager(node.Node):
 		else:
 			self.logger.info('same preset for camera, skip setting camera')
 		newstage = self.instrument.tem.StagePosition
-		msg = '%s targetToScope %.6f' % (newpresetname,newstage['z'])
-		self.testprint('Presetmanager:' + msg)
+		msg = '%s targetToScope %.3f um' % (newpresetname,newstage['z']*1e6)
 		self.logger.debug(msg)
 
 		self.startTimer('preset pause')
