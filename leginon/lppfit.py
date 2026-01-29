@@ -176,10 +176,13 @@ def show_fringe_fit_results(x_data, y_data, x_center, amp_fit, freq_fit, phase_f
 	plt.title('Sine wave fitting')
 	plt.show()
 
-def run_fringe_fit(a, rotation_angle_degrees=5.0):
+def run_fringe_fit(a, rotation_angle_degrees=5.0, wave_period0=None):
 	y_data = makeRotatedLineProfile(a, rotation_angle_degrees)
 	center_of_mass_array, area = findPeaks(y_data)
-	wave_period, x_cleaned_list = estimateLattice(center_of_mass_array, area)
+	if wave_period0 is None:
+		wave_period, x_cleaned_list = estimateLattice(center_of_mass_array, area)
+	else:
+		wave_period = wave_period0
 	# fitting
 	freq0 = math.pi*2/wave_period
 	x_center = y_data.shape[0]//2
@@ -192,7 +195,7 @@ def run_fringe_fit(a, rotation_angle_degrees=5.0):
 		phase_fit = phase_fit - math.pi
 	period_fit = math.pi*2/freq_fit
 	phase_shift_to_max_degrees = 180.0 * convert_phase(phase_fit) / math.pi
-	if __name__=='__main__':
+	if True or __name__=='__main__':
 		show_fringe_fit_results(x_data, y_data, x_center, amp_fit, freq_fit, phase_fit, offset_fit)
 	return {
 			'image_rotation': rotation_angle_degrees,
@@ -270,15 +273,26 @@ def show_on_node_on_plane_fit_results(x_data, y_data, offset, slope, amp):
 
 if __name__=='__main__':
 	import os, sys
-	mrc_path = input('mrc file path ?')
-	if not os.access(mrc_path, os.R_OK):
-		print('Error: file not accessibale')
-		sys.exit(1)
-	a = mrc.read(mrc_path)
+	lpp_number = int(input('number of lpp?'))
+	start_n = int(input('start target number?'))
+	total = int(input('total loop number?'))
+	mrc_path_f = input('mrc file path format i.e. "n25jun17a_%05d.mrc"?')
 	angle1 = float(input('lpp1 wavevector angle in degrees:'))
-	angle2 = float(input('lpp1 wavevector angle in degrees:'))
-	# test fitting with display
-	results = run_2d_fringe_fit(a, (angle1,angle2))
-	keys = results.keys()
-	for k in keys:
-		print(k, results[k])
+	if lpp_number == 2:
+		angle2 = float(input('lpp2 wavevector angle in degrees:'))
+	rf = '%7.2f\t%7.2f'
+	for i in range(total):
+		n = start_n + i
+		print(mrc_path_f, n)
+		mrc_path = mrc_path_f % (n)
+		print(mrc_path)
+		if not os.access(mrc_path, os.R_OK):
+			print('Error: file not accessibale')
+			sys.exit(1)
+		a = mrc.read(mrc_path)
+		# test fitting with display
+		results = run_fringe_fit(a, angle1)
+		print(rf % (results['phase_shift_to_max'],results['wave_period']))
+		if lpp_number == 2:
+			results = run_fringe_fit(a, angle2)
+			print(rf % (results['phase_shift_to_max'],results['wave_period']))
