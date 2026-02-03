@@ -125,13 +125,14 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		try:
 			myimage = self.imagedata['image']
 			self.setImage(myimage, 'Image')
+			number_of_lpp = 1
 			if self.settings['xlpp']:
-					r = lppfit.run_2d_fringe_fit(myimage, (refdata['lpp1 rotation'], refdata['lpp2 rotation']))
-			else:
-					r = {1:lppfit.run_fringe_fit(myimage, refdata['lpp1 rotation'])}
+				number_of_lpp = 2
+			r = lppfit.run_fringe_fit(myimage, number_of_lpp)
 		except Exception as e:
 			self.logger.warning('failed fitting, skipping: %s' % e)
 			return
+		print('fitting result = ',r)
 		self.new_phase_shifts = {}
 		try:
 			# phase shift represent correction needed, so it needs to reverse sign.

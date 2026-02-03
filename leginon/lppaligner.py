@@ -171,13 +171,11 @@ class LppAligner(acquisition.Acquisition):
 			self.logger.error('failed to acquire image, aborting: %s' % e)
 			raise RuntimeError('Acquisition Failed: %e' % e)
 		self.resetLppFocus()
-		results = {}
 		try:
-			r1 = lppfit.run_fringe_fit(myimage, self.settings['rotation1'])
-			results= {1:r1}
+			number_of_lpp = 1
 			if self.settings['xlpp']:
-				r2 = lppfit.run_fringe_fit(myimage, self.settings['rotation2'])
-				results[2] = r2
+				number_of_lpp = 2
+			results = lppfit.run_fringe_fit(myimage, number_of_lpp)
 		except Exception as e:
 			self.logger.warning('failed fitting, skipping: %s' % e)
 			is_failed = self.resetComaCorrection()
@@ -260,14 +258,12 @@ class LppAligner(acquisition.Acquisition):
 				break
 			finally:
 				try:
+					number_of_lpp = 1
 					if self.settings['xlpp']:
-						r = lppfit.run_2d_fringe_fit(myimage, (self.settings['rotation1'], self.settings['rotation2']))
-					else:
-						r = {1:lppfit.run_fringe_fit(myimage, self.settings['rotation1'])}
+						number_of_lpp = 2
+					r = lppfit.run_fringe_fit(myimage, number_of_lpp)
 					for k in r.keys():
 						data[k].append((new_f, r[k]['wave_period'], r[k]['phase_shift_to_max']))
-						print('focus, period, phase_shift_to_apply')
-						print(numpy.array(data))
 				except Exception as e:
 					self.logger.warning('failed fitting, skipping: %s' % e)
 				finally:
