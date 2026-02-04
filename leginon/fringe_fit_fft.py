@@ -129,9 +129,9 @@ def _get_rough_angle_period(img_clipped, binning, number_of_peaks, number_of_fri
 		peak_positions = find_peak_positions(abs_fourier.copy(), number_of_peaks, mask_radius)
 			
 		peak_data = analyze_peaks(fourier_shifted, peak_positions, clipped_size)
-		if number_of_peaks == 1:
-			break
 		angles = list(map((lambda x: x['image_rotation']), peak_data.values()))
+		if len(angles) < 2:
+			break
 		# increasing mask radius in case a second peak is picked up within the same diffraction.
 		delta = abs(angles[1] - angles[0])
 		if delta > 45 or delta < -45:
@@ -174,7 +174,8 @@ if __name__=='__main__':
 	number_of_fringe_guess = 4 
 	#session_image_path = '/Users/anchi.cheng/testdata/leginon/26jan23a/rawdata'
 	session_image_path = '/Users/anchi.cheng/Downloads'
-	filename = 'n25may28c_00094ffen.mrc'
+	filename = 'n25jun20a_00141fa.mrc'
+	#filename = 'n25may28c_00094ffen.mrc'
 	#filename = '26jan23a_00005en.mrc'
 	#session_image_path = '/Users/anchi.cheng/Downloads'
 	#filename = 'n25jul09a_00504fy.mrc'
@@ -191,9 +192,9 @@ if __name__=='__main__':
 	peaks = get_fringe_angle_period(a, number_of_peaks, number_of_fringe_guess)
 	# Fit in real space once angle and rough wave_period are determined.
 	rf = '%7.2f\t shift_to_max in deg %7.2f p-p pixels\t%7.2f image rotation deg'
-	results = fringe_fit_real_space.run_fringe_fit(a, peaks['lpp1']['image_rotation'], peaks['lpp1']['wave_period'])
+	results = fringe_fit_real_space.run_fringe_fit(a, peaks[1]['image_rotation'], peaks[1]['wave_period'])
 	print(rf % (results['phase_shift_to_max'],results['wave_period'],results['image_rotation']))
 	if is_xlpp:
-		results = fringe_fit_real_space.run_fringe_fit(a, peaks['lpp02']['image_rotation'])
+		results = fringe_fit_real_space.run_fringe_fit(a, peaks[2]['image_rotation'])
 		print(rf % (results['phase_shift_to_max'],results['wave_period'],results['image_rotation']))
 	

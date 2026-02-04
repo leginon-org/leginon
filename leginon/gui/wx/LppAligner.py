@@ -102,26 +102,13 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		#
 		cmpsizer = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Compressed View:')
-		cmpsizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		# compression rotation
-		label = wx.StaticText(self, -1, 'Image Rotation for lpp1:')
-		self.widgets['rotation1'] = FloatEntry(self, -1, allownone=False, chars=6, value='0.0')
-		cmpsizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		cmpsizer.Add(self.widgets['rotation1'], (1, 1), (1, 1), wx.ALIGN_CENTER)
-		label = wx.StaticText(self, -1, 'degrees')
-		cmpsizer.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Image Rotation for lpp2:')
-		self.widgets['rotation2'] = FloatEntry(self, -1, allownone=False, chars=6, value='0.0')
-		cmpsizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		cmpsizer.Add(self.widgets['rotation2'], (2, 1), (1, 1), wx.ALIGN_CENTER)
-		label = wx.StaticText(self, -1, 'degrees')
-		cmpsizer.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		cmpsizer.Add(label, (0, 0), (1, 3), wx.ALIGN_LEFT)
 		# compression ratio
 		self.widgets['compress ratio'] = IntEntry(self, -1, min=1, allownone=False, chars=4, value='8')
 		label = wx.StaticText(self, -1, 'Compression ratio:')
-		cmpsizer.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		cmpsizer.Add(self.widgets['compress ratio'], (3, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(cmpsizer, (3, 1), (3, 3), wx.ALIGN_CENTER)
+		cmpsizer.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		cmpsizer.Add(self.widgets['compress ratio'], (1, 2), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(cmpsizer, (3, 0), (2, 3), wx.ALIGN_CENTER)
 
 		fitsizer = wx.GridBagSizer(5, 4)
 		bordersize = 3

@@ -2258,8 +2258,6 @@ class LppAlignerSettingsData(AcquisitionSettingsData):
 			('xlpp',bool),
 			('global view offset', float),
 			('compress ratio', int),
-			('rotation1', float), # degrees
-			('rotation2', float), # degrees
 			('acquire type', str),
 			('phase plate defocus sequence', str), #Issue #5687
 			('lpp1 wave xtilt vector x', float),

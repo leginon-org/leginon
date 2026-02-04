@@ -61,10 +61,14 @@ def fit_on_node(x_data, y_data):
 	popt, pcov = curve_fit(on_node_function, x_data, y_data,p0=[-10,0,amp0])
 	return popt #(phase_shift_to_apply at on-plane focus, amplitude for conversion)
 
-def run_fringe_fit(a,number_of_lpps):
+def get_fringe_angle_period(a, number_of_lpps,number_of_fringe_guess=4):
 	# Use fft diffraction peaks to get accurate angle of rotation
 	number_of_peaks = number_of_lpps * 2
 	peaks = fringe_fit_fft.get_fringe_angle_period(a, number_of_peaks)
+	return peaks
+
+def run_fringe_fit(a,number_of_lpps):
+	peaks = get_fringe_angle_period(a, number_of_peaks)
 	all_results = {}
 	# Use real space fit to get accurate period and phase shift
 	for n in range(number_of_lpps):

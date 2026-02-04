@@ -30,8 +30,6 @@ class LppAligner(acquisition.Acquisition):
 		'global view offset':0.0,
 		'compress ratio':8,
 		'xlpp':False,
-		'rotation1':0.0,
-		'rotation2':90.0,
 		'acquire type':'single off-plane image',
 		#'phase plate defocus sequence': '(-0.002,-0.0025,-0.003,-0.004)',
 		'phase plate defocus sequence': '(-0.002,-0.003,-0.004)',
@@ -339,7 +337,11 @@ class LppAligner(acquisition.Acquisition):
 			else:
 				self.acquirePublishDisplayWait(*args)
 			myimage = self.imagedata['image']
-			self.cmp_image = self.compress(myimage, self.settings['rotation1'], self.settings['compress ratio'])
+			# guess 8 fringes.
+			peaks = lppfit.get_fringe_angle_period(myimage, 1, 8)
+			key = 1
+			image_rotation = peaks[key]['image_rotation']
+			self.cmp_image = self.compress(myimage, -image_rotation, self.settings['compress ratio'])
 			self.setImage(self.cmp_image, 'Compressed')
 			if self.settings['save image']:
 				self.saveCompressed()
