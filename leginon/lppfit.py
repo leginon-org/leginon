@@ -68,7 +68,7 @@ def get_fringe_angle_period(a, number_of_lpps,number_of_fringe_guess=4):
 	return peaks
 
 def run_fringe_fit(a,number_of_lpps):
-	peaks = get_fringe_angle_period(a, number_of_peaks)
+	peaks = get_fringe_angle_period(a, number_of_lpps)
 	all_results = {}
 	# Use real space fit to get accurate period and phase shift
 	for n in range(number_of_lpps):
