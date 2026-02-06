@@ -604,6 +604,10 @@ class MatrixCalibrationClient(MagDependentCalibrationClient):
 	def parameter(self):
 		raise NotImplementedError
 
+	def calculateUnitParameterDelta(self, cam, mag, pixsize):
+		shiftpixels = min(cam.Dimension['x']*cam.Binning['x'], cam.Dimension['y']*cam.Binning['y'])
+		return shiftpixels * pixsize
+
 	def researchMatrix(self, tem, ccdcamera, caltype, ht, mag, probe=None):
 		queryinstance = leginondata.MatrixCalibrationData()
 		self.setDBInstruments(queryinstance,tem,ccdcamera)
@@ -1753,6 +1757,19 @@ class ImageScaleRotationCalibrationClient(ImageShiftCalibrationClient):
 		self.node.logger.info('Adjust for image scale: %.4f' % (scale))
 		return scaled_vect
 
+class PhasePlatePlaneShiftCalibrationClient(SimpleMatrixCalibrationClient):
+	mover = False
+	def __init__(self, node):
+		SimpleMatrixCalibrationClient.__init__(self, node)
+
+	def parameter(self):
+		return 'phase plate plane shift'
+
+	def calculateUnitParameterDelta(self, cam, mag, pixsize):
+		shiftpixels = min(cam.Dimension['x']*cam.Binning['x'], cam.Dimension['y']*cam.Binning['y'])
+		fringe_size = 395*cam.Binning['y'] #for 88000x and -0.0015 phase_plate_focus unit
+		return shiftpixels * pixsize / fringe_size
+
 class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	mover = False
 	def __init__(self, node):
@@ -1760,6 +1777,13 @@ class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
 
 	def parameter(self):
 		return 'beam shift'
+
+		q = leginondata.LppCalibrationData(session=self.session, tem=tem, ccdcamera=ccdcamera, xlpp=self.settings['xlpp'])
+		for k in self.lpp_axes:
+			q['lpp%d wave xtilt vector x' % k] = self.settings['lpp%d wave xtilt vector x' % k]
+			q['lpp%d wave xtilt vector y' % k] = self.settings['lpp%d wave xtilt vector y' % k]
+		q.insert(force=True)
+		self.logger.info('Lpp standing wave xtilt vector saved')
 
 class DiffractionShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	mover = False

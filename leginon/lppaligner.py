@@ -190,7 +190,7 @@ class LppAligner(acquisition.Acquisition):
 		self.x1_defocus_series = list(eval(self.settings['phase plate defocus sequence'])) #defocus in tfs unit
 		self.x1_defocus_series.sort()
 		if self.x1_defocus_series[0] < 0:
-			# always starts from value closest to f0
+			# always starts from value larger than f0
 			self.x1_defocus_series.reverse()
 		delta_f = self.x1_defocus_series[-1]
 		try:
@@ -228,9 +228,9 @@ class LppAligner(acquisition.Acquisition):
 		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
 		args = (presetdata, emtarget, defaultchannel)
 		self.x1_defocus_series = list(eval(self.settings['phase plate defocus sequence'])) #defocus in tfs unit
-		self.x1_defocus_series.sort()
+		self.x1_defocus_series.sort() # TODO: handle thru focus
 		if self.x1_defocus_series[0] < 0:
-			# always starts from value closest to f0
+			# always starts from value
 			self.x1_defocus_series.reverse()
 		data = {}
 		for k in self.lpp_axes:

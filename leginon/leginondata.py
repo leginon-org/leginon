@@ -2615,7 +2615,7 @@ class BeamTiltCalibratorSettingsData(CalibratorSettingsData):
 		
 class MatrixCalibratorSettingsData(CalibratorSettingsData):
 	def typemap(cls):
-		parameters = ['image shift', 'beam shift', 'diffraction shift', 'stage position']
+		parameters = ['image shift', 'beam shift', 'diffraction shift', 'stage position', 'phase plate plane shift']
 		parameterstypemap = []
 		for parameter in parameters:
 			parameterstypemap.append(('%s tolerance' % parameter, float))
