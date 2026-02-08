@@ -1101,7 +1101,7 @@ class Krios(tem.TEM):
 			return
 		my_device = 'XDeflectorTilt'
 		original_vector = getattr(self,'get%s' % my_device)()
-		min_move = 1e-6
+		min_move = 1e-9
 
 		req_key_name = camelcase_to_underscore(my_device)
 		self._setDeflector(req_key_name, vector, original_vector, min_move, relative)
