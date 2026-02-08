@@ -608,6 +608,9 @@ class MatrixCalibrationClient(MagDependentCalibrationClient):
 		shiftpixels = min(cam.Dimension['x']*cam.Binning['x'], cam.Dimension['y']*cam.Binning['y'])
 		return shiftpixels * pixsize
 
+	def getMeasuredPixelSize(self, param_change, totalpix, cam, pixsize):
+		return param_change / totalpix
+
 	def researchMatrix(self, tem, ccdcamera, caltype, ht, mag, probe=None):
 		queryinstance = leginondata.MatrixCalibrationData()
 		self.setDBInstruments(queryinstance,tem,ccdcamera)
@@ -1413,7 +1416,6 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		pixrow = pixelshift['row'] * biny
 		pixcol = pixelshift['col'] * binx
 		pixvect = numpy.array((pixrow, pixcol))
-
 		change = numpy.dot(matrix, pixvect)
 		changex = change[0]
 		changey = change[1]
@@ -1761,14 +1763,21 @@ class PhasePlatePlaneShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	mover = False
 	def __init__(self, node):
 		SimpleMatrixCalibrationClient.__init__(self, node)
+		self.fringe_xtilt_shift = 8.5e-5
+		self.fringe_shiftpixels = 325*8 #for 140000x and -0.0025 phase_plate_focus unit
 
 	def parameter(self):
 		return 'phase plate plane shift'
 
 	def calculateUnitParameterDelta(self, cam, mag, pixsize):
-		shiftpixels = min(cam.Dimension['x']*cam.Binning['x'], cam.Dimension['y']*cam.Binning['y'])
-		fringe_size = 395*cam.Binning['y'] #for 88000x and -0.0015 phase_plate_focus unit
-		return shiftpixels * pixsize / fringe_size
+		return self.fringe_xtilt_shift
+
+	def getMeasuredPixelSize(self, param_change, totalpix, cam, pixsize):
+		self.node.logger.debug('change-scope param change',param_change)
+		self.node.logger.debug('fringe_shiftpixels',self.fringe_shiftpixels)
+		self.node.logger.debug('totalpix-pixelshift for change',totalpix)
+		self.node.logger.debug('fringe_xtilt_shift',self.fringe_xtilt_shift)
+		return pixsize*param_change*self.fringe_shiftpixels / (totalpix*self.fringe_xtilt_shift)
 
 class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	mover = False

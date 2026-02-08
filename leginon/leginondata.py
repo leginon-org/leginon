@@ -701,6 +701,7 @@ class NavigatorScopeEMData(PresetScopeEMData):
 	def typemap(cls):
 		return PresetScopeEMData.typemap() + (
 			('stage position', dict),
+			('phase plate plane shift', dict),
 		)
 	typemap = classmethod(typemap)
 

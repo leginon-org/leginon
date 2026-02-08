@@ -116,7 +116,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 		percent = self.settings['%s shift fraction' % self.parameter]/100.0
 		unit_delta = calclient.calculateUnitParameterDelta(cam, mag, pixsize)
 		delta = percent * unit_delta
-		self.logger.debug('Delta %s' % delta)
+		self.logger.info('Unit Delta %s' % unit_delta)
+		self.logger.info('Delta %s' % delta)
 
 		shifts = {}
 		for axis in self.axislist:
@@ -151,6 +152,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 				self.logger.info('scope %s axis % s change between images: %s' % (self.parameter,axis,change))
 
 				perpix = change / totalpix
+
+				perpix = calclient.getMeasuredPixelSize(change, totalpix, cam, pixsize)
 
 				## deviation from pixsize should be less than
 				## 12%
@@ -255,7 +258,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		scope_state = {self.parameter: {axis: value}}
 		if self.parameter == 'phase plate plane shift':
 			#TODO save in a setting the required focus change
-			delta = -0.0015
+			delta = -0.0025
 			scope_state['phase plate focus'] = self.save_lpp_f0+delta
 			self.logger.info('phase plate focus changed by %.4f for measurement' % delta)
 		return scope_state

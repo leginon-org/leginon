@@ -109,6 +109,7 @@ class Navigator(node.Node):
 		self.calclients['modeled stage position'] = calibrationclient.ModeledStageCalibrationClient(self)
 		self.calclients['beam shift'] = calibrationclient.BeamShiftCalibrationClient(self)
 		self.calclients['image beam shift'] = calibrationclient.ImageBeamShiftCalibrationClient(self)
+		self.calclients['phase plate plane shift'] = calibrationclient.PhasePlatePlaneShiftCalibrationClient(self)
 
 		self.pcal = calibrationclient.PixelSizeCalibrationClient(self)
 		self.presetsclient = presets.PresetsClient(self)
@@ -227,6 +228,7 @@ class Navigator(node.Node):
 		self.logger.info('Moving...')
 
 		pixelshift = {'row':-row, 'col':-col}
+		self.logger.info('Moving by (r,c) %.6f,%.6f' % (pixelshift['row'],pixelshift['col']))
 		scope = self.newimagedata['scope']
 		camera = self.newimagedata['camera']
 
