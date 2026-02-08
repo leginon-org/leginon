@@ -11,10 +11,18 @@ class GctffindClient(object):
 		self.logger = node.logger
 
 	def runFromImageData(self, imagedata, amp_contrast=0.07, fieldsize=512, phase_search=(0,0)):
+		mrcpath=os.path.join(imagedata['session']['image path'],imagedata['filename']+'.mrc')
+		return self._runMrcPathWithImageData(mrcpath, imagedata, amp_contrast, fieldsize, phase_search)
+
+	def runArrayWithImageData(self, a, imagedata, amp_contrast=0.07, fieldsize=512, phase_search=(0,0)):
+		mrcpath='temp.mrc'
+		return self._runMrcPathWithImageData(mrcpath, imagedata, amp_contrast, fieldsize, phase_search)
+
+	def _runMrcPathWithImageData(self, mrcpath, imagedata, amp_contrast=0.07, fieldsize=512, phase_search=(0,0)):
 		pcalclient = calibrationclient.PixelSizeCalibrationClient(self.node)
 		psize = imagedata_pixel_size = pcalclient.getImagePixelSize(imagedata)['x']
 		inputparams={}
-		inputparams['input']=os.path.join(imagedata['session']['image path'],imagedata['filename']+'.mrc')
+		inputparams['input']=mrcpath
 		inputparams['pow_output']='%s-pow.mrc' % imagedata['filename']
 		inputparams['ctf_output']='%s.mrc.ctf.txt' % imagedata['filename']
 		inputparams['cs']=imagedata['scope']['tem']['cs']*1000 # in mm
