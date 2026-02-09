@@ -48,8 +48,8 @@ class LppAligner(acquisition.Acquisition):
 		self.deltaz = 0.0
 		self.v0 = 0.0
 		self.series_id = 1
-		self.xt_cycle = 0.000165
-		self.acquire_types = ['single off-plane image','on-node reference','global view','lpp defocus series']
+		self.xt_cycle = 0.000085
+		self.acquire_types = ['single off-plane image','on-node reference','global view','lpp defocus series','on-plane xtilt series']
 
 	def setParallelIlluminationOffsetToScope(self,view_type='on-plane'):
 		errstr = 'paralllel illumination offset to instrument failed: %s'
@@ -110,6 +110,8 @@ class LppAligner(acquisition.Acquisition):
 			self._acquireOnNodeReference(presetdata, emtarget, attempt, target, channel)
 		elif self.settings['acquire type'] == 'global view':
 			self._acquireGlobal(presetdata, emtarget, attempt, target, channel)
+		elif self.settings['acquire type'] == 'on-plane xtilt series':
+			self._acquireOnPlaneXTiltSeries(presetdata, emtarget, attempt, target, channel)
 		else:
 			self._acquireFocusSeries(presetdata, emtarget, attempt, target, channel)
 
@@ -275,6 +277,80 @@ class LppAligner(acquisition.Acquisition):
 				new_f0[k], self.new_phase_shifts[k], self.on_node_slopes[k], self.second_order_amps[k] = lppfit.calculateOnPlaneOnNode(numpy.array(data[k]), is_over_focus=False)
 				self.logger.info('Calculated LPP x1 lens at %.8f, phase shift needed at %s' % (new_f0[k], self.new_phase_shifts[k]))
 			self.new_f0 = sum(new_f0.values())
+		except Exception as e:
+			raise
+			self.logger.error('Error calculating on-plane and on-node values: %s' % e)
+			return status
+
+	def _acquireOnPlaneXTiltSeries(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
+		'''
+		this replaces Acquisition.acquire()
+		Instead of acquiring an image, we acquire a series of phase plate plane shift and use
+		them to find and move to on-node.
+		'''
+		reduce_pause = self.onTarget
+		status = self.moveAndPreset(presetdata, emtarget)
+		if status == 'error':
+			self.logger.warning('Move failed. skipping acquisition at this target')
+			return status
+		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
+		args = (presetdata, emtarget, defaultchannel)
+		wave_transform = numpy.array([
+				[self.settings['lpp1 wave xtilt vector x'],
+				self.settings['lpp1 wave xtilt vector y']],
+				[self.settings['lpp2 wave xtilt vector x'],
+				self.settings['lpp2 wave xtilt vector y']],
+		])
+		wave_xtlength = math.sqrt(numpy.sum(wave_transform*wave_transform)/2)
+		step_fraction = 0.3
+		self.xtilt_series = step_fraction*numpy.array(((-1,0),(0,0),(1,0))).T
+		self.xtilt_series = numpy.dot(wave_transform,self.xtilt_series)
+		data_shape = self.xtilt_series.shape[1]
+		# add to current value
+		xt0 = numpy.array((self.xt0['x'],self.xt0['y']))
+		xt0_series = numpy.tile(xt0,(data_shape,1)).T
+		self.xtilt_series += xt0_series
+		# initialize data record
+		data = {'xt':self.xtilt_series,'mean':numpy.zeros(data_shape),'std':numpy.zeros(data_shape)}
+		for i in range(data_shape):
+			try:
+				xt = {'x':data['xt'][0,i],'y':data['xt'][1,i]}
+				self.instrument.tem.PhasePlatePlaneShift = xt
+				time.sleep(self.settings['pause time'])
+				if self.settings['background']:
+					self.clearCameraEvents()
+					t = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
+					t.start()
+					self.waitExposureDone()
+				else:
+					self.acquirePublishDisplayWait(*args)
+				myimage = self.imagedata['image']
+			except Exception as e:
+				self.logger.error('failed to acquire image, aborting: %s' % e)
+				self.resetLppFocus()
+				break
+			finally:
+				try:
+					# calculate std
+					data['mean'][i] = myimage.mean()
+					data['std'][i] = myimage.std()
+				except Exception as e:
+					self.logger.warning('failed fitting, skipping: %s' % e)
+				finally:
+					self.resetLppFocus()
+		is_failed = self.resetComaCorrection()
+		if is_failed:
+			self.player.pause()
+		new_f0 = {} # sequence of new_f0 at each axis
+		for k in self.lpp_axes:
+			self.new_phase_shifts[k]=0.0
+		print(data['std'])
+		try:
+			ind = numpy.argmax(data['std'])
+			new_xt0 = {'x':data['xt'][ind][0],'y':data['xt'][ind][1]}
+			if abs(new_xt0['x'] -self.xt0['x']) > 0.5*step_fraction*wave_xtlength or abs(new_xt0['y']-self.xt0['y']) > 0.5*step_fraction*wave_xtlength:
+				self.logger.warning('xt applied %.8f,%.8f' % (new_xt0['x'],new_xt0['y']))
+				self.instrument.tem.PhasePlatePlaneShift = new_xt0
 		except Exception as e:
 			raise
 			self.logger.error('Error calculating on-plane and on-node values: %s' % e)
