@@ -135,6 +135,11 @@ class MatrixCalibrator(calibrator.Calibrator):
 				state2 = self.makeState(newvalue, axis)
 				self.logger.debug('States %s, %s' % (state1, state2))
 				im1 = calclient.acquireImage(state1, settle=self.settle[self.parameter])
+				corr_type = self.settings['correlation type']
+				if self.parameter == 'phase plate plane shift' and corr_type != 'cross':
+					# lpp fringe is low-freq cosine wave. Need to use cross correlation.
+					corr_type = 'cross'
+					self.logger.warning('force using cross correlation')
 				shiftinfo = calclient.measureScopeChange(im1, state2, settle=self.settle[self.parameter],correlation_type=self.settings['correlation type'],lp=self.settings['lpf sigma'])
 
 				rowpix = shiftinfo['pixel shift']['row']
