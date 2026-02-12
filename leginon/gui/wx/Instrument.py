@@ -829,7 +829,7 @@ class TEMPanel(wx.Panel, ParameterMixin):
 					'y': self.szlenses.xy['Stigmator']['Condenser']['y'],
 				},
 			},
-			'PhasePlatePlane': {
+			'PhasePlatePlaneShift': {
 				'x': self.szlenses.xy['PhasePlatePlane']['Shift']['x'],
 				'y': self.szlenses.xy['PhasePlatePlane']['Shift']['y'],
 			},
