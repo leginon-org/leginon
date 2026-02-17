@@ -60,12 +60,12 @@ class StigCalibrator(calibrator.Calibrator):
 
 		self.start()
 
-	def savedCenterToScope(self):
-		self.calibration_clients['%s stigmator' % self.parameter].savedCenterToScope()
+	def stigmatorCenterToScope(self):
+		self.calibration_clients['%s stigmator' % self.parameter].stigmatorCenterToScope()
 		self.panel.setInstrumentDone()
 
-	def savedCenterFromScope(self):
-		self.calibration_clients['%s stigmator' % self.parameter].savedCenterFromScope()
+	def stigmatorCenterFromScope(self):
+		self.calibration_clients['%s stigmator' % self.parameter].stigmatorCenterFromScope()
 		self.panel.setInstrumentDone()
 
 	def getFakeValues(self, axis, index):

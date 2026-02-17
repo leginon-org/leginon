@@ -2567,7 +2567,7 @@ class ObjectiveStigCalibrationClient(PixelSizeCalibrationClient):
 		queryinstance = leginondata.StigmatorCalibrationData()
 		queryinstance['tem'] = tem
 		queryinstance['ccdcamera'] = ccdcamera
-		queryinstance['name'] = self.stigmator_name
+		queryinstance['type'] = name
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		return caldatalist[0]
 
@@ -2590,7 +2590,7 @@ class ObjectiveStigCalibrationClient(PixelSizeCalibrationClient):
 		newdata['session'] = self.node.session
 		newdata['tem'] = self.instrument.getTEMData()
 		newdata['ccdcamera'] = self.instrument.getCCDCameraData()
-		newdata['name'] = name
+		newdata['type'] = name
 		newdata['rotation angle'] = rotation
 		newdata['coeff'] = coeff
 		self.node.publish(newdata, database=True, dbforce=True)
@@ -2620,6 +2620,52 @@ class ObjectiveStigCalibrationClient(PixelSizeCalibrationClient):
 		result['stigy'] = stig_y
 		result['min'] = 0.0
 		return result
+
+	def storeStigmatorCenter(self, tem, center):
+		rc = leginondata.StigmatorCenterData()
+		rc['type'] = self.stigmator_name
+		rc['center'] = center
+		rc['tem'] = tem
+		rc['session'] = self.node.session
+		self.node.publish(rc, database=True, dbforce=True)
+
+	def retrieveStigmatorCenter(self, tem):
+		rc = leginondata.StigmatorCenterData()
+		rc['tem'] = tem
+		rc['type'] = self.stigmator_name
+		results = self.node.research(datainstance=rc, results=1)
+		if results:
+			return results[0]['center']
+		else:
+			return None
+
+	def _stigmatorCenterToScope(self):
+		tem = self.instrument.getTEMData()
+		center = self.retrieveStigmatorCenter(tem)
+		if not center:
+			raise RuntimeError('no stigmator center for %geV, %gX' % (ht, probe))
+		self.instrument.tem.Stigmator = {self.stigmator_name: center}
+
+	def stigmatorCenterToScope(self):
+		try:
+			self._stigmatorCenterToScope()
+		except Exception as e:
+			self.node.logger.error('Unable to set stigmator center: %s' % e)
+		else:
+			self.node.logger.info('Set instrument stigmator center')
+
+	def _stigmatorCenterFromScope(self):
+		tem = self.instrument.getTEMData()
+		stigs = self.instrument.tem.Stigmator
+		self.storeStigmatorCenter(tem, stigs[self.stigmator_name])
+
+	def stigmatorCenterFromScope(self):
+		try:
+			self._stigmatorCenterFromScope()
+		except Exception as e:
+			self.node.logger.error('Unable to get stigmator center: %s' % e)
+		else:
+			self.node.logger.info('Saved instrument stigmator center')
 
 class CtfCalibrationClient(PixelSizeCalibrationClient):
 	def __init__(self, node):

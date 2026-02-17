@@ -114,8 +114,8 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		#self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureComafreeTool, id=leginon.gui.wx.ToolBar.ID_MEASURE_COMAFREE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onEucentricFocusFromScope, id=leginon.gui.wx.ToolBar.ID_GET_INSTRUMENT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onEucentricFocusToScope, id=leginon.gui.wx.ToolBar.ID_SET_INSTRUMENT)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onSavedCenterFromScope, id=leginon.gui.wx.ToolBar.ID_GET_BEAMTILT)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onSavedCenterToScope, id=leginon.gui.wx.ToolBar.ID_SET_BEAMTILT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onStigmatorCenterFromScope, id=leginon.gui.wx.ToolBar.ID_GET_BEAMTILT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onStigmatorCenterToScope, id=leginon.gui.wx.ToolBar.ID_SET_BEAMTILT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onEditFocusCalibrationTool, id=leginon.gui.wx.ToolBar.ID_EDIT)
 
 	def instrumentEnable(self, enable):
@@ -184,13 +184,13 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.instrumentEnable(False)
 		threading.Thread(target=self.node.eucentricFocusFromScope).start()
 
-	def onSavedCenterToScope(self, evt):
+	def onStigmatorCenterToScope(self, evt):
 		self.instrumentEnable(False)
-		threading.Thread(target=self.node.rotationCenterToScope).start()
+		threading.Thread(target=self.node.stigmatorCenterToScope).start()
 
-	def onSavedCenterFromScope(self, evt):
+	def onStigmatorCenterFromScope(self, evt):
 		self.instrumentEnable(False)
-		threading.Thread(target=self.node.rotationCenterFromScope).start()
+		threading.Thread(target=self.node.stigmatorCenterFromScope).start()
 
 	def onMeasureTool(self, evt):
 		self.measure_dialog.ShowModal()
@@ -242,7 +242,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		Edit and save upon closing dialog.
 		Includes probe but not magnification.
 		'''
-		parameter = evt.calibrationdata['name']
+		parameter = evt.calibrationdata['type']
 		tem = evt.calibrationdata['tem']
 		ccdcamera = evt.calibrationdata['ccdcamera']
 		rotation = evt.calibrationdata['rotation angle']

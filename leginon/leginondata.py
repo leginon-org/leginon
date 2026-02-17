@@ -445,9 +445,17 @@ class CameraSensitivityCalibrationData(CalibrationData):
 class StigmatorCalibrationData(CalibrationData):
 	def typemap(cls):
 		return CalibrationData.typemap() + (
-			('name', str),
+			('type', str),
 			('rotation angle', float), #degrees from x-axis like in ctffind
 			('coeff', dict), # unit conversion from stigmator current to astig
+		)
+	typemap = classmethod(typemap)
+
+class StigmatorCenterData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('type', str),
+			('center', dict), # x,y key/value pair
 		)
 	typemap = classmethod(typemap)
 
