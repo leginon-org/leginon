@@ -236,6 +236,9 @@ noderegistry.registerNodeClass(ImageBeamCalibrator,classtype)
 from leginon.beamtiltcalibrator import BeamTiltCalibrator
 noderegistry.registerNodeClass(BeamTiltCalibrator,classtype)
 
+from leginon.stigcalibrator import StigCalibrator
+noderegistry.registerNodeClass(StigCalibrator,classtype)
+
 from leginon.pixelsizecalibrator import PixelSizeCalibrator
 noderegistry.registerNodeClass(PixelSizeCalibrator,classtype)
 

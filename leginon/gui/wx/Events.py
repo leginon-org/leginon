@@ -84,6 +84,7 @@ eventFactory('Clear Grid')
 eventFactory('Grid Inserted')
 eventFactory('Extracting Grid')
 eventFactory('Edit Matrix', attributes=['calibrationdata'])
+eventFactory('Edit Calibration', attributes=['calibrationdata'])
 eventFactory('Edit Focus Calibration', attributes=[
 	'tem',
 	'ccd_camera',

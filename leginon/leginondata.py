@@ -442,6 +442,15 @@ class CameraSensitivityCalibrationData(CalibrationData):
 		)
 	typemap = classmethod(typemap)
 
+class StigmatorCalibrationData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('name', str),
+			('rotation angle', float), #degrees from x-axis like in ctffind
+			('coeff', dict), # unit conversion from stigmator current to astig
+		)
+	typemap = classmethod(typemap)
+
 class MagDependentCalibrationData(CalibrationData):
 	def typemap(cls):
 		return CalibrationData.typemap() + (
@@ -2613,7 +2622,16 @@ class BeamTiltCalibratorSettingsData(CalibratorSettingsData):
 			('imageshift coma repeat', int),
 		)
 	typemap = classmethod(typemap)
-		
+
+class StigCalibratorSettingsData(CalibratorSettingsData):
+	def typemap(cls):
+		return CalibratorSettingsData.typemap() + (
+			('measure defocus', float),
+			('correct tilt', bool),
+			('settling time', float),
+		)
+	typemap = classmethod(typemap)
+
 class MatrixCalibratorSettingsData(CalibratorSettingsData):
 	def typemap(cls):
 		parameters = ['image shift', 'beam shift', 'diffraction shift', 'stage position', 'phase plate plane shift']

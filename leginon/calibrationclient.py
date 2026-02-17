@@ -2557,6 +2557,70 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 
 		return iy,ix
 
+class ObjectiveStigCalibrationClient(PixelSizeCalibrationClient):
+	stigmator_name = 'objective'
+	def __init__(self, node):
+		CalibrationClient.__init__(self, node)
+
+	def researchCalibration(self, tem, ccdcamera, name):
+		#TODO this should be projection mode dependent in case of rotation between modes.
+		queryinstance = leginondata.StigmatorCalibrationData()
+		queryinstance['tem'] = tem
+		queryinstance['ccdcamera'] = ccdcamera
+		queryinstance['name'] = self.stigmator_name
+		caldatalist = self.node.research(datainstance=queryinstance, results=1)
+		return caldatalist[0]
+
+	def ctf2Stigmator(self, cal, ctf):
+		stigmator_rotation = cal['rotation angle'] # degrees
+		x_coeff = cal['coeff']['x']
+		y_coeff = cal['coeff']['y']
+		#
+		# calculate values to apply to remove the measurement
+		# gctffind naming convension
+		phiA = ctf['angle_astigmatism']-stigmator_rotation
+		print('rotated astig angle', phiA)
+		astig_magnitude = 0.5 * (ctf['defocus1']-ctf['defocus2'])*1e-10 # convert to meters
+		xStig = astig_magnitude * math.cos(math.radians(2*phiA))/x_coeff
+		yStig = astig_magnitude * math.sin(math.radians(2*phiA))/y_coeff
+		return xStig, yStig
+
+	def saveStigCalibration(self, rotation, coeff, name='objective'):
+		newdata = leginondata.StigmatorCalibrationData()
+		newdata['session'] = self.node.session
+		newdata['tem'] = self.instrument.getTEMData()
+		newdata['ccdcamera'] = self.instrument.getCCDCameraData()
+		newdata['name'] = name
+		newdata['rotation angle'] = rotation
+		newdata['coeff'] = coeff
+		self.node.publish(newdata, database=True, dbforce=True)
+
+	def measureDefocusStig(self, defocus_value, ctfcalclient, settle=0.5, correct_tilt=False, image0=None, on_phase_plate=False):
+		self.abortevent.clear()
+		tem = self.instrument.getTEMData()
+		cam = self.instrument.getCCDCameraData()
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
+		# Can not handle the exception for retrieveMatrix here. 
+		# Focuser node that calls this need to know the type of error
+		self.cal = self.researchCalibration(tem, cam, self.stigmator_name)
+		if not image0:
+			state1 = leginondata.ScopeEMData()
+			state1['defocus'] = defocus_value
+			image0 = self.acquireImage(state1, settle=settle, correct_tilt=correct_tilt, corchannel=0)
+		phase_search = (0,0)
+		if on_phase_plate:
+			raise ValueError('should not be used in on-phase-plate')
+		defocus_avg, ctfvalues = ctfcalclient.measureImageCtf(image0, (0,0))
+		stig_x, stig_y = self.ctf2Stigmator(self.cal, ctfvalues)
+		result = {'defocus': defocus_avg}
+		# These are stigmator values to apply, not ctf estimation result
+		result['stigx'] = stig_x
+		result['stigy'] = stig_y
+		result['min'] = 0.0
+		return result
+
 class CtfCalibrationClient(PixelSizeCalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
