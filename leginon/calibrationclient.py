@@ -164,14 +164,26 @@ class CalibrationClient(object):
 
 		## acquire neximage
 		nextimage = self.acquireImage(nextscope, settle, correct_tilt=correct_tilt, corchannel=corchannel)
-		self.correlator.insertImage(nextimage['image'])
-		imagearray = nextimage['image']
-		if imagearray.max() == 0:
+		## correlate with the previous image
+		nextimage_array = nextimage['image']
+		if nextimage_array.max() == 0:
 			raise RuntimeError('Bad image intensity range')
 
 		self.checkAbort()
+		cor, shrink_factor = self.correlateNextImage(nextimage_array, correlation_type, lp)
+		self.displayCorrelation(cor)
 
-		## correlate
+		camera_binning = nextimage['camera']['binning']
+		pixelpeak, unbinned = self.findPeak(cor, camera_binning, shrink_factor)
+		self.node.startTimer('shift display')
+		self.displayPeak(pixelpeak)
+		self.node.stopTimer('shift display')
+		shiftinfo = {'previous': previousimage, 'next': nextimage, 'pixel shift': unbinned}
+		return shiftinfo
+
+	def correlateNextImage(self, nextimage_array, correlation_type='phase', lp=None):
+		self.correlator.insertImage(nextimage_array)
+
 		self.node.startTimer('scope change correlation')
 		if correlation_type is None:
 			try:
@@ -188,10 +200,10 @@ class CalibrationClient(object):
 
 		if lp is not None and lp > 0.0001:
 			cor = scipy.ndimage.gaussian_filter(cor, lp)
-
-		self.displayCorrelation(cor)
 		shrink_factor = self.correlator.shrink_factor
+		return cor, shrink_factor
 
+	def findPeak(self, cor, camera_binning, shrink_factor):
 		## find peak
 		self.node.startTimer('shift peak')
 		peak = peakfinder.findSubpixelPeak(cor)
@@ -200,21 +212,16 @@ class CalibrationClient(object):
 		self.node.logger.debug('Peak %s' % (peak,))
 
 		pixelpeak = peak['subpixel peak']
-		self.node.startTimer('shift display')
-		self.displayPeak(pixelpeak)
-		self.node.stopTimer('shift display')
 
 		peakvalue = peak['subpixel peak value']
 		shift = correlator.wrap_coord(peak['subpixel peak'], cor.shape)
 		self.node.logger.debug('pixel shift (row,col): %s' % (shift,))
 
 		## need unbinned result
-		binx = nextimage['camera']['binning']['x']*shrink_factor
-		biny = nextimage['camera']['binning']['y']*shrink_factor
+		binx = camera_binning['x']*shrink_factor
+		biny = camera_binning['y']*shrink_factor
 		unbinned = {'row':shift[0] * biny, 'col': shift[1] * binx}
-
-		shiftinfo = {'previous': previousimage, 'next': nextimage, 'pixel shift': unbinned}
-		return shiftinfo
+		return pixelpeak, unbinned
 	
 	def measureStateDefocus(self, nextscope, settle=0.0):
 		'''

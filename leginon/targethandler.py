@@ -561,13 +561,18 @@ class TargetHandler(object):
 			self.instrument.tem.PhasePlateFocus = self.new_f0
 			# set xtilt
 			self.new_xtilt = self.instrument.tem.PhasePlatePlaneShift
+			delta_xtilt = {'x':0.0,'y':0.0}
 			for k in self.lpp_axes:
 				c = 1/360.0
 				for axis in ('x','y'):
-					self.new_xtilt[axis] += self.new_phase_shifts[k]*c*self.xtilt_cal['lpp%d wave xtilt vector %s' % (k,axis)]
+					delta_xtilt[axis] += self.new_phase_shifts[k]*c*self.xtilt_cal['lpp%d wave xtilt vector %s' % (k,axis)]
+			self.logger.info('Calculated LPP xtilt shift as %s' % (delta_xtilt))
+			for axis in ('x','y'):
+				self.new_xtilt[axis] += delta_xtilt[axis]
 			self.logger.info('Calculated LPP new xtilt as %s' % (self.new_xtilt))
-			self.instrument.tem.PhasePlatePlaneShift = self.new_xtilt
-			self.logger.info('Set LPP x1 lens to %.8f, x-tilt to x:%.6f,y:%6f' % (self.new_f0, self.new_xtilt['x'],self.new_xtilt['y']))
+			self.logger.info('Calibrated LPP new xtilt as %s' % (self.new_xt0))
+			self.instrument.tem.PhasePlatePlaneShift = self.new_xt0
+			self.logger.info('Set LPP x1 lens to %.8f, x-tilt to x:%.6f,y:%6f' % (self.new_f0, self.new_xt0['x'],self.new_xt0['y']))
 		except Exception as e:
 			self.logger.error('Error setting on-plane and on-node values')
 			self.resetLppFocus()

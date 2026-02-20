@@ -12,6 +12,7 @@ import threading
 from leginon import event
 import time
 import math
+import traceback
 from pyami import imagefun, fftfun, ordereddict
 import numpy
 import scipy.ndimage as nd
@@ -45,6 +46,7 @@ class LppAligner(acquisition.Acquisition):
 	def __init__(self, id, session, managerlocation, **kwargs):
 
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
+		self.calclients['phase plate plane shift'] = calibrationclient.PhasePlatePlaneShiftCalibrationClient(self)
 		self.deltaz = 0.0
 		self.v0 = 0.0
 		self.series_id = 1
@@ -68,6 +70,7 @@ class LppAligner(acquisition.Acquisition):
 		self.f0 = self.instrument.tem.PhasePlateFocus
 		self.xt0 = self.instrument.tem.PhasePlatePlaneShift
 		self.new_f0 = self.f0
+		self.new_xt0 = self.xt0
 		self.new_phase_shifts = {1:0.0}
 		self.on_node_slopes = {1:0.0}
 		self.second_order_amps = {1:0.0}
@@ -124,23 +127,76 @@ class LppAligner(acquisition.Acquisition):
 		delta_f = refdata['delta lpp focus']
 		# acquire image with new_f
 		try:
-			status, r = self._acquireOffPlaneImage(presetdata, emtarget, attempt, target, channel, delta_f)
+			status = self._acquireOffPlaneImage(presetdata, emtarget, attempt, target, channel, delta_f)
+			if status != 'error':
+				status, r = self.calculatePhaseShiftCorrection(refdata)
+				self.new_xt0 = self.calculateNewPhasePlatePlaneShift(refdata)
+
 		except Exception as e:
+			traceback.print_exc()
 			self.logger.error('Failed. off plane alignment not valid: %s' % e)
 			return 'error'
+
+	def fitFringe(self):
+		myimage = self.imagedata['image']
 		try:
+			number_of_lpp = 1
+			if self.settings['xlpp']:
+				number_of_lpp = 2
+			results = lppfit.run_fringe_fit(myimage, number_of_lpp)
+		except Exception as e:
+			self.logger.warning('failed fitting, skipping: %s' % e)
+			raise RuntimeError('Lpp Fitting failed: %e' % e)
+		return results
+
+	def calculateNewPhasePlatePlaneShift(self, refdata):
+		"""
+		Use image correlation and MatrixCalibrationData tp calculate new xtilt
+		"""
+		calclient = self.calclients['phase plate plane shift']
+		calclient.correlator.insertImage(refdata['reference']['image'])
+		cor, shrink_factor = calclient.correlateNextImage(self.imagedata['image'], 'cross', None)
+		camera_binning = self.imagedata['camera']['binning']
+		pixelpeak, unbinned = calclient.findPeak(cor, camera_binning, shrink_factor)
+		# convert to binned image
+		row = unbinned['row'] / camera_binning['y']
+		col = unbinned['col'] / camera_binning['x']
+
+		pixelshift = {'row':-row, 'col':-col}
+		self.logger.info('measured shift (r,c) %.6f,%.6f' % (pixelshift['row'],pixelshift['col']))
+		scope = self.imagedata['scope']
+		camera = self.imagedata['camera']
+
+		# figure out shift
+		try:
+			newstate = calclient.transform(pixelshift, scope, camera)
+		except calibrationclient.NoMatrixCalibrationError as e:
+			errsubstr = 'unable to find calibration for %s' % e
+			self.logger.error(errstr % errsubstr)
+			self.beep()
+			return None
+		except Exception as e:
+			self.logger.exception(errstr % e)
+			self.beep()
+			return None
+		return newstate['phase plate plane shift']
+
+	def calculatePhaseShiftCorrection(self, refdata):
+		status = 'success'
+		try:
+			results = self.fitFringe()
 			# phase shift represent correction needed, so it needs to reverse sign.
-			for k in r.keys():
-				phase_shift_needed = r[k]['phase_shift_to_max']
+			for k in results.keys():
+				phase_shift_needed = results[k]['phase_shift_to_max']
 				phase_diff = -(phase_shift_needed - refdata['lpp%d phase shift' % k])
 				self.new_phase_shifts[k] = lppfit.convert_phase_degrees(phase_diff)
 		except Exception as e:
 			self.logger.error('Error calculating on-node values: %s' % e)
 			status = 'error'
-			return status
+			return status, results
 		self.logger.info('phase shift correction = %s' % self.new_phase_shifts)
-		self.saveLppFitMeasurement(refdata, self.imagedata, r, self.new_phase_shifts)
-		return status
+		self.saveLppFitMeasurement(refdata, self.imagedata, results, self.new_phase_shifts)
+		return status, results
 
 	def _acquireOffPlaneImage(self, presetdata, emtarget=None, attempt=None, target=None, channel=None, lpp_delta_focus=None):
 		'''
@@ -167,23 +223,15 @@ class LppAligner(acquisition.Acquisition):
 			else:
 				self.acquirePublishDisplayWait(*args)
 			myimage = self.imagedata['image']
+			return status
 		except Exception as e:
 			self.logger.error('failed to acquire image, aborting: %s' % e)
 			raise RuntimeError('Acquisition Failed: %e' % e)
 		self.resetLppFocus()
-		try:
-			number_of_lpp = 1
-			if self.settings['xlpp']:
-				number_of_lpp = 2
-			results = lppfit.run_fringe_fit(myimage, number_of_lpp)
-		except Exception as e:
-			self.logger.warning('failed fitting, skipping: %s' % e)
-			is_failed = self.resetComaCorrection()
-			raise RuntimeError('Lpp Fitting failed: %e' % e)
 		is_failed = self.resetComaCorrection()
 		if is_failed:
 			self.player.pause()
-		return status, results
+		return status
 
 	def _acquireOnNodeReference(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
 		'''
@@ -196,7 +244,9 @@ class LppAligner(acquisition.Acquisition):
 			self.x1_defocus_series.reverse()
 		delta_f = self.x1_defocus_series[-1]
 		try:
-			status, r = self._acquireOffPlaneImage(presetdata, emtarget, attempt, target, channel, delta_f)
+			status = self._acquireOffPlaneImage(presetdata, emtarget, attempt, target, channel, delta_f)
+			if status != 'error':
+				r = self.fitFringe()
 		except Exception as e:
 			self.logger.error('Failed. on-node reference not saved: %s' % e)
 			return
@@ -229,7 +279,13 @@ class LppAligner(acquisition.Acquisition):
 			return status
 		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
 		args = (presetdata, emtarget, defaultchannel)
-		self.x1_defocus_series = list(eval(self.settings['phase plate defocus sequence'])) #defocus in tfs unit
+		values = eval(self.settings['phase plate defocus sequence'])) #defocus in tfs unit
+		try:
+			self.x1_defocus_series = list(values)
+		except TypeError as e:
+			if type(values) == type(0.1) or type(values) == type(1):
+				values = [values,]
+		self.x1_defocus_series = values #defocus in tfs unit
 		self.x1_defocus_series.sort() # TODO: handle thru focus
 		if self.x1_defocus_series[0] < 0:
 			# always starts from value
