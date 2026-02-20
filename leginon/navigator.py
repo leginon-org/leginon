@@ -749,6 +749,7 @@ class Navigator(node.Node):
 		self.presetsclient.toScope(presetname)
 		if self.presetsclient.stage_targeting_failed:
 			self.logger.error('Preset sending failed. Check parameters')
+		self.f0 = self.instrument.tem.PhasePlateFocus
 		self.setStatus('idle')
 		self.panel.onSendPresetDone()
 
@@ -763,6 +764,16 @@ class Navigator(node.Node):
 	def onResetAlpha(self):
 		loc = {'a':0.0}
 		self._toScope('reset alpha',loc)
+
+	def onToggleLppFocus(self):
+		loc = {'a':0.0}
+		f = self.instrument.tem.PhasePlateFocus
+		if not hasattr(self,'f0'):
+		    self.f0 = self.instrument.tem.PhasePlateFocus
+		if f == self.f0:
+			self.instrument.tem.PhasePlateFocus = self.f0-0.0025
+		else:
+			self.instrument.tem.PhasePlateFocus = self.f0
 
 if __name__ == '__main__':
 	id = ('navigator',)
