@@ -237,7 +237,12 @@ class LppAligner(acquisition.Acquisition):
 		'''
 		save an image used as reference.
 		'''
-		self.x1_defocus_series = list(eval(self.settings['phase plate defocus sequence'])) #defocus in tfs unit
+		try:
+			self.x1_defocus_series = list(values)
+		except TypeError as e:
+			if type(values) == type(0.1) or type(values) == type(1):
+				values = [values,]
+		self.x1_defocus_series = values #defocus in tfs unit
 		self.x1_defocus_series.sort()
 		if self.x1_defocus_series[0] < 0:
 			# always starts from value larger than f0
@@ -279,7 +284,7 @@ class LppAligner(acquisition.Acquisition):
 			return status
 		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
 		args = (presetdata, emtarget, defaultchannel)
-		values = eval(self.settings['phase plate defocus sequence'])) #defocus in tfs unit
+		values = eval(self.settings['phase plate defocus sequence']) #defocus in tfs unit
 		try:
 			self.x1_defocus_series = list(values)
 		except TypeError as e:
