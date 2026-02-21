@@ -53,6 +53,20 @@ class LppAligner(acquisition.Acquisition):
 		self.xt_cycle = 0.000085
 		self.acquire_types = ['single off-plane image','on-node reference','global view','lpp defocus series','on-plane xtilt series']
 
+	def setDefocusSeries(self):
+		values = eval(self.settings['phase plate defocus sequence']) #defocus in tfs unit
+		try:
+			self.x1_defocus_series = list(values)
+		except TypeError as e:
+			if type(values) == type(0.1) or type(values) == type(1):
+				values = [values,]
+				self.x1_defocus_series = values #defocus in tfs unit
+			else:
+				raise
+		except Exception as e:
+			raise
+		self.x1_defocus_series.sort()
+
 	def setParallelIlluminationOffsetToScope(self,view_type='on-plane'):
 		errstr = 'paralllel illumination offset to instrument failed: %s'
 		settings_name = '%s view offset' % view_type
@@ -237,13 +251,7 @@ class LppAligner(acquisition.Acquisition):
 		'''
 		save an image used as reference.
 		'''
-		try:
-			self.x1_defocus_series = list(values)
-		except TypeError as e:
-			if type(values) == type(0.1) or type(values) == type(1):
-				values = [values,]
-		self.x1_defocus_series = values #defocus in tfs unit
-		self.x1_defocus_series.sort()
+		self.setDefocusSeries()
 		if self.x1_defocus_series[0] < 0:
 			# always starts from value larger than f0
 			self.x1_defocus_series.reverse()
@@ -284,14 +292,7 @@ class LppAligner(acquisition.Acquisition):
 			return status
 		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
 		args = (presetdata, emtarget, defaultchannel)
-		values = eval(self.settings['phase plate defocus sequence']) #defocus in tfs unit
-		try:
-			self.x1_defocus_series = list(values)
-		except TypeError as e:
-			if type(values) == type(0.1) or type(values) == type(1):
-				values = [values,]
-		self.x1_defocus_series = values #defocus in tfs unit
-		self.x1_defocus_series.sort() # TODO: handle thru focus
+		self.setDefocusSeries()
 		if self.x1_defocus_series[0] < 0:
 			# always starts from value
 			self.x1_defocus_series.reverse()
