@@ -237,7 +237,6 @@ class LppAligner(acquisition.Acquisition):
 			else:
 				self.acquirePublishDisplayWait(*args)
 			myimage = self.imagedata['image']
-			return status
 		except Exception as e:
 			self.logger.error('failed to acquire image, aborting: %s' % e)
 			raise RuntimeError('Acquisition Failed: %e' % e)

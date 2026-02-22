@@ -1273,7 +1273,7 @@ class FocuserResultData(InSessionData):
 			('stigx', float),
 			('stigy', float),
 			('min', float),
-			('stig correction', int),
+			('stig correction', int), #Shouldn't this boolean ?
 			('defocus correction', str),
 			('method', str),
 			('status', str),

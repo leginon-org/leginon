@@ -2749,9 +2749,7 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		if measured_correction_delta < -0.8 * delta_defoc or measured_correction_delta > -1.2 * delta_defoc:
 			residual = 9.999e8
 			self.node.logger.warning('Failed estimate with bad correction_delta')
-		result = {'defocus': correction0, 'min': residual}
-		result['stigx'] = None
-		result['stigy'] = None
+		result = {'defocus': correction0, 'min': residual, 'ctfvalues': ctfvalues0}
 		return result
 
 	def measureImageCtf(self, imagedata, phase_search=(0,0)):
