@@ -11,7 +11,7 @@ class GctffindClient(object):
 		self.logger = node.logger
 
 	def runOneImageData(self, imagedata):
-		self.runFromImageData(imagedata)
+		return self.runFromImageData(imagedata)
 
 	def runFromImageData(self, imagedata, amp_contrast=0.07, fieldsize=512, phase_search=(0,0)):
 		mrcpath=os.path.join(imagedata['session']['image path'],imagedata['filename']+'.mrc')
@@ -42,6 +42,7 @@ class GctffindClient(object):
 		self.ctfvalues = self.readResult(inputparams['ctf_output'])
 		self.ctfvalues.update(inputparams)
 		os.remove(inputparams['ctf_output'])
+		os.remove(inputparams['pow_output'])
 		return self.ctfvalues
 
 	def makeCommand(self, inputparams):
@@ -55,6 +56,7 @@ class GctffindClient(object):
 			"-PixSize %.3f" % inputparams['apix'],
 			"-TileSize %d" % inputparams['fieldsize'],
 			"-AmpContrast %.4f" % inputparams['amplitude_contrast'],
+			"-AstRange 0.1",
 		]
 		if 'min_phase_shift' in inputparams.keys() and 'max_phase_shift' in inputparams.keys():
 			command_input_list.append(

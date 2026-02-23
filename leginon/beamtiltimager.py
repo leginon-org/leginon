@@ -406,7 +406,9 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 	def applyTiltChange(self, deltabt):
 			oldbt = self.instrument.tem.BeamTilt
 			self.logger.info('Old beam tilt: %.4f, %.4f' % (oldbt['x'],oldbt['y'],))
-			newbt = {'x': oldbt['x'] + deltabt['x'], 'y': oldbt['y'] + deltabt['y']}
+                        # deltabt is the measured beam tilt that gives the coma effect.
+                        # Correction is in the opposite direction.
+                        newbt = {'x': oldbt['x'] - deltabt['x'], 'y': oldbt['y'] - deltabt['y']}
 			self.instrument.tem.BeamTilt = newbt
 			self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
 
@@ -448,6 +450,8 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 				return self.ace.runOneImageData(imagedata)
 			except Exception as e:
 				self.logger.error('Error estimating ctf: %s' % e)
+		else:
+			self.logger.error('No ctf estimator')
 
 	def getSimulatedImageCtfResult(self, imagedata):
 			'''
