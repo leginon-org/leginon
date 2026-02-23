@@ -404,19 +404,19 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 			pass
 
 	def applyTiltChange(self, deltabt):
-			oldbt = self.instrument.tem.BeamTilt
-			self.logger.info('Old beam tilt: %.4f, %.4f' % (oldbt['x'],oldbt['y'],))
-                        # deltabt is the measured beam tilt that gives the coma effect.
-                        # Correction is in the opposite direction.
-                        newbt = {'x': oldbt['x'] - deltabt['x'], 'y': oldbt['y'] - deltabt['y']}
-			self.instrument.tem.BeamTilt = newbt
-			self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
+		oldbt = self.instrument.tem.BeamTilt
+		self.logger.info('Old beam tilt: %.4f, %.4f' % (oldbt['x'],oldbt['y'],))
+		# deltabt is the measured beam tilt that gives the coma effect.
+		# Correction is in the opposite direction.
+		newbt = {'x': oldbt['x'] - deltabt['x'], 'y': oldbt['y'] - deltabt['y']}
+		self.instrument.tem.BeamTilt = newbt
+		self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
 
 	def applyTiltChangeAndReacquireTableau(self,deltabt):
-			self.applyTiltChange(deltabt)
-			self.simulateTarget()
-			newbt = self.instrument.tem.BeamTilt
-			self.logger.info('Final beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
+		self.applyTiltChange(deltabt)
+		self.simulateTarget()
+		newbt = self.instrument.tem.BeamTilt
+		self.logger.info('Final beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
 
 	def navigate(self, xy):
 		clickrow = xy[1]
