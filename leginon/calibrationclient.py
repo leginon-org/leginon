@@ -70,6 +70,7 @@ class CalibrationClient(object):
 		self.abortevent = threading.Event()
 		self.tiltcorrector = tiltcorrector.TiltCorrector(node)
 		self.stagetiltcorrector = tiltcorrector.VirtualStageTilter(node)
+		self.ctfclient = ctffun.GctffindClient(self.node)
 		self.rpixelsize = None
 		self.powerbinning = 2
 		self.debug = False
@@ -239,12 +240,12 @@ class CalibrationClient(object):
 		if imagearray.max() == 0:
 			raise RuntimeError('Bad image intensity range')
 		pow = imagefun.power(imagearray)
-		ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht, self.cs)
-
+		ctfdata = self.ctfclient.runFromImageData(nextimage, phase_search=(0,0))
 		self.checkAbort()
 		if ctfdata is not None:
 			self.node.logger.info('defocus: %.3f um, zast: %.3f um' % (ctfdata[0]*1e6,ctfdata[1]*1e6))
-			defocusinfo = {'next': nextimage, 'defocus': ctfdata[0]}
+			avg_defocus = (ctfdata['defocus1']+ctfdata['defocus2'])/2.0
+			defocusinfo = {'next': nextimage, 'defocus': avg_defocus}
 		else:
 			self.node.logger.warning('ctf estimation failed')
 			defocusinfo = {'next': nextimage, 'defocus': None}
@@ -268,30 +269,13 @@ class CalibrationClient(object):
 			self.ht = imagedata['scope']['high tension']
 			if not self.rpixelsize:
 				self.rpixelsize = self.getImageReciprocalPixelSize(imagedata)
-			ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht, self.cs)
+			ctfdata = self.ctfclient.runFromImageData(imagedata)
 			self.ctfdata.append(ctfdata)
 
 			# show defocus estimate on tableau
 			if ctfdata:
-				self.node.logger.info('tabeau defocus: %.3f um, zast: %.3f um' % (ctfdata[0]*1e6,ctfdata[1]*1e6))
-				s = '%d' % int(ctfdata[0]*1e9)
-				eparams = ctfdata[4]
-				self.node.logger.info('eparams a:%.3f, b:%.3f, alpha:%.3f' % (eparams['a'],eparams['b'],eparams['alpha']))
-				center = numpy.divide(eparams['center'], binning)
-				a = eparams['a'] / binning
-				b = eparams['b'] / binning
-				alpha = eparams['alpha']
-				ellipse1 = pyami.ellipse.drawEllipse(binned.shape, 2*numpy.pi/180, center, a, b, alpha)
-				ellipse2 = pyami.ellipse.drawEllipse(binned.shape, 5*numpy.pi/180, center, a, b, alpha)
-				min = arraystats.min(binned)
-				max = arraystats.max(binned)
-				numpy.putmask(binned, ellipse1, min)
-				numpy.putmask(binned, ellipse2, max)
-			#elif self.ace2exe:
-			elif False:
-				ctfdata = self.estimateCTF(imagedata)
-				z0 = (ctfdata['defocus1'] + ctfdata['defocus2']) / 2
-				s = '%d' % (int(z0*1e9),)
+				self.node.logger.info('tabeau defocus: %.3f um, zast: %.3f um' % (ctfdata['defocus1']*1e4,ctfdata['defocus2']*1e4))
+				s = 'ctf: %d,%d a=%d' % (int(ctfdata['defocus1']*0.1), int(ctfdata['defocus2']*0.1),ctfdata['angle_astigmatism'])
 			if s:
 				t = numpil.textArray(s, binning)
 				t = min + t * (max-min)
@@ -2587,7 +2571,7 @@ class ObjectiveStigCalibrationClient(PixelSizeCalibrationClient):
 		# gctffind naming convension
 		phiA = ctf['angle_astigmatism']-stigmator_rotation
 		print('rotated astig angle', phiA)
-		astig_magnitude = 0.5 * (ctf['defocus1']-ctf['defocus2'])*1e-10 # convert to meters
+		astig_magnitude = 0.5 * (ctf['defocus1']-ctf['defocus2']) # in meters
 		xStig = astig_magnitude * math.cos(math.radians(2*phiA))/x_coeff
 		yStig = astig_magnitude * math.sin(math.radians(2*phiA))/y_coeff
 		return xStig, yStig
@@ -2677,7 +2661,6 @@ class ObjectiveStigCalibrationClient(PixelSizeCalibrationClient):
 class CtfCalibrationClient(PixelSizeCalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
-		self.ctfclient = ctffun.GctffindClient(self.node)
 
 	def measureCtf(self, delta_defocus, correct_tilt=False, stig=False, settle=0.0, image0=None, phase_search=(0,0)):
 		"""
@@ -2738,7 +2721,7 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		else:
 			self.node.logger.info('Confidence of the fits for the two images are (%.3f,%.3f)' % (ctfvalues0['confidence'],ctfvalues1['confidence']))
 			# failure as either confidence (0-1.0) are too low 
-			if 'confidence' not in ctfvalues0.keys() or 'confidence' not in ctfvalues1.keys() or ctfvalues0['confidence'] < 1e-7 or ctfvalues0['confidence']+ctfvalues1['confidence'] < 1e-3:
+			if 'confidence' not in ctfvalues0.keys() or 'confidence' not in ctfvalues1.keys() or ctfvalues0['confidence'] < 1e-4 or ctfvalues0['confidence']+ctfvalues1['confidence'] < 1e-3:
 				residual = 99999.0
 				self.node.logger.warning('Failed estimate with low confidence')
 			else:
@@ -2759,8 +2742,8 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		im = imagedata['image']
 		self.displayImage(im)
 		ctfvalues = self.ctfclient.runFromImageData(imagedata, phase_search=phase_search)
-		self.node.logger.info('estimated ctf: def1,def2,angle_astig: %.2f um, %.2f um, %.1f degrees' % (ctfvalues['defocus1']*1e-4, ctfvalues['defocus2']*1e-4, ctfvalues['angle_astigmatism']))
-		defocus_avg1 = 1e-10*(ctfvalues['defocus1']+ctfvalues['defocus2'])/2.0
+		self.node.logger.info('estimated ctf: def1,def2,angle_astig: %.2f um, %.2f um, %.1f degrees' % (ctfvalues['defocus1']*1e6, ctfvalues['defocus2']*1e6, ctfvalues['angle_astigmatism']))
+		defocus_avg1 = (ctfvalues['defocus1']+ctfvalues['defocus2'])/2.0
 		if max(phase_search) > min(phase_search):
 			self.node.logger.info('estimated phase shift: %.2f degrees' % ctfvalues['extra_phase_shift'])
 		print(ctfvalues)

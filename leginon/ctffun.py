@@ -10,6 +10,9 @@ class GctffindClient(object):
 		self.node = node
 		self.logger = node.logger
 
+	def runOneImageData(self, imagedata):
+		self.runFromImageData(imagedata)
+
 	def runFromImageData(self, imagedata, amp_contrast=0.07, fieldsize=512, phase_search=(0,0)):
 		mrcpath=os.path.join(imagedata['session']['image path'],imagedata['filename']+'.mrc')
 		return self._runMrcPathWithImageData(mrcpath, imagedata, amp_contrast, fieldsize, phase_search)
@@ -65,11 +68,11 @@ class GctffindClient(object):
 		# second line has the data
 		l = lines[1]
 		data = list(filter(lambda x: len(x)>0,l.split(' ')))
-		dfmin = float(data[2])
-		dfmax = float(data[3])
-		azimuth = float(data[4])
-		extphase = float(data[5])
-		score = float(data[6])
+		dfmin = float(data[2]) * 1e-10 #meters
+		dfmax = float(data[3]) * 1e-10 #meters
+		azimuth = float(data[4]) #degrees
+		extphase = float(data[5]) #degrees
+		score = float(data[6]) #relative 0-1
 		return {'defocus1':dfmin, 'defocus2':dfmax, 'angle_astigmatism':azimuth, 'extra_phase_shift':extphase, 'confidence':score}
 
 	def run(self, commandline, ctf_output):

@@ -271,8 +271,8 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 					else:
 						ctfresult = self.getSimulatedImageCtfResult(imagedata)
 					if ctfresult:
-						if ctfresult['ctffind4_resolution'] > 5.0:
-							self.logger.error('ctf fitting bad resolution=%.1f Angstrom' % ctfresult['ctffind4_resolution'])
+						if ctfresult['confidence'] < 0.2:
+							self.logger.error('ctf fitting bad confidence=%.2f' % ctfresult['confidence'])
 						else:
 							self.abe.addData(bt,ctfresult)
 				self.insertTableau(imagedata, angle, rad)
@@ -439,17 +439,8 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 
 
 	def getCtfEstimator(self):
-		from pyami import ctfestimator
-		aceexe = self.getACEPath('gctfCurrent')
-		if aceexe:
-			return ctfestimator.GctfEstimator(aceexe)
-
-	def getACEPath(self, exename):
-		aceexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
-		if not os.path.isfile(aceexe):
-			self.logger.error(exename+" was not found in path. No ctf estimation")
-			return None
-		return aceexe
+		from leginon import ctffun
+		return ctffun.GctffindClient(self)
 
 	def getImageCtfResult(self, imagedata):
 		if self.ace:
@@ -471,21 +462,6 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 		# depend on coma beam-tilt calibration
 		s = None
 		ctfdata = None
-		'''
-		try:
-			ctfdata = fftfun.fitFirstCTFNode(pow,rpixelsize['x'], defocus, ht, cs)
-		except Exception, e:
-			self.logger.error("ctf fitting failed: %s" % e)
-			ctfdata = None
-		if ctfdata:
-			self.logger.info('z0 %.3f um, zast %.3f um (%.0f ), angle= %.1f deg' % (ctfdata[0]*1e6,ctfdata[1]*1e6,ctfdata[2]*100, ctfdata[3]*180.0/math.pi))
-			s = '%d' % int(ctfdata[0]*1e9)
-		#elif self.ace2exe:
-		elif False:
-			ctfdata = self.estimateCTF(imagedata)
-			z0 = (ctfdata['defocus1'] + ctfdata['defocus2']) / 2
-			s = '%d' % (int(z0*1e9),)
-		'''
 		if s:
 			t = numpil.textArray(s)
 			t = ndimage.zoom(t, (min(binned.shape)-40.0)*0.08/(t.shape)[0])
@@ -494,81 +470,6 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 			t = minvalue + t * (maxvalue-minvalue)
 			imagefun.pasteInto(t, binned, (20,20))
 		return binned, ctfdata
-
-	def estimateCTF(self, imagedata):
-		mag = imagedata['scope']['magnification']
-		tem = imagedata['scope']['tem']
-		cam = imagedata['camera']['ccdcamera']
-		pixelsize = self.btcalclient.getPixelSize(mag, tem, cam)
-		inputparams = {
-			'input': os.path.join(imagedata['session']['image path'],imagedata['filename']+".mrc"),
-			'cs': 2.0,
-			'kv': imagedata['scope']['high tension']/1000.0,
-			'apix': pixelsize*1e10,
-			'binby': 1,
-		}
-
-		### make standard input for ACE 2
-		commandline = ( self.ace2exe
-			+ " -i " + str(inputparams['input'])
-			+ " -b " + str(inputparams['binby'])
-			+ " -c " + str(inputparams['cs'])
-			+ " -k " + str(inputparams['kv'])
-			+ " -a " + str(inputparams['apix']) + "\n" )
-
-		### run ace2
-		self.logger.info("run ace2 on %s" % (imagedata['filename']))
-		#aceoutf = open("ace2.out", "a")
-		#aceerrf = open("ace2.err", "a")
-		t0 = time.time()
-		#ace2proc = subprocess.Popen(commandline, shell=True, stdout=aceoutf, stderr=aceerrf)
-		ace2proc = subprocess.Popen(commandline, shell=True)
-		ace2proc.wait()
-
-		### check if ace2 worked
-		imagelog = imagedata['filename']+".mrc"+".ctf.txt"
-		if not os.path.isfile(imagelog):
-			### ace2 always crashes on first image??? .fft_wisdom file??
-			time.sleep(1)
-			#ace2proc = subprocess.Popen(commandline, shell=True, stdout=aceoutf, stderr=aceerrf)
-			ace2proc = subprocess.Popen(commandline, shell=True)
-			ace2proc.wait()
-		#aceoutf.close()
-		#aceerrf.close()
-		if not os.path.isfile(imagelog):
-			self.logger.warning("ace2 did not run")
-
-		### parse log file
-		self.ctfvalues = {}
-		logf = open(imagelog, "r")
-		for line in logf:
-			sline = line.strip()
-			if re.search("^Final Defocus:", sline):
-				parts = sline.split()
-				self.ctfvalues['defocus1'] = float(parts[2])
-				self.ctfvalues['defocus2'] = float(parts[3])
-				### convert to degrees
-				self.ctfvalues['angle_astigmatism'] = math.degrees(float(parts[4]))
-			elif re.search("^Amplitude Contrast:",sline):
-				parts = sline.split()
-				self.ctfvalues['amplitude_contrast'] = float(parts[2])
-			elif re.search("^Confidence:",sline):
-				parts = sline.split()
-				self.ctfvalues['confidence'] = float(parts[1])
-				self.ctfvalues['confidence_d'] = float(parts[1])
-		logf.close()
-
-		### summary stats
-		avgdf = (self.ctfvalues['defocus1']+self.ctfvalues['defocus2'])/2.0
-		ampconst = 100.0*self.ctfvalues['amplitude_contrast']
-		pererror = 100.0 * (self.ctfvalues['defocus1']-self.ctfvalues['defocus2']) / avgdf
-		self.ctfvalues['astig'] = pererror
-		self.logger.info("Amplitude contrast: %.2f percent"%(ampconst))
-		self.logger.info("Final confidence: %.3f"%(self.ctfvalues['confidence']))
-		self.logger.info("Defocus: %.3f x %.3f um, angle %.2f degress (%.2f %% astigmatism)"%
-			(self.ctfvalues['defocus1']*1.0e6, self.ctfvalues['defocus2']*1.0e6, self.ctfvalues['angle_astigmatism'],pererror ))
-
-		return self.ctfvalues
 
 	def saveTableau(self):
 		init = self.imagedata
