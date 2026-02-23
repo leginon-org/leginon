@@ -204,10 +204,10 @@ class CalibrationClient(object):
 		shrink_factor = self.correlator.shrink_factor
 		return cor, shrink_factor
 
-	def findPeak(self, cor, camera_binning, shrink_factor):
+	def findPeak(self, cor, camera_binning, shrink_factor, lpf=None):
 		## find peak
 		self.node.startTimer('shift peak')
-		peak = peakfinder.findSubpixelPeak(cor)
+		peak = peakfinder.findSubpixelPeak(cor, lpf=lpf)
 		self.node.stopTimer('shift peak')
 
 		self.node.logger.debug('Peak %s' % (peak,))

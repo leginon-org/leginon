@@ -170,9 +170,11 @@ class LppAligner(acquisition.Acquisition):
 		calclient = self.calclients['phase plate plane shift']
 		calclient.correlator.insertImage(refdata['reference']['image'])
 		cor, shrink_factor = calclient.correlateNextImage(self.imagedata['image'], 'cross', None)
+		self.setImage(cor, 'Correlation')
 		camera_binning = self.imagedata['camera']['binning']
-		pixelpeak, unbinned = calclient.findPeak(cor, camera_binning, shrink_factor)
-		# convert to binned image
+		pixelpeak, unbinned = calclient.findPeak(cor, camera_binning, shrink_factor, lpf=9)
+		# target display requires x,y order not row,col
+		calclient.displayPeak(pixelpeak)
 		row = unbinned['row'] / camera_binning['y']
 		col = unbinned['col'] / camera_binning['x']
 

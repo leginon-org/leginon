@@ -40,6 +40,9 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ALIGN, 'beamtilt',
 							 shortHelp='Set on-plane on-node')
 		# correlation image
+		self.imagepanel.addTypeTool('Correlation', display=True)
+		color = wx.Colour(255, 128, 0)
+		self.imagepanel.addTargetTool('Peak', color)
 		self.imagepanel.addTypeTool('Compressed', display=True)
 
 		self.szmain.Layout()
