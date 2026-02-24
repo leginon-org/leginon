@@ -30,6 +30,7 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		referencetimer.ReferenceTimer.__init__(self, *args, **kwargs)
 		self.addEventInput(event.FixLppAlignmentEvent, self.handleFixAlignmentEvent)
 		self.ref_position = None
+		self.calclient = calibrationclient.PhasePlatePlaneShiftCalibrationClient(self)
 		self.start()
 
 	def handleFixAlignmentEvent(self, evt):
@@ -125,29 +126,20 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		try:
 			myimage = self.imagedata['image']
 			self.setImage(myimage, 'Image')
-			number_of_lpp = 1
-			if self.settings['xlpp']:
-				number_of_lpp = 2
-			r = lppfit.run_fringe_fit(myimage, number_of_lpp)
 		except Exception as e:
 			self.logger.warning('failed fitting, skipping: %s' % e)
 			return
-		print('fitting result = ',r)
-		self.new_phase_shifts = {}
+		self.new_xt0 = self.instrument.tem.PhasePlatePlaneShift
+		self.new_phase_shifts = {1:0.0}
+		if refdata['xlpp']:
+			self.new_phase_shifts[2]=0.0
 		try:
-			# phase shift represent correction needed, so it needs to reverse sign.
-			phases = []
-			for k in r.keys():
-				phase_shift_needed = r[k]['phase_shift_to_max']
-				phase_diff = -(phase_shift_needed - refdata['lpp%d phase shift' % k])
-				self.new_phase_shifts[k] = lppfit.convert_phase_degrees(phase_diff)
-				phases.append('%.2f' % self.new_phase_shifts[k])
+			self.new_xt0, cor_image, cor_pixelpeak = self.calclient.calculateNewPhasePlatePlaneShift(refdata)
 		except Exception as e:
 			self.logger.error('Error calculating on-node values: %s' % e)
 			return
-		self.logger.info('phase shift correction = (%s)' % ', '.join(phases))
-		#saving
-		self.saveLppFitMeasurement(refdata, self.imagedata, r, self.new_phase_shifts)
+		self.logger.info('new xt calculated = (%s)' % self.new_xt0)
+		#TODO: saving
 		self.setOnPlaneOnNode()
 		return
 

@@ -1770,6 +1770,40 @@ class PhasePlatePlaneShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		self.node.logger.debug('fringe_xtilt_shift',self.fringe_xtilt_shift)
 		return pixsize*param_change*self.fringe_shiftpixels / (totalpix*self.fringe_xtilt_shift)
 
+	def calculateNewPhasePlatePlaneShift(self, refdata):
+		"""
+		Use image correlation and MatrixCalibrationData tp calculate new xtilt
+		"""
+		self.correlator.insertImage(refdata['reference']['image'])
+		my_imagedata = self.node.imagedata
+		cor, shrink_factor = self.correlateNextImage(my_imagedata['image'], 'cross', None)
+		camera_binning = my_imagedata['camera']['binning']
+		# cor_pixelpeak includes camera_binning and shrink_factor binning.
+		cor_pixelpeak, unbinned = self.findPeak(cor, camera_binning, shrink_factor, lpf=9)
+		# target display requires x,y order not row,col
+		row = unbinned['row'] / camera_binning['y']
+		col = unbinned['col'] / camera_binning['x']
+
+		# pixelshift includes camera_binning
+		pixelshift = {'row':-row, 'col':-col}
+		self.node.logger.info('measured shift (r,c) %.6f,%.6f' % (pixelshift['row'],pixelshift['col']))
+		scope = my_imagedata['scope']
+		camera = my_imagedata['camera']
+
+		# figure out shift
+		try:
+			newstate = self.transform(pixelshift, scope, camera)
+		except NoMatrixCalibrationError as e:
+			errsubstr = 'unable to find calibration for %s' % e
+			self.node.logger.error(errstr % errsubstr)
+			self.node.beep()
+			return None
+		except Exception as e:
+			self.node.logger.exception(errstr % e)
+			self.node.beep()
+			return None
+		return newstate['phase plate plane shift'], cor, cor_pixelpeak
+
 class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	mover = False
 	def __init__(self, node):

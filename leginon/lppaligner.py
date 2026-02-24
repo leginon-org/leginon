@@ -139,13 +139,16 @@ class LppAligner(acquisition.Acquisition):
 			raise NoReferenceError('No reference for on-node lpp alignment found.')
 		refdata = ref_results[0]
 		delta_f = refdata['delta lpp focus']
+		#
+		calclient = self.calclients['phase plate plane shift']
 		# acquire image with new_f
 		try:
 			status = self._acquireOffPlaneImage(presetdata, emtarget, attempt, target, channel, delta_f)
 			if status != 'error':
 				status, r = self.calculatePhaseShiftCorrection(refdata)
-				self.new_xt0 = self.calculateNewPhasePlatePlaneShift(refdata)
-
+				self.new_xt0, cor_image, cor_pixelpeak = calclient.calculateNewPhasePlatePlaneShift(refdata)
+				self.setImage(cor_image, 'Correlation')
+				calclient.displayPeak(cor_pixelpeak)
 		except Exception as e:
 			traceback.print_exc()
 			self.logger.error('Failed. off plane alignment not valid: %s' % e)
@@ -163,40 +166,6 @@ class LppAligner(acquisition.Acquisition):
 			raise RuntimeError('Lpp Fitting failed: %e' % e)
 		return results
 
-	def calculateNewPhasePlatePlaneShift(self, refdata):
-		"""
-		Use image correlation and MatrixCalibrationData tp calculate new xtilt
-		"""
-		calclient = self.calclients['phase plate plane shift']
-		calclient.correlator.insertImage(refdata['reference']['image'])
-		cor, shrink_factor = calclient.correlateNextImage(self.imagedata['image'], 'cross', None)
-		self.setImage(cor, 'Correlation')
-		camera_binning = self.imagedata['camera']['binning']
-		pixelpeak, unbinned = calclient.findPeak(cor, camera_binning, shrink_factor, lpf=9)
-		# target display requires x,y order not row,col
-		calclient.displayPeak(pixelpeak)
-		row = unbinned['row'] / camera_binning['y']
-		col = unbinned['col'] / camera_binning['x']
-
-		pixelshift = {'row':-row, 'col':-col}
-		self.logger.info('measured shift (r,c) %.6f,%.6f' % (pixelshift['row'],pixelshift['col']))
-		scope = self.imagedata['scope']
-		camera = self.imagedata['camera']
-
-		# figure out shift
-		try:
-			newstate = calclient.transform(pixelshift, scope, camera)
-		except calibrationclient.NoMatrixCalibrationError as e:
-			errsubstr = 'unable to find calibration for %s' % e
-			self.logger.error(errstr % errsubstr)
-			self.beep()
-			return None
-		except Exception as e:
-			self.logger.exception(errstr % e)
-			self.beep()
-			return None
-		return newstate['phase plate plane shift']
-
 	def calculatePhaseShiftCorrection(self, refdata):
 		status = 'success'
 		try:
@@ -209,7 +178,7 @@ class LppAligner(acquisition.Acquisition):
 		except Exception as e:
 			self.logger.error('Error calculating on-node values: %s' % e)
 			status = 'error'
-			return status, results
+			return status,results
 		self.logger.info('phase shift correction = %s' % self.new_phase_shifts)
 		self.saveLppFitMeasurement(refdata, self.imagedata, results, self.new_phase_shifts)
 		return status, results
