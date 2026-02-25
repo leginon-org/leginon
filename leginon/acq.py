@@ -207,7 +207,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.DriftMonitorRequestEvent, 
 											event.FixBeamEvent,
 											event.FixAlignmentEvent,
-											event.FixLppAlignmentEvent,
 											event.FixConditionEvent,
 											event.AlignZeroLossPeakPublishEvent,
 											event.AlignLppPublishEvent,

@@ -1789,7 +1789,6 @@ class PhasePlatePlaneShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		self.node.logger.info('measured shift (r,c) %.6f,%.6f' % (pixelshift['row'],pixelshift['col']))
 		scope = my_imagedata['scope']
 		camera = my_imagedata['camera']
-
 		# figure out shift
 		try:
 			newstate = self.transform(pixelshift, scope, camera)
@@ -1811,13 +1810,6 @@ class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
 
 	def parameter(self):
 		return 'beam shift'
-
-		q = leginondata.LppCalibrationData(session=self.session, tem=tem, ccdcamera=ccdcamera, xlpp=self.settings['xlpp'])
-		for k in self.lpp_axes:
-			q['lpp%d wave xtilt vector x' % k] = self.settings['lpp%d wave xtilt vector x' % k]
-			q['lpp%d wave xtilt vector y' % k] = self.settings['lpp%d wave xtilt vector y' % k]
-		q.insert(force=True)
-		self.logger.info('Lpp standing wave xtilt vector saved')
 
 class DiffractionShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	mover = False
@@ -2604,7 +2596,6 @@ class ObjectiveStigCalibrationClient(PixelSizeCalibrationClient):
 		# calculate values to apply to remove the measurement
 		# gctffind naming convension
 		phiA = ctf['angle_astigmatism']-stigmator_rotation
-		print('rotated astig angle', phiA)
 		astig_magnitude = 0.5 * (ctf['defocus1']-ctf['defocus2']) # in meters
 		xStig = astig_magnitude * math.cos(math.radians(2*phiA))/x_coeff
 		yStig = astig_magnitude * math.sin(math.radians(2*phiA))/y_coeff

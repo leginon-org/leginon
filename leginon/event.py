@@ -291,9 +291,6 @@ class AlignLppPublishEvent(PublishEvent):
 class FixAlignmentEvent(Event):
 	pass
 
-class FixLppAlignmentEvent(Event):
-	pass
-
 class FixConditionEvent(Event):
 	pass
 

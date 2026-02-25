@@ -84,7 +84,7 @@ class LppAligner(acquisition.Acquisition):
 		self.f0 = self.instrument.tem.PhasePlateFocus
 		self.xt0 = self.instrument.tem.PhasePlatePlaneShift
 		self.new_f0 = self.f0
-		self.new_xt0 = self.xt0
+		self.new_xt0 = self.xt0.copy()
 		self.new_phase_shifts = {1:0.0}
 		self.on_node_slopes = {1:0.0}
 		self.second_order_amps = {1:0.0}
@@ -197,8 +197,8 @@ class LppAligner(acquisition.Acquisition):
 		args = (presetdata, emtarget, defaultchannel)
 		try:
 			lpp_focus = self.f0 + lpp_delta_focus
-			self.logger.info('phase plate focus set to %.8f' % lpp_focus)
-			self.instrument.tem.PhasePlateFocus = lpp_focus
+			self.logger.info('setting phase plate to %.8f' % lpp_focus)
+			self.cyclePhasePlateFocus(self.f0, lpp_focus)
 			time.sleep(self.settings['pause time'])
 			if self.settings['background']:
 				self.clearCameraEvents()
@@ -273,8 +273,8 @@ class LppAligner(acquisition.Acquisition):
 			self.series_id = i+1 #base 1
 			try:
 				new_f = self.f0 + df
-				self.logger.info('phase plate focus set to %.8f' % new_f)
-				self.instrument.tem.PhasePlateFocus = new_f
+				self.logger.info('setting phase plate to %.8f' % new_f)
+				self.cyclePhasePlateFocus(self.f0, new_f)
 				time.sleep(self.settings['pause time'])
 				if self.settings['background']:
 					self.clearCameraEvents()
@@ -376,7 +376,6 @@ class LppAligner(acquisition.Acquisition):
 		new_f0 = {} # sequence of new_f0 at each axis
 		for k in self.lpp_axes:
 			self.new_phase_shifts[k]=0.0
-		print(data['std'])
 		try:
 			ind = numpy.argmax(data['std'])
 			new_xt0 = {'x':data['xt'][ind][0],'y':data['xt'][ind][1]}
@@ -416,7 +415,10 @@ class LppAligner(acquisition.Acquisition):
 
 	def resetLppFocus(self):
 		self.instrument.tem.PhasePlateFocus = self.f0
+		self.logger.info('phase plate focus reset to %.8f' % self.f0)
 		self.instrument.tem.PhasePlatePlaneShift = self.xt0
+		msg = 'Reset LPP focus to %.8f, x-tilt to x:%.4e,y:%.4e' % (self.f0, self.xt0['x'],self.new_xt0['y'])
+		self.logger.info(msg)
 
 	def setImageFilename(self, imagedata):
 		super(LppAligner, self).setImageFilename(imagedata)

@@ -17,7 +17,7 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 	defaultsettings.update (
 		{'xlpp': False}
 	)
-	eventinputs = referencetimer.ReferenceTimer.eventinputs + [event.AlignLppPublishEvent, event.FixLppAlignmentEvent]
+	eventinputs = referencetimer.ReferenceTimer.eventinputs + [event.AlignLppPublishEvent,]
 	panelclass = leginon.gui.wx.LppAlignTimer.LppAlignTimerPanel
 	requestdata = leginondata.AlignLppRequestData
 
@@ -28,26 +28,9 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 			watch = []
 		kwargs['watchfor'] = watch + [event.AlignLppPublishEvent]
 		referencetimer.ReferenceTimer.__init__(self, *args, **kwargs)
-		self.addEventInput(event.FixLppAlignmentEvent, self.handleFixAlignmentEvent)
 		self.ref_position = None
 		self.calclient = calibrationclient.PhasePlatePlaneShiftCalibrationClient(self)
 		self.start()
-
-	def handleFixAlignmentEvent(self, evt):
-		# called from another Reference Class to execute after target move
-		# but before execution.
-		self.logger.info('handling request to execute alignment in place')
-		if self.settings['bypass']:
-			self.logger.info('Bypass alignment fixing')
-			status = 'bypass'
-			self.confirmEvent(evt, status=status)
-			return
-		self.setStatus('processing')
-		self.panel.playerEvent('play')
-		status = self.align(None)
-		self.confirmEvent(evt, status=status)
-		self.setStatus('idle')
-		self.panel.playerEvent('stop')
 
 	def _setRequestPreset(self, request_preset_name):
 		preset = self.presets_client.getCurrentPreset()
@@ -55,32 +38,6 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 			self.logger.info('Change preset to requested %s' % request_preset_name)
 			self.presets_client.toScope(request_preset_name)
 		return self.presets_client.getCurrentPreset()
-
-	def align(self, ccd_camera=None):
-		if not ccd_camera:
-			ccd_camera = self.instrument.ccdcamera
-		ccd_name = ccd_camera._name
-		if not ccd_camera.EnergyFiltered:
-			self.logger.warning('No energy filter on this instrument.')
-			return
-		try:
-			# TODO acquire off-plane image
-			if not ccd_camera.EnergyFilter:
-				self.logger.warning('Energy filtering is not enabled.')
-				return 'bypass'
-			self.positionCamera(camera_name=ccd_name)
-			self.openColumnValveBeforeExposure()
-			self.logger.info('Aligning ZLP with %s camera' % ccd_name)
-			ccd_camera.alignEnergyFilterZeroLossPeak()
-			m = 'Energy filter zero loss peak aligned.'
-			self.logger.info(m)
-		except AttributeError:
-			m = 'Energy filter methods are not available on this instrument.'
-			self.logger.warning(m)
-		except Exception as e:
-			raise
-			s = 'Energy filter align zero loss peak failed: %s.'
-			self.logger.error(s % e)
 
 	def execute(self, request_data=None):
 		'''
@@ -107,10 +64,11 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		# acquire image with new_f
 		self.f0 = self.instrument.tem.PhasePlateFocus
 		self.xt0 = self.instrument.tem.PhasePlatePlaneShift
+		self.new_xt0 = self.xt0.copy()
 		self.new_f0 = self.f0
 		lpp_focus = self.f0 + delta_f
-		self.instrument.tem.PhasePlateFocus = lpp_focus
-		self.logger.info('phase plate focus set to %.8f' % lpp_focus)
+		self.logger.info('setting phase plate focus to %.8f' % lpp_focus)
+		self.cyclePhasePlateFocus(self.f0, lpp_focus)
 		time.sleep(self.settings['pause time'])
 		try:
 			self.imagedata = self.newImageData(measure_preset,'%dref' % refdata.dbid)
@@ -129,7 +87,6 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		except Exception as e:
 			self.logger.warning('failed fitting, skipping: %s' % e)
 			return
-		self.new_xt0 = self.instrument.tem.PhasePlatePlaneShift
 		self.new_phase_shifts = {1:0.0}
 		if refdata['xlpp']:
 			self.new_phase_shifts[2]=0.0
@@ -138,7 +95,8 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		except Exception as e:
 			self.logger.error('Error calculating on-node values: %s' % e)
 			return
-		self.logger.info('new xt calculated = (%s)' % self.new_xt0)
+		msg = 'new xt calculated = (%s)' % self.new_xt0
+		self.logger.info(msg)
 		#TODO: saving
 		self.setOnPlaneOnNode()
 		return
@@ -175,6 +133,6 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 
 	def resetLppFocus(self):
 		self.instrument.tem.PhasePlateFocus = self.f0
-		self.logger.info('phase plate focus reset to %.8f' % self.f0)
 		self.instrument.tem.PhasePlatePlaneShift = self.xt0
-
+		msg = 'Reset LPP focus to %.8f, x-tilt to x:%.4e,y:%.4e' % (self.f0, self.xt0['x'],self.new_xt0['y'])
+		self.logger.info(msg)
