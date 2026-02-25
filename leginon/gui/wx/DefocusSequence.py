@@ -56,14 +56,13 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		sizer = wx.GridBagSizer(5, 4)
 		bordersize = 3
 
-		label = wx.StaticText(self, -1, 'Defocus Change per Step (m)')
+		label = wx.StaticText(self, -1, 'Defocus Change per Step (um)')
 		sizer.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.widgets['step size'] = FloatEntry(self, -1,
-																		min=0.0,
 																		allownone=False,
-																		chars=4,
+																		chars=8,
 																		value='0.0')
-		sizer.Add(self.widgets['step size'], (1,2), (1,2), wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, bordersize)
+		sizer.Add(self.widgets['step size'], (1,2), (1,2), wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE, bordersize)
 		label = wx.StaticText(self, -1, 'Total numbers')
 		sizer.Add(label, (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.widgets['nsteps'] = IntEntry(self, -1, min= 1, chars=8, value='1')

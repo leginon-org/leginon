@@ -8,6 +8,7 @@
 from leginon import acq as acquisition
 from leginon import leginondata
 import threading
+import time
 from pyami import imagefun, fftfun, ordereddict
 import leginon.gui.wx.DefocusSequence
 
@@ -48,7 +49,7 @@ class DefocusSequence(acquisition.Acquisition):
 	settingsclass = leginondata.DefocusSequenceSettingsData
 	defaultsettings = dict(acquisition.Acquisition.defaultsettings)
 	defaultsettings.update({
-			'step size': 1e-6, #meters
+			'step size': 1, #microns
 			'nsteps': 2,
 	})
 
@@ -63,7 +64,8 @@ class DefocusSequence(acquisition.Acquisition):
 		defocus0 = presetdata['defocus']
 		step_size = self.settings['step size']
 		total_number = self.settings['nsteps']
-		defocii = list(map((lambda x: defocus0+step_size*x), list(range(total_number))))
+		scale = 1e-6
+		defocii = list(map((lambda x: defocus0+step_size*scale*x), list(range(total_number))))
 		return defocii
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
@@ -79,6 +81,10 @@ class DefocusSequence(acquisition.Acquisition):
 			for i,d in enumerate(defocii):
 				self.sequence_number = i+1
 				self.instrument.tem.Defocus = d
+				pause_between_time = self.settings['pause between time']
+				if i > 0 and pause_between_time > 0.0:
+					self.logger.info('Pausing for %.1f s before acquisition with %.2f um defocus' % (pause_between_time, d*1e6))
+					time.sleep(pause_between_time)
 				args = (presetdata, emtarget, defaultchannel)
 				if self.settings['background']:
 					self.clearCameraEvents()
