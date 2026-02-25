@@ -79,6 +79,14 @@ class DefocusSequence(acquisition.Acquisition):
 		defocii = self.getDefocusSeries(presetdata)
 		try:
 			for i,d in enumerate(defocii):
+				# allow tuning between defocus change
+				self.preTargetSetup()
+				currentpreset = self.presetsclient.getCurrentPreset()
+				if currentpreset['name'] != presetdata['name']:
+					status = self.moveAndPreset(presetdata, emtarget)
+					if status == 'error':
+						self.logger.warning('Move failed. skipping acquisition at this target')
+						return status
 				self.sequence_number = i+1
 				self.instrument.tem.Defocus = d
 				pause_between_time = self.settings['pause between time']
@@ -93,6 +101,11 @@ class DefocusSequence(acquisition.Acquisition):
 					self.waitExposureDone()
 				else:
 					self.acquirePublishDisplayWait(*args)
+				state = self.pauseCheck('paused before reject targets are published')
+				self.setStatus('processing')
+				if state in ('stop', 'stopqueue'):		# When user stops at this node
+					status = 'aborted'
+					break
 		except:
 			self.resetComaCorrection()
 			raise
