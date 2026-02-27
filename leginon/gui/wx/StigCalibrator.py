@@ -321,7 +321,7 @@ class MeasureScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szresult.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szresult.Add(self.widgets['measure defocus'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
-		label = wx.StaticText(self, -1, 'Defocus')
+		label = wx.StaticText(self, -1, 'Defocus to correct')
 		szresult.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szresult.Add(self.labels['defocus'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Stig. x')

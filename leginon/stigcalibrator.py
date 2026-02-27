@@ -57,6 +57,7 @@ class StigCalibrator(calibrator.Calibrator):
 			'eucentric focus': calibrationclient.EucentricFocusClient(self),
 		}
 		self.stgcalclient = self.calibration_clients['objective stigmator']
+		self.ctfcalclient = self.calibration_clients['ctf']
 
 		self.start()
 
@@ -193,14 +194,13 @@ class StigCalibrator(calibrator.Calibrator):
 		if self.initInstruments():
 			raise RuntimeError('cannot initialize instrument')
 
-		calibration_client = self.calibration_clients['%s stigmator' % self.parameter]
 
-		args = (measure_defocus, self.calibration_clients['ctf'])
+		args = ()
 		kwargs = {
 			'correct_tilt': correct_tilt,
 			'settle': settling_time,
 		}
-		result = calibration_client.measureDefocusStig(*args, **kwargs)
+		result = self.ctfcalclient.measureDefocusStig(*args, **kwargs)
 		self.measurement = {}
 
 		try:
@@ -213,7 +213,7 @@ class StigCalibrator(calibrator.Calibrator):
 		for axis in ('x', 'y'):
 			try:
 				stig[axis] = result['stig' + axis]
-				self.measurement[axis] = result['stig' + axis]
+				self.measurement['stig' + axis] = result['stig' + axis]
 			except KeyError:
 				pass
 
@@ -261,7 +261,7 @@ class StigCalibrator(calibrator.Calibrator):
 		stigmator = self.instrument.tem.Stigmator['objective']
 		try:
 			for axis in ('x', 'y'):
-				stigmator[axis] += self.measurement[axis]
+				stigmator[axis] += self.measurement['stig'+axis]
 		except:
 			raise RuntimeError('no measurement')
 		self.instrument.tem.Stigmator = {'objective': stigmator}

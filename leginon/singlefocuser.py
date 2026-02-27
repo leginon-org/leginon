@@ -343,10 +343,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 
 		defoc = correction['defocus']
 		if setting['stig correction'] and 'ctfvalues' in correction.keys():
-			stigx, stigy = self.stigcalclient.ctf2Stigmator(cal, correction['ctfvalues'])
-			if defoc < 0:
-				stigx = -stigx
-				stigy = -stigy
+			stigx, stigy = self.stigcalclient.ctf2Stigmator(cal, correction)
 			sx = '%.6f' % stigx
 			sy = '%.6f' % stigy
 		else:

@@ -25,6 +25,7 @@ import leginon.gui.wx.BeamTiltCalibrator
 import time
 from datetime import datetime
 import json
+import traceback
 
 class Abort(Exception):
 	pass
@@ -44,6 +45,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		'settling time': 0.5,
 		'comafree beam tilt': 0.005,
 		'comafree misalign': 0.002,
+		'imageshift coma image defocus': -2e-6,
 		'imageshift coma tilt': 0.01,
 		'imageshift coma step': -5e-6,
 		'imageshift coma number': 2,
@@ -66,8 +68,12 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.calibration_clients = {
 			'beam tilt': calibrationclient.BeamTiltCalibrationClient(self),
 			'eucentric focus': calibrationclient.EucentricFocusClient(self),
+			'ctf': calibrationclient.CtfCalibrationClient(self),
+			'stig': calibrationclient.ObjectiveStigCalibrationClient(self),
 		}
 		self.btcalclient = self.calibration_clients['beam tilt']
+		self.ctfcalclient= self.calibration_clients['ctf']
+		self.stigcalclient= self.calibration_clients['stig']
 
 		self.start()
 
@@ -165,6 +171,21 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		xydict = {}
 		ordered_axes = ['x','y']
 		debug = False
+		# Step 1: Auto defocus stig at 0,0
+		self.setPreMeasureState()
+		try:
+			self.autoFocusImage()
+			# reset defocus at the measured correction
+			self.instrument.tem.Defocus = -self.settings['imageshift coma image defocus']
+			self.instrument.tem.resetDefocus()
+			# set to the defocus we want.
+			self.instrument.tem.Defocus = self.settings['imageshift coma image defocus']
+			self.setPreMeasureState()
+		except ValueError as e:
+			self.logger.error('Failed auto stig and focusing:%s' % e)
+			traceback.print_exc()
+			return
+
 		try:
 			for axis in ordered_axes:
 				tdata = []
@@ -214,8 +235,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 					self.instrument.tem.Stigmator = {'objective':newstate['stig']}
 					'''
 					# For TESTING ---END HERE
-					newstate = self.readAbFree(state['image shift'])
 					if abs(shift) > 1e-7:
+						# There must be some coma.
 						while no_cal and abs(newstate['beam tilt']['x']-self.state0['beam tilt']['x']) < 1e-5 or abs(newstate['beam tilt']['y']-self.state0['beam tilt']['y']) < 1e-5:
 							self.logger.error('Beam tilt has not changed. Will cause calibration failure.')
 							self.logger.info('Please repeat the measurement or Cancel in the dialog....')
@@ -310,6 +331,19 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.instrument.tem.Stigmator = {'objective':self.state0['stig']}
 		self.logger.info('Reset to uncorrected state at current image shift')
 		self.readState()
+
+	def applyDeltaState(self, correction):
+		state0 = self.getState()
+		if 'beam tilt' in correction.keys():
+			state0['beam tilt']['x'] += correction['beam tilt']['x']
+			state0['beam tilt']['y'] += correction['beam tilt']['y']
+			self.instrument.tem.BeamTilt = state0['beam tilt']
+		if 'defocus' in correction.keys():
+			self.instrument.tem.Defocus = state0['defocus']+correction['defocus']
+		if 'stig' in correction.keys():
+			state0['stig']['x'] += correction['stigx']
+			state0['stig']['y'] += correction['stigy']
+			self.instrument.tem.Stigmator = {'objective':state0['stig']}
 
 	def setPreMeasureState(self):
 		self.state0 = self.getState().copy()
@@ -837,11 +871,50 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		else:
 			self.logger.warning('need more than one beam tilt images in tableau to navigate')
 
+	def getDefocusStigCorrection(self, imagedata=None):
+		settling_time = self.settings['settling time']
+		args = ()
+		kwargs = {
+			'correct_tilt': False,
+			'image0': imagedata,
+			'settle': settling_time,
+		}
+		result = self.ctfcalclient.measureDefocusStig(*args,**kwargs)
+		return result
+
+	def _acquireAutoFocusImage(self, required_image_defocus):
+		result = self.getDefocusStigCorrection()
+		# result['defocus'] is the correction needed to be infocus.
+		# required_image_defocus is negative for underfocus
+		#
+		# The delta to apply is that to get to required_image_defocus
+		result['defocus'] += required_image_defocus
+		self.applyDeltaState(result)
+		return result
+
+	def autoFocusImage(self):
+		required_image_defocus = self.settings['imageshift coma image defocus']
+		max_trials = 3
+		trial = 1
+		while True:
+			if trial > max_trials:
+				self.resetState()
+				raise ValueError('Failed to converge after %d rounds' % max_trials)
+			result = self._acquireAutoFocusImage(self.settings['imageshift coma image defocus'])
+			diff_defocus = abs(result['defocus']) # applied value to reach required
+			stig_mag = math.hypot(result['stigx'],result['stigy'])
+			if diff_defocus < 0.05*abs(required_image_defocus) and stig_mag < 0.001:
+				self.logger.info('Converged after %d rounds' % trial)
+				break
+			self.logger.info('Round %d off defocus by %.2f um, combined-stigmator change %.5f' % (trial, diff_defocus*1e6, stig_mag))
+			trial += 1
+
 	#--------------Manual Focus---------------
 	def acquireManualFocusImage(self):
 		scope={}
 		# acquire image but not display in node image panel
 		imagedata = self.btcalclient.acquireImage(scope, settle=0.0, correct_tilt=False, corchannel=0, display=False)
+		# measure ctf with gctffind ace
 		# thread to make it possible to acquire the next image before this one is displayed.
 		threading.Thread(target=self.setManualFocusImage(imagedata['image'])).start()
 

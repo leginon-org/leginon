@@ -41,8 +41,13 @@ class GctffindClient(object):
 		self.run(cmd, inputparams['ctf_output'])
 		self.ctfvalues = self.readResult(inputparams['ctf_output'])
 		self.ctfvalues.update(inputparams)
-		os.remove(inputparams['ctf_output'])
-		os.remove(inputparams['pow_output'])
+		try:
+			os.remove(inputparams['ctf_output'])
+			os.remove(inputparams['pow_output'])
+		except FileNotFoundError as e:
+			print('Failed: %s' % e)
+			# readResult will handle error if ctf_output is not produced.
+			pass
 		return self.ctfvalues
 
 	def makeCommand(self, inputparams):

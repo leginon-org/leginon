@@ -2625,6 +2625,7 @@ class BeamTiltCalibratorSettingsData(CalibratorSettingsData):
 			('comafree beam tilt', float),
 			('comafree misalign', float),
 			('imageshift coma tilt', float),
+			('imageshift coma image defocus', float),
 			('imageshift coma step', float),
 			('imageshift coma number', int),
 			('imageshift coma repeat', int),

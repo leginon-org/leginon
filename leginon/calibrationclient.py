@@ -832,7 +832,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
 		probe = self.instrument.tem.ProbeMode
-		# Can not handle the exception for retrieveMatrix here. 
+		# Can not handle the exception for retrieveMatrix here.
 		# Focuser node that calls this need to know the type of error
 		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag, probe)
 
@@ -932,6 +932,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		result = {'defocus': solution[0][0], 'min': float(solution[1][0])}
 		if len(solution[0]) == 3:
+			# the key needs to stay as stigx, stigy to avoid database migration
+			# of the result saved
 			result['stigx'] = solution[0][1]
 			result['stigy'] = solution[0][2]
 		else:
@@ -2588,7 +2590,18 @@ class ObjectiveStigCalibrationClient(PixelSizeCalibrationClient):
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		return caldatalist[0]
 
-	def ctf2Stigmator(self, cal, ctf):
+	def ctf2Stigmator(self, cal, ctf_correction):
+		"""
+		Convert ctf estimation values and averaged_defocus with sign to
+		objective stigmator values
+		ctf_correction has at least two keys:
+			defocus: defocus correction needed to add to reach in-focus.
+			ctfvalues: result dict from auto ctf estimation on the image.
+		"""
+		# an underfocused image should have positive sign
+		defocus_with_sign = ctf_correction['defocus']
+		ctf = ctf_correction['ctfvalues']
+		#
 		stigmator_rotation = cal['rotation angle'] # degrees
 		x_coeff = cal['coeff']['x']
 		y_coeff = cal['coeff']['y']
@@ -2597,9 +2610,12 @@ class ObjectiveStigCalibrationClient(PixelSizeCalibrationClient):
 		# gctffind naming convension
 		phiA = ctf['angle_astigmatism']-stigmator_rotation
 		astig_magnitude = 0.5 * (ctf['defocus1']-ctf['defocus2']) # in meters
-		xStig = astig_magnitude * math.cos(math.radians(2*phiA))/x_coeff
-		yStig = astig_magnitude * math.sin(math.radians(2*phiA))/y_coeff
-		return xStig, yStig
+		stigx = astig_magnitude * math.cos(math.radians(2*phiA))/x_coeff
+		stigy = astig_magnitude * math.sin(math.radians(2*phiA))/y_coeff
+		if defocus_with_sign < 0:
+				stigx = -stigx
+				stigy = -stigy
+		return stigx, stigy
 
 	def saveStigCalibration(self, rotation, coeff, name='objective'):
 		newdata = leginondata.StigmatorCalibrationData()
@@ -2610,32 +2626,6 @@ class ObjectiveStigCalibrationClient(PixelSizeCalibrationClient):
 		newdata['rotation angle'] = rotation
 		newdata['coeff'] = coeff
 		self.node.publish(newdata, database=True, dbforce=True)
-
-	def measureDefocusStig(self, defocus_value, ctfcalclient, settle=0.5, correct_tilt=False, image0=None, on_phase_plate=False):
-		self.abortevent.clear()
-		tem = self.instrument.getTEMData()
-		cam = self.instrument.getCCDCameraData()
-		ht = self.instrument.tem.HighTension
-		mag = self.instrument.tem.Magnification
-		probe = self.instrument.tem.ProbeMode
-		# Can not handle the exception for retrieveMatrix here. 
-		# Focuser node that calls this need to know the type of error
-		self.cal = self.researchCalibration(tem, cam, self.stigmator_name)
-		if not image0:
-			state1 = leginondata.ScopeEMData()
-			state1['defocus'] = defocus_value
-			image0 = self.acquireImage(state1, settle=settle, correct_tilt=correct_tilt, corchannel=0)
-		phase_search = (0,0)
-		if on_phase_plate:
-			raise ValueError('should not be used in on-phase-plate')
-		defocus_avg, ctfvalues = ctfcalclient.measureImageCtf(image0, (0,0))
-		stig_x, stig_y = self.ctf2Stigmator(self.cal, ctfvalues)
-		result = {'defocus': defocus_avg}
-		# These are stigmator values to apply, not ctf estimation result
-		result['stigx'] = stig_x
-		result['stigy'] = stig_y
-		result['min'] = 0.0
-		return result
 
 	def storeStigmatorCenter(self, tem, center):
 		rc = leginondata.StigmatorCenterData()
@@ -2686,8 +2676,9 @@ class ObjectiveStigCalibrationClient(PixelSizeCalibrationClient):
 class CtfCalibrationClient(PixelSizeCalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
+		self.stig_calclient = ObjectiveStigCalibrationClient(node)
 
-	def measureCtf(self, delta_defocus, correct_tilt=False, stig=False, settle=0.0, image0=None, phase_search=(0,0)):
+	def measureCtf(self, initial_defocus=None, correct_tilt=False, stig=False, settle=0.0, image0=None, phase_search=(0,0)):
 		"""
 		measure defocus correction by estimating CTF on two images.
 		"""
@@ -2697,12 +2688,14 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 			if phase_search[index] is None:
 				phase_search[index] = 0.0
 		self.abortevent.clear()
+		if initial_defocus is not None:
+			self.instrument.tem.Defocus = initial_defocus
 		if image0 is None:
 			imagedata0 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
-			self.displayImage(imagedata0['image'])
 		else:
 			# last imagedata from drift check.
 			imagedata0 = image0
+		self.displayImage(imagedata0['image'])
 		defocus0 = self.instrument.tem.Defocus
 		defocus_avg0, ctfvalues0 = self.measureImageCtf(imagedata0, phase_search)
 		# adjust by pixelsize
@@ -2722,7 +2715,7 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		self.instrument.tem.Defocus = defocus1
 		time.sleep(settle)
 		imagedata1 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
-		defocus_avg1, ctfvalues1 = self.measureImageCtf(imagedata1, phase_search)
+		defocus_avg1, ctfvalues1 = self.measureImageCtf(imagedata1, phase_search,'temp1')
 
 		# reset
 		self.instrument.tem.Defocus = defocus0
@@ -2760,10 +2753,11 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		result = {'defocus': correction0, 'min': residual, 'ctfvalues': ctfvalues0}
 		return result
 
-	def measureImageCtf(self, imagedata, phase_search=(0,0)):
+	def measureImageCtf(self, imagedata, phase_search=(0,0),temp_filename='temp'):
 		if not imagedata['filename']:
-			imagedata['filename']='temp'
-			mrc.write(imagedata['image'],'%s/temp.mrc' % (imagedata['session']['image path']))
+			# This occurs when image is taken without saving
+			imagedata['filename']=temp_filename
+			mrc.write(imagedata['image'],'%s/%s.mrc' % (imagedata['session']['image path'],temp_filename))
 		im = imagedata['image']
 		self.displayImage(im)
 		ctfvalues = self.ctfclient.runFromImageData(imagedata, phase_search=phase_search)
@@ -2773,6 +2767,33 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 			self.node.logger.info('estimated phase shift: %.2f degrees' % ctfvalues['extra_phase_shift'])
 		print(ctfvalues)
 		return defocus_avg1, ctfvalues
+
+	def measureDefocusStig(self, initial_defocus=None, settle=0.5, correct_tilt=False, image0=None, on_phase_plate=False):
+		'''
+		Returns defocus and stigmator values required for correction measured by
+		ctf analysis of the power spectrum.
+		'''
+		self.abortevent.clear()
+		tem = self.instrument.getTEMData()
+		cam = self.instrument.getCCDCameraData()
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
+		stig_name = 'objective'
+		# Can not handle the exception for retrieveMatrix here.
+		# Focuser node that calls this need to know the type of error
+		self.stig_cal = self.stig_calclient.researchCalibration(tem, cam, stig_name)
+		phase_search = (0,0)
+		if on_phase_plate:
+			raise ValueError('should not be used in on-phase-plate')
+		ctf_correction = self.measureCtf(initial_defocus,False, True, settle,image0, phase_search)
+		stig_x, stig_y = self.stig_calclient.ctf2Stigmator(self.stig_cal, ctf_correction)
+		result = ctf_correction.copy()
+		# These are stigmator values to apply, not ctf estimation result
+		# Note: the key needs to be stigx and stigy to avoid database migration
+		result['stigx'] = stig_x
+		result['stigy'] = stig_y
+		return result
 
 class EucentricFocusClient(CalibrationClient):
 	def __init__(self, node):
