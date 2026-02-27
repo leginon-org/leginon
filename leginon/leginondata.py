@@ -1137,6 +1137,7 @@ class ReferenceRequestData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('preset', str),
+			('on_position', bool),
 		)
 	typemap = classmethod(typemap)
 
