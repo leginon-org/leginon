@@ -207,7 +207,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.DriftMonitorRequestEvent, 
 											event.FixBeamEvent,
 											event.FixAlignmentEvent,
-											event.FixLppAlignmentEvent,
 											event.FixConditionEvent,
 											event.AlignZeroLossPeakPublishEvent,
 											event.AlignLppPublishEvent,
@@ -468,12 +467,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 					self.logger.warning('Energy filter activated but can not tune without binding to Align ZLP')
 					self.alignzlp_warned = True	
 
-	def tuneLpp(self, presetname):
+	def tuneLpp(self, presetname, on_position=False):
 		presetdata = self.presetsclient.getPresetByName(presetname)
 		if not presetdata:
 			return
 		if type(self.alignlpp_bound)==type({}) and self.alignlpp_bound['is_direct_bound']:
-			self.alignLpp(presetname)
+			self.alignLpp(presetname, on_position)
 
 	def monitorScreenCurrent(self, presetname):
 		presetdata = self.presetsclient.getPresetByName(presetname)
@@ -502,7 +501,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(request_data, database=True, pubevent=True, wait=True)
 		self.setStatus('processing')
 
-	def alignLpp(self, preset_name):
+	def alignLpp(self, preset_name, on_position=False):
 		'''
 		Send align Lpp request
 		'''
@@ -510,6 +509,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		request_data = leginondata.AlignLppRequestData()
 		request_data['session'] = self.session
 		request_data['preset'] = preset_name
+		request_data['on_position'] = on_position
+		print(request_data)
 		self.publish(request_data, database=True, pubevent=True, wait=True)
 		self.setStatus('processing')
 
@@ -529,9 +530,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		zlp_preset_name = self.settings['preset order'][-1]
 		self.logger.info('Tuning before processing a target')
 		self.tuneEnergyFilter(zlp_preset_name)
-		self.tuneLpp(zlp_preset_name) # preset_name is not used but tem/ccdcamera must be set
+		#self.tuneLpp(zlp_preset_name, False) # preset_name is not used but tem/ccdcamera must be set
 		self.monitorScreenCurrent(zlp_preset_name)
 
+	def postTargetSetup(self):
+		self.logger.info('Tuning after processing a target')
+		zlp_preset_name = self.settings['preset order'][-1]
+		self.tuneLpp(zlp_preset_name, True) # preset_name is not used but tem/ccdcamera must be set
 	def validateSettings(self):
 		'''
 		A chance for subclass to abort processTargetData.
@@ -608,6 +613,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.reportStatus('acquisition', 'Acquisition state is "%s"' % ret)
 				break
 
+		self.postTargetSetup()
 		self.reportStatus('processing', 'Processing complete')
 
 		return ret
@@ -1500,6 +1506,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
 		except Exception as e:
+			raise
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
 		self.reportTargetStatus(proctargetdata, 'done')

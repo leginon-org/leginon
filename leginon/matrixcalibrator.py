@@ -57,6 +57,12 @@ class MatrixCalibrator(calibrator.Calibrator):
 		'stage position interval': 2e-6,
 		'stage position current as base': True,
 		'stage position base': {'x': 0.0, 'y': 0.0},
+		'phase plate plane shift tolerance': 12.0,
+		'phase plate plane shift shift fraction': 25.0,
+		'phase plate plane shift n average': 1,
+		'phase plate plane shift interval': 2e-6,
+		'phase plate plane shift current as base': True,
+		'phase plate plane shift base': {'x': 0.0, 'y': 0.0},
 	})
 	def __init__(self, id, session, managerlocation, **kwargs):
 		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
@@ -64,14 +70,16 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.parameters = {
 		  'image shift': calibrationclient.ImageShiftCalibrationClient(self),
 		  'beam shift': calibrationclient.BeamShiftCalibrationClient(self),
-		  'stage position': calibrationclient.StageCalibrationClient(self)
+		  'stage position': calibrationclient.StageCalibrationClient(self),
+		  'phase plate plane shift': calibrationclient.PhasePlatePlaneShiftCalibrationClient(self)
 		}
 		self.parameter = 'stage position'
 		self.pixsizeclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.settle = {
 		  'image shift': 5.0,
 		  'beam shift': 1.0,
-		  'stage position': 1.0
+		  'stage position': 1.0,
+		  'phase plate plane shift': 1.0
 		}
 
 		self.axislist = ['x', 'y']
@@ -104,11 +112,12 @@ class MatrixCalibrator(calibrator.Calibrator):
 		pixsize = self.pixsizeclient.retrievePixelSize(None, None, mag)
 
 		cam = self.instrument.ccdcamera
-		shiftpixels = min(cam.Dimension['x']*cam.Binning['x'], cam.Dimension['y']*cam.Binning['y'])
 
 		percent = self.settings['%s shift fraction' % self.parameter]/100.0
-		delta = percent * shiftpixels * pixsize
-		self.logger.debug('Delta %s' % delta)
+		unit_delta = calclient.calculateUnitParameterDelta(cam, mag, pixsize)
+		delta = percent * unit_delta
+		self.logger.info('Unit Delta %s' % unit_delta)
+		self.logger.info('Delta %s' % delta)
 
 		shifts = {}
 		for axis in self.axislist:
@@ -126,6 +135,11 @@ class MatrixCalibrator(calibrator.Calibrator):
 				state2 = self.makeState(newvalue, axis)
 				self.logger.debug('States %s, %s' % (state1, state2))
 				im1 = calclient.acquireImage(state1, settle=self.settle[self.parameter])
+				corr_type = self.settings['correlation type']
+				if self.parameter == 'phase plate plane shift' and corr_type != 'cross':
+					# lpp fringe is low-freq cosine wave. Need to use cross correlation.
+					corr_type = 'cross'
+					self.logger.warning('force using cross correlation')
 				shiftinfo = calclient.measureScopeChange(im1, state2, settle=self.settle[self.parameter],correlation_type=self.settings['correlation type'],lp=self.settings['lpf sigma'])
 
 				rowpix = shiftinfo['pixel shift']['row']
@@ -143,6 +157,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 				self.logger.info('scope %s axis % s change between images: %s' % (self.parameter,axis,change))
 
 				perpix = change / totalpix
+
+				perpix = calclient.getMeasuredPixelSize(change, totalpix, cam, pixsize)
 
 				## deviation from pixsize should be less than
 				## 12%
@@ -178,10 +194,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 				# better just fail the whole calibration
 				raise CalibrationError('no successful calibration measurement')
 
-		# return to base
-		emdata = leginondata.ScopeEMData()
-		emdata[self.parameter] = basebase
-		self.instrument.setData(emdata)
+		# return to base is handled in the function calling this with
+		# exception handling
 
 		mag, mags = self.getMagnification()
 		ht = self.getHighTension()
@@ -206,6 +220,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 								'Unable to get pixel size, aborting calibration')
 		except CalibrationError as e:
 			self.logger.error('Bad calibration measurement, aborting: %s', e)
+		except Aborted as e:
+			self.logger.debug('User abort')
 		except Exception as e:
 			self.logger.exception('Calibration failed: %s', e)
 		else:
@@ -219,6 +235,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 	def getParameter(self):
 		self.saveparam = self.instrument.getData(leginondata.ScopeEMData)[self.parameter]
+		if self.parameter == 'phase plate plane shift':
+			self.save_lpp_f0 = self.instrument.tem.PhasePlateFocus
 		self.logger.debug('Storing parameter %s, %s'
 											% (self.parameter, self.saveparam))
 
@@ -226,6 +244,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.logger.info('Returning to original state')
 		emdata = leginondata.ScopeEMData()
 		emdata[self.parameter] = self.saveparam
+		if self.parameter == 'phase plate plane shift':
+			emdata['phase plate focus'] = self.save_lpp_f0
 		self.instrument.setData(emdata)
 
 	def uiAbort(self):
@@ -240,7 +260,13 @@ class MatrixCalibrator(calibrator.Calibrator):
 		return base
 
 	def makeState(self, value, axis):
-		return {self.parameter: {axis: value}}
+		scope_state = {self.parameter: {axis: value}}
+		if self.parameter == 'phase plate plane shift':
+			#TODO save in a setting the required focus change
+			delta = -0.0025
+			scope_state['phase plate focus'] = self.save_lpp_f0+delta
+			self.logger.info('phase plate focus changed by %.4f for measurement' % delta)
+		return scope_state
 
 	def getCurrentCalibration(self):
 		if self.instrument.tem is None:

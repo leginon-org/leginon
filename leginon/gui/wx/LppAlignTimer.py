@@ -12,7 +12,6 @@ class LppAlignTimerPanel(leginon.gui.wx.ReferenceTimer.ReferenceTimerPanel, legi
 	imagepanelclass = leginon.gui.wx.ImagePanel.ImagePanel
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.ReferenceTimer.ReferenceTimerPanel.__init__(self, *args, **kwargs)
-		leginon.gui.wx.Instrument.SelectionMixin.__init__(self)
 
 	def onNodeInitialized(self):
 		leginon.gui.wx.ReferenceTimer.ReferenceTimerPanel.onNodeInitialized(self)

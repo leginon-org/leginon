@@ -13,7 +13,7 @@ import leginon.gui.wx.Entry
 import leginon.gui.wx.ListBox
 import leginon.gui.wx.Presets
 
-hide_stig = True
+hide_stig = False
 
 class DialogSettings(object):
 	def __init__(self, preset_names,

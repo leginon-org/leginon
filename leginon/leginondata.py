@@ -442,6 +442,23 @@ class CameraSensitivityCalibrationData(CalibrationData):
 		)
 	typemap = classmethod(typemap)
 
+class StigmatorCalibrationData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('type', str),
+			('rotation angle', float), #degrees from x-axis like in ctffind
+			('coeff', dict), # unit conversion from stigmator current to astig
+		)
+	typemap = classmethod(typemap)
+
+class StigmatorCenterData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('type', str),
+			('center', dict), # x,y key/value pair
+		)
+	typemap = classmethod(typemap)
+
 class MagDependentCalibrationData(CalibrationData):
 	def typemap(cls):
 		return CalibrationData.typemap() + (
@@ -701,6 +718,7 @@ class NavigatorScopeEMData(PresetScopeEMData):
 	def typemap(cls):
 		return PresetScopeEMData.typemap() + (
 			('stage position', dict),
+			('phase plate plane shift', dict),
 		)
 	typemap = classmethod(typemap)
 
@@ -1119,6 +1137,7 @@ class ReferenceRequestData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('preset', str),
+			('on_position', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1255,7 +1274,7 @@ class FocuserResultData(InSessionData):
 			('stigx', float),
 			('stigy', float),
 			('min', float),
-			('stig correction', int),
+			('stig correction', int), #Shouldn't this boolean ?
 			('defocus correction', str),
 			('method', str),
 			('status', str),
@@ -2258,8 +2277,6 @@ class LppAlignerSettingsData(AcquisitionSettingsData):
 			('xlpp',bool),
 			('global view offset', float),
 			('compress ratio', int),
-			('rotation1', float), # degrees
-			('rotation2', float), # degrees
 			('acquire type', str),
 			('phase plate defocus sequence', str), #Issue #5687
 			('lpp1 wave xtilt vector x', float),
@@ -2609,15 +2626,25 @@ class BeamTiltCalibratorSettingsData(CalibratorSettingsData):
 			('comafree beam tilt', float),
 			('comafree misalign', float),
 			('imageshift coma tilt', float),
+			('imageshift coma image defocus', float),
 			('imageshift coma step', float),
 			('imageshift coma number', int),
 			('imageshift coma repeat', int),
 		)
 	typemap = classmethod(typemap)
-		
+
+class StigCalibratorSettingsData(CalibratorSettingsData):
+	def typemap(cls):
+		return CalibratorSettingsData.typemap() + (
+			('measure defocus', float),
+			('correct tilt', bool),
+			('settling time', float),
+		)
+	typemap = classmethod(typemap)
+
 class MatrixCalibratorSettingsData(CalibratorSettingsData):
 	def typemap(cls):
-		parameters = ['image shift', 'beam shift', 'diffraction shift', 'stage position']
+		parameters = ['image shift', 'beam shift', 'diffraction shift', 'stage position', 'phase plate plane shift']
 		parameterstypemap = []
 		for parameter in parameters:
 			parameterstypemap.append(('%s tolerance' % parameter, float))

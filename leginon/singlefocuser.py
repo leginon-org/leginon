@@ -81,6 +81,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		self.psizecalclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.ctfcalclient = calibrationclient.CtfCalibrationClient(self)
+		self.stigcalclient = calibrationclient.ObjectiveStigCalibrationClient(self)
 		self.stagetiltcalclient = calibrationclient.StageTiltCalibrationClient(self)
 		self.imageshiftcalclient = calibrationclient.ImageShiftCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
@@ -183,14 +184,14 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 				self.publish(setting_data, database=True, dbforce=True)
 		self.focus_sequence = sequence
 
-	def autoFocus(self, setting, emtarget, resultdata):
+	def _prepAuto(self, setting, emtarget, btilt1dict):
+		"""
+		Set scope and attributes to prepare for auto defocus/stig correction measurement.
+		This include drift check and eucentric focus setting if autofocus is corrected by
+		stage z height change.
+		This method is used by both beam tilt and ctf measurement method.
+		"""
 		presetname = setting['preset name']
-		stiglens = 'objective'
-		## beam tilt scale
-		btilt = setting['tilt']
-		# relative beam tilt dict
-		presetdata = self.presetsclient.getPresetFromDB(presetname)
-		btilt1dict = 	self.btcalclient.getFirstBeamTiltDeltaXY(btilt, presetdata['probe mode'], self.settings['on phase plate'])
 		### Drift check
 		if setting['check drift']:
 			driftthresh = setting['drift threshold']
@@ -209,14 +210,14 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			if driftresult['status'] == 'timeout':
 				self.logger.warning('still drifting after timeout')
 				return 'aborted'
-			lastdrift = driftresult['final']
-			lastdriftimage = self.driftimage
-			self.setImage(lastdriftimage['image'], 'Image')
+			self.lastdrift = driftresult['final']
+			self.lastdriftimage = self.driftimage
+			self.setImage(self.lastdriftimage['image'], 'Image')
 
 			self.logger.info('use final drift image in focuser')
 		else:
-			lastdrift = None
-			lastdriftimage = None
+			self.lastdrift = None
+			self.lastdriftimage = None
 
 		## send the autofocus preset to the scope
 		## drift check may have done this already
@@ -244,6 +245,18 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			self.instrument.tem.Defocus = p['defocus']
 			self.eucset = False
 		self.reset = True
+		return 'ok'
+
+	def autoFocus(self, setting, emtarget, resultdata):
+		presetname = setting['preset name']
+		## beam tilt scale
+		btilt = setting['tilt']
+		# relative beam tilt dict
+		presetdata = self.presetsclient.getPresetFromDB(presetname)
+		btilt1dict = 	self.btcalclient.getFirstBeamTiltDeltaXY(btilt, presetdata['probe mode'], self.settings['on phase plate'])
+		status = self._prepAuto(setting, emtarget, btilt1dict)
+		if status != 'ok':
+			return status
 		# get original beam to use to reset before return for any reason.
 		# failed in the process or not as a safety
 		beamtilt0 = self.btcalclient.getBeamTilt()
@@ -253,7 +266,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			# increased settle time from 0.25 to 0.5 for Falcon protector
 			settletime = self.settings['beam tilt settle time']
 			### FIX ME temporarily switch off tilt correction because the calculation may be wrong Issue #3030
-			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=False, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=settletime, image0=lastdriftimage, on_phase_plate=self.settings['on phase plate'])
+			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=False, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=settletime, image0=self.lastdriftimage, on_phase_plate=self.settings['on phase plate'])
 		except calibrationclient.Abort:
 			self.logger.info('Measurement of defocus and stig. has been aborted')
 			measure_status = 'aborted'
@@ -288,72 +301,18 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		stigy = correction['stigy']
 		fitmin = correction['min']
 
-		resultdata.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':fitmin, 'drift': lastdrift})
+		resultdata.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':fitmin, 'drift': self.lastdrift})
 		return 'ok'
-
 
 	def autoCtf(self, setting, emtarget, resultdata):
 		presetname = setting['preset name']
-		stiglens = 'objective'
+		presetdata = self.presetsclient.getPresetFromDB(presetname)
 		## beam tilt scale
 		# relative beam tilt dict
-		presetdata = self.presetsclient.getPresetFromDB(presetname)
-		### Drift check
-		if setting['check drift']:
-			driftthresh = setting['drift threshold']
-			# move first if needed
-			# TODO: figure out how drift monitor behaves in RCT if doing this
-			self.conditionalMoveAndPreset(presetname, emtarget)
-			# apply pause time as if it is an image acquisition
-			presetdata = self.presetsclient.getPresetFromDB(presetname)
-			self.preAcquire(presetdata, emtarget, 0, reduce_pause=False)
-			self.is_firstimage = False
-			driftresult = self.checkDrift(presetname, emtarget, driftthresh, {'x':0.0,'y':0.0})
-			if setting['recheck drift'] and driftresult['status'] == 'drifted':
-				# See Issue #3990
-				self.logger.info('Drift was detected so target will be repeated')
-				return 'repeat'
-			if driftresult['status'] == 'timeout':
-				self.logger.warning('still drifting after timeout')
-				return 'aborted'
-			lastdrift = driftresult['final']
-			lastdriftimage = self.driftimage
-			self.setImage(lastdriftimage['image'], 'Image')
 
-			self.logger.info('use final drift image in focuser')
-		else:
-			lastdrift = None
-			lastdriftimage = None
-
-		## send the autofocus preset to the scope
-		## drift check may have done this already
-		self.conditionalMoveAndPreset(presetname,emtarget)
-		# apply pause time as if it is an image acquisition
-		presetdata = self.presetsclient.getPresetFromDB(presetname)
-		self.preAcquire(presetdata, emtarget, 0, reduce_pause=False)
-		self.is_firstimage = False
-
-		## set to eucentric focus if doing Z correction
-		## WARNING:  this assumes that user will not change
-		## to another focus type before doing the correction
-		focustype = setting['correction type']
-		if focustype == 'Stage Z':
-			self.logger.info('Setting eucentric focus...')
-			self.eucentricFocusToScope()
-			self.logger.info('Eucentric focus set')
-			self.eucset = True
-		else:
-			# Make sure defocus is set according to the preset
-			# Otherwise two defocus correction sequence 
-			# using the same preset would have close
-			# to zero defocus after the first correction
-			p = self.presetsclient.getCurrentPreset()
-			self.instrument.tem.Defocus = p['defocus']
-			self.eucset = False
-		self.reset = True
-		# get original beam to use to reset before return for any reason.
-		# failed in the process or not as a safety
-		focus0 = self.instrument.tem.Focus
+		status = self._prepAuto(setting, emtarget, {'x':0.0,'y':0.0})
+		if status != 'ok':
+			return status
 
 		measure_status = None
 		delta_defocus = 1e-6
@@ -362,7 +321,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			# increased settle time from 0.25 to 0.5 for Falcon protector
 			settletime = self.settings['beam tilt settle time']
 			### FIX ME temporarily switch off tilt correction because the calculation may be wrong Issue #3030
-			correction = self.ctfcalclient.measureCtf(delta_defocus, correct_tilt=False, stig=setting['stig correction'], settle=settletime, image0=lastdriftimage, phase_search=phase_search)
+			correction = self.ctfcalclient.measureCtf(delta_defocus, correct_tilt=False, stig=setting['stig correction'], settle=settletime, image0=self.lastdriftimage, phase_search=phase_search)
 		except calibrationclient.Abort:
 			self.logger.info('Measurement of defocus and stig. has been aborted')
 			measure_status = 'aborted'
@@ -377,18 +336,24 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			if measure_status:
 				return measure_status
 
-		if setting['stig correction'] and correction['stigx'] and correction['stigy']:
-			sx = '%.3f' % correction['stigx']
-			sy = '%.3f' % correction['stigy']
+		tem = presetdata['tem']
+		ccdcamera = presetdata['ccdcamera']
+		name = 'objective'
+		cal = self.stigcalclient.researchCalibration(tem, ccdcamera, name)
+
+		defoc = correction['defocus']
+		if setting['stig correction'] and 'ctfvalues' in correction.keys():
+			stigx, stigy = self.stigcalclient.ctf2Stigmator(cal, correction)
+			sx = '%.6f' % stigx
+			sy = '%.6f' % stigy
 		else:
 			sx = sy = 'N/A'
+			stigx = None
+			stigy = None
 		self.logger.info('Measured defocus: %.3e, stigx: %s, stigy: %s, min: %.2f' % (correction['defocus'], sx, sy, correction['min']))
-		defoc = correction['defocus']
-		stigx = correction['stigx']
-		stigy = correction['stigy']
 		fitmin = correction['min']
 
-		resultdata.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':fitmin, 'drift': lastdrift})
+		resultdata.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':fitmin, 'drift': self.lastdrift})
 		return 'ok'
 
 		#####################################################################
@@ -456,7 +421,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 				stigdefocusmin = stigdefocrange[0]
 				stigdefocusmax = stigdefocrange[1]
 				if validdefocus and stigdefocusmin < abs(defoc) < stigdefocusmax:
-					resultdata['stig correction'] = 0
+					resultdata['stig correction'] = 1
 				else:
 					self.logger.info('Stig. correction invalid due to invalid defocus')
 					resultdata['stig correction'] = 0
@@ -466,13 +431,12 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		
 	def correctDefocusStig(self, setting, resultdata):
 		correction_type = setting['correction type']
+		stiglens = 'objective'
 		fitmin = resultdata['min']
 		stigx = resultdata['stigx']
 		stigy = resultdata['stigy']
 		if resultdata['stig correction']:
 			self.correctStig(stiglens, stigx, stigy)
-			resultstring = resultstring + ', corrected stig by x,y=%.4f,%.4f' % (stigx, stigy)
-			self.logger.info(resultstring)
 
 		defoc0 = self.instrument.tem.Defocus
 		self.logger.info('Defocus correction...')
@@ -764,7 +728,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		stig = self.instrument.tem.Stigmator
 		stig[stiglens]['x'] += deltax
 		stig[stiglens]['y'] += deltay
-		self.logger.info('Correcting %s stig by %s, %s' % (stiglens, deltax, deltay))
+		self.logger.info('Correcting %s stig by %.6f, %.6f' % (stiglens, deltax, deltay))
 		self.instrument.tem.Stigmator = stig
 
 	def correctDefocus(self, delta, setting):

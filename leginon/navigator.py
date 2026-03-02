@@ -109,6 +109,7 @@ class Navigator(node.Node):
 		self.calclients['modeled stage position'] = calibrationclient.ModeledStageCalibrationClient(self)
 		self.calclients['beam shift'] = calibrationclient.BeamShiftCalibrationClient(self)
 		self.calclients['image beam shift'] = calibrationclient.ImageBeamShiftCalibrationClient(self)
+		self.calclients['phase plate plane shift'] = calibrationclient.PhasePlatePlaneShiftCalibrationClient(self)
 
 		self.pcal = calibrationclient.PixelSizeCalibrationClient(self)
 		self.presetsclient = presets.PresetsClient(self)
@@ -226,6 +227,7 @@ class Navigator(node.Node):
 		self.logger.info('Moving...')
 
 		pixelshift = {'row':-row, 'col':-col}
+		self.logger.info('Moving by (r,c) %.6f,%.6f' % (pixelshift['row'],pixelshift['col']))
 		scope = self.newimagedata['scope']
 		camera = self.newimagedata['camera']
 
@@ -746,6 +748,7 @@ class Navigator(node.Node):
 		self.presetsclient.toScope(presetname)
 		if self.presetsclient.stage_targeting_failed:
 			self.logger.error('Preset sending failed. Check parameters')
+		self.f0 = self.instrument.tem.PhasePlateFocus
 		self.setStatus('idle')
 		self.panel.onSendPresetDone()
 
@@ -760,6 +763,16 @@ class Navigator(node.Node):
 	def onResetAlpha(self):
 		loc = {'a':0.0}
 		self._toScope('reset alpha',loc)
+
+	def onToggleLppFocus(self):
+		loc = {'a':0.0}
+		f = self.instrument.tem.PhasePlateFocus
+		if not hasattr(self,'f0'):
+		    self.f0 = self.instrument.tem.PhasePlateFocus
+		if f == self.f0:
+			self.instrument.tem.PhasePlateFocus = self.f0-0.0025
+		else:
+			self.instrument.tem.PhasePlateFocus = self.f0
 
 if __name__ == '__main__':
 	id = ('navigator',)

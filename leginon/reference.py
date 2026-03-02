@@ -283,14 +283,19 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		# Moving part
 		preset_name = request_data['preset']
 		self.preset_name = preset_name
+		on_position = False
+		if 'on_position' in request_data.keys():
+			on_position = request_data['on_position']
+			self.logger.info('Stay on the current position to execute')
 		position0 = self.instrument.tem.StagePosition
-		try:
-			self.moveToTarget(preset_name)
-			self.declareDrift('stage')
-		except Exception as e:
-			self.logger.error('Error moving to target, %s' % e)
-			self.moveBack(position0)
-			return
+		if not on_position:
+			try:
+				self.moveToTarget(preset_name)
+				self.declareDrift('stage')
+			except Exception as e:
+				self.logger.error('Error moving to target, %s' % e)
+				self.moveBack(position0)
+				return
 		# Execution part
 		if pause_time is not None:
 			self.logger.info('Pausing %.1f second before execution' % (pause_time,))
@@ -305,8 +310,9 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		except Exception as e:
 			self.logger.error('Error executing request, %s' % e)
 		finally:
-			# Must move back
-			self.moveBack(position0)
+			if not on_position:
+				# Must move back
+				self.moveBack(position0)
 			return
 
 	def pauseBeforeReturn(self):

@@ -164,14 +164,14 @@ class SessionCreator(object):
 		projeq.insert()
 		return projeq['project']
 
-	def linkGridServerSession(self):
+	def linkGridServerSession(self, is_auto_session=True):
 		'''
 		record session name and dbid to grid management system 
 		and associate that with a grid if gridhook.cfg
 		is defined.  The grid is identified in session comment.
 		'''
 		grid_id_string = self.session['comment']
-		gapp = gridserver.GridHookServer(self.session, self.project, is_auto_session=True)
+		gapp = gridserver.GridHookServer(self.session, self.project, is_auto_session=is_auto_session)
 		if not gapp.gridhook_server_active:
 			# Do nothing
 			return
@@ -292,7 +292,7 @@ class SessionSettingsCopier(object):
 			try:
 				self.copyOldSettings(settings_classname, alias)
 			except Exception as e:
-				print(e)
+				print('Warning: No settings to copy: %s class as %s' % (settings_classname, alias))
 				continue
 			if 'Focuser' in class_name:
 				settings_classname = 'FocusSequenceData'

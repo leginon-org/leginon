@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright under
-#       Apache License, Version 2.0
-#       For terms of the license agreement
-#       see  http://leginon.org
+#   The Leginon software is Copyright under
+#   Apache License, Version 2.0
+#   For terms of the license agreement
+#   see  http://leginon.org
 #
 #
 
@@ -717,6 +717,17 @@ class Node(correctorclient.CorrectorClient):
 	def setUserVerificationStatus(self, state):
 		evt = leginon.gui.wx.Events.UserVerificationUpdatedEvent(self.panel, state)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
+
+	def cyclePhasePlateFocus(self, before, after, repeat=2, sleep_time=0.5):
+		self.logger.info('cycling lpp focus %d times with %.1f sec sleep' % (repeat, sleep_time))
+		for i in range(repeat):
+			self.instrument.tem.PhasePlateFocus = after
+			time.sleep(sleep_time)
+			self.instrument.tem.PhasePlateFocus = before
+			time.sleep(sleep_time)
+		self.logger.info('final lpp focus  %.8f' % after)
+		self.instrument.tem.PhasePlateFocus = after
+
 
 ## module global for storing start times
 start_times = {}
