@@ -204,6 +204,10 @@ class Tomography(acquisition.Acquisition):
 		if status == 'error':
 			self.logger.warning('Move failed. skipping acquisition at this target')
 			return
+		# reset tilt and xys used for leastSquaresXY so that
+		# it does not use previous tiltseries data for least squares fitting.
+		if self.settings['fixed model']:
+			self.prediction.resetTiltSeriesList()
 		try:
 			calibrations = self.getCalibrations(presetdata)
 		except CalibrationError as e:
@@ -268,6 +272,8 @@ class Tomography(acquisition.Acquisition):
 			return 'aborted'
 		except leginon.tomography.collection.Fail:
 			return 'failed'
+		except Exception:
+			raise
 
 		# ignoring wait for process
 		#self.publishDisplayWait(imagedata)

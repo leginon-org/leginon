@@ -219,7 +219,7 @@ class Collection(object):
 		# use calibrated defocus delta instead
 		cal_delta = self.prediction.getCalibratedDefocusDelta(tilt)
 		self.logger.info('calibrated tilt defocus shift: %.2f um' % (cal_delta*1e6))
-		defocus =  defocus0 + cal_delta
+		defocus =  defocus0 - cal_delta
 		self.logger.info('defocus0: %g meters,sintilt: %g' % (defocus0,math.sin(tilt)))
 		self.logger.info('prediction defocus %.2f um' % (defocus*1e6))
 		# record z prediction not including calibrated defocus delta ???
@@ -408,25 +408,30 @@ class Collection(object):
 					other_group = int(not seq[0])
 					fake_corr_image = self.correlator[other_group].correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=False, taper=0)
 		
+			raw_correlation = self.correlator[seq[0]].getShift(True)
 			correlation = self.correlator[seq[0]].getShift(False)
 			phi, optical_axis, z0 = self.prediction.getCurrentParameters()
 			phi,offset = self.prediction.convertparams(phi,optical_axis)
 			if self.settings['use tilt']:
 				# alternative correlation using phi from model as tilt axis.
 				correlation = self.correlator[seq[0]].tiltShift(tilt,correlation,phi)
+			corr_bin = self.correlator[seq[0]].getCorrelationBinning()
 			for i, axis in enumerate(('y','x')):
 				if type(correlation_image) != type(None):
-					if abs(correlation[axis]) > 0.99*correlation_image.shape[i]:
+					print('pair-wise correlation', axis, raw_correlation[axis]*corr_bin)
+					if abs(raw_correlation[axis]*corr_bin) > 0.49*correlation_image.shape[i]:
 						print('at edge of the correlation')
-						if predicted_position[axis] > 0:
+						print('predicted_position',axis, predicted_shift[axis])
+						if predicted_position[axis] > 0 and predicted_shift[axis] < 0:
 							correlation[axis] -= correlation_image.shape[i]
-						else:
+							print('wrap to left')
+						elif predicted_position[axis] < 0 and predicted_shift[axis] > 0:
 							correlation[axis] += correlation_image.shape[i]
+							print('wrap to right')
 			position = {
 				'x': predicted_position['x'] - correlation['x'],
 				'y': predicted_position['y'] - correlation['y'],
 			}
-			print(position)
 
 			self.prediction.addPosition(tilt, position, correlation)
 
@@ -435,7 +440,6 @@ class Collection(object):
 								  correlation['y'],
 								  correlation['x']*self.image_pixel_size,
 								  correlation['y']*self.image_pixel_size))
-
 			m = 'Feature position: %g, %g pixels, %g, %g meters.'
 			self.logger.info(m % (position['x'],
 								  position['y'],

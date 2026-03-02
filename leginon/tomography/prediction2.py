@@ -37,9 +37,7 @@ class TiltGroup2(TiltGroup):
 		self.pys = []
 	
 	def addTilt(self,tilt, x, y, px=None, py=None):		
-		self.tilts.append(tilt)
-		self.xs.append(x)						# measured positions
-		self.ys.append(y)
+		super(TiltGroup2,self).addTilt()
 		self.pxs.append(px)						# predicted positions
 		self.pys.append(py)
 
