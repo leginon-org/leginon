@@ -207,6 +207,13 @@ class Collection(object):
 		
 		self.logger.info('Collection loop completed.')
 
+	def predictDefocusZByCalibration(self, defocus0, tilt):
+		# use calibrated defocus delta instead
+		cal_delta = self.prediction.getCalibratedDefocusDelta(tilt)
+		self.logger.info('calibrated tilt defocus shift: %.2f um' % (cal_delta*1e6))
+		defocus =  defocus0 - cal_delta
+		return defocus, cal_delta / self.pixel_size
+
 	def predictByTilt(self, defocus0, tilt, position, defocus):
 		predicted_position = self.prediction.predict(tilt)
 

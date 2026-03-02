@@ -37,7 +37,7 @@ class TiltGroup2(TiltGroup):
 		self.pys = []
 	
 	def addTilt(self,tilt, x, y, px=None, py=None):		
-		super(TiltGroup2,self).addTilt()
+		super(TiltGroup2,self).addTilt(tilt, x, y)
 		self.pxs.append(px)						# predicted positions
 		self.pys.append(py)
 

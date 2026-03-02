@@ -266,8 +266,9 @@ class Collection2(Collection):
 					# tracked_shift has to be corrected by total pixel shifts applied up to now
 					predicted_position['x'] = tracked_shift['x'] + sum(pix_shifts['x'])
 					predicted_position['y'] = tracked_shift['y'] + sum(pix_shifts['y'])
-					# TODO: actually implement something for z heights
-					predicted_position['z'] = tracked_shift['z'] + self.preset['defocus']/image_pixel_size
+					# TODO: actually implement something for z heights in unit of image pixel
+					defocus, predicted_z = self.predictDefocusZByCalibration(defocus0, tilt)
+					predicted_position['z'] = predicted_z
 					self.logger.debug('previous x: %.3f, y: %.3f' %(position['x'],position['y']))
 					self.logger.debug('tracked shift x: %.3f, y: %.3f' %(tracked_shift['x'],tracked_shift['y']))
 					self.logger.debug('set to binned pixel from track x: %.3f, y: %.3f' %(predicted_position['x'],predicted_position['y']))
@@ -284,7 +285,7 @@ class Collection2(Collection):
 					# tracked_shift has to be corrected by total image shifts applied up to now
 					predicted_position['x'] = predicted_shift['x'] + sum(pix_shifts['x'])
 					predicted_position['y'] = predicted_shift['y'] + sum(pix_shifts['y'])
-					# TODO: actually implement something for z heights
+					# use calibrated defocus change  for z heights
 					predicted_position['z'] = predicted_shift['z'] + self.preset['defocus']/image_pixel_size
 
 					# determine if we need to take a tracking image
@@ -307,7 +308,7 @@ class Collection2(Collection):
 			except PredictionError as e:
 				self.logger.error('Failed to predict. Aborting tilt series: %s' % e)
 				raise Abort
-			except Exception:
+			except Exception as e:
 				traceback.print_exc()
 				self.finalize()
 				raise Abort
