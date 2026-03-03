@@ -47,6 +47,7 @@ class LppAligner(acquisition.Acquisition):
 
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
 		self.calclients['phase plate plane shift'] = calibrationclient.PhasePlatePlaneShiftCalibrationClient(self)
+		self.calclients['lpp fringe'] = calibrationclient.LppCalibrationClient(self)
 		self.deltaz = 0.0
 		self.v0 = 0.0
 		self.series_id = 1
@@ -145,8 +146,9 @@ class LppAligner(acquisition.Acquisition):
 		try:
 			status = self._acquireOffPlaneImage(presetdata, emtarget, attempt, target, channel, delta_f)
 			if status != 'error':
-				status, r = self.calculatePhaseShiftCorrection(refdata)
-				self.new_xt0, cor_image, cor_pixelpeak = calclient.calculateNewPhasePlatePlaneShift(refdata)
+				self.new_phase_shifts, status, r = self.calclients['lpp fringe'].calculatePhaseShiftCorrectionFromFringeFit(refdata, self.imagedata)
+				# correlation method
+				self.new_xt0, cor_image, cor_pixelpeak = calclient.calculateNewPhasePlatePlaneShiftByCorrelation(refdata, self.imagedata)
 				self.setImage(cor_image, 'Correlation')
 				calclient.displayPeak(cor_pixelpeak)
 		except Exception as e:
@@ -154,34 +156,9 @@ class LppAligner(acquisition.Acquisition):
 			self.logger.error('Failed. off plane alignment not valid: %s' % e)
 			return 'error'
 
-	def fitFringe(self):
-		myimage = self.imagedata['image']
-		try:
-			number_of_lpp = 1
-			if self.settings['xlpp']:
-				number_of_lpp = 2
-			results = lppfit.run_fringe_fit(myimage, number_of_lpp)
-		except Exception as e:
-			self.logger.warning('failed fitting, skipping: %s' % e)
-			raise RuntimeError('Lpp Fitting failed: %e' % e)
-		return results
-
-	def calculatePhaseShiftCorrection(self, refdata):
-		status = 'success'
-		try:
-			results = self.fitFringe()
-			# phase shift represent correction needed, so it needs to reverse sign.
-			for k in results.keys():
-				phase_shift_needed = results[k]['phase_shift_to_max']
-				phase_diff = -(phase_shift_needed - refdata['lpp%d phase shift' % k])
-				self.new_phase_shifts[k] = lppfit.convert_phase_degrees(phase_diff)
-		except Exception as e:
-			self.logger.error('Error calculating on-node values: %s' % e)
-			status = 'error'
-			return status,results
-		self.logger.info('phase shift correction = %s' % self.new_phase_shifts)
-		self.saveLppFitMeasurement(refdata, self.imagedata, results, self.new_phase_shifts)
-		return status, results
+	def fitFringe(self, myimage_array):
+		self.calclients['lpp fringe'].setIsXLpp(self.settings['xlpp'])
+		return self.calclients['lpp fringe'].fitFringe(myimage_array)
 
 	def _acquireOffPlaneImage(self, presetdata, emtarget=None, attempt=None, target=None, channel=None, lpp_delta_focus=None):
 		'''
@@ -229,7 +206,7 @@ class LppAligner(acquisition.Acquisition):
 		try:
 			status = self._acquireOffPlaneImage(presetdata, emtarget, attempt, target, channel, delta_f)
 			if status != 'error':
-				r = self.fitFringe()
+				r = self.fitFringe(self.imagedata['image'])
 		except Exception as e:
 			self.logger.error('Failed. on-node reference not saved: %s' % e)
 			return
@@ -247,7 +224,7 @@ class LppAligner(acquisition.Acquisition):
 			q['lpp%d phase shift' % k] = r[k]['phase_shift_to_max']
 			self.logger.info('reference lpp%d phase shift saved at %.1f.' % (k,r[k]['phase_shift_to_max']))
 		q.insert(force=True)
-		self.saveLppFitInImageComment(self.imagedata, r, True)
+		self.calclients['lpp fringe'].saveLppFitInImageComment(self.imagedata, r, True)
 
 	def _acquireFocusSeries(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
 		'''
@@ -387,6 +364,9 @@ class LppAligner(acquisition.Acquisition):
 			self.logger.error('Error calculating on-plane and on-node values: %s' % e)
 			return status
 
+	def setOnPlaneOnNode(self):
+		self.calclients['lpp fringe'].setOnPlaneOnNode()
+
 	def guiSetOnPlaneOnNode(self):
 		'''
 		set on-plane and on-node and save the xtilt calibration
@@ -417,7 +397,7 @@ class LppAligner(acquisition.Acquisition):
 		self.instrument.tem.PhasePlateFocus = self.f0
 		self.logger.info('phase plate focus reset to %.8f' % self.f0)
 		self.instrument.tem.PhasePlatePlaneShift = self.xt0
-		msg = 'Reset LPP focus to %.8f, x-tilt to x:%.4e,y:%.4e' % (self.f0, self.xt0['x'],self.new_xt0['y'])
+		msg = 'Reset LPP focus to %.8f, x-tilt to x:%.4e,y:%.4e' % (self.f0, self.xt0['x'],self.xt0['y'])
 		self.logger.info(msg)
 
 	def setImageFilename(self, imagedata):

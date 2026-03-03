@@ -26,6 +26,7 @@ import threading
 from leginon import gonmodel
 from leginon import tiltcorrector
 from leginon import tableau
+from leginon import lppfit
 
 class Drifting(Exception):
 	pass
@@ -1835,6 +1836,10 @@ class ImageScaleRotationCalibrationClient(ImageShiftCalibrationClient):
 		return scaled_vect
 
 class PhasePlatePlaneShiftCalibrationClient(SimpleMatrixCalibrationClient):
+	"""
+	Matrix Calibration of phase plate plane shift to off-plane image.
+	The calibration is mag dependent
+	"""
 	mover = False
 	def __init__(self, node):
 		SimpleMatrixCalibrationClient.__init__(self, node)
@@ -1854,12 +1859,11 @@ class PhasePlatePlaneShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		self.node.logger.debug('fringe_xtilt_shift',self.fringe_xtilt_shift)
 		return pixsize*param_change*self.fringe_shiftpixels / (totalpix*self.fringe_xtilt_shift)
 
-	def calculateNewPhasePlatePlaneShift(self, refdata):
+	def calculateNewPhasePlatePlaneShiftByCorrelation(self, refdata, my_imagedata):
 		"""
 		Use image correlation and MatrixCalibrationData tp calculate new xtilt
 		"""
 		self.correlator.insertImage(refdata['reference']['image'])
-		my_imagedata = self.node.imagedata
 		cor, shrink_factor = self.correlateNextImage(my_imagedata['image'], 'cross', None)
 		camera_binning = my_imagedata['camera']['binning']
 		# cor_pixelpeak includes camera_binning and shrink_factor binning.
@@ -1886,6 +1890,143 @@ class PhasePlatePlaneShiftCalibrationClient(SimpleMatrixCalibrationClient):
 			self.node.beep()
 			return None
 		return newstate['phase plate plane shift'], cor, cor_pixelpeak
+
+class LppCalibrationClient(SimpleMatrixCalibrationClient):
+	mover = False
+	def __init__(self, node):
+		SimpleMatrixCalibrationClient.__init__(self, node)
+		self.is_xlpp = False
+
+	def parameter(self):
+		return 'lpp fringe'
+
+	def setIsXLpp(self, value):
+		self.is_xlpp = value
+		self.lpp_axes = [1,2] if self.is_xlpp else [1,]
+
+		tem = self.instrument.getTEMData()
+		ccdcamera = self.instrument.getCCDCameraData()
+		xtilt_results = leginondata.LppCalibrationData(tem=tem, ccdcamera=ccdcamera, xlpp=self.is_xlpp).query(results=1)
+		if xtilt_results:
+			self.xtilt_cal = xtilt_results[0]
+		else:
+			self.xtilt_cal = None
+
+	def saveLppFitMeasurement(self, refdata, imagedata, fit_results, applied_phase_shifts):
+		"""
+		Save Lpp fringe fitting results and display in viewer. Shared by LppAlign and LppAlignTimer classes
+		"""
+		r = fit_results
+		for k in r.keys():
+			q = leginondata.LppFitResultData(session=self.node.session)
+			q['on node ref'] = refdata
+			q['axis'] = k
+			q['axis rotation'] = r[k]['image_rotation'] # rotation for fitting in degrees
+			q['amp'] = r[k]['wave_amp'] #modulation amplitude
+			q['offset'] = r[k]['value_offset'] # modulation intensity offset
+			q['period'] = r[k]['wave_period'] #peak to peak distance in pixels
+			q['phase shift'] = r[k]['phase_shift_to_max'] # fitting result
+			q['image'] = imagedata
+			q['phase shift correction'] = applied_phase_shifts[k] # phase shift applied to bring lpp on node.
+			q.insert()
+		self.saveLppFitInImageComment(imagedata, r, False)
+
+	def saveLppFitInImageComment(self, imagedata, r, is_on_node_ref=False):
+		# save image comment
+		periods = []
+		phis = []
+		for k in r.keys():
+			periods.append('%.1f' % r[k]['wave_period'])
+			phis.append('%.1f' % r[k]['phase_shift_to_max'])
+		n = len(list(r.keys()))
+		if n > 1:
+			period_text = '('+','.join(periods)+')'
+			phi_text = '('+','.join(phis)+')'
+			text = 'p-p %s pixels and phi %s degrees' % (period_text, phi_text)
+		elif n == 1:
+			period_text = periods[0]
+			phi_text = phis[0]
+			text = 'p-p %s pixels and phi %s degrees' % (period_text, phi_text)
+		else:
+			text = 'failed fringe fitting'
+		if is_on_node_ref:
+			text = 'On-node ref '+text
+		# put result in comment
+		q = leginondata.ImageCommentData(session=self.node.session, image=imagedata)
+		q['comment'] = text
+		q.insert()
+
+	def fitFringe(self, myimage_array):
+		try:
+			number_of_lpp = 1
+			if self.is_xlpp:
+				number_of_lpp = 2
+			results = lppfit.run_fringe_fit(myimage_array, number_of_lpp)
+		except Exception as e:
+			self.logger.warning('failed fitting, skipping: %s' % e)
+			raise RuntimeError('Lpp Fitting failed: %e' % e)
+		return results
+
+	def getNewXTiltFromFringeFit(self,phase_shifts):
+			new_xtilt = self.instrument.tem.PhasePlatePlaneShift
+			# Wave fit method starts
+			delta_xtilt = {'x':0.0,'y':0.0}
+			for k in self.lpp_axes:
+				c = 1/360.0
+				for axis in ('x','y'):
+					delta_xtilt[axis] += phase_shifts[k]*c*self.xtilt_cal['lpp%d wave xtilt vector %s' % (k,axis)]
+			self.node.logger.info('Calculated LPP xtilt shift as %s' % (delta_xtilt))
+			for axis in ('x','y'):
+				new_xtilt[axis] += delta_xtilt[axis]
+			self.node.logger.info('Phase shift LPP new xtilt as x:%.4e, y:%.4e' % (new_xtilt['x'],new_xtilt['y']))
+			# Wave fit method ends
+			return new_xtilt
+
+	def calculatePhaseShiftCorrectionFromFringeFit(self, refdata, imagedata):
+		status = 'success'
+		new_phase_shifts = {}
+		try:
+			results = self.fitFringe(imagedata['image'])
+			# phase shift represent correction needed, so it needs to reverse sign.
+			for k in results.keys():
+				phase_shift_needed = results[k]['phase_shift_to_max']
+				phase_diff = -(phase_shift_needed - refdata['lpp%d phase shift' % k])
+				new_phase_shifts[k] = lppfit.convert_phase_degrees(phase_diff)
+		except Exception as e:
+			self.node.logger.error('Error calculating on-node values: %s' % e)
+			status = 'error'
+			return {1:0.0,2:0.0}, status,results
+		self.node.logger.info('phase shift correction = %s' % new_phase_shifts)
+		self.saveLppFitMeasurement(refdata, imagedata, results, new_phase_shifts)
+		return new_phase_shifts, status, results
+
+	def setOnPlaneOnNode(self):
+		try:
+			self.instrument.tem.PhasePlateFocus = self.node.new_f0
+		except Exception as e:
+			self.logger.error('Error setting to on-plane')
+			return
+		try:
+			# set xtilt
+			# Method 1: Fringe Fitting. Calculated but not used now.
+			fringe_fit_phase_shifts = self.node.new_phase_shifts
+			new_xt0 = self.getNewXTiltFromFringeFit(fringe_fit_phase_shifts)
+			# Method 2: Correlation
+			new_xt0 = self.node.new_xt0.copy()
+			# setting value
+			self.node.logger.info('Calibrated LPP new xtilt as y:%.4e, y:%.4e' % (new_xt0['x'],new_xt0['y']))
+			self.node.logger.info('Use correlation for correction')
+			self.instrument.tem.PhasePlatePlaneShift = new_xt0
+			msg = 'Set LPP focus to %.8f, x-tilt to x:%.4e, y:%.4e' % (self.node.new_f0, new_xt0['x'],new_xt0['y'])
+			self.node.logger.info(msg)
+			#
+			# Save the new alignment as the new reset point upon successful correction
+			self.node.x0 = new_xt0.copy()
+			self.node.f0 = self.node.new_f0
+		except Exception as e:
+			self.logger.error('Error setting on-plane and on-node values')
+			self.node.resetLppFocus()
+			raise
 
 class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	mover = False
@@ -2881,6 +3022,32 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		result['stigy'] = stig_y
 		return result
 
+class TableauAberrationCalibrationClient(PixelSizeCalibrationClient):
+	def __init__(self, node):
+		CalibrationClient.__init__(self, node)
+		self.ctf_calclient = CtfCalibrationClient(node)
+		## initialize a new tableau
+		self.initTableau()
+		ht = self.instrument.tem.HighTension
+		self.abe = aberration.AberrationEstimator(presetdata['tem']['cs'], ht)
+
+	def calculateAxialComa(self):
+		try:
+			A = self.abe.run()
+			Adict = self.abe.mapAberration(A)
+		except ValueError as e:
+			self.logger.error(e)
+			return None, None
+		c21 = Adict['coma']
+		if TESTING:
+			# reduced by half for each iteration
+			c21['x'] = (0.5**self.auto_count)*(Adict['coma']['x'])
+			c21['y'] = (0.5**self.auto_count)*(Adict['coma']['y'])
+		bt = self.abe.calculateBeamTiltCorrection(A)
+		self.logger.info('Axial Coma C21 (um)= (%.2f,%.2f),total= %.2f' % (c21['x']*1e6,c21['y']*1e6,math.hypot(c21['x'],c21['y'])*1e6))
+		self.logger.info('Coma correction beam tilt (x,y)(mrad)= (%.2f,%.2f)' % (bt['x']*1e3,bt['y']*1e3))
+		self.abe.resetData()
+		return c21, bt
 class EucentricFocusClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
