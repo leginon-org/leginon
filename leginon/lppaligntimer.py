@@ -29,7 +29,8 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		kwargs['watchfor'] = watch + [event.AlignLppPublishEvent]
 		referencetimer.ReferenceTimer.__init__(self, *args, **kwargs)
 		self.ref_position = None
-		self.calclient = calibrationclient.PhasePlatePlaneShiftCalibrationClient(self)
+		self.calibration_clients['phase plate plane shift'] = calibrationclient.PhasePlatePlaneShiftCalibrationClient(self)
+		self.calibration_clients['lpp fringe'] = calibrationclient.LppCalibrationClient(self)
 		self.start()
 
 	def _setRequestPreset(self, request_preset_name):
@@ -44,20 +45,19 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		Execute without moving. Used in testing and handling the
 		request after moving and set preset. request_data is not used.
 		'''
-		self.lpp_axes = [1]
-		if self.settings['xlpp']:
-			self.lpp_axes.append(2)
+		self.calibration_clients['lpp fringe'].setIsXLpp(self.settings['xlpp'])
+		self.lpp_axes = self.calibration_clients['lpp fringe'].lpp_axes
+		self.xtilt_cal = self.calibration_clients['lpp fringe'].xtilt_cal
+		#
 		preset = self.presets_client.getCurrentPreset()
 		tem = preset['tem']
 		ccdcamera = preset['ccdcamera']
-		xtilt_results = leginondata.LppCalibrationData(tem=tem, ccdcamera=ccdcamera, xlpp=self.settings['xlpp']).query(results=1)
 		ref_results = leginondata.LppOnNodeRefData(tem=tem,ccdcamera=ccdcamera, xlpp=self.settings['xlpp']).query(results=1)
-		if not ref_results or not xtilt_results:
+		if not ref_results or not self.xtilt_cal:
 			self.logger.error('No reference or xtilt cycle calibration for on-node lpp alignment.')
 			return
 		refdata = ref_results[0]
 		self.logger.info('Using %s as the reference' % refdata['reference']['filename'])
-		self.xtilt_cal = xtilt_results[0]
 		delta_f = refdata['delta lpp focus']
 		measure_preset = self.makeMeasurePreset(refdata['reference']['preset'])
 		self._setRequestPreset(refdata['reference']['preset']['name'])
@@ -91,14 +91,15 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		if refdata['xlpp']:
 			self.new_phase_shifts[2]=0.0
 		try:
-			self.new_xt0, cor_image, cor_pixelpeak = self.calclient.calculateNewPhasePlatePlaneShift(refdata)
+			self.new_phase_shifts, status, r = self.calibration_clients['lpp fringe'].calculatePhaseShiftCorrectionFromFringeFit(refdata, self.imagedata)
+			self.new_xt0, cor_image, cor_pixelpeak = self.calibration_clients['phase plate plane shift'].calculateNewPhasePlatePlaneShiftByCorrelation(refdata, self.imagedata)
 		except Exception as e:
 			self.logger.error('Error calculating on-node values: %s' % e)
 			return
-		msg = 'new xt calculated = (%s)' % self.new_xt0
+		msg = 'new xt calculated from correlation = (%s)' % self.new_xt0
 		self.logger.info(msg)
 		#TODO: saving
-		self.setOnPlaneOnNode()
+		self.calibration_clients['lpp fringe'].setOnPlaneOnNode()
 		return
 
 	def makeMeasurePreset(self, ref_preset):
@@ -134,5 +135,5 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 	def resetLppFocus(self):
 		self.instrument.tem.PhasePlateFocus = self.f0
 		self.instrument.tem.PhasePlatePlaneShift = self.xt0
-		msg = 'Reset LPP focus to %.8f, x-tilt to x:%.4e,y:%.4e' % (self.f0, self.xt0['x'],self.new_xt0['y'])
+		msg = 'Reset LPP focus to %.8f, x-tilt to x:%.4e,y:%.4e' % (self.f0, self.xt0['x'],self.xt0['y'])
 		self.logger.info(msg)

@@ -530,13 +530,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 		zlp_preset_name = self.settings['preset order'][-1]
 		self.logger.info('Tuning before processing a target')
 		self.tuneEnergyFilter(zlp_preset_name)
-		#self.tuneLpp(zlp_preset_name, False) # preset_name is not used but tem/ccdcamera must be set
+		self.tuneLpp(zlp_preset_name, False) # preset_name is not used but tem/ccdcamera must be set
 		self.monitorScreenCurrent(zlp_preset_name)
 
 	def postTargetSetup(self):
 		self.logger.info('Tuning after processing a target')
 		zlp_preset_name = self.settings['preset order'][-1]
-		self.tuneLpp(zlp_preset_name, True) # preset_name is not used but tem/ccdcamera must be set
+		#self.tuneLpp(zlp_preset_name, True) # preset_name is not used but tem/ccdcamera must be set
+
 	def validateSettings(self):
 		'''
 		A chance for subclass to abort processTargetData.
