@@ -20,8 +20,6 @@ def start(sessionname, clientlist, gridslot,z, task=None):
 		gridslot = '%d' % gridslot
 	else:
 		gridslot = None
-	if not gridslot:
-		z = None
 	option_dict = {'version':None, 'session': sessionname, 'clients': clients,'prevapp':True, 'gridslot':gridslot, 'stagez':z, 'task':task}
 	# options need to be set as attributes
 	options = autoscreen.Options()
@@ -62,15 +60,7 @@ if __name__ == "__main__":
 	except Exception as e:
 		print('Error: %s' % e)
 		sys.exit(1)
-	# z value
-	stagez = app1.getOldSessionStageZ()
-	zanswer = input('Enter Z stage height to return to in um (default: the old sessionvalue %.1f): ' % (stagez*1e6,))
-	if zanswer != '':
-		try:
-			stagez = float(zanswer)*1e-6
-		except ValueError:
-			print('Invalid number entry: %s' % zanswer)
-			sys.exit(1)
+	# z value can not be set without autoscreen tasks.
 	# confirm session project assignment
 	if use_gui:
 		app1.confirmCommentProjectWithGui(grid_info_map)
@@ -101,4 +91,4 @@ if __name__ == "__main__":
 			app3 = autoscreen.SessionSettingsCopier(first_session, app2.old_session, launched_app['application'])
 		time.sleep(1.0) # to prevent session out of order on the viewer.
 	#start the first session.  The rest will be set from Manager.
-	start(first_session['name'],app2.clients,first_slot,stagez, None)
+	start(first_session['name'],app2.clients,first_slot,None, None)
