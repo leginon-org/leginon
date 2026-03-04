@@ -3114,6 +3114,8 @@ class LppAlignTimerSettingsData(ReferenceTimerSettingsData):
 	def typemap(cls):
 		return ReferenceTimerSettingsData.typemap() + (
 			('xlpp', bool),
+			('xt offset x', float),
+			('xt offset y', float),
 		)
 	typemap = classmethod(typemap)
 

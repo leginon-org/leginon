@@ -1,6 +1,7 @@
 
 import threading
 import time
+import math
 from leginon import leginondata
 from leginon import calibrationclient
 from leginon import event
@@ -15,7 +16,10 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 	# defaultsettings are not the same as the parent class.  Therefore redefined.
 	defaultsettings = dict(referencetimer.ReferenceTimer.defaultsettings)
 	defaultsettings.update (
-		{'xlpp': False}
+		{'xlpp': False,
+		'xt offset x': 0.0,
+		'xt offset y': 0.0,
+		}
 	)
 	eventinputs = referencetimer.ReferenceTimer.eventinputs + [event.AlignLppPublishEvent,]
 	panelclass = leginon.gui.wx.LppAlignTimer.LppAlignTimerPanel
@@ -61,6 +65,8 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		delta_f = refdata['delta lpp focus']
 		measure_preset = self.makeMeasurePreset(refdata['reference']['preset'])
 		self._setRequestPreset(refdata['reference']['preset']['name'])
+		# reverse offset
+		self.addXtOffset(False)
 		# acquire image with new_f
 		self.f0 = self.instrument.tem.PhasePlateFocus
 		self.xt0 = self.instrument.tem.PhasePlatePlaneShift
@@ -90,17 +96,42 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		self.new_phase_shifts = {1:0.0}
 		if refdata['xlpp']:
 			self.new_phase_shifts[2]=0.0
-		try:
-			self.new_phase_shifts, status, r = self.calibration_clients['lpp fringe'].calculatePhaseShiftCorrectionFromFringeFit(refdata, self.imagedata)
-			self.new_xt0, cor_image, cor_pixelpeak = self.calibration_clients['phase plate plane shift'].calculateNewPhasePlatePlaneShiftByCorrelation(refdata, self.imagedata)
-		except Exception as e:
-			self.logger.error('Error calculating on-node values: %s' % e)
-			return
+		max_iter = 10
+		i = 1
+		# Iterate until stable
+		while True:
+			self.logger.info('Iterate until stable, iter=%d' % i)
+			try:
+				self.new_phase_shifts, status, r = self.calibration_clients['lpp fringe'].calculatePhaseShiftCorrectionFromFringeFit(refdata, self.imagedata)
+				new_xt0, cor_image, cor_pixelpeak = self.calibration_clients['phase plate plane shift'].calculateNewPhasePlatePlaneShiftByCorrelation(refdata, self.imagedata)
+				delta_xt_magnitude = math.hypot(new_xt0['x']-self.new_xt0['x'], new_xt0['y']-self.new_xt0['y'])
+				if delta_xt_magnitude < 0.000015:
+					self.new_xt0 = new_xt0.copy()
+					break
+				i += 1
+				if i > max_iter:
+					self.logger.error('Maximal iteration reached without convergance')
+			except Exception as e:
+				self.logger.error('Error calculating on-node values: %s' % e)
+				return
+
 		msg = 'new xt calculated from correlation = (%s)' % self.new_xt0
 		self.logger.info(msg)
 		#TODO: saving
 		self.calibration_clients['lpp fringe'].setOnPlaneOnNode()
+		self.addXtOffset(True)
 		return
+
+	def addXtOffset(self, is_positive_offset):
+		xt0 = self.instrument.tem.PhasePlatePlaneShift
+		offsetx = self.settings['xt offset x']
+		offsety = self.settings['xt offset y']
+		sign = 1 if is_positive_offset else -1
+		new_xt0 = {'x':offsetx*sign+xt0['x'], 'y':offsety*sign+xt0['y']}
+		self.instrument.tem.PhasePlatePlaneShift = new_xt0
+		msg = 'new xt offset to = (%s)' % new_xt0
+		self.logger.info(msg)
+		return new_xt0
 
 	def makeMeasurePreset(self, ref_preset):
 		new_name = ref_preset['name']+'-m'
