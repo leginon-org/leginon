@@ -2,6 +2,7 @@
 import threading
 import time
 import math
+import traceback
 from leginon import leginondata
 from leginon import calibrationclient
 from leginon import event
@@ -63,7 +64,6 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		refdata = ref_results[0]
 		self.logger.info('Using %s as the reference' % refdata['reference']['filename'])
 		delta_f = refdata['delta lpp focus']
-		measure_preset = self.makeMeasurePreset(refdata['reference']['preset'])
 		self._setRequestPreset(refdata['reference']['preset']['name'])
 		# reverse offset
 		self.addXtOffset(False)
@@ -73,53 +73,62 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		self.new_xt0 = self.xt0.copy()
 		self.new_f0 = self.f0
 		lpp_focus = self.f0 + delta_f
-		self.logger.info('setting phase plate focus to %.8f' % lpp_focus)
-		self.cyclePhasePlateFocus(self.f0, lpp_focus)
-		time.sleep(self.settings['pause time'])
-		try:
-			self.imagedata = self.newImageData(measure_preset,'%dref' % refdata.dbid)
-			filename = self.getMeasureImageFilename(self.imagedata, refdata)
-			self.imagedata['filename'] = filename
-			self.imagedata.insert()
-		except Exception as e:
-			self.logger.error(e)
-			self.logger.error('failed to acquire image, aborting: %s' % e)
-			self.resetLppFocus()
-			return
-		self.resetLppFocus()
-		try:
-			myimage = self.imagedata['image']
-			self.setImage(myimage, 'Image')
-		except Exception as e:
-			self.logger.warning('failed fitting, skipping: %s' % e)
-			return
 		self.new_phase_shifts = {1:0.0}
+		measure_preset = self.makeMeasurePreset(refdata['reference']['preset'])
 		if refdata['xlpp']:
 			self.new_phase_shifts[2]=0.0
-		max_iter = 10
-		i = 1
-		# Iterate until stable
-		while True:
-			self.logger.info('Iterate until stable, iter=%d' % i)
-			try:
-				self.new_phase_shifts, status, r = self.calibration_clients['lpp fringe'].calculatePhaseShiftCorrectionFromFringeFit(refdata, self.imagedata)
-				new_xt0, cor_image, cor_pixelpeak = self.calibration_clients['phase plate plane shift'].calculateNewPhasePlatePlaneShiftByCorrelation(refdata, self.imagedata)
-				delta_xt_magnitude = math.hypot(new_xt0['x']-self.new_xt0['x'], new_xt0['y']-self.new_xt0['y'])
+		try:
+			max_iter = 10
+			i = 1
+			# Iterate until stable
+			while True:
+				self.logger.info('Iterate until stable, iter=%d' % i)
+				new_xt0, delta_xt_magnitude = self._measureShift(refdata, measure_preset,lpp_focus)
 				if delta_xt_magnitude < 0.000015:
 					self.new_xt0 = new_xt0.copy()
 					break
 				i += 1
 				if i > max_iter:
 					self.logger.error('Maximal iteration reached without convergance')
-			except Exception as e:
-				self.logger.error('Error calculating on-node values: %s' % e)
-				return
-
+					break
+		except Exception as e:
+			traceback.print_exc()
+			self.logger.error('Error calculating on-node values: %s' % e)
+			self.resetLppFocus()
+			return
 		msg = 'new xt calculated from correlation = (%s)' % self.new_xt0
 		self.logger.info(msg)
-		#TODO: saving
 		self.calibration_clients['lpp fringe'].setOnPlaneOnNode()
+		#TODO: saving
+		# convert back
 		self.addXtOffset(True)
+		return
+
+	def _measureShift(self, refdata, measure_preset, lpp_focus):
+		self.logger.info('setting phase plate focus to %.8f' % lpp_focus)
+		self.cyclePhasePlateFocus(self.f0, lpp_focus)
+		time.sleep(self.settings['pause time'])
+		try:
+			self.logger.info('acquiring measure image....')
+			self.imagedata = self.newImageData(measure_preset,'%dref' % refdata.dbid)
+			filename = self.getMeasureImageFilename(self.imagedata, refdata)
+			self.imagedata['filename'] = filename
+			self.imagedata.insert()
+			myimage = self.imagedata['image']
+			self.setImage(myimage, 'Image')
+		except Exception as e:
+			self.logger.error('failed to acquire image, aborting: %s' % e)
+			raise
+		self.resetLppFocus()
+		try:
+			# fringe fit method, not used for now.
+			self.new_phase_shifts, status, r = self.calibration_clients['lpp fringe'].calculatePhaseShiftCorrectionFromFringeFit(refdata, self.imagedata)
+			# correlation method
+			new_xt0, cor_image, cor_pixelpeak = self.calibration_clients['phase plate plane shift'].calculateNewPhasePlatePlaneShiftByCorrelation(refdata, self.imagedata)
+			delta_xt_magnitude = math.hypot(new_xt0['x']-self.new_xt0['x'], new_xt0['y']-self.new_xt0['y'])
+			return new_xt0, delta_xt_magnitude
+		except Exception as e:
+			self.logger.warning('failed fitting, skipping: %s' % e)
 		return
 
 	def addXtOffset(self, is_positive_offset):
