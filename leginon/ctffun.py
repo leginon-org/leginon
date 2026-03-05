@@ -42,8 +42,11 @@ class GctffindClient(object):
 		self.ctfvalues = self.readResult(inputparams['ctf_output'])
 		self.ctfvalues.update(inputparams)
 		try:
-			os.remove(inputparams['ctf_output'])
-			os.remove(inputparams['pow_output'])
+			if 'temp' not in inputparams['ctf_output']:
+				# Only keep temp output for diagnosis until the next run that overwrites
+				# the results.  
+				os.remove(inputparams['ctf_output'])
+				os.remove(inputparams['pow_output'])
 		except FileNotFoundError as e:
 			print('Failed: %s' % e)
 			# readResult will handle error if ctf_output is not produced.
