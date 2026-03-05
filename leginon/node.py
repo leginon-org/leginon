@@ -720,6 +720,8 @@ class Node(correctorclient.CorrectorClient):
 
 	def cyclePhasePlateFocus(self, before, after, repeat=2, sleep_time=0.5):
 		self.logger.info('cycling lpp focus %d times with %.1f sec sleep' % (repeat, sleep_time))
+		if abs(before-after) < 1e-8:
+			return
 		for i in range(repeat):
 			self.instrument.tem.PhasePlateFocus = after
 			time.sleep(sleep_time)

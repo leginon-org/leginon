@@ -1963,7 +1963,7 @@ class LppCalibrationClient(SimpleMatrixCalibrationClient):
 				number_of_lpp = 2
 			results = lppfit.run_fringe_fit(myimage_array, number_of_lpp)
 		except Exception as e:
-			self.logger.warning('failed fitting, skipping: %s' % e)
+			self.node.logger.warning('failed fitting, skipping: %s' % e)
 			raise RuntimeError('Lpp Fitting failed: %e' % e)
 		return results
 
@@ -2004,7 +2004,7 @@ class LppCalibrationClient(SimpleMatrixCalibrationClient):
 		try:
 			self.instrument.tem.PhasePlateFocus = self.node.new_f0
 		except Exception as e:
-			self.logger.error('Error setting to on-plane')
+			self.node.logger.error('Error setting to on-plane')
 			return
 		try:
 			# set xtilt
@@ -2024,7 +2024,7 @@ class LppCalibrationClient(SimpleMatrixCalibrationClient):
 			self.node.x0 = new_xt0.copy()
 			self.node.f0 = self.node.new_f0
 		except Exception as e:
-			self.logger.error('Error setting on-plane and on-node values')
+			self.node.logger.error('Error setting on-plane and on-node values')
 			self.node.resetLppFocus()
 			raise
 
@@ -3036,7 +3036,7 @@ class TableauAberrationCalibrationClient(PixelSizeCalibrationClient):
 			A = self.abe.run()
 			Adict = self.abe.mapAberration(A)
 		except ValueError as e:
-			self.logger.error(e)
+			self.node.logger.error(e)
 			return None, None
 		c21 = Adict['coma']
 		if TESTING:
@@ -3044,8 +3044,8 @@ class TableauAberrationCalibrationClient(PixelSizeCalibrationClient):
 			c21['x'] = (0.5**self.auto_count)*(Adict['coma']['x'])
 			c21['y'] = (0.5**self.auto_count)*(Adict['coma']['y'])
 		bt = self.abe.calculateBeamTiltCorrection(A)
-		self.logger.info('Axial Coma C21 (um)= (%.2f,%.2f),total= %.2f' % (c21['x']*1e6,c21['y']*1e6,math.hypot(c21['x'],c21['y'])*1e6))
-		self.logger.info('Coma correction beam tilt (x,y)(mrad)= (%.2f,%.2f)' % (bt['x']*1e3,bt['y']*1e3))
+		self.node.logger.info('Axial Coma C21 (um)= (%.2f,%.2f),total= %.2f' % (c21['x']*1e6,c21['y']*1e6,math.hypot(c21['x'],c21['y'])*1e6))
+		self.node.logger.info('Coma correction beam tilt (x,y)(mrad)= (%.2f,%.2f)' % (bt['x']*1e3,bt['y']*1e3))
 		self.abe.resetData()
 		return c21, bt
 class EucentricFocusClient(CalibrationClient):
