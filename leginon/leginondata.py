@@ -3116,6 +3116,7 @@ class LppAlignTimerSettingsData(ReferenceTimerSettingsData):
 			('xlpp', bool),
 			('xt offset x', float),
 			('xt offset y', float),
+			('delta xt threshold', float),
 		)
 	typemap = classmethod(typemap)
 
