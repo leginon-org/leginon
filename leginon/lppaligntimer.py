@@ -109,6 +109,9 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		# setOnPlaneOnNode will set using self.new_xt0
 		self.calibration_clients['lpp fringe'].setOnPlaneOnNode()
 		#TODO: saving
+		# reset default to the new value since recording correction image
+		# will include use resetLppFocus().
+		self.xt0 = self.new_xt0.copy()
 		correct_preset = self.makeCorrectPreset(refdata['reference']['preset'])
 		self._acquireAndSaveMeasureImage(correct_preset, refdata, self.f0)
 		# convert back
