@@ -121,7 +121,10 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 	def _acquireAndSaveMeasureImage(self, measure_preset, refdata, lpp_focus):
 		self.logger.info('setting phase plate focus to %.8f' % lpp_focus)
 		self.cyclePhasePlateFocus(self.f0, lpp_focus)
-		time.sleep(self.settings['pause time'])
+		# pause time setting in this node class is for after stage move. We don't want to wait that long at this point
+		pause_time = min(self.settings['pause time'],0.5)
+		self.logger.info('pausing for %.2 seconds')
+		time.sleep(pause_time)
 		try:
 			self.logger.info('acquiring image....')
 			self.imagedata = self.newImageData(measure_preset,'%dref' % refdata.dbid)
