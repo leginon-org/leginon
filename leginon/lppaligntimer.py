@@ -20,6 +20,7 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		{'xlpp': False,
 		'xt offset x': 0.0,
 		'xt offset y': 0.0,
+		'delta xt threshold': 0.000015,
 		}
 	)
 	eventinputs = referencetimer.ReferenceTimer.eventinputs + [event.AlignLppPublishEvent,]
@@ -65,7 +66,7 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		self.logger.info('Using %s as the reference' % refdata['reference']['filename'])
 		delta_f = refdata['delta lpp focus']
 		self._setRequestPreset(refdata['reference']['preset']['name'])
-		# reverse offset
+		# apply offset for image shifted target
 		self.addXtOffset(False)
 		# acquire image with new_f
 		self.f0 = self.instrument.tem.PhasePlateFocus
@@ -79,15 +80,22 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 			self.new_phase_shifts[2]=0.0
 		try:
 			max_iter = 10
-			i = 1
 			# Iterate until stable
+			i = 1
+			# compare to the value before the request is executed in the
+			# first iteration
+			last_xt0 = self.new_xt0.copy()
 			while True:
 				self.logger.info('Iterate until stable, iter=%d' % i)
-				new_xt0, delta_xt_magnitude = self._measureShift(refdata, measure_preset,lpp_focus)
-				if delta_xt_magnitude < 0.000015:
+				new_xt0, delta_xt_magnitude = self._measureShift(refdata, measure_preset,lpp_focus, last_xt0)
+				self.logger.info('delta_xt_magnitude %d: %s' % (i, delta_xt_magnitude))
+				if delta_xt_magnitude < self.settings['delta xt threshold']:
+					# accept the new value
 					self.new_xt0 = new_xt0.copy()
 					break
 				i += 1
+				# compare with the last iteration xt0 in the next iteration.
+				last_xt0 = new_xt0.copy()
 				if i > max_iter:
 					self.logger.error('Maximal iteration reached without convergance')
 					break
@@ -98,18 +106,21 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 			return
 		msg = 'new xt calculated from correlation = (%s)' % self.new_xt0
 		self.logger.info(msg)
+		# setOnPlaneOnNode will set using self.new_xt0
 		self.calibration_clients['lpp fringe'].setOnPlaneOnNode()
 		#TODO: saving
+		correct_preset = self.makeCorrectPreset(refdata['reference']['preset'])
+		self._acquireAndSaveMeasureImage(correct_preset, refdata, self.f0)
 		# convert back
 		self.addXtOffset(True)
 		return
 
-	def _measureShift(self, refdata, measure_preset, lpp_focus):
+	def _acquireAndSaveMeasureImage(self, measure_preset, refdata, lpp_focus):
 		self.logger.info('setting phase plate focus to %.8f' % lpp_focus)
 		self.cyclePhasePlateFocus(self.f0, lpp_focus)
 		time.sleep(self.settings['pause time'])
 		try:
-			self.logger.info('acquiring measure image....')
+			self.logger.info('acquiring image....')
 			self.imagedata = self.newImageData(measure_preset,'%dref' % refdata.dbid)
 			filename = self.getMeasureImageFilename(self.imagedata, refdata)
 			self.imagedata['filename'] = filename
@@ -120,12 +131,15 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 			self.logger.error('failed to acquire image, aborting: %s' % e)
 			raise
 		self.resetLppFocus()
+
+	def _measureShift(self, refdata, measure_preset, lpp_focus, last_xt0):
+		self._acquireAndSaveMeasureImage(measure_preset, refdata, lpp_focus)
 		try:
 			# fringe fit method, not used for now.
 			self.new_phase_shifts, status, r = self.calibration_clients['lpp fringe'].calculatePhaseShiftCorrectionFromFringeFit(refdata, self.imagedata)
 			# correlation method
 			new_xt0, cor_image, cor_pixelpeak = self.calibration_clients['phase plate plane shift'].calculateNewPhasePlatePlaneShiftByCorrelation(refdata, self.imagedata)
-			delta_xt_magnitude = math.hypot(new_xt0['x']-self.new_xt0['x'], new_xt0['y']-self.new_xt0['y'])
+			delta_xt_magnitude = math.hypot(new_xt0['x']-last_xt0['x'], new_xt0['y']-last_xt0['y'])
 			return new_xt0, delta_xt_magnitude
 		except Exception as e:
 			self.logger.warning('failed fitting, skipping: %s' % e)
@@ -143,7 +157,13 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		return new_xt0
 
 	def makeMeasurePreset(self, ref_preset):
-		new_name = ref_preset['name']+'-m'
+		return self._makeMeasurePreset(ref_preset, 'm')
+
+	def makeCorrectPreset(self, ref_preset):
+		return self._makeMeasurePreset(ref_preset, 'c')
+
+	def _makeMeasurePreset(self, ref_preset,postfix='m'):
+		new_name = ref_preset['name']+'-'+postfix
 		preset = leginondata.PresetData(initializer=ref_preset,name=new_name)
 		availablepresets = self.presets_client.getPresetNames()
 		if new_name not in availablepresets:
