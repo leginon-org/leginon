@@ -1177,13 +1177,13 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				tilts['x'].append(cftilt[(0,0)])
 				tilts['y'].append(cftilt[(1,1)])
 				comatilt = {'x':cftilt[(0,0)],'y':cftilt[(1,1)]}
-				self.node.logger.debug("\t%5.2f,  %5.2f" % (cftilt[(0,0)]*1000,cftilt[(1,1)]*1000))
+				self.node.logger.debug("     %5.2f,  %5.2f" % (cftilt[(0,0)]*1000,cftilt[(1,1)]*1000))
 		if len(tilts['x']):
 			xarray = numpy.array(tilts['x'])
 			yarray = numpy.array(tilts['y'])
 			self.node.logger.debug("--------------------")
-			self.node.logger.debug("m\t%5.2f,  %5.2f" %(xarray.mean()*1000,yarray.mean()*1000))
-			self.node.logger.debug("std\t%5.2f,  %5.2f" %(xarray.std()*1000,yarray.std()*1000))
+			self.node.logger.debug("m    %5.2f,  %5.2f" %(xarray.mean()*1000,yarray.mean()*1000))
+			self.node.logger.debug("std  %5.2f,  %5.2f" %(xarray.std()*1000,yarray.std()*1000))
 			return xarray,yarray
 
 	def transformImageShiftToBeamTilt(self, imageshift, tem, cam, ht, zero, mag):
@@ -1389,9 +1389,11 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 
 	def transform(self, pixelshift, scope, camera):
 		'''
-		Calculate a new scope state from the given pixelshift
-		The input scope and camera state should refer to the image
-		from which the pixelshift originates
+		Calculate a new absolute scope state from the given binned pixelshift from
+		the center of a fake image using scope and camera state to acquire.
+		The output is a new scope state that pairs with camera state will give
+		an image of such shift.
+		Note that pixelshift is in dict of 'row','col' keys
 		'''
 		mag = scope['magnification']
 		ht = scope['high tension']
@@ -1410,26 +1412,37 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		pixrow = pixelshift['row'] * biny
 		pixcol = pixelshift['col'] * binx
 		pixvect = numpy.array((pixrow, pixcol))
-		change = numpy.dot(matrix, pixvect)
-		changex = change[0]
-		changey = change[1]
+
+		# state shift in physical unit
+		shift_array = numpy.dot(matrix, pixvect)
+		shift_x = shift_array[0]
+		shift_y = shift_array[1]
 
 		### take into account effect of alpha tilt on Y stage pos
 		if par == 'stage position':
 			if 'a' in scope[par] and scope[par]['a'] is not None:
 				alpha = scope[par]['a']
-				changey = changey / numpy.cos(alpha)
+				shift_y = shift_y / numpy.cos(alpha)
 
+		shift_dict = {'x':shift_x,'y':shift_y}
+		if par == 'image shift':
+			# Only image shift is calibrated for defocus distortion now
+			if abs(scope['defocus']) > 1e-5: #10 micron
+				shift_dict = self.transformDefocus(shift_dict, scope, camera)
 		new = leginondata.ScopeEMData(initializer=scope)
 		## make a copy of this since it will be modified
 		new[par] = dict(scope[par])
-		# By defining new parameters by change, physical movement scale
+		# By defining new parameters by shift, physical movement scale
 		# in physical unit has to be accurate.
-		new[par]['x'] += changex
-		new[par]['y'] += changey
+		new[par]['x'] += shift_dict['x']
+		new[par]['y'] += shift_dict['y']
 		return new
 
 	def itransform(self, position, scope, camera):
+		"""
+		Inverse transform of physical parameter position relative to the scope state passed
+		to binned pixel shift the center of the image defined by scope and camera.
+		"""
 		parameter = self.parameter()
 		args = (
 			scope['tem'],
@@ -1456,9 +1469,14 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 			if 'a' in scope[parameter] and scope[parameter]['a'] is not None:
 				alpha = scope[parameter]['a']
 				shift['y'] = shift['y']*numpy.cos(alpha)
+		if parameter == 'image shift':
+			# Only image shift is calibrated for defocus distortion now
+			if abs(scope['defocus']) > 1e-5: #10 micron
+				shift = self.itransformDefocus(shift, scope, camera)
 
 		shift_vector = numpy.array((shift['x'], shift['y']))
 		pixel = numpy.dot(inverse_matrix, shift_vector)
+		#print('itransform output unbinned pixel_shift (r,c) %.1f, %.1f' % (pixel[0],pixel[1]))
 
 		pixel_shift = {
 			'row': pixel[0]/camera['binning']['y'],
@@ -1524,10 +1542,31 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def parameter(self):
 		return 'image shift'
 
+	def presetImagePixelToPixel(self, ht, preset1, preset2, p1_shift):
+		'''
+		Unlike pixelToPixel, this transformation is on binned image pixel dict of row,col
+		'''
+		tem1 = preset1['tem']
+		ccdcamera1 = preset1['ccdcamera']
+		mag1 = preset1['magnification']
+		tem2 = preset1['tem']
+		ccdcamera2 = preset2['ccdcamera']
+		mag2 = preset2['magnification']
+		p1_row = p1_shift['row'] * preset1['binning']['y']
+		p1_col = p1_shift['col'] * preset1['binning']['x']
+		# row, col list or array input, row, col array out
+		p1_vec = numpy.array((p1_row, p1_col))
+		p2_vec = self.pixelToPixel(tem1,\
+			ccdcamera1,tem2, ccdcamera2, ht,mag1,mag2,p1_vec)	# unbinned
+		p2_shift = {'row':p2_vec[0] / preset2['binning']['y'],
+					'col':p2_vec[1] / preset2['binning']['x']
+		}
+		return p2_shift   #binned
+
 	def pixelToPixel(self, tem1, ccdcamera1, tem2, ccdcamera2, ht, mag1, mag2, p1):
 		'''
 		Using physical position as a global coordinate system, we can
-		do pixel to pixel transforms between mags.
+		do pixel to unbinned pixel transforms between mags.
 		This function will calculate a (row,col) pixel vector at mag2, given
 		a (row,col) pixel vector at mag1.
 		For image shift, this means: the physical image shift values in meters
@@ -1540,7 +1579,7 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 
 	def pixelToPosition(self,tem, ccdcamera, matrix_type, ht, mag, pixel_shift):
 		'''
-		Using matrix to transform a pixel shift on camera to relative physical position.
+		Using matrix to transform an unbinned pixel shift on camera to relative physical position.
 		'''
 		par = matrix_type
 		matrix = self.retrieveMatrix(tem, ccdcamera, par, ht, mag)
@@ -1550,7 +1589,7 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 
 	def positionToPixel(self,tem, ccdcamera, matrix_type, ht, mag, position):
 		'''
-		Using matrix to transform a relative physical position to pixel shift on camera.
+		Using matrix to transform a relative physical position to unbinned pixel shift on camera.
 		'''
 		par = matrix_type
 		matrix = self.retrieveMatrix(tem, ccdcamera, par, ht, mag)
@@ -1614,7 +1653,50 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		mat = caldata['matrix'].copy()
 		return mat
 
+	def transformDefocus(self, shift_dict, scope, camera):
+		'''
+		Transform image shift change obtained from transform function to defocused value
+		'''
+		ccdcamera = camera['ccdcamera']
+		tem = scope['tem']
+		mag = scope['magnification']
+		defocus = scope['defocus']
+		probe = scope['probe mode']
+		par = 'image shift'
+		p0 = scope['image shift']
+		# defocused to focused affine transform matrix
+		m = self.retrieveAffineMatrix(tem, ccdcamera, par, mag, probe, defocus)
+		pos_array = numpy.array((shift_dict['y'],shift_dict['x'],0.0))
+		# focused to defocused affine transform matrix
+		m_inv = numpy.linalg.inv(m)
+		new_pos_array = m_inv @ pos_array
+		return {'y': new_pos_array[0],'x':new_pos_array[1]}
+
+	def itransformDefocus(self, shift_dict, scope, camera):
+		'''
+		Transform physical shift input, image shift in this case, of
+		itransform function from defocused value
+		'''
+		ccdcamera = camera['ccdcamera']
+		tem = scope['tem']
+		mag = scope['magnification']
+		defocus = scope['defocus']
+		probe = scope['probe mode']
+		par = 'image shift'
+		p0 = scope['image shift']
+		p1 = shift_dict
+		# defocused to focused affine transform matrix
+		m = self.retrieveAffineMatrix(tem, ccdcamera, par, mag, probe, defocus)
+		pos_array = numpy.array((shift_dict['y'],shift_dict['x'],0.0))
+		new_pos_array = m @ pos_array
+		return {'y': new_pos_array[0],'x':new_pos_array[1]}
+
 	def correctDefocusImageShift(self, preset, image_shift):
+		"""
+		Image shift correction required for defocused preset relative to
+		the preset image shift value.  The input is absolute image shift.
+		The output is relative to the preset image shift.
+		"""
 		tem = preset['tem']
 		ccdcamera = preset['ccdcamera']
 		mag = preset['magnification']
@@ -2096,7 +2178,11 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 			newscope = self.transform(pixelshift, scope, cam)
 			# y component is all we care about to get Z
 			y = newscope['stage position']['y'] - scope['stage position']['y']
-			z[t] = y / math.sin(state[t]['stage position']['a'])
+			if abs(math.sin(state[t]['stage position']['a'])) <0.001:
+				# avoid division by zero error
+				z[t] = 0.0
+			else:
+				z[t] = y / math.sin(state[t]['stage position']['a'])
 
 		zmean = (z[1]+z[2]) / 2
 		return zmean
@@ -2383,7 +2469,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 	def pixelToPixel(self, tem1, ccdcamera1, tem2, ccdcamera2, ht, mag1, mag2, p1):
 		'''
 		Using stage position as a global coordinate system, we can
-		do pixel to pixel transforms between mags.
+		do unbinned pixel to pixel transforms between mags.
 		This function will calculate a (row, col) pixel vector at mag2, given
 		a (row, col) pixel vector at mag1.
 		'''

@@ -213,7 +213,7 @@ class Prediction(object):
 		n_tilt_series = len(self.valid_tilt_series_list)
 		n_tilt_groups = len(tilt_series)
 		n_tilts = len(tilt_group.tilts)
-
+		predict_method = 'as_is'
 		#####
 		parameters = self.getCurrentParameters()
 		debug_print('z0 at start of prediction %.2f' % parameters[-1])
@@ -227,6 +227,7 @@ class Prediction(object):
 			# x, y, z unchanged
 			x, y = tilt_group.xs[-1], tilt_group.ys[-1]
 			z = 0.0
+			predict_method = 'as_is'
 		elif n_tilts < n_start_fit:
 			debug_print('set use input model as prediction')
 			# number of tilts not enough to calculate modeled position.
@@ -246,15 +247,18 @@ class Prediction(object):
 			z = result[-1][-1][2] - z0
 			x = result[-1][-1][0]
 			y = result[-1][-1][1]
+			predict_method = 'as_input_model'
 
 		else:
 			# fitting is possible
 			if n_tilts != n_start_fit:
 				self.forcemodel = False
+				predict_method = ''
 			else:
 				# When it is fitted the first time, force the prediction
 				# to be used if it has the same trend as the earlier tilts.
 				# Otherwise it would slip off too much.
+				predict_method = 'first '
 				r2 = [0,0]
 				r2[0] = abs(self._getCorrelationCoefficient(tilt_group.tilts[1:], tilt_group.xs[1:]))
 				r2[1] = abs(self._getCorrelationCoefficient(tilt_group.tilts[1:], tilt_group.ys[1:]))
@@ -262,6 +266,7 @@ class Prediction(object):
 				if max(r2) > 0.95 and r2xy > 0.95 and not self.fixed_model:
 					self.forcemodel = True
 					debug_print('force to use fitted model')
+					predict_method = 'force_fitted_model'
 				else:
 					debug_print( 'trend is not strong: %.4f, %.4f <=0.95' % (max(r2), r2xy))
 					debug_print('or fixed model (%s) is True' % (self.fixed_model))
@@ -289,9 +294,10 @@ class Prediction(object):
 				self.fixed_model = True
 				self.calculate()
 				self.fixed_model = orig_fixed_model
+				predict_method += 'as_input_model'
 			else:
 				self.calculate()
-
+				predict_method += 'fitted_model'
 
 			# use the tilt and tilt0 x,y values to calculate the model z0
 			x0 = tilt_group.xs[0]
@@ -320,6 +326,7 @@ class Prediction(object):
 			'phi': float(phi),
 			'optical axis': float(offset),
 			'z0': float(self.parameters[current_group_index][-1]),
+			'predict_method': predict_method
 		}
 		debug_print('calculate result: %s' % result)
 		return result

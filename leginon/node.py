@@ -30,8 +30,7 @@ from leginon import correctorclient
 from leginon import remoteserver
 from leginon import settingsfun
 
-# testprinting for development
-testing = False
+# printing for development test should be set within the node class as self.print_testing
 
 class ResearchError(Exception):
 	pass
@@ -68,6 +67,7 @@ class Node(correctorclient.CorrectorClient):
 	objectserviceclass = remotecall.NodeObjectService
 
 	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None, order=0):
+		self.is_testing = self.print_testing if hasattr(self,'print_testing') else False
 		self.name = name
 		self.this_node = None
 		self.panel = panel
@@ -164,10 +164,6 @@ class Node(correctorclient.CorrectorClient):
 							temname = description
 						self.tem_hostname = temname
 		return self.tem_hostname
-
-	def testprint(self,msg):
-		if testing:
-			print(msg)
 
 	# settings
 
@@ -644,7 +640,6 @@ class Node(correctorclient.CorrectorClient):
 		z = self.getLastFocusedStageZ(targetdata)
 		if z is not None:
 			msg = 'moveToLastFocusedStageZ %s' % (z,)
-			self.testprint(msg)
 			self.logger.debug(msg)
 			stage_position = {'z':z}
 			self.instrument.tem.StagePosition = stage_position

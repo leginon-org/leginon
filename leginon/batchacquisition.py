@@ -104,7 +104,6 @@ class BatchAcquisition(acquisition.Acquisition):
 		# set stage z first before move
 		z = self.moveToLastFocusedStageZ(targetdata)
 		self.targetlist_z = z
-		self.testprint('preset manager moved to LastFocusedStageZ %s' % (z,))
 		self._setCameraAndCorrection()
 		self.logger.info('setting first target camera state with preset %s:%d' % (self.batch_preset['name'],self.batch_preset.dbid))
 		# wait for it ready before setting

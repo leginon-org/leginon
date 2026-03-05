@@ -161,12 +161,11 @@ class Navigator(node.Node):
 		if use_target_z:
 			# if the move comes from target adjustment, z focus is likely done.
 			# Therefore target z should not be set according to parent
-			msg = 'Set to target z %.6f' % imagedata['scope']['stage position']['z']
-			self.testprint('Navigator: ' + msg)
+			msg = 'Set to target z %.3f um' % (imagedata['scope']['stage position']['z']*1e6)
 			self.logger.debug(msg)
 			self.instrument.tem.setStagePosition({'z':imagedata['scope']['stage position']['z']})
 		stagenow = self.instrument.tem.StagePosition
-		self.logger.debug('Navigator: z in navigator move %.6f' % stagenow['z'])
+		self.logger.debug('Navigator: z in navigator move %.3f um' % (stagenow['z']*1e6))
 		status = self.move(rows, cols, movetype, precision, accept_precision, check, preset=preset, final_imageshift=final_imageshift, cycle_after=True)
 		self.stopTimer('move')
 
