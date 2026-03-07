@@ -2000,6 +2000,39 @@ class LppCalibrationClient(SimpleMatrixCalibrationClient):
 		self.saveLppFitMeasurement(refdata, imagedata, results, new_phase_shifts)
 		return new_phase_shifts, status, results
 
+	def getXTiltDeltaMagnitudeLimit(self):
+		'''
+		Return the xt on each axis the vector value with higher magnitude regardless
+		of the sign of vector.  This can be improved to be proper when lpp is not
+		oriented to image x, y axis.
+		'''
+		result = leginondata.LppCalibrationData(xlpp=self.is_xlpp).query(results=1)[0]
+		xs = result['lpp1 wave xtilt vector x'],result['lpp2 wave xtilt vector x']
+		ys = result['lpp1 wave xtilt vector y'],result['lpp2 wave xtilt vector y']
+		def max_magnitude(xs):
+			mags = list(map((lambda x:abs(x)),xs))
+			return xs[mags.index(max(mags))]
+		wave_max = {}
+		wave_max['x'] = max_magnitude(xs)
+		wave_max['y'] = max_magnitude(ys)
+		return wave_max
+
+	def limitXTiltDrift(self, xt, refdata, wave_max):
+		'''
+		Keep the xtilt correction to be around the reference image within +/-
+		one wave length so that the correction stay within +/- 0.5 of the wave.
+		'''
+		ref_xt = refdata['reference']['scope']['phase plate plane shift']
+		new_xt = xt.copy()
+		print('old_xt', {'x':xt['x']-ref_xt['x'], 'y':xt['y']-ref_xt['y']})
+		for axis in 'x','y':
+			if abs(xt[axis]-ref_xt[axis]-0.5*wave_max[axis]) > 1:
+				self.node.logger.warning('shift by one wave length to avoid drifting in %s axis' % axis)
+				print('correction made')
+			new_xt[axis] = (xt[axis]-ref_xt[axis]-0.5*wave_max[axis]) % wave_max[axis] - 0.5*wave_max[axis]
+		print('new_xt', new_xt)
+		return new_xt
+
 	def setOnPlaneOnNode(self):
 		try:
 			self.instrument.tem.PhasePlateFocus = self.node.new_f0
@@ -2021,7 +2054,7 @@ class LppCalibrationClient(SimpleMatrixCalibrationClient):
 			self.node.logger.info(msg)
 			#
 			# Save the new alignment as the new reset point upon successful correction
-			self.node.x0 = new_xt0.copy()
+			self.node.xt0 = new_xt0.copy()
 			self.node.f0 = self.node.new_f0
 		except Exception as e:
 			self.node.logger.error('Error setting on-plane and on-node values')

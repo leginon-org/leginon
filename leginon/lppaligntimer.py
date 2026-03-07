@@ -102,8 +102,10 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		except Exception as e:
 			traceback.print_exc()
 			self.logger.error('Error calculating on-node values: %s' % e)
-			self.resetLppFocus()
+			self.resetLppFocus() #reset to the old value
 			return
+		wave_max = self.calibration_clients['lpp fringe'].getXTiltDeltaMagnitudeLimit()
+		self.new_xt0 = self.calibration_clients['lpp fringe'].limitXTiltDrift(self.new_xt0, refdata, wave_max)
 		msg = 'new xt calculated from correlation = (%s)' % self.new_xt0
 		self.logger.info(msg)
 		# setOnPlaneOnNode will set using self.new_xt0
@@ -122,8 +124,8 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		self.logger.info('setting phase plate focus to %.8f' % lpp_focus)
 		self.cyclePhasePlateFocus(self.f0, lpp_focus)
 		# pause time setting in this node class is for after stage move. We don't want to wait that long at this point
-		pause_time = min(self.settings['pause time'],0.5)
-		self.logger.info('pausing for %.2 seconds')
+		pause_time = min(self.settings['pause time'],5)
+		self.logger.info('pausing for %.2f seconds' % pause_time)
 		time.sleep(pause_time)
 		try:
 			self.logger.info('acquiring image....')
