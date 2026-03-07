@@ -2024,13 +2024,10 @@ class LppCalibrationClient(SimpleMatrixCalibrationClient):
 		'''
 		ref_xt = refdata['reference']['scope']['phase plate plane shift']
 		new_xt = xt.copy()
-		print('old_xt', {'x':xt['x']-ref_xt['x'], 'y':xt['y']-ref_xt['y']})
 		for axis in 'x','y':
 			if abs(xt[axis]-ref_xt[axis]-0.5*wave_max[axis]) > 1:
 				self.node.logger.warning('shift by one wave length to avoid drifting in %s axis' % axis)
-				print('correction made')
-			new_xt[axis] = (xt[axis]-ref_xt[axis]-0.5*wave_max[axis]) % wave_max[axis] - 0.5*wave_max[axis]
-		print('new_xt', new_xt)
+			new_xt[axis] = (xt[axis]-ref_xt[axis]-0.5*wave_max[axis]) % wave_max[axis] - 0.5*wave_max[axis] + ref_xt[axis]
 		return new_xt
 
 	def setOnPlaneOnNode(self):

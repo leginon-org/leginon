@@ -86,9 +86,13 @@ class LppAligner(acquisition.Acquisition):
 		self.xt0 = self.instrument.tem.PhasePlatePlaneShift
 		self.new_f0 = self.f0
 		self.new_xt0 = self.xt0.copy()
-		self.new_phase_shifts = {1:0.0}
-		self.on_node_slopes = {1:0.0}
-		self.second_order_amps = {1:0.0}
+		self.new_phase_shifts = {}
+		self.on_node_slopes = {}
+		self.second_order_amps = {}
+		for k in self.lpp_axes:
+			self.new_phase_shifts[k] = 0.0
+			self.on_node_slopes[k] = 0.0
+			self.second_order_amps[k] = 0.0
 		if self.settings['acquire type'] == 'global view':
 			self.setParallelIlluminationOffsetToScope('global')
 
@@ -162,7 +166,7 @@ class LppAligner(acquisition.Acquisition):
 
 	def _acquireOffPlaneImage(self, presetdata, emtarget=None, attempt=None, target=None, channel=None, lpp_delta_focus=None):
 		'''
-		save an image used as reference.
+		save an image used as reference or to compare with
 		'''
 		#
 		reduce_pause = self.onTarget
@@ -371,6 +375,7 @@ class LppAligner(acquisition.Acquisition):
 		'''
 		set on-plane and on-node and save the xtilt calibration
 		'''
+		self.calclients['lpp fringe'].setIsXLpp(self.settings['xlpp'])
 		self.xtilt_cal = self.settings
 		self.setOnPlaneOnNode()
 		self.saveLppCalibration()
@@ -426,15 +431,16 @@ class LppAligner(acquisition.Acquisition):
 				self.waitExposureDone()
 			else:
 				self.acquirePublishDisplayWait(*args)
-			myimage = self.imagedata['image']
-			# guess 8 fringes.
-			peaks = lppfit.get_fringe_angle_period(myimage, 1, 8)
-			key = 1
-			image_rotation = peaks[key]['image_rotation']
-			self.cmp_image = self.compress(myimage, -image_rotation, self.settings['compress ratio'])
-			self.setImage(self.cmp_image, 'Compressed')
-			if self.settings['save image']:
-				self.saveCompressed()
+			if self.settings['compress ratio'] > 1:
+				myimage = self.imagedata['image']
+				# guess 8 fringes.
+				peaks = lppfit.get_fringe_angle_period(myimage, 1, 8)
+				key = 1
+				image_rotation = peaks[key]['image_rotation']
+				self.cmp_image = self.compress(myimage, -image_rotation, self.settings['compress ratio'])
+				self.setImage(self.cmp_image, 'Compressed')
+				if self.settings['save image']:
+					self.saveCompressed()
 		except:
 			self.resetParallelIlluminationOffset()
 			self.resetComaCorrection()
