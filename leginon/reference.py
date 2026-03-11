@@ -73,6 +73,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.at_reference_target = False
 		self.last_processed = None
 		self.label = None
+		self.target_image_shift = None
 
 		if self.__class__ == Reference:
 			print('isReference')
@@ -296,6 +297,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 				self.logger.error('Error moving to target, %s' % e)
 				self.moveBack(position0)
 				return
+		self.target_image_shift = self.instrument.tem.ImageShift
 		# Execution part
 		if pause_time is not None:
 			self.logger.info('Pausing %.1f second before execution' % (pause_time,))
