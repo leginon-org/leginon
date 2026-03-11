@@ -1543,6 +1543,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.logger.info('begin simulated target loop of %s iterations' % (iterations,))
 		for i in range(iterations):
 			self.logger.info('iteration %s of %s' % (i+1, iterations,))
+			# For simulate loop need to fix condition to flash cFeg to keep a long run from losing the beam.
+			self.fixCondition()
 			self.simulateTarget()
 			self.setStatus('processing')
 			if self.simloopstop.isSet():

@@ -149,6 +149,7 @@ class LppAligner(acquisition.Acquisition):
 		# acquire image with new_f
 		try:
 			status = self._acquireOffPlaneImage(presetdata, emtarget, attempt, target, channel, delta_f)
+			self.calclients['lpp fringe'].setIsXLpp(self.settings['xlpp'])
 			if status != 'error':
 				self.new_phase_shifts, status, r = self.calclients['lpp fringe'].calculatePhaseShiftCorrectionFromFringeFit(refdata, self.imagedata)
 				# correlation method
