@@ -68,7 +68,7 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		self._setRequestPreset(refdata['reference']['preset']['name'])
 		# apply absolute focus instead of defocus since xl2 rotation center
 		# is purposely not aligned.
-		self.node.logger.info('set image focus relative to eucentric focus for lpp')
+		self.logger.info('set image focus relative to eucentric focus for lpp')
 		self.instrument.tem.Focus = refdata['reference']['scope']['focus']
 		# apply offset for image shifted target
 		if self.target_image_shift:
