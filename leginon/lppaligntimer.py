@@ -69,7 +69,10 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		# apply absolute focus instead of defocus since xl2 rotation center
 		# is purposely not aligned.
 		self.logger.info('set image focus relative to eucentric focus for lpp')
-		self.instrument.tem.Focus = refdata['reference']['scope']['focus']
+		self.target_focus = refdata['reference']['scope']['focus']
+		self.instrument.tem.Focus = self.target_focus
+		print('at the start focus', self.instrument.tem.Focus)
+		print('defocus', self.instrument.tem.getDefocus())
 		# apply offset for image shifted target
 		if self.target_image_shift:
 			self.instrument.tem.ImageShift = self.target_image_shift
@@ -136,7 +139,7 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		time.sleep(pause_time)
 		try:
 			self.logger.info('acquiring image....')
-			self.imagedata = self.newImageData(measure_preset,'%dref' % refdata.dbid)
+			self.imagedata = self.newImageData(measure_preset,'%dref' % refdata.dbid, setfocus=True)
 			filename = self.getMeasureImageFilename(self.imagedata, refdata)
 			self.imagedata['filename'] = filename
 			self.imagedata.insert()

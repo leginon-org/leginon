@@ -74,6 +74,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.last_processed = None
 		self.label = None
 		self.target_image_shift = None
+		self.target_focus = None #used to keep target focus the same as reference in LppAlignTimer
 
 		if self.__class__ == Reference:
 			print('isReference')
@@ -470,7 +471,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		except:
 			raise RuntimeError('Failed to publish reference target')
 
-	def newImageData(self, preset, label, filename=None):
+	def newImageData(self, preset, label, filename=None, setfocus=False):
 		"""
 		Return unpublished imagedata with acquired image array at current
 		position.
@@ -479,6 +480,8 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		emtarget['image shift'] = preset['image shift']
 		emtarget['beam shift'] = preset['beam shift']
 		emtarget['stage position'] = self.instrument.tem.StagePosition
+		if setfocus and self.target_focus is not None:
+			self.instrument.tem.Focus = self.target_focus
 		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
 		## convert CameraImageData to AcquisitionImageData
 		dim = imagedata['camera']['dimension']
