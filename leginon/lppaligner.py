@@ -34,10 +34,6 @@ class LppAligner(acquisition.Acquisition):
 		'acquire type':'single off-plane image',
 		#'phase plate defocus sequence': '(-0.002,-0.0025,-0.003,-0.004)',
 		'phase plate defocus sequence': '(-0.002,-0.003,-0.004)',
-		'lpp1 wave xtilt vector x': 0.0,
-		'lpp1 wave xtilt vector y': 0.000165,
-		'lpp2 wave xtilt vector x': 0.000165,
-		'lpp2 wave xtilt vector y': 0.0,
 	})
 
 	eventinputs = acquisition.Acquisition.eventinputs
@@ -303,18 +299,18 @@ class LppAligner(acquisition.Acquisition):
 		them to find and move to on-node.
 		'''
 		reduce_pause = self.onTarget
+		self.calclients['lpp fringe'].setIsXLpp(self.settings['xlpp'])
 		status = self.moveAndPreset(presetdata, emtarget)
 		if status == 'error':
 			self.logger.warning('Move failed. skipping acquisition at this target')
 			return status
 		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
 		args = (presetdata, emtarget, defaultchannel)
-		wave_transform = numpy.array([
-				[self.settings['lpp1 wave xtilt vector x'],
-				self.settings['lpp1 wave xtilt vector y']],
-				[self.settings['lpp2 wave xtilt vector x'],
-				self.settings['lpp2 wave xtilt vector y']],
-		])
+		try:
+			wave_transform = self.retrieveWaveTransformCalibration()
+		except Exception as e:
+			self.logger.error(e)
+			return
 		wave_xtlength = math.sqrt(numpy.sum(wave_transform*wave_transform)/2)
 		step_fraction = 0.3
 		self.xtilt_series = step_fraction*numpy.array(((-1,0),(0,0),(1,0))).T
@@ -379,25 +375,18 @@ class LppAligner(acquisition.Acquisition):
 		self.calclients['lpp fringe'].setIsXLpp(self.settings['xlpp'])
 		self.xtilt_cal = self.settings
 		self.setOnPlaneOnNode()
-		self.saveLppCalibration()
 
-	def saveLppCalibration(self):
-		currentpreset = self.presetsclient.getCurrentPreset()
-		tem = currentpreset['tem']
-		ccdcamera = currentpreset['ccdcamera']
-		results = leginondata.LppCalibrationData(session=self.session, tem=tem, ccdcamera=ccdcamera, xlpp=self.settings['xlpp']).query(results=1)
-		if results:
-			r = results[0]
-			# only save once if unchanged
-			if r['lpp1 wave xtilt vector x'] == self.settings['lpp1 wave xtilt vector x'] and r['lpp1 wave xtilt vector y'] == self.settings['lpp1 wave xtilt vector y']:
-				if r['lpp2 wave xtilt vector x'] == self.settings['lpp2 wave xtilt vector x'] and r['lpp2 wave xtilt vector y'] == self.settings['lpp2 wave xtilt vector y']:
-					return
-		q = leginondata.LppCalibrationData(session=self.session, tem=tem, ccdcamera=ccdcamera, xlpp=self.settings['xlpp'])
-		for k in self.lpp_axes:
-			q['lpp%d wave xtilt vector x' % k] = self.settings['lpp%d wave xtilt vector x' % k]
-			q['lpp%d wave xtilt vector y' % k] = self.settings['lpp%d wave xtilt vector y' % k]
-		q.insert(force=True)
-		self.logger.info('Lpp standing wave xtilt vector saved')
+	def retrieveWaveTransformCalibration(self):
+		caldata = self.caliclients['lpp fringe'].retrieveLppCalibration()
+		if caldata:
+			wave_transform = numpy.array([
+				[caldata['lpp1 wave xtilt vector x'],
+				caldata['lpp1 wave xtilt vector y']],
+				[caldata['lpp2 wave xtilt vector x'],
+				caldata['lpp2 wave xtilt vector y']],
+		])
+		return wave_transform
+
 
 	def resetLppFocus(self):
 		self.instrument.tem.PhasePlateFocus = self.f0

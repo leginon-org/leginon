@@ -1903,14 +1903,42 @@ class LppCalibrationClient(SimpleMatrixCalibrationClient):
 	def setIsXLpp(self, value):
 		self.is_xlpp = value
 		self.lpp_axes = [1,2] if self.is_xlpp else [1,]
+		self.xtilt_cal = self.retrieveLppCalibration()
 
+	def saveLppCalibration(self, vector_dict):
+		"""
+		Save Lpp standing wave xtilt vectors.
+		"""
+		#TODO: check if the calibration depends on laser power or on-plane focus
+		tem = self.instrument.getTEMData()
+		ccdcamera = self.instrument.getCCDCameraData()
+		results = leginondata.LppCalibrationData(session=self.session, tem=tem, ccdcamera=ccdcamera, xlpp=self.is_xlpp).query(results=1)
+		if results:
+			r = results[0]
+			# only save once if unchanged
+			if r['lpp1 wave xtilt vector x'] == vector_dict['lpp1 wave xtilt vector x'] and r['lpp1 wave xtilt vector y'] == vector_dict['lpp1 wave xtilt vector y']:
+				if r['lpp2 wave xtilt vector x'] == vector_dict['lpp2 wave xtilt vector x'] and r['lpp2 wave xtilt vector y'] == vector_dict['lpp2 wave xtilt vector y']:
+					return
+		q = leginondata.LppCalibrationData(session=self.session, tem=tem, ccdcamera=ccdcamera, xlpp=vector_dict['xlpp'])
+		for k in self.lpp_axes:
+			q['lpp%d wave xtilt vector x' % k] = vector_dict['lpp%d wave xtilt vector x' % k]
+			q['lpp%d wave xtilt vector y' % k] = vector_dict['lpp%d wave xtilt vector y' % k]
+		q.insert(force=True)
+		self.node.logger.info('Lpp standing wave xtilt vector saved')
+
+	def retrieveLppCalibration(self):
+		"""
+		return lpp wave vector calibration that defines xtilt or phase plate plane shift
+		for one standing wave period.
+		"""
 		tem = self.instrument.getTEMData()
 		ccdcamera = self.instrument.getCCDCameraData()
 		xtilt_results = leginondata.LppCalibrationData(tem=tem, ccdcamera=ccdcamera, xlpp=self.is_xlpp).query(results=1)
+		self.node.logger.info('Retrieving lpp wave vectors for %d lpp setup' % (2 if self.is_xlpp else 1))
 		if xtilt_results:
-			self.xtilt_cal = xtilt_results[0]
+			return xtilt_results[0]
 		else:
-			self.xtilt_cal = None
+			raise NoMatrixCalibrationError()
 
 	def saveLppFitMeasurement(self, refdata, imagedata, fit_results, applied_phase_shifts):
 		"""

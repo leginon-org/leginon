@@ -2279,10 +2279,6 @@ class LppAlignerSettingsData(AcquisitionSettingsData):
 			('compress ratio', int),
 			('acquire type', str),
 			('phase plate defocus sequence', str), #Issue #5687
-			('lpp1 wave xtilt vector x', float),
-			('lpp1 wave xtilt vector y', float),
-			('lpp2 wave xtilt vector x', float),
-			('lpp2 wave xtilt vector y', float),
 		)
 	typemap = classmethod(typemap)
 

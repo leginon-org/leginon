@@ -123,38 +123,11 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		fitsizer.AddGrowableCol(4)
 
 		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
-		label = wx.StaticText(self, -1, 'Align with defocus series fitting')
+		label = wx.StaticText(self, -1, 'Align with single or multiple off-plane series fitting with this sequence')
 		sbsz.Add(label, 0 , wx.ALL|wx.EXPAND|wx.ALIGN_LEFT, 5)
 		sbsz.Add(fitsizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
-		label = wx.StaticText(self, -1, 'Align with single off-plane image')
-		sbsz.Add(label, 0 , wx.ALL|wx.EXPAND|wx.ALIGN_LEFT, 5)
-		sbsz.Add(self.createAcquireOnNodeReferenceSizer(), 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 
 		return sizers + [sbsz,]
-
-	def createAcquireOnNodeReferenceSizer(self):
-		savesizer = wx.GridBagSizer(5, 4)
-		bordersize = 3
-		label = wx.StaticText(self, -1, 'xtilt change to move by one standing wave wavelength:')
-		savesizer.Add(label, (0, 0), (1, 4), wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'lpp1 x:')
-		savesizer.Add(label, (1, 1), (1, 1), wx.ALIGN_RIGHT)
-		self.widgets['lpp1 wave xtilt vector x'] = FloatEntry(self, -1, allownone=False, chars=8, value='0.0')
-		savesizer.Add(self.widgets['lpp1 wave xtilt vector x'], (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'lpp1 y:')
-		savesizer.Add(label, (1, 3), (1, 1), wx.ALIGN_RIGHT)
-		self.widgets['lpp1 wave xtilt vector y'] = FloatEntry(self, -1, allownone=False, chars=8, value='0.0')
-		savesizer.Add(self.widgets['lpp1 wave xtilt vector y'], (1, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		# 
-		label = wx.StaticText(self, -1, 'lpp2 x:')
-		savesizer.Add(label, (2, 1), (1, 1), wx.ALIGN_RIGHT)
-		self.widgets['lpp2 wave xtilt vector x'] = FloatEntry(self, -1, allownone=False, chars=8, value='0.0')
-		savesizer.Add(self.widgets['lpp2 wave xtilt vector x'], (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'lpp2 y:')
-		savesizer.Add(label, (2, 3), (1, 1), wx.ALIGN_RIGHT)
-		self.widgets['lpp2 wave xtilt vector y'] = FloatEntry(self, -1, allownone=False, chars=8, value='0.0')
-		savesizer.Add(self.widgets['lpp2 wave xtilt vector y'], (2, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		return savesizer
 
 if __name__ == '__main__':
 	class App(wx.App):

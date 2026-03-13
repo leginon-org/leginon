@@ -510,7 +510,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		request_data['session'] = self.session
 		request_data['preset'] = preset_name
 		request_data['on_position'] = on_position
-		print(request_data)
 		self.publish(request_data, database=True, pubevent=True, wait=True)
 		self.setStatus('processing')
 
