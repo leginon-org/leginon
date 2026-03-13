@@ -266,9 +266,9 @@ class Collection2(Collection):
 					# tracked_shift has to be corrected by total pixel shifts applied up to now
 					predicted_position['x'] = tracked_shift['x'] + sum(pix_shifts['x'])
 					predicted_position['y'] = tracked_shift['y'] + sum(pix_shifts['y'])
-					# TODO: actually implement something for z heights in unit of image pixel
+					# predicted z heights in unit of image pixel
 					defocus, predicted_z = self.predictDefocusZByCalibration(defocus0, tilt)
-					predicted_position['z'] = predicted_z
+					predicted_position['z'] = defocus / image_pixel_size
 					self.logger.debug('previous x: %.3f, y: %.3f' %(position['x'],position['y']))
 					self.logger.debug('tracked shift x: %.3f, y: %.3f' %(tracked_shift['x'],tracked_shift['y']))
 					self.logger.debug('set to binned pixel from track x: %.3f, y: %.3f' %(predicted_position['x'],predicted_position['y']))
@@ -565,6 +565,8 @@ class Collection2(Collection):
 			myimage = self.node.instrument.tem.ImageShift
 			self.logger.debug('image shift in track image (um): x: %8.2f y: %8.2f' % (myimage['x']*1e6, myimage['y']*1e6)) 	# (1)
 			self.viewer.addTrackingImage(imagedata['image'])
+			self.logger.debug('tune Lpp after tracking image')
+			self.node.tuneLpp(self.trackpreset['name'], True) # preset_name is not used but tem/ccdcamera must be set
 			self.return2Tomo(isoffset)
 		except:
 			raise TrackingImgError
