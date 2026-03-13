@@ -765,14 +765,17 @@ class Navigator(node.Node):
 		self._toScope('reset alpha',loc)
 
 	def onToggleLppFocus(self):
-		loc = {'a':0.0}
+		offset = -0.0025
 		f = self.instrument.tem.PhasePlateFocus
 		if not hasattr(self,'f0'):
-		    self.f0 = self.instrument.tem.PhasePlateFocus
+			self.f0 = self.instrument.tem.PhasePlateFocus
+			self.logger.info('saving phase plate on-plane focus')
 		if f == self.f0:
-			self.instrument.tem.PhasePlateFocus = self.f0-0.0025
+			self.instrument.tem.PhasePlateFocus = self.f0 + offset
+			self.logger.info('Send phase plate focus to %.5f off plane' % offset)
 		else:
 			self.instrument.tem.PhasePlateFocus = self.f0
+			self.logger.info('Send phase plate focus to on-plane at %.5f' % self.f0)
 
 if __name__ == '__main__':
 	id = ('navigator',)

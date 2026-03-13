@@ -71,8 +71,6 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		self.logger.info('set image focus relative to eucentric focus for lpp')
 		self.target_focus = refdata['reference']['scope']['focus']
 		self.instrument.tem.Focus = self.target_focus
-		print('at the start focus', self.instrument.tem.Focus)
-		print('defocus', self.instrument.tem.getDefocus())
 		# apply offset for image shifted target
 		if self.target_image_shift:
 			self.instrument.tem.ImageShift = self.target_image_shift

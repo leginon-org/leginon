@@ -77,7 +77,6 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.target_focus = None #used to keep target focus the same as reference in LppAlignTimer
 
 		if self.__class__ == Reference:
-			print('isReference')
 			self.start()
 
 	def handleApplicationEvent(self,evt):
@@ -244,6 +243,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		# subclass need to define self.last_processed in resetProcess
 
 	def moveBack(self,position0):
+		self.pauseCheckBeforeMoveBack()
 		self.logger.info('Returning to the original position....')
 		try:
 			self.instrument.tem.StagePosition = position0
@@ -257,7 +257,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.player.wait()
 		self.at_reference_target = False
 		self.setStatus('processing')
-		self.pauseBeforeReturn()
+		self.pauseAfterMoveBack()
 
 	def handleFailToMoveBack(self, position):
 		self.player.pause()
@@ -288,7 +288,8 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		on_position = False
 		if 'on_position' in request_data.keys():
 			on_position = request_data['on_position']
-			self.logger.info('Stay on the current position to execute')
+		if on_position:
+				self.logger.info('Stay on the current position to execute')
 		position0 = self.instrument.tem.StagePosition
 		if not on_position:
 			try:
@@ -300,6 +301,20 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 				return
 		self.target_image_shift = self.instrument.tem.ImageShift
 		# Execution part
+		try:
+			state = self.pauseCheckBeforeExecute()
+		except ValueError as e:
+			self.logger.error(e)
+			if not on_position:
+				self.player.play()
+				self.moveBack(position0)
+				return
+		# aborted is not an error
+		if state == 'aborted':
+			if not on_position:
+				self.player.play()
+				self.moveBack(position0)
+				return
 		if pause_time is not None:
 			self.logger.info('Pausing %.1f second before execution' % (pause_time,))
 			time.sleep(pause_time)
@@ -318,7 +333,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 				self.moveBack(position0)
 			return
 
-	def pauseBeforeReturn(self):
+	def pauseAfterMoveBack(self):
 		pause_time = self.settings['return settle time']
 		if pause_time is not None:
 			self.logger.info('Settling the stage for %.1f second' % (pause_time,))
@@ -332,6 +347,8 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.panel.playerEvent('play')
 		try:
 			self._processRequest(request_data)
+		except Exception as e:
+			raise
 		finally:
 			self.setStatus('idle')
 			self.panel.playerEvent('stop')
@@ -365,7 +382,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		# This is different from moveAndExecute
 		self.logger.info('Testing...')
 		self.setStatus('processing')
-		self.player.play()
+		#self.player.play()
 		try:
 			self._testRun()
 		except Exception as e:
@@ -403,10 +420,13 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		else:
 			self.logger.warning('No reference target')
 			self.logger.info('Use current position for testing')
+			state = self.pauseCheckBeforeExecute()
+			if self.player.state == 'stop':
+				return
 			if pause_time is not None:
 				self.logger.info('Pausing %.1f second before execution' % (pause_time,))
 				time.sleep(pause_time)
-			if self.player.state() == 'stop':
+			if self.player.state == 'stop':
 				return
 			try:
 				self.execute(None)
@@ -510,11 +530,34 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
 	def onPlayer(self, state):
 		infostr = ''
-		if state == 'pause':
-			infostr += 'Paused'
+		if state == 'play':
+			infostr += 'Continuing...'
+		elif state == 'pause':
+			infostr += 'Pausing'
 		elif state == 'stop':
 			infostr += 'Aborting...'
 		if infostr:
 			self.logger.info(infostr)
 		self.panel.playerEvent(state)
 
+	def pauseCheckBeforeExecute(self):
+		preset = self.presets_client.getCurrentPreset()
+		if self.player.state() == 'pause':
+			self.logger.info('Paused')
+			self.setStatus('user input')
+			self.player.wait()
+			new_preset = self.presets_client.getCurrentPreset()
+			if new_preset['name'] != preset['name']:
+				raise ValueError('Preset change not allowed during this pause.')
+		if self.player.state() == 'stop':
+			self.logger.info('Aborted execution')
+			return 'aborted'
+
+	def pauseCheckBeforeMoveBack(self):
+		if self.player.state() == 'pause':
+			self.logger.info('Paused before return')
+			self.setStatus('user input')
+			self.player.wait()
+		if self.player.state() == 'stop':
+			self.logger.warning('Too late to abort. Will still move back')
+			self.player.play()

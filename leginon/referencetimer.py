@@ -139,6 +139,9 @@ class AlignZeroLossPeak(ReferenceTimer):
 		if need_align:
 			# now ready to do it.
 			try:
+				state = self.pauseCheckBeforeExecute()
+				if state == 'stop':
+					raise ValueError('stoped by user')
 				self._setRequestPreset(request_preset_name)
 			except:
 				self.moveBack(position0)
@@ -211,6 +214,8 @@ class AlignZeroLossPeak(ReferenceTimer):
 		Execute without moving. Used in testing and handling the
 		request after moving and set preset.
 		'''
+		self.logger.info('Checking if pause is requested...')
+		state = self.player.wait()
 		ccd_camera = self.instrument.ccdcamera
 		try:
 			if not ccd_camera.EnergyFiltered:
