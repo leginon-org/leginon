@@ -517,16 +517,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		return imagedata
 
 	def newReferenceTarget(self, image_data, drow, dcol):
-		target_data = leginondata.ReferenceTargetData()
-		target_data['image'] = image_data
-		target_data['scope'] = image_data['scope']
-		target_data['camera'] = image_data['camera']
-		target_data['preset'] = image_data['preset']
-		target_data['grid'] = image_data['grid']
-		target_data['delta row'] = drow
-		target_data['delta column'] = dcol
-		target_data['session'] = self.session
-		return target_data
+		return self.calibration_clients['image shift'].newReferenceTarget(image_data, drow, dcol)
 
 	def onPlayer(self, state):
 		infostr = ''

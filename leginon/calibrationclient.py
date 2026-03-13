@@ -176,7 +176,7 @@ class CalibrationClient(object):
 		self.displayCorrelation(cor)
 
 		camera_binning = nextimage['camera']['binning']
-		pixelpeak, unbinned = self.findPeak(cor, camera_binning, shrink_factor)
+		pixelpeak, unbinned = self.findPeak(cor, camera_binning, shrink_factor, lp)
 		self.node.startTimer('shift display')
 		self.displayPeak(pixelpeak)
 		self.node.stopTimer('shift display')
@@ -334,6 +334,18 @@ class CalibrationClient(object):
 			self.node.setTargets(targets, 'Peak')
 		except:
 			pass
+
+	def newReferenceTarget(self, image_data, drow, dcol):
+		target_data = leginondata.ReferenceTargetData()
+		target_data['image'] = image_data
+		target_data['scope'] = image_data['scope']
+		target_data['camera'] = image_data['camera']
+		target_data['preset'] = image_data['preset']
+		target_data['grid'] = image_data['grid']
+		target_data['delta row'] = drow
+		target_data['delta column'] = dcol
+		target_data['session'] = self.node.session
+		return target_data
 
 class DoseCalibrationClient(CalibrationClient):
 	coulomb = 6.2414e18
@@ -1912,14 +1924,14 @@ class LppCalibrationClient(SimpleMatrixCalibrationClient):
 		#TODO: check if the calibration depends on laser power or on-plane focus
 		tem = self.instrument.getTEMData()
 		ccdcamera = self.instrument.getCCDCameraData()
-		results = leginondata.LppCalibrationData(session=self.session, tem=tem, ccdcamera=ccdcamera, xlpp=self.is_xlpp).query(results=1)
+		results = leginondata.LppCalibrationData(session=self.node.session, tem=tem, ccdcamera=ccdcamera, xlpp=self.is_xlpp).query(results=1)
 		if results:
 			r = results[0]
 			# only save once if unchanged
 			if r['lpp1 wave xtilt vector x'] == vector_dict['lpp1 wave xtilt vector x'] and r['lpp1 wave xtilt vector y'] == vector_dict['lpp1 wave xtilt vector y']:
 				if r['lpp2 wave xtilt vector x'] == vector_dict['lpp2 wave xtilt vector x'] and r['lpp2 wave xtilt vector y'] == vector_dict['lpp2 wave xtilt vector y']:
 					return
-		q = leginondata.LppCalibrationData(session=self.session, tem=tem, ccdcamera=ccdcamera, xlpp=vector_dict['xlpp'])
+		q = leginondata.LppCalibrationData(session=self.node.session, tem=tem, ccdcamera=ccdcamera, xlpp=vector_dict['xlpp'])
 		for k in self.lpp_axes:
 			q['lpp%d wave xtilt vector x' % k] = vector_dict['lpp%d wave xtilt vector x' % k]
 			q['lpp%d wave xtilt vector y' % k] = vector_dict['lpp%d wave xtilt vector y' % k]
