@@ -154,6 +154,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'wait for process': False,
 		'wait for rejects': False,
 		'wait for reference': False,
+		'post-target tuning': False,
 		#'duplicate targets': False,
 		#'duplicate target type': 'focus',
 		'iterations': 1,
@@ -528,14 +529,20 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		zlp_preset_name = self.settings['preset order'][-1]
 		self.logger.info('Tuning before processing a target')
+		self.monitorScreenCurrent(zlp_preset_name)
+		if self.settings['post-target tuning']:
+			self.logger.debug('Skip the rest of pre-target setup to do them post-target instead')
+			return
 		self.tuneEnergyFilter(zlp_preset_name)
 		self.tuneLpp(zlp_preset_name, False) # preset_name is not used but tem/ccdcamera must be set
-		self.monitorScreenCurrent(zlp_preset_name)
 
 	def postTargetSetup(self):
+		if not self.settings['post-target tuning']:
+			return
 		self.logger.info('Tuning after processing a target')
 		zlp_preset_name = self.settings['preset order'][-1]
-		#self.tuneLpp(zlp_preset_name, True) # preset_name is not used but tem/ccdcamera must be set
+		self.tuneEnergyFilter(zlp_preset_name)
+		self.tuneLpp(zlp_preset_name, True) # preset_name is not used but tem/ccdcamera must be set
 
 	def validateSettings(self):
 		'''

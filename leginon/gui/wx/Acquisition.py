@@ -250,6 +250,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 																				'Publish and wait for rejected targets')
 		self.widgets['wait for reference'] = wx.CheckBox(self, -1,
 																				'Publish and wait for the reference target')
+		self.widgets['post-target tuning'] = wx.CheckBox(self, -1,
+																				'tune on-position after processing target')
 		self.widgets['drift between'] = wx.CheckBox(self, -1, 'Declare drift between targets')
 		self.widgets['background'] = wx.CheckBox(self, -1, 'Acquire in the background')
 		self.widgets['park after target'] = wx.CheckBox(self, -1, 'Park after every target acquired')
@@ -259,6 +261,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_misc.Add(self.widgets['wait for process'])
 		sz_misc.Add(self.widgets['wait for rejects'])
 		sz_misc.Add(self.widgets['wait for reference'])
+		sz_misc.Add(self.widgets['post-target tuning'])
 		sz_misc.Add(self.createTransformSizer())
 		sz_misc.Add(self.createUseParentMoverSizer())
 		sz_misc.Add(self.createOffsetSizer())

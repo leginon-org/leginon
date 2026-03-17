@@ -2226,6 +2226,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('wait for process', bool),
 			('wait for rejects', bool),
 			('wait for reference', bool),
+			('post-target tuning', bool),
 			#('duplicate targets', bool),
 			#('duplicate target type', str),
 			('loop delay time', float),
