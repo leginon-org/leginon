@@ -126,12 +126,92 @@ class LppAligner(acquisition.Acquisition):
 			self._acquireAlignImage(presetdata, emtarget, attempt, target, channel)
 		elif self.settings['acquire type'] == 'on-node reference':
 			self._acquireOnNodeReference(presetdata, emtarget, attempt, target, channel)
+			# also save this position to return to like in Reference nodes.
+			# TODO: may need to specify the type of reference for Lpp tuning
+			# TODO: would be nice to have a unique name like used in reference node
+			targetdata = self.calclients['lpp fringe'].newReferenceTarget(self.imagedata, 0,0)
+			targetdata.insert()
+			self.calibratPhasePlatePlaneShiftMatrix()
 		elif self.settings['acquire type'] == 'global view':
 			self._acquireGlobal(presetdata, emtarget, attempt, target, channel)
 		elif self.settings['acquire type'] == 'on-plane xtilt series':
 			self._acquireOnPlaneXTiltSeries(presetdata, emtarget, attempt, target, channel)
 		else:
 			self._acquireFocusSeries(presetdata, emtarget, attempt, target, channel)
+
+	def getBase(self):
+		dataclass = leginondata.ScopeEMData
+		dat = self.instrument.getData(dataclass)
+		return dat[self.parameter]
+
+	def makeState(self, value, axis):
+		scope_state = {self.parameter: {axis: value}}
+		delta = -0.0025
+		scope_state['phase plate focus'] = self.f0+delta
+		self.logger.info('phase plate focus changed by %.4f for measurement' % delta)
+		return scope_state
+
+	def calibratPhasePlatePlaneShiftMatrix(self):
+		calclient = self.calclients['phase plate plane shift']
+		self.parameter = calclient.parameter()
+		im1 = self.imagedata
+		percent = 25/100.0
+		ht = self.imagedata['scope']['high tension']
+		mag = self.imagedata['scope']['magnification']
+		cam = self.instrument.ccdcamera
+		pixsize = calclient.getPixelSize(mag)
+		unit_delta = calclient.calculateUnitParameterDelta(cam, mag, pixsize)
+		delta = percent * unit_delta
+		basebase = self.getBase()
+		baselist = []
+		naverage = 2
+		interval = 2e-6
+		settle = 1.0
+		for i in range(naverage):
+			delta = i * interval
+			basex = basebase['x'] + delta
+			basey = basebase['y'] + delta
+			newbase = {'x':basex, 'y':basey}
+			baselist.append(newbase)
+		corr_type = 'cross'
+		peakfinder_lp = 9
+		shifts = {}
+		for axis in ('x','y'):
+			shifts[axis] = {'row': 0.0, 'col': 0.0}
+			n = 0
+			for base in baselist:
+				basevalue = base[axis]
+				newvalue = basevalue + delta
+				state1 = self.makeState(basevalue, axis)
+				state2 = self.makeState(newvalue, axis)
+				im1 = calclient.acquireImage(state1, settle=settle)
+				shiftinfo = calclient.measureScopeChange(im1, state2, settle=settle,correlation_type=corr_type,lp=peakfinder_lp)
+				rowpix = shiftinfo['pixel shift']['row']
+				colpix = shiftinfo['pixel shift']['col']
+				self.logger.info('Shift between images: (%.2f, %.2f)' % (colpix, rowpix))
+				totalpix = abs(rowpix + 1j * colpix)
+				if totalpix == 0.0:
+					raise CalibrationError('total pixel shift is zero')
+
+				actual1 = shiftinfo['previous']['scope'][self.parameter][axis]
+				actual2 = shiftinfo['next']['scope'][self.parameter][axis]
+				change = actual2 - actual1
+				if change == 0.0:
+					raise CalibrationError('change in %s is zero' % self.parameter)
+				self.logger.info('scope %s axis % s change between images: %s' % (self.parameter,axis,change))
+
+				rowpixelsper = rowpix / change
+				colpixelsper = colpix / change
+				shifts[axis]['row'] += rowpixelsper
+				shifts[axis]['col'] += colpixelsper
+				n += 1
+			if n:
+				shifts[axis]['row'] /= n
+				shifts[axis]['col'] /= n
+		matrix = calclient.measurementToMatrix(shifts)
+		self.logger.debug('Matrix %s' % matrix)
+		calclient.storeMatrix(ht, mag, self.parameter, matrix)
+		self.resetLppFocus()
 
 	def _acquireAlignImage(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
 		ref_results = leginondata.LppOnNodeRefData(tem=presetdata['tem'],ccdcamera=presetdata['ccdcamera'], xlpp=self.settings['xlpp']).query(results=1)
@@ -200,10 +280,7 @@ class LppAligner(acquisition.Acquisition):
 		save an image used as reference.
 		'''
 		self.setDefocusSeries()
-		if self.x1_defocus_series[0] < 0:
-			# always starts from value larger than f0
-			self.x1_defocus_series.reverse()
-		delta_f = self.x1_defocus_series[-1]
+		delta_f = self.x1_defocus_series[0]
 		try:
 			status = self._acquireOffPlaneImage(presetdata, emtarget, attempt, target, channel, delta_f)
 			if status != 'error':
