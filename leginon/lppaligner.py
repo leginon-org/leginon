@@ -131,7 +131,7 @@ class LppAligner(acquisition.Acquisition):
 			# TODO: would be nice to have a unique name like used in reference node
 			targetdata = self.calclients['lpp fringe'].newReferenceTarget(self.imagedata, 0,0)
 			targetdata.insert()
-			self.calibratPhasePlatePlaneShiftMatrix()
+			self.calibratePhasePlatePlaneShiftMatrix()
 		elif self.settings['acquire type'] == 'global view':
 			self._acquireGlobal(presetdata, emtarget, attempt, target, channel)
 		elif self.settings['acquire type'] == 'on-plane xtilt series':
@@ -151,7 +151,11 @@ class LppAligner(acquisition.Acquisition):
 		self.logger.info('phase plate focus changed by %.4f for measurement' % delta)
 		return scope_state
 
-	def calibratPhasePlatePlaneShiftMatrix(self):
+	def calibratePhasePlatePlaneShiftMatrix(self):
+		'''
+		Calibrate matrix that relates image pixel shift and phase plate plane
+		shift.  This calibration is very sensitive to electron focus on the lpp.
+		'''
 		calclient = self.calclients['phase plate plane shift']
 		self.parameter = calclient.parameter()
 		im1 = self.imagedata
@@ -165,8 +169,8 @@ class LppAligner(acquisition.Acquisition):
 		basebase = self.getBase()
 		baselist = []
 		naverage = 2
-		interval = 2e-6
-		settle = 1.0
+		interval = 2e-6 # radians of xtilt value. For focus length 6.8 mm.
+		settle = 1.0 # settle time in seconds
 		for i in range(naverage):
 			delta = i * interval
 			basex = basebase['x'] + delta
@@ -174,7 +178,7 @@ class LppAligner(acquisition.Acquisition):
 			newbase = {'x':basex, 'y':basey}
 			baselist.append(newbase)
 		corr_type = 'cross'
-		peakfinder_lp = 9
+		peakfinder_lp = 9 # low pass filter to cross-correlation map for peak finding
 		shifts = {}
 		for axis in ('x','y'):
 			shifts[axis] = {'row': 0.0, 'col': 0.0}
