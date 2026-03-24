@@ -43,7 +43,7 @@ class LppAligner(acquisition.Acquisition):
 
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
 		self.calclients['phase plate plane shift'] = calibrationclient.PhasePlatePlaneShiftCalibrationClient(self)
-		self.calclients['lpp fringe'] = calibrationclient.LppCalibrationClient(self)
+		self.calclients['ctf'] = calibrationclient.CtfCalibrationClient(self)
 		self.deltaz = 0.0
 		self.v0 = 0.0
 		self.series_id = 1
@@ -62,7 +62,6 @@ class LppAligner(acquisition.Acquisition):
 				raise
 		except Exception as e:
 			raise
-		self.x1_defocus_series.sort()
 
 	def setParallelIlluminationOffsetToScope(self,view_type='on-plane'):
 		errstr = 'paralllel illumination offset to instrument failed: %s'
@@ -140,13 +139,28 @@ class LppAligner(acquisition.Acquisition):
 			self._acquireFocusSeries(presetdata, emtarget, attempt, target, channel)
 
 	def getBase(self):
+		'''
+		Use current scope data as base
+		'''
 		dataclass = leginondata.ScopeEMData
 		dat = self.instrument.getData(dataclass)
 		return dat[self.parameter]
 
+	def makeBaseList(self, basebase, interval, naverage=1):
+		baselist = []
+		for i in range(naverage):
+			delta = i * interval
+			basex = basebase['x'] + delta
+			basey = basebase['y'] + delta
+			newbase = {'x':basex, 'y':basey}
+			baselist.append(newbase)
+
 	def makeState(self, value, axis):
+		'''
+		Make scope state with also lpp defocus
+		'''
 		scope_state = {self.parameter: {axis: value}}
-		delta = -0.0025
+		delta = self.x1_defocus_series[0]
 		scope_state['phase plate focus'] = self.f0+delta
 		self.logger.info('phase plate focus changed by %.4f for measurement' % delta)
 		return scope_state
@@ -154,12 +168,18 @@ class LppAligner(acquisition.Acquisition):
 	def calibratePhasePlatePlaneShiftMatrix(self):
 		'''
 		Calibrate matrix that relates image pixel shift and phase plate plane
-		shift.  This calibration is very sensitive to electron focus on the lpp.
+		shift.  This is copied from MatrixCalibrator.
+		This calibration is very sensitive to electron focus on the lpp.
+		Parameters used here are based on CZII Krios2 -0.0025 lpp defocus.
 		'''
 		calclient = self.calclients['phase plate plane shift']
 		self.parameter = calclient.parameter()
 		im1 = self.imagedata
+		fringe_wavelength = 500e-9
+		imaging_focal_length = 7e-3
 		percent = 25/100.0
+		# radians of xtilt value to shift by percentage of the fringe projection
+		interval = percent*math.atan2(fringe_wavelength, imaging_focal_length)
 		ht = self.imagedata['scope']['high tension']
 		mag = self.imagedata['scope']['magnification']
 		cam = self.instrument.ccdcamera
@@ -167,16 +187,9 @@ class LppAligner(acquisition.Acquisition):
 		unit_delta = calclient.calculateUnitParameterDelta(cam, mag, pixsize)
 		delta = percent * unit_delta
 		basebase = self.getBase()
-		baselist = []
 		naverage = 2
-		interval = 2e-6 # radians of xtilt value. For focus length 6.8 mm.
+		baselist = self.makeBaseList(basebase, interval, naverage)
 		settle = 1.0 # settle time in seconds
-		for i in range(naverage):
-			delta = i * interval
-			basex = basebase['x'] + delta
-			basey = basebase['y'] + delta
-			newbase = {'x':basex, 'y':basey}
-			baselist.append(newbase)
 		corr_type = 'cross'
 		peakfinder_lp = 9 # low pass filter to cross-correlation map for peak finding
 		shifts = {}
@@ -322,9 +335,6 @@ class LppAligner(acquisition.Acquisition):
 		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
 		args = (presetdata, emtarget, defaultchannel)
 		self.setDefocusSeries()
-		if self.x1_defocus_series[0] < 0:
-			# always starts from value
-			self.x1_defocus_series.reverse()
 		data = {}
 		for k in self.lpp_axes:
 			data[k] = []
@@ -362,12 +372,15 @@ class LppAligner(acquisition.Acquisition):
 		is_failed = self.resetComaCorrection()
 		if is_failed:
 			self.player.pause()
-		new_f0 = {} # sequence of new_f0 at each axis
+		new_f0 = {} # sequence of new_f0 at each lpp axis
+		# Note: result_phase_shifts are not good enough to find on-node.
+		# Not applied as self.new_phase_shifts
+		result_phase_shifts = {} # sequence of phase_shifts at each lpp axis
 		try:
 			for k in data.keys():
-				new_f0[k], self.new_phase_shifts[k], self.on_node_slopes[k], self.second_order_amps[k] = lppfit.calculateOnPlaneOnNode(numpy.array(data[k]), is_over_focus=False)
-				self.logger.info('Calculated LPP x1 lens at %.8f, phase shift needed at %s' % (new_f0[k], self.new_phase_shifts[k]))
-			self.new_f0 = sum(new_f0.values())
+				new_f0[k], result_phase_shifts[k], self.on_node_slopes[k], self.second_order_amps[k] = lppfit.calculateOnPlaneOnNode(numpy.array(data[k]), is_over_focus=False)
+				self.logger.info('Calculated LPP focus at %.8f, phase shift needed at %s' % (new_f0[k], result_phase_shifts[k]))
+			self.new_f0 = sum(new_f0.values())/len(new_f0.keys())
 		except Exception as e:
 			raise
 			self.logger.error('Error calculating on-plane and on-node values: %s' % e)
@@ -380,8 +393,8 @@ class LppAligner(acquisition.Acquisition):
 		them to find and move to on-node.
 		'''
 		reduce_pause = self.onTarget
-		self.calclients['lpp fringe'].setIsXLpp(self.settings['xlpp'])
 		status = self.moveAndPreset(presetdata, emtarget)
+		self.calclients['lpp fringe'].setIsXLpp(self.settings['xlpp'])
 		if status == 'error':
 			self.logger.warning('Move failed. skipping acquisition at this target')
 			return status
@@ -393,16 +406,18 @@ class LppAligner(acquisition.Acquisition):
 			self.logger.error(e)
 			return
 		wave_xtlength = math.sqrt(numpy.sum(wave_transform*wave_transform)/2)
-		step_fraction = 0.3
-		self.xtilt_series = step_fraction*numpy.array(((-1,0),(0,0),(1,0))).T
+		step_fraction = 0.1
+		self.xtilt_series = step_fraction*numpy.array(((-1,0),(0,0),(1,0),(0,-1),(0,1))).T
 		self.xtilt_series = numpy.dot(wave_transform,self.xtilt_series)
 		data_shape = self.xtilt_series.shape[1]
 		# add to current value
 		xt0 = numpy.array((self.xt0['x'],self.xt0['y']))
 		xt0_series = numpy.tile(xt0,(data_shape,1)).T
 		self.xtilt_series += xt0_series
+		is_failed = False
+		phase_search = (10,170)
 		# initialize data record
-		data = {'xt':self.xtilt_series,'mean':numpy.zeros(data_shape),'std':numpy.zeros(data_shape)}
+		data = {'xt':self.xtilt_series,'mean':numpy.zeros(data_shape),'std':numpy.zeros(data_shape),'phase_shift':numpy.zeros(data_shape)}
 		for i in range(data_shape):
 			try:
 				xt = {'x':data['xt'][0,i],'y':data['xt'][1,i]}
@@ -419,24 +434,28 @@ class LppAligner(acquisition.Acquisition):
 			except Exception as e:
 				self.logger.error('failed to acquire image, aborting: %s' % e)
 				self.resetLppFocus()
+				is_failed = True
 				break
 			finally:
 				try:
 					# calculate std
 					data['mean'][i] = myimage.mean()
 					data['std'][i] = myimage.std()
+					defocus_avg, ctfvalues = self.calclients['ctf'].measureImageCtf(self.imagedata, phase_search,'temp1')
+					data['phase_shift'] = ctfvalues['extra_phase_shift']
 				except Exception as e:
 					self.logger.warning('failed fitting, skipping: %s' % e)
 				finally:
 					self.resetLppFocus()
-		is_failed = self.resetComaCorrection()
+		is_failed = self.resetComaCorrection() or is_failed
 		if is_failed:
 			self.player.pause()
-		new_f0 = {} # sequence of new_f0 at each axis
 		for k in self.lpp_axes:
 			self.new_phase_shifts[k]=0.0
+		# Find and set the best xt state
 		try:
-			ind = numpy.argmax(data['std'])
+			# use the state with the highest value
+			ind = numpy.argmax(data['phase_shift'])
 			new_xt0 = {'x':data['xt'][ind][0],'y':data['xt'][ind][1]}
 			if abs(new_xt0['x'] -self.xt0['x']) > 0.5*step_fraction*wave_xtlength or abs(new_xt0['y']-self.xt0['y']) > 0.5*step_fraction*wave_xtlength:
 				self.logger.warning('xt applied %.8f,%.8f' % (new_xt0['x'],new_xt0['y']))
@@ -458,7 +477,7 @@ class LppAligner(acquisition.Acquisition):
 		self.setOnPlaneOnNode()
 
 	def retrieveWaveTransformCalibration(self):
-		caldata = self.caliclients['lpp fringe'].retrieveLppCalibration()
+		caldata = self.calclients['lpp fringe'].retrieveLppCalibration()
 		if caldata:
 			wave_transform = numpy.array([
 				[caldata['lpp1 wave xtilt vector x'],
