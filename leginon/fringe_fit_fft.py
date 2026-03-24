@@ -64,7 +64,7 @@ def analyze_peaks(fourier_shifted, peak_positions, clipped_size):
 	p_periods = numpy.array(number*(fourier_shape[0],)).reshape((number,))/p_freqs
 	p_angs = numpy.angle(p_complex, deg=True)
 	data = {}
-	# return peak data with angle closest to zero and 90 degrees
+	# return peak data with angle closest to zero (i.e. along y-axis) and 90 degrees
 	near_0_index = numpy.argmin(numpy.abs(p_angs))
 	near_0_angle = p_angs[near_0_index]
 	near_90_index = numpy.argmin(numpy.abs(p_angs - numpy.array(number*(near_0_angle+90,))))
@@ -123,20 +123,25 @@ def _get_rough_angle_period(img_clipped, binning, number_of_peaks, number_of_fri
 	# fft2 with shift
 	fourier = numpy.fft.fft2(img_binned - numpy.mean(img_binned), (size,size))
 	fourier_shifted = numpy.fft.fftshift(fourier)
-	mask_radius = (size // number_of_fringe_guess) // 16 # keep mask smaller than 1/2 guess fringe frequency
+	mask_radius = (size // number_of_fringe_guess) // 8 # keep mask smaller than 1/2 guess fringe frequency
 	abs_fourier = numpy.abs(fourier_shifted)
 	while True:
 		peak_positions = find_peak_positions(abs_fourier.copy(), number_of_peaks, mask_radius)
 			
 		peak_data = analyze_peaks(fourier_shifted, peak_positions, clipped_size)
 		angles = list(map((lambda x: x['image_rotation']), peak_data.values()))
+		freqs = list(map((lambda x: x['wave_freq']), peak_data.values()))
 		if len(angles) < 2:
 			break
 		# increasing mask radius in case a second peak is picked up within the same diffraction.
-		delta = abs(angles[1] - angles[0])
+		delta = angles[1] - angles[0]
+		delta = math.degrees(math.atan(math.tan(math.radians(delta))))
 		if delta > 45 or delta < -45:
 			break
 		mask_radius *= 2
+		print(freqs[0],freqs[1],mask_radius)
+		if (freqs[0]+freqs[1])/2 < mask_radius:
+			raise ValueError('Mask getting too big')
 
 	scale = clipped_size / img_binned_size
 	lpp_keys = list(peak_data.keys())
@@ -144,8 +149,8 @@ def _get_rough_angle_period(img_clipped, binning, number_of_peaks, number_of_fri
 	for k in lpp_keys:
 		peak_data[k]['wave_period'] *= scale
 		peak_data[k]['wave_freq'] /= scale
-	for k in lpp_keys:
-		print('period','phase','diffr angle',peak_data[k]['wave_period'],peak_data[k]['image_rotation'])
+	#for k in lpp_keys:
+	#	print('period','phase','diffr angle',peak_data[k]['wave_period'],peak_data[k]['image_rotation'])
 	return numpy.abs(fourier_shifted), numpy.angle(fourier_shifted), peak_data
 
 def get_fringe_angle_period(img, number_of_peaks, number_of_fringe_guess=4):
@@ -174,9 +179,11 @@ if __name__=='__main__':
 	number_of_fringe_guess = 4 
 	#session_image_path = '/Users/anchi.cheng/testdata/leginon/26jan23a/rawdata'
 	session_image_path = '/Users/anchi.cheng/Downloads'
-	filename = 'n25jun20a_00141fa.mrc'
-	#filename = 'n25may28c_00094ffen.mrc'
-	#filename = '26jan23a_00005en.mrc'
+	#filename = 'n25jun20a_00141fa.mrc'
+	if 'Downloads' in session_image_path:
+		filename = input('filename in %s:' % session_image_path)
+	#filename = 'n26mar05a_81216lpp_00054fh-m.mrc'
+	#filename = '26jan23a_00140fh.mrc'
 	#session_image_path = '/Users/anchi.cheng/Downloads'
 	#filename = 'n25jul09a_00504fy.mrc'
 	mrc_path = os.path.join(session_image_path, filename)

@@ -199,7 +199,9 @@ class StigCalibrator(calibrator.Calibrator):
 		kwargs = {
 			'correct_tilt': correct_tilt,
 			'settle': settling_time,
+			'on_phase_plate': False,
 		}
+		#TODO add phase plate option ?
 		result = self.ctfcalclient.measureDefocusStig(*args, **kwargs)
 		self.measurement = {}
 

@@ -265,6 +265,8 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		try:
 			# increased settle time from 0.25 to 0.5 for Falcon protector
 			settletime = self.settings['beam tilt settle time']
+			defoc0 = self.instrument.tem.Defocus
+			self.logger.debug('start defocus after measure on tem %.3e' % defoc0)
 			### FIX ME temporarily switch off tilt correction because the calculation may be wrong Issue #3030
 			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=False, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=settletime, image0=self.lastdriftimage, on_phase_plate=self.settings['on phase plate'])
 		except calibrationclient.Abort:
@@ -315,13 +317,18 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			return status
 
 		measure_status = None
-		delta_defocus = 1e-6
 		phase_search = (setting['phase search min'],setting['phase search max'])
 		try:
+			defoc0 = self.instrument.tem.Defocus
+			self.logger.info('start defocus before measure on tem %.3e' % defoc0)
 			# increased settle time from 0.25 to 0.5 for Falcon protector
 			settletime = self.settings['beam tilt settle time']
+			# use defocus on the instrument
+			initial_defocus = None
 			### FIX ME temporarily switch off tilt correction because the calculation may be wrong Issue #3030
-			correction = self.ctfcalclient.measureCtf(delta_defocus, correct_tilt=False, stig=setting['stig correction'], settle=settletime, image0=self.lastdriftimage, phase_search=phase_search)
+			correction = self.ctfcalclient.measureCtf(initial_defocus, correct_tilt=False, stig=setting['stig correction'], settle=settletime, image0=self.lastdriftimage, phase_search=phase_search)
+			defoc0 = self.instrument.tem.Defocus
+			self.logger.debug('final defocus after measure on tem %.3e' % defoc0)
 		except calibrationclient.Abort:
 			self.logger.info('Measurement of defocus and stig. has been aborted')
 			measure_status = 'aborted'
@@ -439,6 +446,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			self.correctStig(stiglens, stigx, stigy)
 
 		defoc0 = self.instrument.tem.Defocus
+		self.logger.info('final defocus on tem %.3e' % defoc0)
 		self.logger.info('Defocus correction...')
 		defoc = resultdata['defocus']
 		delta = defoc + defoc0

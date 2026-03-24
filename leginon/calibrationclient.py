@@ -838,7 +838,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		return bt
 
 	def measureDefocusStig(self, tilt_value, stig=True, correct_tilt=False, correlation_type=None, settle=0.5, image0=None, on_phase_plate=False):
-
+		'''
+		Return defocus and stigmator correction required using beam tilt
+		'''
 		self.abortevent.clear()
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
@@ -3013,9 +3015,9 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		time.sleep(settle)
 		imagedata1 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
 		defocus_avg1, ctfvalues1 = self.measureImageCtf(imagedata1, phase_search,'temp1')
-
 		# reset
 		self.instrument.tem.Defocus = defocus0
+
 		# determine sign of the ctf defocus correction required to reach 0.
 		# an underfocused image should have positive sign
 		defocus0_is_over_focus = False
@@ -3082,7 +3084,7 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		self.stig_cal = self.stig_calclient.researchCalibration(tem, cam, stig_name)
 		phase_search = (0,0)
 		if on_phase_plate:
-			raise ValueError('should not be used in on-phase-plate')
+			phase_search = (10,170)
 		ctf_correction = self.measureCtf(initial_defocus,False, True, settle,image0, phase_search)
 		stig_x, stig_y = self.stig_calclient.ctf2Stigmator(self.stig_cal, ctf_correction)
 		result = ctf_correction.copy()

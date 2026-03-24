@@ -214,7 +214,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.at_reference_target = True
 		# check results
 		p = self.instrument.tem.StagePosition
-		self.logger.info('Reference target position x: %.1f um, y:%.1f um, z:%.1f um' % (p['x']*1e6,p['y']*1e6,p['z']))
+		self.logger.info('Reference target position x: %.1f um, y:%.1f um, z:%.1f um' % (p['x']*1e6,p['y']*1e6,p['z']*1e6))
 		preset = self.presets_client.getCurrentPreset()
 		if preset['name'] != preset_name:
 			message = 'failed to set preset \'%s\'' % preset_name

@@ -243,12 +243,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.calclients['image beam shift'] = calibrationclient.ImageBeamShiftCalibrationClient(self)
 		self.calclients['beam shift'] = calibrationclient.BeamShiftCalibrationClient(self)
 		self.calclients['beam tilt'] = calibrationclient.BeamTiltCalibrationClient(self)
+		self.calclients['lpp fringe'] = calibrationclient.LppCalibrationClient(self)
 
 		self.presetsclient = presets.PresetsClient(self)
 		self.navclient = navigator.NavigatorClient(self)
 		self.doneevents = {}
 		self.onTarget = False
 		self.imagelistdata = None
+		self.imagedata = None
 		self.simloopstop = threading.Event()
 		self.received_image_drift = threading.Event()
 		self.requested_drift = None
@@ -537,12 +539,22 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.tuneLpp(zlp_preset_name, False) # preset_name is not used but tem/ccdcamera must be set
 
 	def postTargetSetup(self):
+		"""
+		Tuning on-position after each target is processed.  For Focuser and subclasses
+		that acquire multiple images per target, this is meant to done only when
+		self.imagedata is set to imagedata it acquires.
+		"""
 		if not self.settings['post-target tuning']:
+			return
+		# self.imagedata is not assigned to data in Focuser except for the final image 
+		if not hasattr(self,'imagedata') or self.imagedata is None:
 			return
 		self.logger.info('Tuning after processing a target')
 		zlp_preset_name = self.settings['preset order'][-1]
 		self.tuneEnergyFilter(zlp_preset_name)
 		self.tuneLpp(zlp_preset_name, True) # preset_name is not used but tem/ccdcamera must be set
+		targetdata = self.calclients['lpp fringe'].newReferenceTarget(self.imagedata, 0,0)
+		targetdata.insert()
 
 	def validateSettings(self):
 		'''
