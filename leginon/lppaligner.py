@@ -382,7 +382,6 @@ class LppAligner(acquisition.Acquisition):
 				self.logger.info('Calculated LPP focus at %.8f, phase shift needed at %s' % (new_f0[k], result_phase_shifts[k]))
 			self.new_f0 = sum(new_f0.values())/len(new_f0.keys())
 		except Exception as e:
-			raise
 			self.logger.error('Error calculating on-plane and on-node values: %s' % e)
 			return status
 
