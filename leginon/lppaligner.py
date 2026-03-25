@@ -154,6 +154,7 @@ class LppAligner(acquisition.Acquisition):
 			basey = basebase['y'] + delta
 			newbase = {'x':basex, 'y':basey}
 			baselist.append(newbase)
+		return baselist
 
 	def makeState(self, value, axis):
 		'''

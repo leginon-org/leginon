@@ -37,6 +37,7 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		self.ref_position = None
 		self.calibration_clients['phase plate plane shift'] = calibrationclient.PhasePlatePlaneShiftCalibrationClient(self)
 		self.calibration_clients['lpp fringe'] = calibrationclient.LppCalibrationClient(self)
+		self.first_image_mean = None
 		self.start()
 
 	def _setRequestPreset(self, request_preset_name):
@@ -86,14 +87,14 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		measure_preset = self.makeMeasurePreset(refdata['reference']['preset'])
 		if refdata['xlpp']:
 			self.new_phase_shifts[2]=0.0
-		try:
-			max_iter = 10
-			# Iterate until stable
-			i = 1
-			# compare to the value before the request is executed in the
-			# first iteration
-			last_xt0 = self.new_xt0.copy()
-			while True:
+		max_iter = 10
+		# Iterate until stable
+		i = 1
+		# compare to the value before the request is executed in the
+		# first iteration
+		last_xt0 = self.new_xt0.copy()
+		while True:
+			try:
 				self.logger.info('Iterate until stable, iter=%d' % i)
 				new_xt0, delta_xt_magnitude = self._measureShift(refdata, measure_preset,lpp_focus, last_xt0)
 				self.logger.info('delta_xt_magnitude %d: %s' % (i, delta_xt_magnitude))
@@ -107,11 +108,17 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 				if i > max_iter:
 					self.logger.error('Maximal iteration reached without convergance')
 					break
-		except Exception as e:
-			traceback.print_exc()
-			self.logger.error('Error calculating on-node values: %s' % e)
-			self.resetLppFocus() #reset to the old value
-			return
+			except Exception as e:
+				self.logger.error('Error calculating on-node values: %s' % e)
+				self.logger.warning('Lpp might be unlocked or electron beam lost')
+				self.logger.error('Paused to wait for user confirmation')
+				self.setStatus('user input')
+				self.player.pause()
+				# reset so it will wait for
+				i = 1
+				self.player.wait()
+				self.setStatus('processing')
+		self.resetLppFocus() #reset to the old value
 		wave_max = self.calibration_clients['lpp fringe'].getXTiltDeltaMagnitudeLimit()
 		self.new_xt0 = self.calibration_clients['lpp fringe'].limitXTiltDrift(self.new_xt0, refdata, wave_max)
 		msg = 'new xt calculated from correlation = (%s)' % self.new_xt0
@@ -143,6 +150,13 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 			self.imagedata.insert()
 			myimage = self.imagedata['image']
 			self.setImage(myimage, 'Image')
+			new_mean = myimage.mean()
+			# Check if lost e-beam
+			if self.first_image_mean is None:
+				self.first_image_mean = new_mean
+			else:
+				if new_mean < 0.05 * self.first_image_mean:
+					raise ValueError('Image mean below 5% of the first image')
 		except Exception as e:
 			self.logger.error('failed to acquire image, aborting: %s' % e)
 			raise
@@ -158,7 +172,8 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 			delta_xt_magnitude = math.hypot(new_xt0['x']-last_xt0['x'], new_xt0['y']-last_xt0['y'])
 			return new_xt0, delta_xt_magnitude
 		except Exception as e:
-			self.logger.warning('failed fitting, skipping: %s' % e)
+			self.logger.error('failed fitting: %s' % e)
+			raise
 		return
 
 	def addXtOffset(self, is_positive_offset):
