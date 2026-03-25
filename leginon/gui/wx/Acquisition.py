@@ -199,14 +199,10 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_response = self.createBadResponseSizer()
 		sz_range = self.createBadRangeSizer()
 		sz_evaluate = self.createBadEvaluateSizer()
-		# bad stats email
-		passwordbut = wx.Button(self, -1, 'Enter Email Password')
-		self.Bind(wx.EVT_BUTTON, self.onEnterPassword, passwordbut)
 		# evaluate box sizer
 		sbsz_evaluate.Add(sz_response, 0, wx.ALIGN_CENTER|wx.ALL, 0)
 		sbsz_evaluate.Add(sz_range, 0, wx.ALIGN_CENTER|wx.ALL,0)
 		sbsz_evaluate.Add(sz_evaluate, 0, wx.ALIGN_CENTER|wx.ALL,0)
-		sbsz_evaluate.Add(passwordbut, 0, wx.ALIGN_CENTER|wx.ALL, 3)
 		return sbsz_evaluate
 
 	def createTransformSizer(self):
@@ -483,12 +479,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(szright, (0,2),(8,1), wx.ALIGN_TOP)
 		sz.Add(sz_limit_image, (9,2), (2,1), wx.ALIGN_BOTTOM)
 		return sz
-
-	def onEnterPassword(self, evt):
-		dialog = wx.PasswordEntryDialog(self, 'Enter Password:')
-		dialog.ShowModal()
-		self.node.setEmailPassword(dialog.GetValue())
-		dialog.Destroy()
 
 class Panel(leginon.gui.wx.Node.Panel):
 	icon = 'acquisition'

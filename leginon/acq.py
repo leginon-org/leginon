@@ -29,7 +29,6 @@ import numpy.linalg
 import math
 from pyami import arraystats, imagefun, ordereddict, moduleconfig
 import smtplib
-from leginon import emailnotification
 from leginon import leginonconfig
 from leginon import gridlabeler
 import itertools
@@ -1296,21 +1295,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		statsdata['image'] = imagedata
 		self.publish(statsdata, database=True)
 
-	def setEmailPassword(self, password):
-		self.emailpassword = password
-
-	def emailBadImageStats(self, stats):
-		s = smtplib.SMTP()
-		s.connect(leginonconfig.emailhost)
-		s.login(leginonconfig.emailuser, self.emailpassword)
-
-		subject = 'LEGINON: bad image stats'
-		responsetext = self.settings['bad stats response'].replace('Abort','aborted')
-		responsetext = responsetext.replace('Pause','paused at current')
-		text = 'Your Leginon session has '+ responsetext + ' target list(s) at \n\n'+time.ctime() + '\n\n due to bad image mean value of %.2f' %stats
-		mes = emailnotification.makeMessage(leginonconfig.emailfrom, leginonconfig.emailto, subject, text)
-		s.sendmail(leginonconfig.emailfrom, leginonconfig.emailto, mes.as_string())
-
 	def pauseAndRecheck(self,pausetime):
 		recheck_count = next(self.recheck_counter)
 		self.logger.info('Pausing for %d s before checking again at %d' % (pausetime,recheck_count))
@@ -1374,16 +1358,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if mean is None:
 				return
 		if mean > self.settings['high mean']:
-			try:
-				self.emailBadImageStats(mean)
-			except:
-				self.logger.info('could not email')
 			self.respondBadImageStats('high')
 		if mean < self.settings['low mean']:
-			try:
-				self.emailBadImageStats(mean)
-			except:
-				self.logger.info('could not email')
 			if mean is not None:
 				self.logger.info('mean lower than settings %6.0f' % (mean))
 			self.respondBadImageStats('low')
