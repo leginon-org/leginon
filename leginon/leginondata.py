@@ -415,6 +415,14 @@ class MagnificationComparisonData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class XTiltCenterData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('tem', InstrumentData),
+			('center', dict), # x,y key/value pair
+		)
+	typemap = classmethod(typemap)
+
 class CalibrationData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (

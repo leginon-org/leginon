@@ -570,3 +570,15 @@ class LppAligner(acquisition.Acquisition):
 		txt = 'xtilt (x,y): (%.5f,%5f); xshift: (%5f,%5f)' % (xtilt['x'],xtilt['y'], xshift['x'],xshift['y'])
 		cdata['comment'] = txt
 		cdata.insert(force=True)
+
+	def xTiltToScope(self):
+		calclient = self.calclients['phase plate plane shift']
+		center = calclient.retrieveXTiltCenter()
+		if center is None:
+			return
+		self.instrument.tem.PhasePlatePlaneShift = center
+		self.logger.info('xtilt center sent as x: %.3f, y: %.3f mrad' % (center['x']*1e3, center['y']*1e3))
+
+	def xTiltFromScope(self):
+		calclient = self.calclients['phase plate plane shift']
+		calclient.saveXTiltCenter()

@@ -1905,6 +1905,28 @@ class PhasePlatePlaneShiftCalibrationClient(SimpleMatrixCalibrationClient):
 			return None
 		return newstate['phase plate plane shift'], cor, cor_pixelpeak
 
+	def retrieveXTiltCenter(self):
+		tem = self.instrument.getTEMData()
+		if not tem:
+			return None
+		try:
+			r = leginondata.XTiltCenterData(tem=tem).query()
+			return r[0]['center']
+		except IndexError as e:
+			errstr = 'No X-tilt center for %s' % (tem['name'],)
+			self.node.logger.exception(errstr)
+		except Exception as e:
+			errstr = 'Other error for %s: %s' % (tem['name'], e)
+			self.node.logger.exception(errstr)
+		return None
+
+	def saveXTiltCenter(self):
+		tem = self.instrument.getTEMData()
+		xt = self.instrument.tem.PhasePlatePlaneShift
+		q = leginondata.XTiltCenterData(tem=tem, center=xt)
+		q.insert(force=True)
+		self.node.logger.info('xtilt center saved')
+
 class LppCalibrationClient(SimpleMatrixCalibrationClient):
 	mover = False
 	def __init__(self, node):
