@@ -405,15 +405,55 @@ class LppAligner(acquisition.Acquisition):
 		except Exception as e:
 			self.logger.error(e)
 			return
-		wave_xtlength = math.sqrt(numpy.sum(wave_transform*wave_transform)/2)
 		step_fraction = 0.1
+		wave_xtlength = math.sqrt(numpy.sum(wave_transform*wave_transform)/2)
+		xt_delta_min = 0.025*wave_xtlength
+		# save value for reset if error.
+		old_xt0 = self.instrument.tem.PhasePlatePlaneShift
+		trial_max = 10
+		trial = 1
+		# initialize old_xt which changes with iteration
+		old_xt = self.instrument.tem.PhasePlatePlaneShift
+		while trial <= trial_max:
+			try:
+				self.logger.info('Trial number %d' % trial)
+				new_xt,data_index = self.optimizeXTilt(wave_transform, step_fraction, args)
+				self.xt0 = new_xt.copy()
+				self.instrument.tem.PhasePlatePlaneShift = self.xt0
+				if data_index == 1:
+					xt_delta_length = math.hypot(new_xt['x']-old_xt['x'], new_xt['y']-old_xt['y'])
+					#TODO xt_delta_lenthis always 0 since data_index==1
+					if xt_delta_length < xt_delta_min or trial > trial_max:
+						break
+					step_fraction /= 2.0
+				state=self.player.state()
+				if state == 'stop':
+					self.xt0 = old_xt0.copy()
+					self.instrument.tem.PhasePlatePlaneShift = self.xt0
+					return 'aborted'
+				trial += 1
+				# set next iteration old_xt
+				old_xt = new_xt.copy()
+			except Exception as e:
+				traceback.print_exc()
+				return 'error'
+		return 'ok'
+
+	def optimizeXTilt(self, wave_transform, step_fraction, args):
+		wave_xtlength = math.sqrt(numpy.sum(wave_transform*wave_transform)/2)
 		self.xtilt_series = step_fraction*numpy.array(((-1,0),(0,0),(1,0),(0,-1),(0,1))).T
 		self.xtilt_series = numpy.dot(wave_transform,self.xtilt_series)
+		print('**************')
+		print(self.xtilt_series)
+		print('**************')
 		data_shape = self.xtilt_series.shape[1]
 		# add to current value
 		xt0 = numpy.array((self.xt0['x'],self.xt0['y']))
 		xt0_series = numpy.tile(xt0,(data_shape,1)).T
 		self.xtilt_series += xt0_series
+		print('*****added center*********')
+		print(self.xtilt_series)
+		print('**************')
 		is_failed = False
 		phase_search = (10,170)
 		# initialize data record
@@ -435,14 +475,14 @@ class LppAligner(acquisition.Acquisition):
 				self.logger.error('failed to acquire image, aborting: %s' % e)
 				self.resetLppFocus()
 				is_failed = True
-				break
+				raise
 			finally:
 				try:
 					# calculate std
 					data['mean'][i] = myimage.mean()
 					data['std'][i] = myimage.std()
 					defocus_avg, ctfvalues = self.calclients['ctf'].measureImageCtf(self.imagedata, phase_search,'temp1')
-					data['phase_shift'] = ctfvalues['extra_phase_shift']
+					data['phase_shift'][i] = ctfvalues['extra_phase_shift']
 				except Exception as e:
 					self.logger.warning('failed fitting, skipping: %s' % e)
 				finally:
@@ -455,15 +495,18 @@ class LppAligner(acquisition.Acquisition):
 		# Find and set the best xt state
 		try:
 			# use the state with the highest value
+            # TODO: use std to break tie ?
 			ind = numpy.argmax(data['phase_shift'])
-			new_xt0 = {'x':data['xt'][ind][0],'y':data['xt'][ind][1]}
+			print(data)
+			new_xt0 = {'x':data['xt'][0][ind],'y':data['xt'][1][ind]}
 			if abs(new_xt0['x'] -self.xt0['x']) > 0.5*step_fraction*wave_xtlength or abs(new_xt0['y']-self.xt0['y']) > 0.5*step_fraction*wave_xtlength:
 				self.logger.warning('xt applied %.8f,%.8f' % (new_xt0['x'],new_xt0['y']))
 				self.instrument.tem.PhasePlatePlaneShift = new_xt0
+			return new_xt0, ind
 		except Exception as e:
 			raise
 			self.logger.error('Error calculating on-plane and on-node values: %s' % e)
-			return status
+
 
 	def setOnPlaneOnNode(self):
 		self.calclients['lpp fringe'].setOnPlaneOnNode()
