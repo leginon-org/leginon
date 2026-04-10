@@ -3062,6 +3062,7 @@ class ReferenceSettingsData(SettingsData):
 			('mover', str),
 			('move precision', float),
 			('accept precision', float),
+			('user check', bool),
 		)
 	typemap = classmethod(typemap)
 

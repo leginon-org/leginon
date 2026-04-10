@@ -125,7 +125,7 @@ class LppAlignTimer(referencetimer.ReferenceTimer):
 		self.logger.info(msg)
 		# setOnPlaneOnNode will set using self.new_xt0
 		self.calibration_clients['lpp fringe'].setOnPlaneOnNode()
-		#TODO: saving
+		#TODO: saving correction values like focuser
 		# reset default to the new value since recording correction image
 		# will include use resetLppFocus().
 		self.xt0 = self.new_xt0.copy()

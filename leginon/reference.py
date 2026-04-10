@@ -43,6 +43,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		'accept precision': 1e-6,
 		'pause time': 3.0,
 		'return settle time': 2.5,
+		'user check': False,
 	}
 	requestdata = None
 
@@ -78,6 +79,12 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
 		if self.__class__ == Reference:
 			self.start()
+
+	def onInitialized(self):
+		super(Reference, self).onInitialized()
+		# self.panel is now made
+		combined_state = self.settings['user check'] and not self.settings['bypass']
+		self.setUserVerificationStatus(combined_state)
 
 	def handleApplicationEvent(self,evt):
 		'''
@@ -325,6 +332,14 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			self.execute(request_data)
 			# default behavior: reset only if successful
 			self.resetProcess()
+			if self.settings['user check']:
+				self.setStatus('user input')
+				self.panel.playerEvent('pause')
+				self.logger.info('Paused by settings to always confirm by user')
+				self.player.pause()
+			self.player.wait()
+			self.setStatus('processing')
+			self.panel.playerEvent('play')
 		except Exception as e:
 			self.logger.error('Error executing request, %s' % e)
 		finally:
