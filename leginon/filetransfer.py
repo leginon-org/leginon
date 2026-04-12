@@ -41,6 +41,7 @@ class FileTransfer(pyami.scriptrun.ScriptRun):
 		parser.add_option("--path_mode", dest="mode_str", 
 			help="recursive session permission modification by chmod if specified, default means not to modify e.g. --path_mode=g-w,o-rw")
 		parser.add_option("--check_days", dest="check_days", help="Number of days to query database", type="int", default=10)
+		parser.add_option("--max_workers", dest="max_workers", help="Number of concurrent workers", type="int", default=4)
 		parser.add_option("--debug", dest="debug", default=False,
 			action="store_true", help="Print more info to debug")
 
