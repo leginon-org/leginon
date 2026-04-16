@@ -232,8 +232,8 @@ class RawTransfer(filetransfer.FileTransfer):
 				target=run_with_semaphore,
 				args=(name,),
 				name='rawtransfer-%s' % name,
-				daemon=True,
 			)
+			t.daemon = True
 			threads.append(t)
 			t.start()
 
