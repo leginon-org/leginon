@@ -1602,6 +1602,44 @@ class leginondata {
 		}
 	}
 
+	function getImageLppFitResults($imageId) {
+		if ($this->mysql->isTable('LppFitResultData') && $imageId) {
+			$q = "select * from LppFitResultData where `REF|AcquisitionImageData|image`=".$imageId." ";
+			$r = $this->mysql->getSQLResult($q);
+		} else {
+			return array();
+		}
+		$skipedKeys = ['DEF_timestamp', 'REF|SessionData|session', 'REF|AcquisitionImageData|image'];
+		$sharedKeys = ['REF|LppOnNodeRefData|on node ref'];
+
+		$result = [];
+
+		foreach ($r as $subArray) {
+			$axisValue = $subArray['axis'];
+
+			// based on Claude code suggestion
+			foreach ($subArray as $key => $value) {
+				if (in_array($key, $skipedKeys)) {
+					continue;
+				} elseif ($key === 'DEF_id') {
+					$key = 'lpp_fit_id';
+				} elseif (in_array($key, $sharedKeys)) {
+					// Add shared keys once (no suffix)
+					$new_key = str_replace(' ','_',resolveKey($key));
+					$result[$new_key] = $value;
+				} elseif ($key === 'axis') {
+					// Skip the axis key itself or store it if needed
+					continue;
+				} else {
+					// Append axis value as suffix for unique keys
+					$new_key = str_replace(' ','_',resolveKey($key));
+					$result[$new_key . '_axis' . $axisValue] = $value;
+				}
+			}
+		}
+		return $result;
+	}
+
 	function getGridId($imgId) {
 		if (!$this->mysql->isTable('GridData'))
 			return 0;
@@ -4363,6 +4401,13 @@ class leginondata {
 function rsum($v, $w) {
 	$v += $w;
 	return $v;
+}
+
+function resolveKey($key) {
+    if (str_starts_with($key, 'REF|')) {
+        return substr($key, strrpos($key, '|') + 1).' id';
+    }
+    return $key;
 }
 
 $leginondata = new leginondata();
