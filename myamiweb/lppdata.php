@@ -31,7 +31,7 @@ if ($viewsql) {
 	exit;
 }
 
-$display_names = array('image_id', 'filename');
+$display_names = array('image_id', 'timestamp', 'filename');
 foreach ($scaler_fieldnames as $fieldname) {
 	$display_names[] = str_replace(' ','_',$fieldname);
 }
