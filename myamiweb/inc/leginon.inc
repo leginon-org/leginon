@@ -3155,7 +3155,8 @@ class leginondata {
 			."FROM `AcquisitionImageData` AS `a` "
 			."LEFT JOIN `PresetData` AS `p` ON (`p`.`DEF_id` = `a`.`REF|PresetData|preset`) "
 			."WHERE `a`.`REF|SessionData|session` = $sessionId "
-			."AND `a`.`version`=0 "
+			."AND (`a`.`version`=0 or `a`.`version` is NULL) "
+			#."AND (`a`.`version`=0) "
 			."AND `p`.`name` like '".$preset_name."' "
 			."ORDER BY `utime` DESC ";
 			if ($limit !== false) {
@@ -3188,29 +3189,43 @@ class leginondata {
 	}
 
 	function getTiming($sessionId, $preset="", $getquery=false) {
+		$test = $this->_getTiming($sessionId, $preset, $false);
+		if (!empty($ret)) {
+			$ret = $this->_getTiming($sessionId, $preset, $getquery,'target');
+		} else {
+			$ret = $this->_getTiming($sessionId, $preset, $getquery,'emtarget');
+		}
+		return $ret;
+	}
+
+	function _getTiming($sessionId, $preset="", $getquery=false, $target_data_type='target') {
 		// This timing calculation checks time difference between
 		// target start processing and image published, thus without
 		// overhead from processing rejected targets nor autofilling etc.
+		$target_table = ($target_data_type==='target') ? 'AcquisitionImageTargetData':'EMTargetData';
+		$target_field = ($target_data_type==='target') ? 'REF|AcquisitionImageTargetData|target':'REF|EMTargetData|emtarget';
 		$datatype=($preset) ? array($preset):$this->getDataTypes($sessionId);
 		foreach ($datatype as $preset) {
             if ($preset == 'manual') continue;
 			$siblings=$this->getSiblingsfrompreset($sessionId, $preset);
 			$presetorder=array();
-			if ($siblings)
-			foreach($siblings as $sibling) {
-				$presetorder[]=$sibling['s_preset'];
+			if ($siblings) {
+				foreach($siblings as $sibling) {
+					$presetorder[]=$sibling['s_preset'];
+				}
 			}
 			$key = array_search($preset, $presetorder);
 			$key -=1;
 			if ($key<0)
 				$key=0;
 			$sibling=$siblings[$key];
-			$sqlsiblings[]="(`p`.`name` = '".$preset."' AND `s_p`.`name` = '".$sibling['s_preset']."')";
+			$sibling_preset = $sibling['s_preset'] ? $sibling['s_preset']: $preset;
+			$sqlsiblings[]="(`p`.`name` = '".$preset."' AND `s_p`.`name` = '".$sibling_preset."')";
 		}
 
 			$where[] = "`a`.`REF|SessionData|session` = $sessionId";
-			$where[] = "`sibling`.`version`=0 ";
-			$where[] = "`a`.`version`=0 ";
+			$where[] = "(`sibling`.`version`=0 or `sibling`.`version` is NULL) ";
+			$where[] = "(`a`.`version`=0 or `a`.`version` is NULL) ";
 			$where[] = "(".join(" OR ", $sqlsiblings).")";
 			// --- quick hack for Square preset --- //
 			if ($preset=="sq")
@@ -3235,10 +3250,10 @@ class leginondata {
 		.$preselect
 		."FROM "
 		."`AcquisitionImageData` AS `a` "
-		."LEFT JOIN `AcquisitionImageTargetData` AS `t` "
-		."ON (`t`.`DEF_id`=`a`.`REF|AcquisitionImageTargetData|target`) "
+		."LEFT JOIN `".$target_table."` AS `t` "
+		."ON (`t`.`DEF_id`=`a`.`".$target_field."`) "
 		."LEFT JOIN AcquisitionImageData AS `sibling` "
-		."ON (`sibling`.`REF|AcquisitionImageTargetData|target`=`t`.`DEF_id`) "
+		."ON (`sibling`.`".$target_field."`=`t`.`DEF_id`) "
 		.$prejoin
 		.$sqlwhere;
 
