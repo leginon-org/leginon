@@ -127,7 +127,7 @@ class FastFreeHandTestScript(appionScript.AppionScript):
 		scripts = []
 		files = []
 		last_particle = apStack.getNumberStackParticlesFromId(self.params['stackid'], msg=True)
-		last_particle = 82	
+		last_particle = 82
 		# This is integer division and will return integer
 		stepsize = int(math.ceil(float(last_particle) / nproc))
 		for proc in range(nproc):
@@ -225,7 +225,7 @@ class plotFreeHandTestResult(object):
 		self.peakfile = 'peaks.txt'
 
 	def getCCP4Path(self):
-		### get the openmpi directory        
+		### get the openmpi directory
 		ccp4path = subprocess.Popen("env | grep CCP4=/usr/local/ccp4-6.3.0", shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 
 		if ccp4path:
@@ -467,9 +467,9 @@ class plotFreeHandTestResult(object):
 		avgfile = self.averageStack(self.merged_outfile)
 		avgroot = '.'.join(os.path.splitext(avgfile)[:-1])
 
-                #Run & Plot peak finding
-                self.findPeak(self.merged_outfile)
-                self.scatter(peaks,angSearch,tiltCenter,includedPercentTilt)
+		#Run & Plot peak finding
+		self.findPeak(self.merged_outfile)
+		self.scatter(peaks,angSearch,tiltCenter,includedPercentTilt)
 
 		#Calculate contour
 		ccp4PATH = self.getCCP4Path()

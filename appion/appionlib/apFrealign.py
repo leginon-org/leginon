@@ -1100,7 +1100,7 @@ def exclude_class_from_frealign9_parfile(inparfile, outlist, minocc=50.0, freali
 	if frealign9outfile is not None:
 		ff9 = open(frealign9outfile, "w")
 		ff9.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
-	                % ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
+			% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
 	k = 1
 	olddx = 0
 	micnum = 0
@@ -1531,19 +1531,19 @@ def combine_best_multimodel_parfiles_into_one(outparfile, *parfiles):
 	return
 
 def frealign9_to_spider(inparfile, outspifile):
-        ### set params
-        params = parseFrealign9ParamFile(inparfile)
+	### set params
+	params = parseFrealign9ParamFile(inparfile)
 	first = 0
 	last = len(params)
-        of = open(outspifile, "w")
-        for i in range(first, last):
-                rot = float(params[i+1]['phi'])
-                theta = float(params[i+1]['theta'])
-                psi = float(params[i+1]['psi'])
-                shx = float(params[i+1]['shiftx'])
-                shy = float(params[i+1]['shifty'])
-                of.write("%10.3f%10.3f%10.3f%10.3f%10.3f\n" % (rot, theta, psi, shx, shy))
-        of.close()
+	of = open(outspifile, "w")
+	for i in range(first, last):
+		rot = float(params[i+1]['phi'])
+		theta = float(params[i+1]['theta'])
+		psi = float(params[i+1]['psi'])
+		shx = float(params[i+1]['shiftx'])
+		shy = float(params[i+1]['shifty'])
+		of.write("%10.3f%10.3f%10.3f%10.3f%10.3f\n" % (rot, theta, psi, shx, shy))
+	of.close()
 
 def getFrealignStyleParticleMagnification(stackpdata,refinestack_bin):
 	stackbin = apStack.getStackBinningFromStackId(stackpdata['stack'].dbid)

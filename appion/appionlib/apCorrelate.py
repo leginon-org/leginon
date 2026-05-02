@@ -228,9 +228,9 @@ def calcNormConvMap(image, imagefft, tmplmask, oversized, pixrad):
 	#REMOVE OUTSIDE AREA
 	cshape = v2.shape
 	white1 = 0.01
- 	v2[ 0:pixrad*2, 0:cshape[1] ] = white1
+	v2[ 0:pixrad*2, 0:cshape[1] ] = white1
 	v2[ 0:cshape[0], 0:pixrad*2 ] = white1
- 	v2[ cshape[0]-pixrad*2:cshape[0], 0:cshape[1] ] = white1
+	v2[ cshape[0]-pixrad*2:cshape[0], 0:cshape[1] ] = white1
 	v2[ 0:cshape[0], cshape[1]-pixrad*2:cshape[1] ] = white1
 
 	xn = (v2.shape)[0]/2
