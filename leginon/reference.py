@@ -330,6 +330,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			return
 		try:
 			self.execute(request_data)
+			self.logExecution(request_data)
 			# default behavior: reset only if successful
 			self.resetProcess()
 			if self.settings['user check']:
@@ -446,7 +447,18 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			try:
 				self.execute(None)
 			finally:
+				self.logExecution()
 				self.resetProcess()
+
+	def logExecution(self, request_data=None):
+		try:
+			request_name = request_data.__class__.__name__
+		except:
+			request_name = None
+		q = leginondata.ReferenceReqExecutionData(session=self.session)
+		q['node'] = self.this_node
+		q['request name'] = request_name
+		q.insert(force=True)
 
 	def resetProcess(self):
 		# self.last_processed is different between Timer and Counter

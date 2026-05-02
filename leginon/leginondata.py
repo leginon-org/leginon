@@ -1152,6 +1152,14 @@ class ReferenceRequestData(InSessionData):
 class AlignZeroLossPeakData(ReferenceRequestData):
 	pass
 
+class ReferenceReqExecutionData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('node', NodeSpecData),
+			('request name', str),
+		)
+	typemap = classmethod(typemap)
+
 class ZeroLossCheckData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
