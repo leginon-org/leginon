@@ -9,7 +9,7 @@
 require_once "basicLoopForm.inc";
 require_once "dbDefocusTable.inc";
 
-class GCtfFind extends BasicLoopForm
+class gctffind extends BasicLoopForm
 {
 	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $fieldsize='1024',
 								$astig='0.05', $bestdb=true, $nominal='', $parallel=true, $phase_plate=false, $min_phase_shift=10, $max_phase_shift=170) 
