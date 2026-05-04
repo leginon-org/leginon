@@ -23,6 +23,7 @@ from pyami import correlator, peakfinder, arraystats, imagefun, fftfun, numpil, 
 from pyami import aberration
 import time
 import sys
+import os
 import threading
 from leginon import gonmodel
 from leginon import tiltcorrector
@@ -3089,8 +3090,11 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 	def measureImageCtf(self, imagedata, phase_search=(0,0),temp_filename='temp'):
 		if not imagedata['filename']:
 			# This occurs when image is taken without saving
+			session_path = imagedata['session']['image path']
+			os.makedirs(session_path, exist_ok=True)
+
 			imagedata['filename']=temp_filename
-			mrc.write(imagedata['image'],'%s/%s.mrc' % (imagedata['session']['image path'],temp_filename))
+			mrc.write(imagedata['image'],'%s/%s.mrc' % (session_path,temp_filename))
 		im = imagedata['image']
 		self.displayImage(im)
 		ctfvalues = self.ctfclient.runFromImageData(imagedata, phase_search=phase_search)
