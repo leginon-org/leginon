@@ -50,6 +50,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		'imageshift coma step': -5e-6,
 		'imageshift coma number': 2,
 		'imageshift coma repeat': 1,
+		'auto coma count limit': 3,
+		'auto coma limit': 0.002,
 	})
 
 	def __init__(self, *args, **kwargs):
@@ -61,7 +63,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.comameasurement = {}
 		self.parameter = 'defocus'
 		self.dialog_done = threading.Event()
-		self.ab_types = ['beam tilt','stig','defocus']
+		self.ab_types = ['beam tilt','stig','defocus', 'phase plate plane shift']
 		self.sites = 4
 		self.manualplayer = player.Player()
 
@@ -70,6 +72,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			'eucentric focus': calibrationclient.EucentricFocusClient(self),
 			'ctf': calibrationclient.CtfCalibrationClient(self),
 			'stig': calibrationclient.ObjectiveStigCalibrationClient(self),
+			'coma': calibrationclient.TableauAberrationCalibrationClient(self),
 		}
 		self.btcalclient = self.calibration_clients['beam tilt']
 		self.ctfcalclient= self.calibration_clients['ctf']
@@ -116,6 +119,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	def calibrateImageShiftComa(self):
 		'''determine the calibration matrix for image shift induced coma'''
 		calibration_client = self.calibration_clients['beam tilt']
+		my_tem = self.instrument.getTEMData()
+		ht = self.instrument.tem.HighTension
+		self.abe = self.calibration_clients['coma'].abe
+		self.ace = self.calibration_clients['coma'].ctfclient
 		try:
 			if self.initInstruments():
 				raise RuntimeError('cannot initialize instrument')
@@ -151,12 +158,51 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		fake['beam tilt'] = {'x':[(0.00355495,-0.0236784),(0.00590004,-0.0213854),(0.00808952,-0.0189389)],'y':[(0.00329904,-0.0192235),(0.00585431,-0.0213466),(0.00822038,-0.023757)]}
 		fake['stig'] = {'x':[(-0.0047448,-0.0031997),(-0.012963,-0.0113492),(-0.0225249,-0.0163792)],'y':[(-0.0111456, -0.0247119),(-0.0131071,-0.0115893),(-0.0147681, 0.00236871)]}
 		fake['defocus'] = {'x':[3.14407e-6*2.429,2.358393e-6*2.429,1.64571e-6*2.429],'y':[2.00239e-6*2.429,2.33574e-6*2.429,2.90392e-6*2.429]}
+		fake['phase plate plane shift'] = {'x':[(0.00355495,-0.0236784),(0.00590004,-0.0213854),(0.00808952,-0.0189389)],'y':[(0.00329904,-0.0192235),(0.00585431,-0.0213466),(0.00822038,-0.023757)]}
 		for ab_type in list(fake.keys()):
 			if type(fake[ab_type][axis][index]) == type(()):
 				newstate[ab_type] = {'x':fake[ab_type][axis][index][0],'y':fake[ab_type][axis][index][1]}
 			else:
 				newstate[ab_type] = fake[ab_type][axis][index]
 		return newstate
+
+	def applyCurrentAberrationCalibration(self):
+		"""
+		Use calibration and instrument state to apply abberation correction
+		at current state.
+		"""
+		# memorize the aberration state0
+		self.setPreMeasureState()
+		try:
+			last_calibration = self.getCurrentNoMagCalibration()
+		except calibrationclient.NoMatrixCalibrationError as e:
+			pass
+		try:
+			self.btcalclient.correctImageShiftComa()
+			self.logger.warning('Apply beam tilt delta from last image-shift coma calibration to start')
+			no_cal = False
+		except:
+			self.logger.warning('use original beam tilt to start')
+			no_cal = True
+		try:
+			if no_cal == False:
+				self.btcalclient.correctImageShiftObjStig()
+				self.logger.warning('Apply obj stig delta from last image-shift stig calibration to start')
+		except:
+			self.logger.warning('use original stig to start')
+		try:
+			if no_cal == False:
+				self.btcalclient.correctImageShiftDefocus()
+				self.logger.warning('Apply defocus delta from last image-shift defocus calibration to start')
+		except:
+			self.logger.warning('use original defocus to start')
+		try:
+			if no_cal == False:
+				self.btcalclient.correctImageShiftPhasePlatePlaneShift()
+				self.logger.warning('Apply phase plate plane shift delta from last calibration to start')
+		except:
+			self.logger.warning('use original phase plate plane shift to start')
+		return no_cal
 
 	def measureImageShiftAberrationMatrices(self, shift_n, shift_step, repeat, tilt_value, settle):
 		''' Measure various aberration for a range of image shift and fit the results 
@@ -186,12 +232,15 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			traceback.print_exc()
 			return
 
+		# Step 2 find needed abberation correction at each axis and shift
 		try:
 			for axis in ordered_axes:
 				tdata = []
 				data = {}
+				# Step 2.1 Initialize data with self.ab_types
 				for ab_type in self.ab_types:
 					data[ab_type] = {'x':[],'y':[]}
+				# for each shift
 				for i in range(0,2*shift_n+1):
 					shift = (i - shift_n) * shift_step
 					tdata.append(shift)
@@ -202,39 +251,20 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 					self.instrument.setData(state)
 					newshift = self.instrument.tem.ImageShift
 					self.logger.info('Image Shift ( %5.2f, %5.2f)' % (newshift['x']*1e6,newshift['y']*1e6))
-					# memorize the aberration state0
-					self.setPreMeasureState()
-					try:
-						last_calibration = self.getCurrentNoMagCalibration()
-					except calibrationclient.NoMatrixCalibrationError as e:
-						pass
-					try:
-						self.btcalclient.correctImageShiftComa()
-						self.logger.warning('Apply beam tilt delta from last image-shift coma calibration to start')
-						no_cal = False
-					except:
-						self.logger.warning('use original beam tilt to start')
-						no_cal = True
-					try:
-						if no_cal == False:
-							self.btcalclient.correctImageShiftObjStig()
-							self.logger.warning('Apply obj stig delta from last image-shift stig calibration to start')
-					except:
-						self.logger.warning('use original stig to start')
-					try:
-						if no_cal == False:
-							self.btcalclient.correctImageShiftDefocus()
-							self.logger.warning('Apply defocus delta from last image-shift defocus calibration to start')
-					except:
-						self.logger.warning('use original defocus to start')
+
+					no_cal =  self.applyCurrentAberrationCalibration()
 					# For TESTING ---START HERE
 					'''
 					newstate = self.getFakeValues(axis, i)
 					self.instrument.tem.BeamTilt = newstate['beam tilt']
 					self.instrument.tem.Defocus = newstate['defocus']
 					self.instrument.tem.Stigmator = {'objective':newstate['stig']}
+					self.instrument.tem.PhasePlatePlaneShift = newstate['phase plate plane shift']
 					'''
 					# For TESTING ---END HERE
+					self.is_auto_coma = False
+					# start dialog and returns the real newstate
+					newstate = self.readAbFree(state['image shift'])
 					if abs(shift) > 1e-7:
 						# There must be some coma.
 						while no_cal and abs(newstate['beam tilt']['x']-self.state0['beam tilt']['x']) < 1e-5 or abs(newstate['beam tilt']['y']-self.state0['beam tilt']['y']) < 1e-5:
@@ -282,6 +312,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		'''
 		matrices = {}
 		ab0s = {}
+		print('self.ab_types', self.ab_types)
+		print('xydict', xydict['x'])
 		for ab_type in self.ab_types:
 			this_xydict = {'x':xydict['x'][ab_type],'y':xydict['y'][ab_type]}
 			matrix, ab0 = self.btcalclient.calculateImageShiftAberrationMatrix(tdict,this_xydict)
@@ -318,6 +350,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		state['beam tilt'] = self.instrument.tem.BeamTilt
 		state['defocus'] = self.instrument.tem.Defocus
 		state['stig'] = self.instrument.tem.Stigmator['objective']
+		state['phase plate plane shift'] = self.instrument.tem.PhasePlatePlaneShift
 		return state
 
 	def readState(self):
@@ -329,6 +362,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.instrument.tem.BeamTilt = self.state0['beam tilt']
 		self.instrument.tem.Defocus = self.state0['defocus']
 		self.instrument.tem.Stigmator = {'objective':self.state0['stig']}
+		self.instrument.tem.PhasePlatePlaneShift = self.state0['phase plate plane shift']
 		self.logger.info('Reset to uncorrected state at current image shift')
 		self.readState()
 
@@ -344,6 +378,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			state0['stig']['x'] += correction['stigx']
 			state0['stig']['y'] += correction['stigy']
 			self.instrument.tem.Stigmator = {'objective':state0['stig']}
+		if 'phase plate plane shift' in correction.keys():
+			state0['phase plate plane shift']['x'] += correction['phase plate plane shift']['x']
+			state0['phase plate plane shift']['y'] += correction['phase plate plane shift']['y']
+			self.instrument.tem.PhasePlatePlaneShift = state0['phase plate plane shift']
 
 	def setPreMeasureState(self):
 		self.state0 = self.getState().copy()
@@ -786,25 +824,73 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		binned = imagefun.bin(pow, binning)
 		return binned
 
+	def guiAutoComa(self):
+		self.logger.info('Running auto coma')
+		self.is_auto_coma = True
+		self.auto_coma_count = 0
+		self.acquireTableauImages()
+
 	def acquireTableauImages(self):
+		count_limit = self.settings['auto coma count limit']
 		oldbt = self.instrument.tem.BeamTilt
 		oldstig = self.instrument.tem.Stigmator['objective']
 		tiltlist,anglelist = self.getBeamTiltList()
 		rad = 1 #radius step.  Fixed at 1 for this
-
 		## initialize a new tableau
 		self.initTableau()
 		ht = self.instrument.tem.HighTension
-		scope = leginondata.ScopeEMData(tem=self.instrument.getTEMData())
+		my_tem = self.instrument.getTEMData()
+		scope = leginondata.ScopeEMData(tem=my_tem)
+		if self.is_auto_coma:
+			if self.auto_coma_count >= 3:
+				self.logger.error('auto coma failed to reach threshold in %d triales' % (count_limit))
+				return
+			self.auto_coma_count += 1
 		for i, bt in enumerate(tiltlist):
 			newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
 			scope['beam tilt'] = newbt
 			# acquire image with scope state but not display in node image panel
 			imagedata = self.btcalclient.acquireImage(scope, settle=0.0, correct_tilt=False, corchannel=0, display=False)
+			if self.is_auto_coma:
+				print('imagedata acquired')
+				ctfresult = self.getImageCtfResult(imagedata)
+				if ctfresult:
+					if ctfresult['confidence'] < 0.2:
+						self.logger.error('ctf fitting bad confidence=%.2f' % ctfresult['confidence'])
+					else:
+						self.abe.addData(bt,ctfresult)
 			self.setManualComaFreeImage(imagedata['image'])
 			self.insertTableau(imagedata, anglelist[i], rad)
 			self.renderTableau()
 		self.instrument.tem.BeamTilt = oldbt
+		if self.is_auto_coma:
+			c21, deltabt = self.calculateAxialComa()
+			if deltabt is None:
+				self.logger.error('No correction to correct')
+				return
+			c21total = math.hypot(c21['x'],c21['y'])
+			if c21total <= self.settings['auto coma limit']:
+				self.logger.info('Auto coma successful')
+				return
+			deltabt_total = math.hypot(deltabt['x'],deltabt['y'])
+			self.logger.info('auto coma correction trial %d made %.2f mrad change' % (self.auto_coma_count+1,deltabt_total*1e3))
+			self.applyTiltChange(deltabt)
+			# try again
+			self.acquireTableauImages()
+
+	def getImageCtfResult(self, imagedata):
+		if self.ace:
+			try:
+				print('imagedata filename', imagedata['filename'])
+				return self.ace.runArrayWithImageData(imagedata['image'],imagedata)
+			except Exception as e:
+				self.logger.error('Error estimating ctf: %s' % e)
+				traceback.print_exc()
+		else:
+			self.logger.error('No ctf estimator')
+
+	def calculateAxialComa(self):
+		return self.calibration_clients['coma'].calculateAxialComa()
 
 	def setManualComaFreeImage(self,imagearray):
 		self.panel.setManualComaFreeImage(imagearray, 'Image')
@@ -871,6 +957,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		else:
 			self.logger.warning('need more than one beam tilt images in tableau to navigate')
 
+	#--------------Auto Focus---------------
 	def getDefocusStigCorrection(self, imagedata=None):
 		settling_time = self.settings['settling time']
 		args = ()
@@ -879,10 +966,15 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			'image0': imagedata,
 			'settle': settling_time,
 		}
+		# This result include the sign of defocus to correct
 		result = self.ctfcalclient.measureDefocusStig(*args,**kwargs)
 		return result
 
 	def _acquireAutoFocusImage(self, required_image_defocus):
+		"""
+		Acquire and determine and correct to the required_image_defocus using
+		defocus in appearance.  No ResetDefocus involved.
+		"""
 		result = self.getDefocusStigCorrection()
 		# result['defocus'] is the correction needed to be infocus.
 		# required_image_defocus is negative for underfocus
@@ -903,11 +995,15 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			result = self._acquireAutoFocusImage(self.settings['imageshift coma image defocus'])
 			diff_defocus = abs(result['defocus']) # applied value to reach required
 			stig_mag = math.hypot(result['stigx'],result['stigy'])
-			if diff_defocus < 0.05*abs(required_image_defocus) and stig_mag < 0.001:
+			if diff_defocus < 0.05*abs(required_image_defocus) and stig_mag < 0.002:
 				self.logger.info('Converged after %d rounds' % trial)
 				break
 			self.logger.info('Round %d off defocus by %.2f um, combined-stigmator change %.5f' % (trial, diff_defocus*1e6, stig_mag))
 			trial += 1
+
+	def guiAutoFocus(self):
+		self.autoFocusImage()
+		self.acquireManualFocusImage()
 
 	#--------------Manual Focus---------------
 	def acquireManualFocusImage(self):

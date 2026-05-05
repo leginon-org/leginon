@@ -2635,6 +2635,8 @@ class BeamTiltCalibratorSettingsData(CalibratorSettingsData):
 			('imageshift coma step', float),
 			('imageshift coma number', int),
 			('imageshift coma repeat', int),
+			('auto coma limit', int),
+			('auto coma count limit', int),
 		)
 	typemap = classmethod(typemap)
 

@@ -40,7 +40,9 @@ class ManualComaFreeDialog(leginon.gui.wx.Dialog.ConfirmationDialog):
 			style=wx.DEFAULT_FRAME_STYLE|wx.RESIZE_BORDER|wx.FRAME_FLOAT_ON_PARENT)
 
 	def onInitialize(self):
+		self.bauto = self.addButton('&Auto')
 		super(ManualComaFreeDialog,self).onInitialize()
+		self.Bind(wx.EVT_BUTTON, self.onAuto, self.bauto)
 		self.imagepanel = leginon.gui.wx.ImagePanel.ClickImagePanel(self,-1, mode='horizontal',imagesize=(612,612))
 
 		self.imagepanel.addTypeTool('Image', display=True)
@@ -84,6 +86,11 @@ class ManualComaFreeDialog(leginon.gui.wx.Dialog.ConfirmationDialog):
 
 	def onClose(self, evt):
 		evt.Skip(True)
+
+	def onAuto(self, evt):
+		# nothing, yet
+		print('onAuto called')
+		threading.Thread(target=self.node.guiAutoComa, args=()).start()
 
 	def onSetImage(self, evt):
 		if evt.typename == 'Tableau':

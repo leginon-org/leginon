@@ -75,6 +75,8 @@ class SimpleManualFocusDialog(leginon.gui.wx.Dialog.ConfirmationDialog):
 			style=wx.DEFAULT_FRAME_STYLE|wx.RESIZE_BORDER|wx.FRAME_FLOAT_ON_PARENT)
 
 	def onInitialize(self):
+		auto_focus_id = wx.NewIdRef()
+		self.bauto = self.addButton('&Auto',auto_focus_id)
 		super(SimpleManualFocusDialog,self).onInitialize()
 		self.imagepanel = leginon.gui.wx.TargetPanel.FFTTargetImagePanel(self, -1,imagesize=(612,512))
 		self.imagepanel.addTypeTool('Image', display=True)
@@ -86,10 +88,14 @@ class SimpleManualFocusDialog(leginon.gui.wx.Dialog.ConfirmationDialog):
 		#self.SetSizerAndFit(self.mainsz)
 		self.SetAutoLayout(True)
 		self.Layout()
-		# Bingings
+		# Bindings
+		self.Bind(wx.EVT_BUTTON, self.onAuto, self.bauto)
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		self.Bind(leginon.gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
 
+	def onAuto(self, evt):
+		threading.Thread(target=self.node.guiAutoFocus, args=()).start()
+		
 	def onClose(self, evt):
 		self.node.manualplayer.stop()
 		evt.Skip(True)

@@ -20,6 +20,7 @@ import pyami.quietscipy
 import scipy.ndimage
 import math
 from pyami import correlator, peakfinder, arraystats, imagefun, fftfun, numpil, ellipse, mrc
+from pyami import aberration
 import time
 import sys
 import threading
@@ -1224,6 +1225,12 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			self.node.logger.warning('image-shift defocus not calibrated, ignore such correction.')
 			return defoc0
 
+	def transformImageShiftToPhasePlatePlaneShift(self, imageshift, tem, cam, ht, zero, mag):
+		par = 'image-shift pp-plane-shift'
+		new = self._transformImageShiftToNewPar(imageshift, tem, cam, ht, zero, mag, par)
+		self.node.logger.debug("pp-plane-shift ( %5.2f, %5.2f) * 1e-3" % (new['x']*1e3,new['y']*1e3))
+		return new
+
 	def _transformImageShiftToNewPar(self, imageshift, tem, cam, ht, zero, mag, par):
 		new = {}
 		try:
@@ -1267,6 +1274,11 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		shift0, tem, cam, ht, defocus0, mag = self.getScopeState('Defocus')
 		defocus = self.transformImageShiftToDefocus(shift0, tem, cam, ht, defocus0, mag)
 		self.instrument.tem.Defocus = defocus
+
+	def correctImageShiftPhasePlatePlaneShift(self):
+		shift0, tem, cam, ht, xt0, mag = self.getScopeState('PhasePlatePlaneShift')
+		defocus = self.transformImageShiftToPhasePlatePlaneShift(shift0, tem, cam, ht, xt0, mag)
+		self.instrument.tem.PhasePlatePlaneShift = xt0
 
 	def alignRotationCenter(self, defocus1, defocus2):
 		bt = self.measureRotationCenter(defocus1, defocus2, correlation_type=None, settle=0.5)
@@ -3122,8 +3134,9 @@ class TableauAberrationCalibrationClient(PixelSizeCalibrationClient):
 		self.ctf_calclient = CtfCalibrationClient(node)
 		## initialize a new tableau
 		self.initTableau()
+		my_tem = self.instrument.getTEMData()
 		ht = self.instrument.tem.HighTension
-		self.abe = aberration.AberrationEstimator(presetdata['tem']['cs'], ht)
+		self.abe = aberration.AberrationEstimator(my_tem['cs'], ht)
 
 	def calculateAxialComa(self):
 		try:
@@ -3133,7 +3146,7 @@ class TableauAberrationCalibrationClient(PixelSizeCalibrationClient):
 			self.node.logger.error(e)
 			return None, None
 		c21 = Adict['coma']
-		if TESTING:
+		if False and TESTING:
 			# reduced by half for each iteration
 			c21['x'] = (0.5**self.auto_count)*(Adict['coma']['x'])
 			c21['y'] = (0.5**self.auto_count)*(Adict['coma']['y'])
@@ -3142,6 +3155,7 @@ class TableauAberrationCalibrationClient(PixelSizeCalibrationClient):
 		self.node.logger.info('Coma correction beam tilt (x,y)(mrad)= (%.2f,%.2f)' % (bt['x']*1e3,bt['y']*1e3))
 		self.abe.resetData()
 		return c21, bt
+
 class EucentricFocusClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
