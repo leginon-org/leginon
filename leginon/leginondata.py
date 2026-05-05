@@ -2013,6 +2013,7 @@ class RasterFinderSettingsData(TargetFinderSettingsData):
 			('raster limit', int),
 			('raster limit asymm', int),
 			('raster symmetric', bool),
+			('raster spiral order', bool),
 			('select polygon', bool),
 		)
 	typemap = classmethod(typemap)
