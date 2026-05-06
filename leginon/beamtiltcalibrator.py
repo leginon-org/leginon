@@ -78,6 +78,9 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.ctfcalclient= self.calibration_clients['ctf']
 		self.stigcalclient= self.calibration_clients['stig']
 
+		self.phase_search=(10,170)
+		self.auto_coma_count = 0
+		self.is_auto_coma = False
 		self.start()
 
 	def alignRotationCenter(self, defocus1, defocus2):
@@ -104,6 +107,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		except Exception as e:
 			self.logger.error('Calibration failed: %s' % e)
 			matrix = None
+			traceback.print_exc()
 		else:
 			self.logger.info('Calibration completed')
 		# store calibration
@@ -120,8 +124,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		'''determine the calibration matrix for image shift induced coma'''
 		calibration_client = self.calibration_clients['beam tilt']
 		my_tem = self.instrument.getTEMData()
-		ht = self.instrument.tem.HighTension
 		self.abe = self.calibration_clients['coma'].abe
+		self.abe.setCs(my_tem['cs'])
 		self.ace = self.calibration_clients['coma'].ctfclient
 		try:
 			if self.initInstruments():
@@ -134,6 +138,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		except Exception as e:
 			self.logger.error('Calibration failed: %s' % e)
 			matrices = None
+			traceback.print_exc()
 		else:
 			self.logger.info('Calibration completed')
 		# store calibration
@@ -306,14 +311,12 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		Calculate the aberration matrix.  Requires input of
 		tdict = {'x': [shiftx1,....],'y':[shifty1,....]}
 		xydict ={'x':{aberration_type: [aberration_value_dictx1,....],
-		         'y':{aberration_type: [aberration_value_dictx1,....],
+			 'y':{aberration_type: [aberration_value_dictx1,....],
 						}
 		aberration_value_dicts are in the form of {'x':valuex, 'y':valuey}
 		'''
 		matrices = {}
 		ab0s = {}
-		print('self.ab_types', self.ab_types)
-		print('xydict', xydict['x'])
 		for ab_type in self.ab_types:
 			this_xydict = {'x':xydict['x'][ab_type],'y':xydict['y'][ab_type]}
 			matrix, ab0 = self.btcalclient.calculateImageShiftAberrationMatrix(tdict,this_xydict)
@@ -472,6 +475,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			self._calibrateDefocus(beam_tilt, defocii)
 		except Exception as e:
 			self.logger.error('Calibration failed: %s' % e)
+			traceback.print_exc()
 		else:
 			self.logger.info('Calibration completed')
 
@@ -538,6 +542,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			self._calibrateStigmator(beam_tilt, delta)
 		except Exception as e:
 			self.logger.error('Calibration failed: %s' % e)
+			traceback.print_exc()
 		else:
 			self.logger.info('Calibration completed')
 
@@ -829,6 +834,11 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.is_auto_coma = True
 		self.auto_coma_count = 0
 		self.acquireTableauImages()
+		self.panel.manualcomafree_dialog.enableActions(True)
+
+	def resetToManualComa(self):
+		self.auto_coma_count = 0
+		self.is_auto_coma = False
 
 	def acquireTableauImages(self):
 		count_limit = self.settings['auto coma count limit']
@@ -836,23 +846,23 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		oldstig = self.instrument.tem.Stigmator['objective']
 		tiltlist,anglelist = self.getBeamTiltList()
 		rad = 1 #radius step.  Fixed at 1 for this
+		if self.is_auto_coma:
+			if self.auto_coma_count >= 3:
+				self.logger.error('auto coma failed to reach threshold in %d triales' % (count_limit))
+				self.resetToManualComa()
+				return
+			self.auto_coma_count += 1
 		## initialize a new tableau
 		self.initTableau()
 		ht = self.instrument.tem.HighTension
 		my_tem = self.instrument.getTEMData()
 		scope = leginondata.ScopeEMData(tem=my_tem)
-		if self.is_auto_coma:
-			if self.auto_coma_count >= 3:
-				self.logger.error('auto coma failed to reach threshold in %d triales' % (count_limit))
-				return
-			self.auto_coma_count += 1
 		for i, bt in enumerate(tiltlist):
 			newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
 			scope['beam tilt'] = newbt
 			# acquire image with scope state but not display in node image panel
 			imagedata = self.btcalclient.acquireImage(scope, settle=0.0, correct_tilt=False, corchannel=0, display=False)
 			if self.is_auto_coma:
-				print('imagedata acquired')
 				ctfresult = self.getImageCtfResult(imagedata)
 				if ctfresult:
 					if ctfresult['confidence'] < 0.2:
@@ -867,10 +877,12 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			c21, deltabt = self.calculateAxialComa()
 			if deltabt is None:
 				self.logger.error('No correction to correct')
+				self.resetToManualComa()
 				return
 			c21total = math.hypot(c21['x'],c21['y'])
 			if c21total <= self.settings['auto coma limit']:
 				self.logger.info('Auto coma successful')
+				self.resetToManualComa()
 				return
 			deltabt_total = math.hypot(deltabt['x'],deltabt['y'])
 			self.logger.info('auto coma correction trial %d made %.2f mrad change' % (self.auto_coma_count+1,deltabt_total*1e3))
@@ -882,7 +894,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		if self.ace:
 			try:
 				print('imagedata filename', imagedata['filename'])
-				return self.ace.runArrayWithImageData(imagedata['image'],imagedata)
+				return self.ace.runArrayWithImageData(imagedata['image'],imagedata, phase_search=self.phase_search)
 			except Exception as e:
 				self.logger.error('Error estimating ctf: %s' % e)
 				traceback.print_exc()
@@ -956,6 +968,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			self.applyTiltChangeAndReacquireTableau(bt)
 		else:
 			self.logger.warning('need more than one beam tilt images in tableau to navigate')
+		self.panel.manualcomafree_dialog.enableActions(True)
 
 	#--------------Auto Focus---------------
 	def getDefocusStigCorrection(self, imagedata=None):
@@ -1002,7 +1015,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			trial += 1
 
 	def guiAutoFocus(self):
-		self.autoFocusImage()
+		try:
+			self.autoFocusImage()
+		except Exception as e:
+			self.logger.error(e)
 		self.acquireManualFocusImage()
 
 	#--------------Manual Focus---------------

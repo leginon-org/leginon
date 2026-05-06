@@ -13,9 +13,12 @@ class BeamTiltCtfData(object):
 								}
 
 class AberrationEstimator(object):
-	def __init__(self, cs=2.7e-3, ht=300000):
+	def __init__(self, cs=2.7e-3):
 		self.cs = cs
 		self.data = []
+
+	def setCs(self, cs):
+		self.cs = cs
 
 	def resetData(self):
 		self.data = []

@@ -83,13 +83,13 @@ class ManualComaFreeDialog(leginon.gui.wx.Dialog.ConfirmationDialog):
 		self.accept_click = active
 		self.bok.Enable(active)
 		self.bcancel.Enable(active)
+		self.bauto.Enable(active)
 
 	def onClose(self, evt):
 		evt.Skip(True)
 
 	def onAuto(self, evt):
 		# nothing, yet
-		print('onAuto called')
 		threading.Thread(target=self.node.guiAutoComa, args=()).start()
 
 	def onSetImage(self, evt):

@@ -94,7 +94,9 @@ class SimpleManualFocusDialog(leginon.gui.wx.Dialog.ConfirmationDialog):
 		self.Bind(leginon.gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
 
 	def onAuto(self, evt):
+		self.node.manualplayer.pause()
 		threading.Thread(target=self.node.guiAutoFocus, args=()).start()
+		self.node.manualplayer.play()
 		
 	def onClose(self, evt):
 		self.node.manualplayer.stop()

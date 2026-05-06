@@ -467,7 +467,7 @@ class ImageShiftComaScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		self.sz = wx.GridBagSizer(5, 5)
 		position = (0,0)
-		#position = self.addImageshiftComaTiltSizer(position)
+		position = self.addImageshiftComaTiltSizer(position)
 		position = self.addImageshiftComaNumberSizer(position)
 		position = self.addImageshiftComaStepSizer(position)
 		#position = self.addImageshiftComaRepeatSizer(position)

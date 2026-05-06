@@ -3139,8 +3139,10 @@ class TableauAberrationCalibrationClient(PixelSizeCalibrationClient):
 		## initialize a new tableau
 		self.initTableau()
 		my_tem = self.instrument.getTEMData()
-		ht = self.instrument.tem.HighTension
-		self.abe = aberration.AberrationEstimator(my_tem['cs'], ht)
+		if my_tem is not None:
+		    self.abe = aberration.AberrationEstimator(my_tem['cs'])
+		else:
+		    self.abe = aberration.AberrationEstimator()
 
 	def calculateAxialComa(self):
 		try:
