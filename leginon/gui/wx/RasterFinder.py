@@ -92,6 +92,7 @@ class RasterScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['raster limit asymm'] = IntEntry(self, -1, chars=4)
 		self.widgets['raster angle'] = FloatEntry(self, -1, chars=4)
 		self.widgets['raster center on image'] = wx.CheckBox(self, -1, 'Center on image')
+		self.widgets['raster spiral order'] = wx.CheckBox(self, -1, ' Order targets by distance to center')
 		self.widgets['raster center x'] = IntEntry(self, -1, chars=4)
 		self.widgets['raster center y'] = IntEntry(self, -1, chars=4)
 		self.widgets['raster symmetric'] = wx.CheckBox(self, -1, '&Symmetric')
@@ -106,13 +107,13 @@ class RasterScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 
 		szauto = wx.GridBagSizer(5, 5)
-		szauto.Add(self.autobut, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		szauto.Add(self.autobut, (0, 0), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'Raster Preset')
 		szauto.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szauto.Add(self.widgets['raster preset'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szauto.Add(self.widgets['raster preset'], (1, 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'Overlap percent')
-		szauto.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szauto.Add(self.widgets['raster overlap'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szauto.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER)
+		szauto.Add(self.widgets['raster overlap'], (2, 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		movetypes = list(self.node.calclients.keys())
 		# beam size is not a valid move type
@@ -120,7 +121,7 @@ class RasterScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['raster movetype'] = Choice(self, -1, choices=movetypes)
 		label = wx.StaticText(self, -1, 'Move Type')
 		szauto.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szauto.Add(self.widgets['raster movetype'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szauto.Add(self.widgets['raster movetype'], (3, 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		sbszauto.Add(szauto, 1, wx.EXPAND|wx.ALL,5)
 
 		szraster = wx.GridBagSizer(5, 5)
@@ -135,31 +136,34 @@ class RasterScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'Spacing (x,y):')
 		szraster.Add(label, (1,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		szraster.Add(self.widgets['raster spacing'], (1,1), (1,1), 
-			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		szraster.Add(self.widgets['raster spacing asymm'], (1,2), (1,1), 
-			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 
 		label = wx.StaticText(self, -1, 'Num points (x,y):')
 		szraster.Add(label, (2,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		szraster.Add(self.widgets['raster limit'], (2,1), (1,1),
-			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		szraster.Add(self.widgets['raster limit asymm'], (2,2), (1,1),
-			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		szraster.AddGrowableCol(1)
 
 		label = wx.StaticText(self, -1, 'Angle:')
 		szraster.Add(label, (3,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		szraster.Add(self.widgets['raster angle'], (3,1), (1,2), 
-			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
+			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL|wx.FIXED_MINSIZE)
 
 		szraster.Add(self.widgets['raster center on image'], (4,0), (1,3), 
 			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
 		self.Bind(wx.EVT_CHECKBOX, self.onCheckBox, self.widgets['raster center on image'])
 
+		szraster.Add(self.widgets['raster spiral order'], (5,0), (1,3), 
+			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
+
 		label = wx.StaticText(self, -1, 'Center on x,y:')
-		szraster.Add(label, (5,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		szraster.Add(self.widgets['raster center x'], (5,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		szraster.Add(self.widgets['raster center y'], (5,2), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		szraster.Add(label, (6,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		szraster.Add(self.widgets['raster center x'], (6,1), (1,1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szraster.Add(self.widgets['raster center y'], (6,2), (1,1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
 		if self.widgets['raster center on image'].GetValue():
 			self.widgets['raster center x'].Enable(False)

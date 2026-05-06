@@ -149,6 +149,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 			try:
 				self.at_reference_target = True
 				self.execute(request_data)
+				self.logExecution(request_data)
 			except Exception as e:
 				self.logger.error('Error executing request, %s' % e)
 				self._setRequestPreset(request_preset_name)

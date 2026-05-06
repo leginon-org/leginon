@@ -38,6 +38,8 @@ def getCtfMethod(ctfvalue):
 		return "ctffind"
 	elif ctfvalue['acerun']['xmipp_ctf_params'] is not None:
 		return "xmipp_ctf"
+	elif ctfvalue['acerun']['gctffind_params'] is not None:
+		return "gctffind"
 	elif ctfvalue['acerun']['ctffind4_params'] is not None:
 		if ctfvalue['acerun']['ctffind4_params']['local_refine'] == 1:
 			return "localctf"

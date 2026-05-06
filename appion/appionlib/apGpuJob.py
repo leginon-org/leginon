@@ -185,7 +185,7 @@ class GpuJob(object):
 		return self.runname + ".job"
 	def getLaunchAsShell(self):
 		return self.launch_as_shell
-        def getSetupOnly(self):
+	def getSetupOnly(self):
 		return False
 	
 

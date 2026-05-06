@@ -134,13 +134,14 @@ class HoleFinder(icefinderback.IceFinder):
 			raise RuntimeError('need original image to run hole finding')
 		self.blobs_to_lattice()
 
-	def configure_raster(self, x0=None,y0=None,xspacing=None,yspacing=None,xpoints=None,ypoints=None,radians=0.0):
+	def configure_raster(self, x0=None,y0=None,xspacing=None,yspacing=None,xpoints=None,ypoints=None,radians=0.0, spiral=False):
 		#pixels and radians
 		self.raster.configure({
 				'center x':x0,'center y':y0,
 				'spacing x':xspacing,'spacing y':yspacing,
 				'points x':xpoints,'points y':ypoints,
 				'angle':radians,
+				'spiral': spiral,
 		})
 
 	def make_raster_points(self):
@@ -156,8 +157,9 @@ class HoleFinder(icefinderback.IceFinder):
 		xspacing = c['spacing x']
 		yspacing = c['spacing y']
 		x0 = c['center x']
-		y0 = c['center x']
+		y0 = c['center y']
 		radians = c['angle']
+		is_spiral_from_center = c['spiral']
 
 		# center set to image center if None
 		imageshape = image.shape
@@ -175,6 +177,7 @@ class HoleFinder(icefinderback.IceFinder):
 		ylist = numpy.asarray(range(ypoints), dtype=numpy.float32)
 		ylist -= ndimage.mean(ylist)
 
+		dists = []
 		for xt in xlist:
 			xshft = xt * xspacing
 			for yt in ylist:
@@ -186,7 +189,12 @@ class HoleFinder(icefinderback.IceFinder):
 				if x < 0 or x >= imageshape[1]: continue
 				if y < 0 or y >= imageshape[0]: continue
 				points.append( (x,y) )
-		self.update_result('raster', points)
+		if is_spiral_from_center:
+			# target number starts from the center.
+			sorted_points = sorted(points, key=lambda p:(p[0]-x0)**2+(p[1]-y0)**2)
+			self.update_result('raster', sorted_points)
+		else:
+			self.update_result('raster', points)
 
 	def find_center(self):
 		'''
