@@ -195,6 +195,8 @@ class Collection(object):
 		self.logger.info('Starting tilt collection (%d angles)...' % len(sequence))
 		try:
 			self.node.removeStageAlphaBacklash(tilts, sequence, self.preset['name'], self.target, self.emtarget)
+			self.logger.debug('tune Lpp after adjust target')
+			self.node.tuneLpp(self.preset['name'], True) # preset_name is not used but tem/ccdcamera must be set
 		except Exception as e:
 			self.logger.error('Failed to remove backlash: %s.' % e)
 			self.finalize()
@@ -211,7 +213,7 @@ class Collection(object):
 		# use calibrated defocus delta instead
 		cal_delta = self.prediction.getCalibratedDefocusDelta(tilt)
 		self.logger.info('calibrated tilt defocus shift: %.2f um' % (cal_delta*1e6))
-		defocus =  defocus0 - cal_delta
+		defocus =  defocus0 + cal_delta
 		return defocus, cal_delta / self.pixel_size
 
 	def predictByTilt(self, defocus0, tilt, position, defocus):
