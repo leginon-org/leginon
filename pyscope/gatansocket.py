@@ -49,6 +49,7 @@ enum_gs = [
 	'GS_GetDefectList',
 	'GS_SetK2Parameters2',
 	'GS_StopContinuousCamera',
+	'GS_WaitUntilReady',
 	'GS_GetPluginVersion',
 	'GS_GetLastError',
 	'GS_FreeK2GainReference',
@@ -152,7 +153,7 @@ class GatanSocket(object):
 		self.save_frames = False
 		self.num_grab_sum = 0
 		self.connect()
-
+		self.ef_offset_technique = 1
 		self.script_functions = [ 
 			('AFGetSlitState', 'GetEnergyFilter'),
 			('AFSetSlitState', 'SetEnergyFilter'),
@@ -166,7 +167,7 @@ class GatanSocket(object):
 			('IFCDoAlignZeroLoss', 'AlignEnergyFilterZeroLossPeak'),
 			('IFGetSlitIn', 'GetEnergyFilter'),
 			('IFSetSlitIn', 'SetEnergyFilter'),
-			('IFGetEnergyLoss', 'GetEnergyFilterOffset'),
+			('IFGetEnergyOffset', 'GetEnergyFilterOffset'), #ac consistent use IFGetEnergyOffset
 			('IFSetEnergyOffset', 'SetEnergyFilterOffset'), #wjr this was IFSetEnergyLoss
 			('IFGetMaximumSlitWidth', 'GetEnergyFilterWidthMax'),
 			('IFGetSlitWidth', 'GetEnergyFilterWidth'),
@@ -428,8 +429,12 @@ class GatanSocket(object):
 	def GetEnergyFilterOffset(self):
 		if 'GetEnergyFilterOffset' not in list(self.filter_functions.keys()):
 			return 0.0
-		script = 'Exit(%s())' % (self.filter_functions['GetEnergyFilterOffset'],)
-		return self.ExecuteGetDoubleScript(script)
+		script = 'Exit(%s(%i))' % (self.filter_functions['GetEnergyFilterOffset'], self.ef_offset_technique)
+		value = self.ExecuteGetDoubleScript(script)
+		if self.ef_offset_technique == 1:
+			#prism shift is inverse of energy offset definition of drift tube shift
+			value = -value
+		return value
 
 	def SetEnergyFilterOffset(self, value):
 		"""
@@ -442,15 +447,19 @@ class GatanSocket(object):
 		technique 4: prism adjust (confusing because -10 is 10 and it does not count when checking the energy loss value)
 		note: the Gatan function being called is a void, so removed the boolean logic used for most other functions
 		"""
-		technique = 3 # hard code to drift tube for now
+		technique = self.ef_offset_technique # hard code to drift tube for now
 		if 'SetEnergyFilterOffset' not in list(self.filter_functions.keys()):
 			return -1.0
-		script = '%s(%i,%f)' % (self.filter_functions['SetEnergyFilterOffset'], technique, value)
+		value_to_set = value
+		if technique == 1:
+			#prism shift is inverse of energy offset definition of drift tube shift
+			value_to_set = -value
+		script = '%s(%i,%f); IFWaitForFilter()' % (self.filter_functions['SetEnergyFilterOffset'], technique, value_to_set)
 		self.ExecuteSendScript(script)
 #		return 1
 		# or better to 
 		newvalue =  self.GetEnergyFilterOffset()  #? but wastes time
-		if value == newvalue:
+		if abs(value - newvalue) < 0.1:
 			return 1
 		else:
 			technique = 2 # reset the HT offfset to 0, sometimes this gets set
