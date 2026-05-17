@@ -58,6 +58,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 													shortHelp='Reset stage Z to 0')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET_ALPHA, 'alpha',
 													shortHelp='Reset stage alpha tilt to 0')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SET_BEAMTILT, 'beamtiltset', shortHelp='Toggle Lpp Focus On/Off Plane')
 
 		# image
 		self.imagepanel = leginon.gui.wx.TargetPanel.ClickAndTargetImagePanel(self, -1)
@@ -108,6 +109,8 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 											id=leginon.gui.wx.ToolBar.ID_RESET_Z)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onResetAlpha,
 											id=leginon.gui.wx.ToolBar.ID_RESET_ALPHA)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onToggleLppFocus,
+											id=leginon.gui.wx.ToolBar.ID_SET_BEAMTILT)
 		self.cmovetype.Bind(wx.EVT_CHOICE, self.onMoveTypeChoice)
 		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked,
 							self.imagepanel)
@@ -163,6 +166,9 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 	def onResetAlpha(self, evt):
 		self.node.onResetAlpha()
+
+	def onToggleLppFocus(self, evt):
+		self.node.onToggleLppFocus()
 
 	def onReproTest(self, evt):
 		self.test_dialog.Show()
@@ -349,7 +355,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 			sz = self.addBasicSettings()
 		else:
 			sz = self.addSettings()
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
+		sbsz.Add(sz, 0, wx.EXPAND|wx.ALL, 5)
 		return [sbsz]
 
 	def addBasicSettings(self):
@@ -372,9 +378,13 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		# error checking and correction
 		self.widgets['check calibration'] = wx.CheckBox(self, -1,
 																										'Measure move error')
+		# no reacquire
+		self.widgets['move without reacquire'] = wx.CheckBox(self, -1,
+				'Move without reacquire')
 		sz = wx.GridBagSizer(5, 10)
 		sz.Add(szpausetime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['check calibration'], (1, 0), (1, 1))
+		sz.Add(self.widgets['move without reacquire'], (2, 0), (1, 1))
 		return sz
 
 	def addSettings(self):

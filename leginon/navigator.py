@@ -94,6 +94,7 @@ class Navigator(node.Node):
 		'final image shift': False,
 		'camera settings': cameraclient.default_settings,
 		'preexpose': True,
+		'move without reacquire': False,
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs + [event.MoveToTargetEvent]
 	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs + [event.CameraImagePublishEvent, event.MoveToTargetDoneEvent,event.UpdatePresetEvent]
@@ -108,6 +109,7 @@ class Navigator(node.Node):
 		self.calclients['modeled stage position'] = calibrationclient.ModeledStageCalibrationClient(self)
 		self.calclients['beam shift'] = calibrationclient.BeamShiftCalibrationClient(self)
 		self.calclients['image beam shift'] = calibrationclient.ImageBeamShiftCalibrationClient(self)
+		self.calclients['phase plate plane shift'] = calibrationclient.PhasePlatePlaneShiftCalibrationClient(self)
 
 		self.pcal = calibrationclient.PixelSizeCalibrationClient(self)
 		self.presetsclient = presets.PresetsClient(self)
@@ -159,12 +161,11 @@ class Navigator(node.Node):
 		if use_target_z:
 			# if the move comes from target adjustment, z focus is likely done.
 			# Therefore target z should not be set according to parent
-			msg = 'Set to target z %.6f' % imagedata['scope']['stage position']['z']
-			self.testprint('Navigator: ' + msg)
+			msg = 'Set to target z %.3f um' % (imagedata['scope']['stage position']['z']*1e6)
 			self.logger.debug(msg)
 			self.instrument.tem.setStagePosition({'z':imagedata['scope']['stage position']['z']})
 		stagenow = self.instrument.tem.StagePosition
-		self.logger.debug('Navigator: z in navigator move %.6f' % stagenow['z'])
+		self.logger.debug('Navigator: z in navigator move %.3f um' % (stagenow['z']*1e6))
 		status = self.move(rows, cols, movetype, precision, accept_precision, check, preset=preset, final_imageshift=final_imageshift, cycle_after=True)
 		self.stopTimer('move')
 
@@ -195,10 +196,14 @@ class Navigator(node.Node):
 		deltacol = clickcol - centerc
 
 		check = self.settings['check calibration']
+		no_reacquire = self.settings['move without reacquire']
+		self.currentpreset = self.presetsclient.getCurrentPreset()
+		if 'preset' in self.newimagedata.keys() and self.newimagedata['preset']['name'] != self.currentpreset['name']:
+			self.logger.warning('preset of the image will be applied to the scope')
 		status = self.move(deltarow, deltacol, movetype, precision, accept_precision, check, final_imageshift=final_imageshift)
 
 		## acquire image if check not done
-		if not check:
+		if not check and not no_reacquire:
 			self.reacquireImage()
 		elif status != 'error' and movetype != 'image shift' and final_imageshift:
 			self.reacquireImage()
@@ -222,6 +227,7 @@ class Navigator(node.Node):
 		self.logger.info('Moving...')
 
 		pixelshift = {'row':-row, 'col':-col}
+		self.logger.info('Moving by (r,c) %.6f,%.6f' % (pixelshift['row'],pixelshift['col']))
 		scope = self.newimagedata['scope']
 		camera = self.newimagedata['camera']
 
@@ -552,7 +558,6 @@ class Navigator(node.Node):
 		try:
 			self.logger.info('Acquiring...')
 			imagedata = self.acquireCorrectedCameraImageData(channel=channel,force_no_frames=True)
-			self.logger.info('Acquired')
 		except:
 			self.logger.error('unable to get corrected image')
 			self._restoreSaveFrames()
@@ -562,6 +567,7 @@ class Navigator(node.Node):
 			self.logger.error('Acquire image failed')
 			self._restoreSaveFrames()
 			return
+		self.logger.info('Acquired')
 
 		self._restoreSaveFrames()
 		self.newImage(imagedata)
@@ -740,6 +746,9 @@ class Navigator(node.Node):
 		self.logger.info('Send %s preset to scope' % (presetname,))
 		self.setStatus('processing')
 		self.presetsclient.toScope(presetname)
+		if self.presetsclient.stage_targeting_failed:
+			self.logger.error('Preset sending failed. Check parameters')
+		self.f0 = self.instrument.tem.PhasePlateFocus
 		self.setStatus('idle')
 		self.panel.onSendPresetDone()
 
@@ -754,6 +763,19 @@ class Navigator(node.Node):
 	def onResetAlpha(self):
 		loc = {'a':0.0}
 		self._toScope('reset alpha',loc)
+
+	def onToggleLppFocus(self):
+		offset = -0.0025
+		f = self.instrument.tem.PhasePlateFocus
+		if not hasattr(self,'f0'):
+			self.f0 = self.instrument.tem.PhasePlateFocus
+			self.logger.info('saving phase plate on-plane focus')
+		if f == self.f0:
+			self.instrument.tem.PhasePlateFocus = self.f0 + offset
+			self.logger.info('Send phase plate focus to %.5f off plane' % offset)
+		else:
+			self.instrument.tem.PhasePlateFocus = self.f0
+			self.logger.info('Send phase plate focus to on-plane at %.5f' % self.f0)
 
 if __name__ == '__main__':
 	id = ('navigator',)

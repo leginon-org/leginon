@@ -603,6 +603,7 @@ class ScrolledSettings2(ScrolledSettings):
 		self.widgets['track preset'] = leginon.gui.wx.Presets.PresetChoice(self, -1)
 		self.widgets['track preset'].setChoices(self.presetnames)
 		self.widgets['full track'] =  wx.CheckBox(self, -1, 'Full tracking')
+		self.widgets['save track images'] =  wx.CheckBox(self, -1, 'Save tracking images')
 		
 		self.widgets['tolerance'] = FloatEntry(self, -1, 
 												allownone=False,
@@ -623,6 +624,8 @@ class ScrolledSettings2(ScrolledSettings):
 		tracksz.Add(self.widgets['track preset'], (0, 1), (1, 1), 
 				wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		tracksz.Add(self.widgets['full track'], (0, 3), (1, 1),
+				wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		tracksz.Add(self.widgets['save track images'], (0, 4), (1, 1),
 				wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		
 		tracksz_t = wx.GridBagSizer(5, 5)

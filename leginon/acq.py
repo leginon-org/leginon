@@ -29,7 +29,6 @@ import numpy.linalg
 import math
 from pyami import arraystats, imagefun, ordereddict, moduleconfig
 import smtplib
-from leginon import emailnotification
 from leginon import leginonconfig
 from leginon import gridlabeler
 import itertools
@@ -154,6 +153,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'wait for process': False,
 		'wait for rejects': False,
 		'wait for reference': False,
+		'post-target tuning': False,
 		#'duplicate targets': False,
 		#'duplicate target type': 'focus',
 		'iterations': 1,
@@ -209,6 +209,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.FixAlignmentEvent,
 											event.FixConditionEvent,
 											event.AlignZeroLossPeakPublishEvent,
+											event.AlignLppPublishEvent,
 											event.ScreenCurrentLoggerPublishEvent,
 											event.PhasePlatePublishEvent,
 											event.NodeBusyNotificationEvent,
@@ -241,12 +242,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.calclients['image beam shift'] = calibrationclient.ImageBeamShiftCalibrationClient(self)
 		self.calclients['beam shift'] = calibrationclient.BeamShiftCalibrationClient(self)
 		self.calclients['beam tilt'] = calibrationclient.BeamTiltCalibrationClient(self)
+		self.calclients['lpp fringe'] = calibrationclient.LppCalibrationClient(self)
 
 		self.presetsclient = presets.PresetsClient(self)
 		self.navclient = navigator.NavigatorClient(self)
 		self.doneevents = {}
 		self.onTarget = False
 		self.imagelistdata = None
+		self.imagedata = None
 		self.simloopstop = threading.Event()
 		self.received_image_drift = threading.Event()
 		self.requested_drift = None
@@ -292,6 +295,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		app = evt['application']
 		self.targetfinder_from = appclient.getLastNodeThruBinding(app,self.name,'ImageTargetListPublishEvent','TargetFinder')
 		self.alignzlp_bound = appclient.getNextNodeThruBinding(app,self.name,'AlignZeroLossPeakPublishEvent','AlignZeroLossPeak')
+		self.alignlpp_bound = appclient.getNextNodeThruBinding(app,self.name,'AlignLppPublishEvent','LppAlignTimer')
 		self.phaseplate_bound = appclient.getNextNodeThruBinding(app,self.name,'PhasePlatePublishEvent','PhasePlateAligner')
 		self.screencurrent_bound = appclient.getNextNodeThruBinding(app,self.name,'ScreenCurrentLoggerPublishEvent','ScreenCurrentLogger')
 
@@ -465,6 +469,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 					self.logger.warning('Energy filter activated but can not tune without binding to Align ZLP')
 					self.alignzlp_warned = True	
 
+	def tuneLpp(self, presetname, on_position=False):
+		presetdata = self.presetsclient.getPresetByName(presetname)
+		if not presetdata:
+			return
+		if type(self.alignlpp_bound)==type({}) and self.alignlpp_bound['is_direct_bound']:
+			self.alignLpp(presetname, on_position)
+
 	def monitorScreenCurrent(self, presetname):
 		presetdata = self.presetsclient.getPresetByName(presetname)
 		if not presetdata:
@@ -492,6 +503,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(request_data, database=True, pubevent=True, wait=True)
 		self.setStatus('processing')
 
+	def alignLpp(self, preset_name, on_position=False):
+		'''
+		Send align Lpp request
+		'''
+		self.setStatus('waiting')
+		request_data = leginondata.AlignLppRequestData()
+		request_data['session'] = self.session
+		request_data['preset'] = preset_name
+		request_data['on_position'] = on_position
+		self.publish(request_data, database=True, pubevent=True, wait=True)
+		self.setStatus('processing')
+
 	def measureScreenCurrent(self, preset_name): 
 		'''
 		Send screen current measurement request
@@ -507,8 +530,30 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		zlp_preset_name = self.settings['preset order'][-1]
 		self.logger.info('Tuning before processing a target')
-		self.tuneEnergyFilter(zlp_preset_name)
 		self.monitorScreenCurrent(zlp_preset_name)
+		if self.settings['post-target tuning']:
+			self.logger.debug('Skip the rest of pre-target setup to do them post-target instead')
+			return
+		self.tuneEnergyFilter(zlp_preset_name)
+		self.tuneLpp(zlp_preset_name, False) # preset_name is not used but tem/ccdcamera must be set
+
+	def postTargetSetup(self):
+		"""
+		Tuning on-position after each target is processed.  For Focuser and subclasses
+		that acquire multiple images per target, this is meant to done only when
+		self.imagedata is set to imagedata it acquires.
+		"""
+		if not self.settings['post-target tuning']:
+			return
+		# self.imagedata is not assigned to data in Focuser except for the final image 
+		if not hasattr(self,'imagedata') or self.imagedata is None:
+			return
+		self.logger.info('Tuning after processing a target')
+		zlp_preset_name = self.settings['preset order'][-1]
+		self.tuneEnergyFilter(zlp_preset_name)
+		self.tuneLpp(zlp_preset_name, True) # preset_name is not used but tem/ccdcamera must be set
+		targetdata = self.calclients['lpp fringe'].newReferenceTarget(self.imagedata, 0,0)
+		targetdata.insert()
 
 	def validateSettings(self):
 		'''
@@ -564,7 +609,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 			# set stage z first before move
 			z = self.moveToLastFocusedStageZ(targetdata)
-			self.testprint('preset manager moved to LastFocusedStageZ %s' % (z,))
 
 			### determine how to move to target
 			try:
@@ -587,6 +631,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.reportStatus('acquisition', 'Acquisition state is "%s"' % ret)
 				break
 
+		self.postTargetSetup()
 		self.reportStatus('processing', 'Processing complete')
 
 		return ret
@@ -1011,6 +1056,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.warning('Move failed. skipping acquisition at this target')
 			return status
 
+		state =  self.pauseCheck('paused after moveAndPreset')
 		defaultchannel = self.preAcquire(presetdata, emtarget, channel, reduce_pause)
 		args = (presetdata, emtarget, defaultchannel)
 		try:
@@ -1249,21 +1295,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		statsdata['image'] = imagedata
 		self.publish(statsdata, database=True)
 
-	def setEmailPassword(self, password):
-		self.emailpassword = password
-
-	def emailBadImageStats(self, stats):
-		s = smtplib.SMTP()
-		s.connect(leginonconfig.emailhost)
-		s.login(leginonconfig.emailuser, self.emailpassword)
-
-		subject = 'LEGINON: bad image stats'
-		responsetext = self.settings['bad stats response'].replace('Abort','aborted')
-		responsetext = responsetext.replace('Pause','paused at current')
-		text = 'Your Leginon session has '+ responsetext + ' target list(s) at \n\n'+time.ctime() + '\n\n due to bad image mean value of %.2f' %stats
-		mes = emailnotification.makeMessage(leginonconfig.emailfrom, leginonconfig.emailto, subject, text)
-		s.sendmail(leginonconfig.emailfrom, leginonconfig.emailto, mes.as_string())
-
 	def pauseAndRecheck(self,pausetime):
 		recheck_count = next(self.recheck_counter)
 		self.logger.info('Pausing for %d s before checking again at %d' % (pausetime,recheck_count))
@@ -1327,16 +1358,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if mean is None:
 				return
 		if mean > self.settings['high mean']:
-			try:
-				self.emailBadImageStats(mean)
-			except:
-				self.logger.info('could not email')
 			self.respondBadImageStats('high')
 		if mean < self.settings['low mean']:
-			try:
-				self.emailBadImageStats(mean)
-			except:
-				self.logger.info('could not email')
 			if mean is not None:
 				self.logger.info('mean lower than settings %6.0f' % (mean))
 			self.respondBadImageStats('low')
@@ -1478,6 +1501,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
 		except Exception as e:
+			raise
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
 		self.reportTargetStatus(proctargetdata, 'done')
@@ -1513,6 +1537,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.logger.info('begin simulated target loop of %s iterations' % (iterations,))
 		for i in range(iterations):
 			self.logger.info('iteration %s of %s' % (i+1, iterations,))
+			# For simulate loop need to fix condition to flash cFeg to keep a long run from losing the beam.
+			self.fixCondition()
 			self.simulateTarget()
 			self.setStatus('processing')
 			if self.simloopstop.isSet():

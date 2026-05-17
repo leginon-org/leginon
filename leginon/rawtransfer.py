@@ -5,6 +5,7 @@ import sys
 import shutil
 import filecmp
 import subprocess
+import threading
 import time
 import numpy
 import leginon.leginondata
@@ -12,8 +13,6 @@ import leginon.ddinfo
 import pyami.fileutil, pyami.mrc
 from leginon import filetransfer
 
-next_time_start = 0
-mtime = 0
 query_day_limit = 10 # ignore database query for older dates
 expired_names = ['.DS_Store',] # files that should not be transferred
 check_interval = 20  # seconds between checking for new frames
@@ -86,7 +85,8 @@ class RawTransfer(filetransfer.FileTransfer):
 		dirname,basename = os.path.split(os.path.abspath(dst))
 
 		# get path of the session, e.g. /data/frames/joeuser/17nov06a
-		sessionpath = os.path.abspath(os.path.join(dirname,'..'))
+		# vim syntax parsing mistaken '..' parsing unless using '''
+		sessionpath = os.path.abspath(os.path.join(dirname,'''..'''))
 
 		self.makeDirWithOwnershipChange(sessionpath,uid,gid)
 		self.makeDirWithOwnershipChange(dirname,uid,gid)
@@ -102,127 +102,143 @@ class RawTransfer(filetransfer.FileTransfer):
 		if mode_str:
 			self.changeMode(dst, mode_str, recursive=True)
 
-		# comment out cleanUp here and rely on rsync to do its job
-		# and clean up on the next source search iteration.
-		# see Issue #10244
-		# self.cleanUp(src,method)
+	def _process_by_name(self, name, parent_src_path, cam_host, dest_head, method, mode_str, mtime_lock):
+		src_path = os.path.join(parent_src_path, name)
+		_, ext = os.path.splitext(name)
+		# skip expired dirs, mrcs
+		if name in expired_names:
+			return 'skip'
+		print('**checking', src_path)
+		# check access instead of wait for files to write. Speeds up interval
+		try:
+			if not os.access(src_path, os.R_OK):
+				print('not ready. Deferring to next iteration')
+				return 'skip'
+		except Exception as e:
+				# There maybe other reason for it to fail.
+				print('error checking access: %s' % e)
+				return 'skip'
+		## skip empty directories
+		if os.path.isdir(src_path) and not os.listdir(src_path):
+			# maybe delete empty dir too?
+			return 'skip'
+
+		# ignore irrelevent source files or folders
+		# gatan k2 summit data ends with '.mrc' or '.tif'
+		# de folder starts with '20' through timestamp
+		# falcon mrchack stacks ends with '.mrcs'
+		if not ext.startswith('.mrc') and ext != '.tif' and  ext !='.eer' and ext != '.frames' and not name.startswith('20'):
+			return 'skip'
+
+		# query for Leginon image
+		if ext.startswith('.mrc'):
+			ext_len = len(ext)
+			frames_name = name[:-ext_len]
+			dst_suffix = '.frames.mrc'
+		elif ext.startswith('.tif'):
+			# tiff format
+			ext_len = len(ext)
+			frames_name = name[:-ext_len]
+			dst_suffix = '.frames.tif'
+		elif ext.startswith('.eer'):
+			ext_len = len(ext)
+			frames_name = name[:-ext_len]
+			dst_suffix = '.frames.eer'
+		else:
+			frames_name = name
+			dst_suffix = '.frames'
+			## ensure a trailing / on directory
+			if os.path.isdir(src_path) and src_path[-1] != os.sep:
+				src_path = src_path + os.sep
+		imdata = self.query_image_by_frames_name(frames_name,cam_host,dest_head)
+		if imdata is None:
+			print('%s not from a saved image' % (frames_name))
+			# TODO sometimes this query happens before the imagedata is queriable.
+			# Need to have a delay before remove.
+			if not self.isRecentCreation(src_path):
+				self.handleBadFile(src_path, method)
+			return 'skip'
+		if imdata == True:
+			print(' None of the found imagedata has destination starts with %s. Skipped' % (dest_head))
+			return 'skip'
+		image_path = imdata['session']['image path']
+		frames_path = self.getSessionFramePath(imdata)
+		# only process destination frames_path starting with chosen head
+		if sys.platform != 'win32' and not frames_path.startswith(dest_head):
+			print("frames_path = %s"%frames_path)
+			print('    Destination frame path does not starts with %s. Skipped' % (dest_head))
+			return 'skip'
+
+		print('**running', src_path)
+		# determine user and group of leginon data
+		filename = imdata['filename']
+		uid, gid = self._getUidGid(imdata)
+		# make full dst_path
+		imname = filename + dst_suffix
+		# full path of frames
+		dst_path = os.path.join(frames_path, imname)
+		print('Destination path: %s' %  (dst_path))
+
+		# copy reference if possible
+		if self.refcopy:
+			try:
+				self.refcopy.setFrameDir(frames_path, uid, gid)
+				self.refcopy.run(imdata, imname)
+			except:
+				print('reference copying error. skip')
+		# skip  and clean up finished ones. Needed when the
+		# destination user lost write privilege temporarily.
+		if os.path.exists(dst_path):
+			if os.path.isfile(dst_path):
+				# check files to be identical.
+				if filecmp.cmp(src_path, dst_path):
+					print('Destination path %s is good, cleaning up source' % dst_path)
+					os.remove(src_path)
+					return 'source_cleaned'
+				else:
+					print('Destination path %s not good, redo transfer' % dst_path)
+					self.cleanUp(dst_path,method)
+			#TODO: directory ?
+		# do actual copy and delete
+		self.transfer(src_path, dst_path, uid, gid, method, mode_str)
+		# de only
+		leginon.ddinfo.saveImageDDinfoToDatabase(imdata,os.path.join(dst_path,'info.txt'))
+		# falcon3 only, xml file transfer
+		xml_src_path = src_path.replace('mrc','xml')
+		xml_dst_path = dst_path.replace('mrc','xml')
+		if os.path.exists(xml_src_path):
+			self.transfer(xml_src_path, xml_dst_path, uid, gid, method, mode_str)
+		return 'success'
 
 	def run_once(self,parent_src_path,cam_host,dest_head,method,mode_str):
-		global next_time_start
-		global mtime
 		names = os.listdir(parent_src_path)
 		time.sleep(10)  # wait for any current writes to finish
-		time_start = next_time_start
-		for name in names:
-			src_path = os.path.join(parent_src_path, name)
-			_, ext = os.path.splitext(name)
-			# skip expired dirs, mrcs
-			if name in expired_names:
-				continue
-			print('**checking', src_path)
-			# check access instead of wait for files to write. Speeds up interval
+		max_workers = self.params.get('max_workers', 4)
+		mtime_lock = threading.Lock()
+
+		# Spawn one thread per name, capped at max_workers concurrent threads
+		threads = []
+		semaphore = threading.Semaphore(max_workers)
+
+		def run_with_semaphore(name):
+			semaphore.acquire()
 			try:
-				if not os.access(src_path, os.R_OK):
-					print('not ready. Deferring to next iteration')
-					continue
-			except Exception as e:
-					# There maybe other reason for it to fail.
-					print('error checking access: %s' % e)
-					continue
-			## skip empty directories
-			if os.path.isdir(src_path) and not os.listdir(src_path):
-				# maybe delete empty dir too?
-				continue
+				self._process_by_name(name, parent_src_path, cam_host, dest_head, method, mode_str, mtime_lock)
+			finally:
+				semaphore.release()
 
-			# ignore irrelevent source files or folders
-			# gatan k2 summit data ends with '.mrc' or '.tif'
-			# de folder starts with '20' through timestamp
-			# falcon mrchack stacks ends with '.mrcs'
-			if not ext.startswith('.mrc') and ext != '.tif' and  ext !='.eer' and ext != '.frames' and not name.startswith('20'):
-				continue
+		for name in names:
+			t = threading.Thread(
+				target=run_with_semaphore,
+				args=(name,),
+				name='rawtransfer-%s' % name,
+			)
+			t.daemon = True
+			threads.append(t)
+			t.start()
 
-			# adjust next expiration timer to most recent time
-			if mtime > next_time_start:
-				next_time_start = mtime
-
-			# query for Leginon image
-			if ext.startswith('.mrc'):
-				ext_len = len(ext)
-				frames_name = name[:-ext_len]
-				dst_suffix = '.frames.mrc'
-			elif ext.startswith('.tif'):
-				# tiff format
-				ext_len = len(ext)
-				frames_name = name[:-ext_len]
-				dst_suffix = '.frames.tif'
-			elif ext.startswith('.eer'):
-				ext_len = len(ext)
-				frames_name = name[:-ext_len]
-				dst_suffix = '.frames.eer'
-			else:
-				frames_name = name
-				dst_suffix = '.frames'
-				## ensure a trailing / on directory
-				if os.path.isdir(src_path) and src_path[-1] != os.sep:
-					src_path = src_path + os.sep
-			imdata = self.query_image_by_frames_name(frames_name,cam_host,dest_head)
-			if imdata is None:
-				print('%s not from a saved image' % (frames_name))
-				# TODO sometimes this query happens before the imagedata is queriable.
-				# Need to have a delay before remove.
-				if not self.isRecentCreation(src_path):
-					self.handleBadFile(src_path, method)
-				continue
-			if imdata == True:
-				print(' None of the found imagedata has destination starts with %s. Skipped' % (dest_head))
-				continue
-			image_path = imdata['session']['image path']
-			frames_path = self.getSessionFramePath(imdata)
-			# only process destination frames_path starting with chosen head
-			if sys.platform != 'win32' and not frames_path.startswith(dest_head):
-				print("frames_path = %s"%frames_path)
-				print('    Destination frame path does not starts with %s. Skipped' % (dest_head))
-				continue
-
-			print('**running', src_path)
-			# determine user and group of leginon data
-			filename = imdata['filename']
-			uid, gid = self._getUidGid(imdata)
-			# make full dst_path
-			imname = filename + dst_suffix
-			# full path of frames
-			dst_path = os.path.join(frames_path, imname)
-			print('Destination path: %s' %  (dst_path))
-
-			# copy reference if possible
-			if self.refcopy:
-				try:
-					self.refcopy.setFrameDir(frames_path, uid, gid)
-					self.refcopy.run(imdata, imname)
-				except:
-					print('reference copying error. skip')
-			# skip  and clean up finished ones. Needed when the
-			# destination user lost write privilege temporarily.
-			if os.path.exists(dst_path):
-				if os.path.isfile(dst_path):
-					# check files to be identical.
-					if filecmp.cmp(src_path, dst_path):
-						print('Destination path %s is good, cleaning up source' % dst_path)
-						os.remove(src_path)
-						return
-					else:
-						print('Destination path %s not good, redo transfer' % dst_path)
-						self.cleanUp(dst_path,method)
-				#TODO: directory ?
-			# do actual copy and delete
-			self.transfer(src_path, dst_path, uid, gid, method, mode_str)
-			# de only
-			leginon.ddinfo.saveImageDDinfoToDatabase(imdata,os.path.join(dst_path,'info.txt'))
-			# falcon3 only, xml file transfer
-			xml_src_path = src_path.replace('mrc','xml')
-			xml_dst_path = dst_path.replace('mrc','xml')
-			if os.path.exists(xml_src_path):
-				self.transfer(xml_src_path, xml_dst_path, uid, gid, method, mode_str)
+		for t in threads:
+			t.join()
 
 	def run(self):
 		self.params = self.parseParams()

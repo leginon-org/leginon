@@ -33,11 +33,13 @@ class Tomography2(Tomography):
 		'cosine dose': True,
 		'full track': False,
 		'tolerance': 0.05,
-		'maxfitpoints': 10
+		'maxfitpoints': 10,
+		'save track images': False,
 	})
 	panelclass = leginon.gui.wx.tomography.Tomography.Panel2
 
 	def __init__(self, *args, **kwargs):
+		self.print_testing = True
 		super(Tomography2, self).__init__(*args, **kwargs)
 		self.calclients['image rotation'] = \
 			leginon.calibrationclient.ImageScaleRotationCalibrationClient(self)
@@ -97,16 +99,20 @@ class Tomography2(Tomography):
 	def getPredictionObject(self):
 		return leginon.tomography.prediction2.Prediction2()
 	
-	def getCollectionObject(self,target):
+	def getCollectionObject(self):
 		collect = leginon.tomography.collection2.Collection2()
+		return collect
+
+	def setTrackingInCollection(self, collect):
+		target = collect.target
 		offsetdata = self.researchTargetOffset(target['list'])
 		if offsetdata:
 			collect.offset = offsetdata
 			collect.trackpreset = \
 				self.presetsclient.getPresetByName(self.settings['track preset'])
 			collect.fulltrack = self.settings['full track']
-		return collect
-	
+			collect.save_track_images = self.settings['save track images']
+
 	def loadPredictionInfo(self):	
 		# dummy function since we don't need previous history	
 		pass
@@ -125,7 +131,7 @@ class Tomography2(Tomography):
 		else:
 			return None								# Should be able to find targetoffset
 	
-	def newFocusTargetForImageFromTarget(self, imagedata, target, offset):
+	def newFocusTargetForImageFromTarget(self, imagedata, target, offset, number):
 		# (1) Get position of acquisition target.
 		# (2) Apply offset.
 		# (3) Make new 
@@ -133,24 +139,28 @@ class Tomography2(Tomography):
 		drow = target['delta row'] + offset[0]
 		targetdata = self.newTarget(image=imagedata, scope=imagedata['scope'], \
 								camera=imagedata['camera'], preset=imagedata['preset'], \
-								drow=drow, dcol=dcol, session=self.session, type='focus')
+								drow=drow, dcol=dcol, session=self.session, type='focus', number=number)
 		return targetdata
 
 
 	def makeNewFocusTarget(self, target, offset, targetlist):
+		"""
+		A new focus target is made per acquisition target.
+		"""
 		# (1) Get parent image.
 		# (2) Get and publish new version of parent image. 
 		# (3) Make new focus target attach to targetlist.
+		number = target['number']
 		parentimage = target.special_getitem('image',readimages=False,dereference=True)			# (1) 
 		newimagedata = self.copyImage(parentimage)												# (2) 
-		focus_td = self.newFocusTargetForImageFromTarget(newimagedata, target, offset)			# (3)		# (3)
-		focus_td['list'] = targetlist															
+		focus_td = self.newFocusTargetForImageFromTarget(newimagedata, target, offset, number)			# (3)
+		focus_td['list'] = targetlist
 		return focus_td
 
 	def markTargetsFailed(self, targets):
 		for target in targets:
 			self.reportTargetStatus(target, 'failed')
-				
+
 	def copyImage(self, oldimage):
 		# copied from targetrepeater
 		imagedata = leginon.leginondata.AcquisitionImageData()
@@ -226,7 +236,7 @@ class Tomography2(Tomography):
 			offsetdata = self.researchTargetOffset(targetlist)									# (1)
 			if not offsetdata:										# somehow couldn't find offsetdata
 				self.logger.info('Could not find TomoTargetOffsetData for target: %i' % target.dbid)
-				self.markTargetsFailed(good_targets, 'failed')
+				self.markTargetsFailed(good_targets)
 				# This will go back to ~ line 325 in processTargetList in targetwatcher.py
 				# Targetlist status will be reported as success. A bit strange??
 				return

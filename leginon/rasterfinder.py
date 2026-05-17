@@ -39,6 +39,7 @@ class RasterFinder(icetargetfinder.IceTargetFinder):
 		'raster limit': 5,
 		'raster limit asymm': None,
 		'raster symmetric': True,
+		'raster spiral order': False,
 		'select polygon': False,
 	})
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -136,7 +137,7 @@ class RasterFinder(icetargetfinder.IceTargetFinder):
 		else:
 			x0 = float(self.settings['raster center x'])
 			y0 = float(self.settings['raster center y'])
-		self.hf.configure_raster(x0,y0,xspacing,yspacing,xpoints,ypoints, radians)
+		self.hf.configure_raster(x0,y0,xspacing,yspacing,xpoints,ypoints, radians, spiral=self.settings['raster spiral order'])
 		self.hf.make_raster_points()
 		#old stuff
 		points = self.hf['raster']

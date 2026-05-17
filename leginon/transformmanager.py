@@ -402,7 +402,6 @@ class TransformManager(node.Node, TargetTransformer):
 			status = 'error'
 		stagenow = self.instrument.tem.StagePosition
 		msg = 'reacquire imageMoveAndPreset end z %.6f' % stagenow['z']
-		self.testprint(msg)
 		self.logger.debug(msg)
 		return status
 

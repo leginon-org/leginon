@@ -376,8 +376,8 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		limit = max(distancelist)+3  # add 3 for safety, if center point is within this distance of a convolved point, center point is removed
 		oldholes_list = list(self.hf.get_result(oldholes))
 		newholes_list = list(self.hf.get_result(newholes))
-		oldcenters = map((lambda x: x.stats['center']),oldholes_list)
-		newcenters = map((lambda x: x.stats['center']),newholes_list)
+		oldcenters = list(map((lambda x: x.stats['center']),oldholes_list))
+		newcenters = list(map((lambda x: x.stats['center']),newholes_list))
 		remove_points=[]
 		for i, p1 in enumerate(newcenters):
 			r1,c1 = p1

@@ -12,19 +12,22 @@
 # $Locker:  $
 
 from leginon import node, leginondata, event
+from leginon import ctffun
 import numpy
 import numpy.linalg
 import scipy
 import pyami.quietscipy
 import scipy.ndimage
 import math
-from pyami import correlator, peakfinder, arraystats, imagefun, fftfun, numpil, ellipse
+from pyami import correlator, peakfinder, arraystats, imagefun, fftfun, numpil, ellipse, mrc
 import time
 import sys
+import os
 import threading
 from leginon import gonmodel
 from leginon import tiltcorrector
 from leginon import tableau
+from leginon import lppfit
 
 class Drifting(Exception):
 	pass
@@ -69,6 +72,7 @@ class CalibrationClient(object):
 		self.abortevent = threading.Event()
 		self.tiltcorrector = tiltcorrector.TiltCorrector(node)
 		self.stagetiltcorrector = tiltcorrector.VirtualStageTilter(node)
+		self.ctfclient = ctffun.GctffindClient(self.node)
 		self.rpixelsize = None
 		self.powerbinning = 2
 		self.debug = False
@@ -163,14 +167,26 @@ class CalibrationClient(object):
 
 		## acquire neximage
 		nextimage = self.acquireImage(nextscope, settle, correct_tilt=correct_tilt, corchannel=corchannel)
-		self.correlator.insertImage(nextimage['image'])
-		imagearray = nextimage['image']
-		if imagearray.max() == 0:
+		## correlate with the previous image
+		nextimage_array = nextimage['image']
+		if nextimage_array.max() == 0:
 			raise RuntimeError('Bad image intensity range')
 
 		self.checkAbort()
+		cor, shrink_factor = self.correlateNextImage(nextimage_array, correlation_type, lp)
+		self.displayCorrelation(cor)
 
-		## correlate
+		camera_binning = nextimage['camera']['binning']
+		pixelpeak, unbinned = self.findPeak(cor, camera_binning, shrink_factor, lp)
+		self.node.startTimer('shift display')
+		self.displayPeak(pixelpeak)
+		self.node.stopTimer('shift display')
+		shiftinfo = {'previous': previousimage, 'next': nextimage, 'pixel shift': unbinned}
+		return shiftinfo
+
+	def correlateNextImage(self, nextimage_array, correlation_type='phase', lp=None):
+		self.correlator.insertImage(nextimage_array)
+
 		self.node.startTimer('scope change correlation')
 		if correlation_type is None:
 			try:
@@ -187,33 +203,28 @@ class CalibrationClient(object):
 
 		if lp is not None and lp > 0.0001:
 			cor = scipy.ndimage.gaussian_filter(cor, lp)
-
-		self.displayCorrelation(cor)
 		shrink_factor = self.correlator.shrink_factor
+		return cor, shrink_factor
 
+	def findPeak(self, cor, camera_binning, shrink_factor, lpf=None):
 		## find peak
 		self.node.startTimer('shift peak')
-		peak = peakfinder.findSubpixelPeak(cor)
+		peak = peakfinder.findSubpixelPeak(cor, lpf=lpf)
 		self.node.stopTimer('shift peak')
 
 		self.node.logger.debug('Peak %s' % (peak,))
 
 		pixelpeak = peak['subpixel peak']
-		self.node.startTimer('shift display')
-		self.displayPeak(pixelpeak)
-		self.node.stopTimer('shift display')
 
 		peakvalue = peak['subpixel peak value']
 		shift = correlator.wrap_coord(peak['subpixel peak'], cor.shape)
 		self.node.logger.debug('pixel shift (row,col): %s' % (shift,))
 
 		## need unbinned result
-		binx = nextimage['camera']['binning']['x']*shrink_factor
-		biny = nextimage['camera']['binning']['y']*shrink_factor
+		binx = camera_binning['x']*shrink_factor
+		biny = camera_binning['y']*shrink_factor
 		unbinned = {'row':shift[0] * biny, 'col': shift[1] * binx}
-
-		shiftinfo = {'previous': previousimage, 'next': nextimage, 'pixel shift': unbinned}
-		return shiftinfo
+		return pixelpeak, unbinned
 	
 	def measureStateDefocus(self, nextscope, settle=0.0):
 		'''
@@ -231,12 +242,12 @@ class CalibrationClient(object):
 		if imagearray.max() == 0:
 			raise RuntimeError('Bad image intensity range')
 		pow = imagefun.power(imagearray)
-		ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht, self.cs)
-
+		ctfdata = self.ctfclient.runFromImageData(nextimage, phase_search=(0,0))
 		self.checkAbort()
 		if ctfdata is not None:
 			self.node.logger.info('defocus: %.3f um, zast: %.3f um' % (ctfdata[0]*1e6,ctfdata[1]*1e6))
-			defocusinfo = {'next': nextimage, 'defocus': ctfdata[0]}
+			avg_defocus = (ctfdata['defocus1']+ctfdata['defocus2'])/2.0
+			defocusinfo = {'next': nextimage, 'defocus': avg_defocus}
 		else:
 			self.node.logger.warning('ctf estimation failed')
 			defocusinfo = {'next': nextimage, 'defocus': None}
@@ -260,30 +271,13 @@ class CalibrationClient(object):
 			self.ht = imagedata['scope']['high tension']
 			if not self.rpixelsize:
 				self.rpixelsize = self.getImageReciprocalPixelSize(imagedata)
-			ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht, self.cs)
+			ctfdata = self.ctfclient.runFromImageData(imagedata)
 			self.ctfdata.append(ctfdata)
 
 			# show defocus estimate on tableau
 			if ctfdata:
-				self.node.logger.info('tabeau defocus: %.3f um, zast: %.3f um' % (ctfdata[0]*1e6,ctfdata[1]*1e6))
-				s = '%d' % int(ctfdata[0]*1e9)
-				eparams = ctfdata[4]
-				self.node.logger.info('eparams a:%.3f, b:%.3f, alpha:%.3f' % (eparams['a'],eparams['b'],eparams['alpha']))
-				center = numpy.divide(eparams['center'], binning)
-				a = eparams['a'] / binning
-				b = eparams['b'] / binning
-				alpha = eparams['alpha']
-				ellipse1 = pyami.ellipse.drawEllipse(binned.shape, 2*numpy.pi/180, center, a, b, alpha)
-				ellipse2 = pyami.ellipse.drawEllipse(binned.shape, 5*numpy.pi/180, center, a, b, alpha)
-				min = arraystats.min(binned)
-				max = arraystats.max(binned)
-				numpy.putmask(binned, ellipse1, min)
-				numpy.putmask(binned, ellipse2, max)
-			#elif self.ace2exe:
-			elif False:
-				ctfdata = self.estimateCTF(imagedata)
-				z0 = (ctfdata['defocus1'] + ctfdata['defocus2']) / 2
-				s = '%d' % (int(z0*1e9),)
+				self.node.logger.info('tabeau defocus: %.3f um, zast: %.3f um' % (ctfdata['defocus1']*1e4,ctfdata['defocus2']*1e4))
+				s = 'ctf: %d,%d a=%d' % (int(ctfdata['defocus1']*0.1), int(ctfdata['defocus2']*0.1),ctfdata['angle_astigmatism'])
 			if s:
 				t = numpil.textArray(s, binning)
 				t = min + t * (max-min)
@@ -341,6 +335,18 @@ class CalibrationClient(object):
 			self.node.setTargets(targets, 'Peak')
 		except:
 			pass
+
+	def newReferenceTarget(self, image_data, drow, dcol):
+		target_data = leginondata.ReferenceTargetData()
+		target_data['image'] = image_data
+		target_data['scope'] = image_data['scope']
+		target_data['camera'] = image_data['camera']
+		target_data['preset'] = image_data['preset']
+		target_data['grid'] = image_data['grid']
+		target_data['delta row'] = drow
+		target_data['delta column'] = dcol
+		target_data['session'] = self.node.session
+		return target_data
 
 class DoseCalibrationClient(CalibrationClient):
 	coulomb = 6.2414e18
@@ -483,8 +489,22 @@ class DoseCalibrationClient(CalibrationClient):
 		pixel_totaldose = mean_counts / sensitivity
 		return pixel_totaldose
 
+class MagDependentCalibrationClient(CalibrationClient):
+	def researchCalibration(self, queryinstance, tem, ccdcamera, mag, ht):
+		self.setDBInstruments(queryinstance,tem,ccdcamera)
+		if ht is None:
+			ht = self.instrument.tem.HighTension
+		queryinstance['magnification'] = mag
+		queryinstance['high tension'] = ht
+		if mag is None:
+			# get all.  Used in calibration
+			caldatalist = self.node.research(datainstance=queryinstance)
+		else:
+			# get the last one at the mag.
+			caldatalist = self.node.research(datainstance=queryinstance, results=1)
+		return caldatalist
 
-class PixelSizeCalibrationClient(CalibrationClient):
+class PixelSizeCalibrationClient(MagDependentCalibrationClient):
 	'''
 	basic CalibrationClient for accessing a type of calibration involving
 	a matrix at a certain magnification
@@ -578,7 +598,7 @@ class CameraLengthCalibrationClient(CalibrationClient):
 		return list(last.values())
 
 
-class MatrixCalibrationClient(CalibrationClient):
+class MatrixCalibrationClient(MagDependentCalibrationClient):
 	'''
 	basic CalibrationClient for accessing a type of calibration involving
 	a matrix at a certain magnification
@@ -588,6 +608,13 @@ class MatrixCalibrationClient(CalibrationClient):
 
 	def parameter(self):
 		raise NotImplementedError
+
+	def calculateUnitParameterDelta(self, cam, mag, pixsize):
+		shiftpixels = min(cam.Dimension['x']*cam.Binning['x'], cam.Dimension['y']*cam.Binning['y'])
+		return shiftpixels * pixsize
+
+	def getMeasuredPixelSize(self, param_change, totalpix, cam, pixsize):
+		return param_change / totalpix
 
 	def researchMatrix(self, tem, ccdcamera, caltype, ht, mag, probe=None):
 		queryinstance = leginondata.MatrixCalibrationData()
@@ -812,14 +839,16 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		return bt
 
 	def measureDefocusStig(self, tilt_value, stig=True, correct_tilt=False, correlation_type=None, settle=0.5, image0=None, on_phase_plate=False):
-
+		'''
+		Return defocus and stigmator correction required using beam tilt
+		'''
 		self.abortevent.clear()
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
 		probe = self.instrument.tem.ProbeMode
-		# Can not handle the exception for retrieveMatrix here. 
+		# Can not handle the exception for retrieveMatrix here.
 		# Focuser node that calls this need to know the type of error
 		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag, probe)
 
@@ -919,6 +948,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		result = {'defocus': solution[0][0], 'min': float(solution[1][0])}
 		if len(solution[0]) == 3:
+			# the key needs to stay as stigx, stigy to avoid database migration
+			# of the result saved
 			result['stigx'] = solution[0][1]
 			result['stigy'] = solution[0][2]
 		else:
@@ -1161,13 +1192,13 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				tilts['x'].append(cftilt[(0,0)])
 				tilts['y'].append(cftilt[(1,1)])
 				comatilt = {'x':cftilt[(0,0)],'y':cftilt[(1,1)]}
-				self.node.logger.debug("    %5.2f,  %5.2f" % (cftilt[(0,0)]*1000,cftilt[(1,1)]*1000))
+				self.node.logger.debug("     %5.2f,  %5.2f" % (cftilt[(0,0)]*1000,cftilt[(1,1)]*1000))
 		if len(tilts['x']):
 			xarray = numpy.array(tilts['x'])
 			yarray = numpy.array(tilts['y'])
 			self.node.logger.debug("--------------------")
-			self.node.logger.debug("m   %5.2f,  %5.2f" %(xarray.mean()*1000,yarray.mean()*1000))
-			self.node.logger.debug("std %5.2f,  %5.2f" %(xarray.std()*1000,yarray.std()*1000))
+			self.node.logger.debug("m    %5.2f,  %5.2f" %(xarray.mean()*1000,yarray.mean()*1000))
+			self.node.logger.debug("std  %5.2f,  %5.2f" %(xarray.std()*1000,yarray.std()*1000))
 			return xarray,yarray
 
 	def transformImageShiftToBeamTilt(self, imageshift, tem, cam, ht, zero, mag):
@@ -1373,9 +1404,11 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 
 	def transform(self, pixelshift, scope, camera):
 		'''
-		Calculate a new scope state from the given pixelshift
-		The input scope and camera state should refer to the image
-		from which the pixelshift originates
+		Calculate a new absolute scope state from the given binned pixelshift from
+		the center of a fake image using scope and camera state to acquire.
+		The output is a new scope state that pairs with camera state will give
+		an image of such shift.
+		Note that pixelshift is in dict of 'row','col' keys
 		'''
 		mag = scope['magnification']
 		ht = scope['high tension']
@@ -1395,26 +1428,36 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		pixcol = pixelshift['col'] * binx
 		pixvect = numpy.array((pixrow, pixcol))
 
-		change = numpy.dot(matrix, pixvect)
-		changex = change[0]
-		changey = change[1]
+		# state shift in physical unit
+		shift_array = numpy.dot(matrix, pixvect)
+		shift_x = shift_array[0]
+		shift_y = shift_array[1]
 
 		### take into account effect of alpha tilt on Y stage pos
 		if par == 'stage position':
 			if 'a' in scope[par] and scope[par]['a'] is not None:
 				alpha = scope[par]['a']
-				changey = changey / numpy.cos(alpha)
+				shift_y = shift_y / numpy.cos(alpha)
 
+		shift_dict = {'x':shift_x,'y':shift_y}
+		if par == 'image shift':
+			# Only image shift is calibrated for defocus distortion now
+			if abs(scope['defocus']) > 1e-5: #10 micron
+				shift_dict = self.transformDefocus(shift_dict, scope, camera)
 		new = leginondata.ScopeEMData(initializer=scope)
 		## make a copy of this since it will be modified
 		new[par] = dict(scope[par])
-		# By defining new parameters by change, physical movement scale
+		# By defining new parameters by shift, physical movement scale
 		# in physical unit has to be accurate.
-		new[par]['x'] += changex
-		new[par]['y'] += changey
+		new[par]['x'] += shift_dict['x']
+		new[par]['y'] += shift_dict['y']
 		return new
 
 	def itransform(self, position, scope, camera):
+		"""
+		Inverse transform of physical parameter position relative to the scope state passed
+		to binned pixel shift the center of the image defined by scope and camera.
+		"""
 		parameter = self.parameter()
 		args = (
 			scope['tem'],
@@ -1441,9 +1484,14 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 			if 'a' in scope[parameter] and scope[parameter]['a'] is not None:
 				alpha = scope[parameter]['a']
 				shift['y'] = shift['y']*numpy.cos(alpha)
+		if parameter == 'image shift':
+			# Only image shift is calibrated for defocus distortion now
+			if abs(scope['defocus']) > 1e-5: #10 micron
+				shift = self.itransformDefocus(shift, scope, camera)
 
 		shift_vector = numpy.array((shift['x'], shift['y']))
 		pixel = numpy.dot(inverse_matrix, shift_vector)
+		#print('itransform output unbinned pixel_shift (r,c) %.1f, %.1f' % (pixel[0],pixel[1]))
 
 		pixel_shift = {
 			'row': pixel[0]/camera['binning']['y'],
@@ -1509,10 +1557,31 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def parameter(self):
 		return 'image shift'
 
+	def presetImagePixelToPixel(self, ht, preset1, preset2, p1_shift):
+		'''
+		Unlike pixelToPixel, this transformation is on binned image pixel dict of row,col
+		'''
+		tem1 = preset1['tem']
+		ccdcamera1 = preset1['ccdcamera']
+		mag1 = preset1['magnification']
+		tem2 = preset1['tem']
+		ccdcamera2 = preset2['ccdcamera']
+		mag2 = preset2['magnification']
+		p1_row = p1_shift['row'] * preset1['binning']['y']
+		p1_col = p1_shift['col'] * preset1['binning']['x']
+		# row, col list or array input, row, col array out
+		p1_vec = numpy.array((p1_row, p1_col))
+		p2_vec = self.pixelToPixel(tem1,\
+			ccdcamera1,tem2, ccdcamera2, ht,mag1,mag2,p1_vec)	# unbinned
+		p2_shift = {'row':p2_vec[0] / preset2['binning']['y'],
+					'col':p2_vec[1] / preset2['binning']['x']
+		}
+		return p2_shift   #binned
+
 	def pixelToPixel(self, tem1, ccdcamera1, tem2, ccdcamera2, ht, mag1, mag2, p1):
 		'''
 		Using physical position as a global coordinate system, we can
-		do pixel to pixel transforms between mags.
+		do pixel to unbinned pixel transforms between mags.
 		This function will calculate a (row,col) pixel vector at mag2, given
 		a (row,col) pixel vector at mag1.
 		For image shift, this means: the physical image shift values in meters
@@ -1525,7 +1594,7 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 
 	def pixelToPosition(self,tem, ccdcamera, matrix_type, ht, mag, pixel_shift):
 		'''
-		Using matrix to transform a pixel shift on camera to relative physical position.
+		Using matrix to transform an unbinned pixel shift on camera to relative physical position.
 		'''
 		par = matrix_type
 		matrix = self.retrieveMatrix(tem, ccdcamera, par, ht, mag)
@@ -1535,7 +1604,7 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 
 	def positionToPixel(self,tem, ccdcamera, matrix_type, ht, mag, position):
 		'''
-		Using matrix to transform a relative physical position to pixel shift on camera.
+		Using matrix to transform a relative physical position to unbinned pixel shift on camera.
 		'''
 		par = matrix_type
 		matrix = self.retrieveMatrix(tem, ccdcamera, par, ht, mag)
@@ -1543,6 +1612,119 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		physicalpos = numpy.array(position)
 		pixel_shift = numpy.dot(matrix_inv, physicalpos)
 		return pixel_shift
+
+	def saveAffineMatrixCalibration(self, tem, ccdcamera, caltype, mag, probe, defocus, afmatrix):
+		queryinstance = leginondata.AffineMatrixCalibrationData()
+		self.setDBInstruments(queryinstance,tem,ccdcamera)
+		queryinstance['type'] = caltype
+		queryinstance['magnification'] = mag
+		# getting high tension only possible after setDBInstruments
+		queryinstance['high tension'] = self.instrument.tem.HighTension
+		queryinstance['probe'] = probe
+		queryinstance['defocus'] = defocus
+		queryinstance['matrix'] = afmatrix
+	
+		queryinstance.insert(force=True)
+
+	def saveAffineMatrixByPreset(self, preset,afmatrix):
+		tem = preset['tem']
+		ccdcamera = preset['ccdcamera']
+		mag = preset['magnification']
+		defocus = preset['defocus']
+		probe = preset['probe mode']
+		par = 'image shift'
+		self.saveAffineMatrixCalibration(tem, ccdcamera, par, mag, probe, defocus, afmatrix)
+
+	def researchCorrectionAffineMatrix(self, tem, ccdcamera, caltype, mag, probe, defocus):
+		queryinstance = leginondata.AffineMatrixCalibrationData()
+		self.setDBInstruments(queryinstance,tem,ccdcamera)
+		queryinstance['type'] = caltype
+		queryinstance['magnification'] = mag
+		# getting high tension only possible after setDBInstruments
+		queryinstance['high tension'] = self.instrument.tem.HighTension
+		queryinstance['probe'] = probe
+		queryinstance['defocus'] = defocus
+		caldatalist = self.node.research(datainstance=queryinstance, results=1)
+		if caldatalist:
+			return caldatalist[0]
+		else:
+			queryinstance = leginondata.AffineMatrixCalibrationData()
+			self.setDBInstruments(queryinstance,tem,ccdcamera)
+			queryinstance['type'] = caltype
+			queryinstance['magnification'] = mag
+			# getting high tension only possible after setDBInstruments
+			queryinstance['high tension'] = self.instrument.tem.HighTension
+			queryinstance['probe'] = probe
+			caldatalist = self.node.research(datainstance=queryinstance, results=1)
+			if caldatalist:
+				self.node.logger.warning('No correction matrix for the defocus requested, use that for defocus %.2f um' % caldatalist[0]['defocus'])
+				return caldatalist[0]
+			else:
+				self.node.logger.warning('No correction matrix for imaging mag %d and instrument %s' % (int(mag),tem['name']))
+				return {'matrix':numpy.array(((1.0,0.0,0.0),(0.0,1.0,0.0),(0.0,0.0,1.0))),'defocus':0.0}
+
+	def retrieveAffineMatrix(self, tem, ccdcamera, par, mag, probe, defocus):
+		caldata = self.researchCorrectionAffineMatrix(tem, ccdcamera, par, mag, probe, defocus)
+		mat = caldata['matrix'].copy()
+		return mat
+
+	def transformDefocus(self, shift_dict, scope, camera):
+		'''
+		Transform image shift change obtained from transform function to defocused value
+		'''
+		ccdcamera = camera['ccdcamera']
+		tem = scope['tem']
+		mag = scope['magnification']
+		defocus = scope['defocus']
+		probe = scope['probe mode']
+		par = 'image shift'
+		p0 = scope['image shift']
+		# defocused to focused affine transform matrix
+		m = self.retrieveAffineMatrix(tem, ccdcamera, par, mag, probe, defocus)
+		pos_array = numpy.array((shift_dict['y'],shift_dict['x'],0.0))
+		# focused to defocused affine transform matrix
+		m_inv = numpy.linalg.inv(m)
+		new_pos_array = m_inv @ pos_array
+		return {'y': new_pos_array[0],'x':new_pos_array[1]}
+
+	def itransformDefocus(self, shift_dict, scope, camera):
+		'''
+		Transform physical shift input, image shift in this case, of
+		itransform function from defocused value
+		'''
+		ccdcamera = camera['ccdcamera']
+		tem = scope['tem']
+		mag = scope['magnification']
+		defocus = scope['defocus']
+		probe = scope['probe mode']
+		par = 'image shift'
+		p0 = scope['image shift']
+		p1 = shift_dict
+		# defocused to focused affine transform matrix
+		m = self.retrieveAffineMatrix(tem, ccdcamera, par, mag, probe, defocus)
+		pos_array = numpy.array((shift_dict['y'],shift_dict['x'],0.0))
+		new_pos_array = m @ pos_array
+		return {'y': new_pos_array[0],'x':new_pos_array[1]}
+
+	def correctDefocusImageShift(self, preset, image_shift):
+		"""
+		Image shift correction required for defocused preset relative to
+		the preset image shift value.  The input is absolute image shift.
+		The output is relative to the preset image shift.
+		"""
+		tem = preset['tem']
+		ccdcamera = preset['ccdcamera']
+		mag = preset['magnification']
+		defocus = preset['defocus']
+		probe = preset['probe mode']
+		par = 'image shift'
+		p0 = preset['image shift']
+		p1 = image_shift
+		# defocused to focused affine transform
+		m = self.retrieveAffineMatrix(tem, ccdcamera, par, mag, probe, defocus)
+		pos_array = numpy.array((p1['y']-p0['y'],p1['x']-p0['x'],0.0)).reshape((1,3))
+		new_pos_array = numpy.dot(pos_array,m)
+		return {'y': new_pos_array[0,0],'x':new_pos_array[0,1]}
 
 class ImageScaleRotationCalibrationClient(ImageShiftCalibrationClient):
 	mover = False
@@ -1594,20 +1776,6 @@ class ImageScaleRotationCalibrationClient(ImageShiftCalibrationClient):
 	def researchImageRotation(self, tem, ccdcamera, mag=None, ht=None):
 		queryinstance = leginondata.ImageRotationCalibrationData()
 		return self.researchCalibration(queryinstance, tem, ccdcamera, mag, ht)
-
-	def researchCalibration(self, queryinstance, tem, ccdcamera, mag, ht):
-		self.setDBInstruments(queryinstance,tem,ccdcamera)
-		if ht is None:
-			ht = self.instrument.tem.HighTension
-		queryinstance['magnification'] = mag
-		queryinstance['high tension'] = ht
-		if mag is None:
-			# get all.  Used in calibration
-			caldatalist = self.node.research(datainstance=queryinstance)
-		else:
-			# get the last one at the mag.
-			caldatalist = self.node.research(datainstance=queryinstance, results=1)
-		return caldatalist
 
 	def retrieveImageRotation(self, tem, ccdcamera, mag, ht=None):
 		'''
@@ -1681,6 +1849,279 @@ class ImageScaleRotationCalibrationClient(ImageShiftCalibrationClient):
 		scaled_vect = scale * pixvect
 		self.node.logger.info('Adjust for image scale: %.4f' % (scale))
 		return scaled_vect
+
+class PhasePlatePlaneShiftCalibrationClient(SimpleMatrixCalibrationClient):
+	"""
+	Matrix Calibration of phase plate plane shift to off-plane image.
+	The calibration is mag dependent
+	"""
+	mover = False
+	def __init__(self, node):
+		SimpleMatrixCalibrationClient.__init__(self, node)
+		self.fringe_xtilt_shift = 8.5e-5
+		self.fringe_shiftpixels = 325*8 #for 140000x and -0.0025 phase_plate_focus unit
+
+	def parameter(self):
+		return 'phase plate plane shift'
+
+	def calculateUnitParameterDelta(self, cam, mag, pixsize):
+		return self.fringe_xtilt_shift
+
+	def getMeasuredPixelSize(self, param_change, totalpix, cam, pixsize):
+		self.node.logger.debug('change-scope param change',param_change)
+		self.node.logger.debug('fringe_shiftpixels',self.fringe_shiftpixels)
+		self.node.logger.debug('totalpix-pixelshift for change',totalpix)
+		self.node.logger.debug('fringe_xtilt_shift',self.fringe_xtilt_shift)
+		return pixsize*param_change*self.fringe_shiftpixels / (totalpix*self.fringe_xtilt_shift)
+
+	def calculateNewPhasePlatePlaneShiftByCorrelation(self, refdata, my_imagedata):
+		"""
+		Use image correlation and MatrixCalibrationData tp calculate new xtilt
+		"""
+		self.correlator.insertImage(refdata['reference']['image'])
+		cor, shrink_factor = self.correlateNextImage(my_imagedata['image'], 'cross', None)
+		camera_binning = my_imagedata['camera']['binning']
+		# cor_pixelpeak includes camera_binning and shrink_factor binning.
+		cor_pixelpeak, unbinned = self.findPeak(cor, camera_binning, shrink_factor, lpf=9)
+		# target display requires x,y order not row,col
+		row = unbinned['row'] / camera_binning['y']
+		col = unbinned['col'] / camera_binning['x']
+
+		# pixelshift includes camera_binning
+		pixelshift = {'row':-row, 'col':-col}
+		self.node.logger.info('measured shift (r,c) %.6f,%.6f' % (pixelshift['row'],pixelshift['col']))
+		scope = my_imagedata['scope']
+		camera = my_imagedata['camera']
+		# figure out shift
+		try:
+			newstate = self.transform(pixelshift, scope, camera)
+		except NoMatrixCalibrationError as e:
+			errsubstr = 'unable to find calibration for %s' % e
+			self.node.logger.error(errstr % errsubstr)
+			self.node.beep()
+			return None
+		except Exception as e:
+			self.node.logger.exception(errstr % e)
+			self.node.beep()
+			return None
+		return newstate['phase plate plane shift'], cor, cor_pixelpeak
+
+	def retrieveXTiltCenter(self):
+		tem = self.instrument.getTEMData()
+		if not tem:
+			return None
+		try:
+			r = leginondata.XTiltCenterData(tem=tem).query()
+			return r[0]['center']
+		except IndexError as e:
+			errstr = 'No X-tilt center for %s' % (tem['name'],)
+			self.node.logger.exception(errstr)
+		except Exception as e:
+			errstr = 'Other error for %s: %s' % (tem['name'], e)
+			self.node.logger.exception(errstr)
+		return None
+
+	def saveXTiltCenter(self):
+		tem = self.instrument.getTEMData()
+		xt = self.instrument.tem.PhasePlatePlaneShift
+		q = leginondata.XTiltCenterData(tem=tem, center=xt)
+		q.insert(force=True)
+		self.node.logger.info('xtilt center saved')
+
+class LppCalibrationClient(SimpleMatrixCalibrationClient):
+	mover = False
+	def __init__(self, node):
+		SimpleMatrixCalibrationClient.__init__(self, node)
+		self.is_xlpp = False
+
+	def parameter(self):
+		return 'lpp fringe'
+
+	def setIsXLpp(self, value):
+		self.is_xlpp = value
+		self.lpp_axes = [1,2] if self.is_xlpp else [1,]
+		self.xtilt_cal = self.retrieveLppCalibration()
+
+	def saveLppCalibration(self, vector_dict):
+		"""
+		Save Lpp standing wave xtilt vectors.
+		"""
+		#TODO: check if the calibration depends on laser power or on-plane focus
+		tem = self.instrument.getTEMData()
+		ccdcamera = self.instrument.getCCDCameraData()
+		results = leginondata.LppCalibrationData(session=self.node.session, tem=tem, ccdcamera=ccdcamera, xlpp=self.is_xlpp).query(results=1)
+		if results:
+			r = results[0]
+			# only save once if unchanged
+			if r['lpp1 wave xtilt vector x'] == vector_dict['lpp1 wave xtilt vector x'] and r['lpp1 wave xtilt vector y'] == vector_dict['lpp1 wave xtilt vector y']:
+				if r['lpp2 wave xtilt vector x'] == vector_dict['lpp2 wave xtilt vector x'] and r['lpp2 wave xtilt vector y'] == vector_dict['lpp2 wave xtilt vector y']:
+					return
+		q = leginondata.LppCalibrationData(session=self.node.session, tem=tem, ccdcamera=ccdcamera, xlpp=vector_dict['xlpp'])
+		for k in self.lpp_axes:
+			q['lpp%d wave xtilt vector x' % k] = vector_dict['lpp%d wave xtilt vector x' % k]
+			q['lpp%d wave xtilt vector y' % k] = vector_dict['lpp%d wave xtilt vector y' % k]
+		q.insert(force=True)
+		self.node.logger.info('Lpp standing wave xtilt vector saved')
+
+	def retrieveLppCalibration(self):
+		"""
+		return lpp wave vector calibration that defines xtilt or phase plate plane shift
+		for one standing wave period.
+		"""
+		tem = self.instrument.getTEMData()
+		ccdcamera = self.instrument.getCCDCameraData()
+		xtilt_results = leginondata.LppCalibrationData(tem=tem, ccdcamera=ccdcamera, xlpp=self.is_xlpp).query(results=1)
+		self.node.logger.info('Retrieving lpp wave vectors for %d lpp setup' % (2 if self.is_xlpp else 1))
+		if xtilt_results:
+			return xtilt_results[0]
+		else:
+			raise NoMatrixCalibrationError()
+
+	def saveLppFitMeasurement(self, refdata, imagedata, fit_results, applied_phase_shifts):
+		"""
+		Save Lpp fringe fitting results and display in viewer. Shared by LppAlign and LppAlignTimer classes
+		"""
+		r = fit_results
+		for k in r.keys():
+			q = leginondata.LppFitResultData(session=self.node.session)
+			q['on node ref'] = refdata
+			q['axis'] = k
+			q['axis rotation'] = r[k]['image_rotation'] # rotation for fitting in degrees
+			q['amp'] = r[k]['wave_amp'] #modulation amplitude
+			q['offset'] = r[k]['value_offset'] # modulation intensity offset
+			q['period'] = r[k]['wave_period'] #peak to peak distance in pixels
+			q['phase shift'] = r[k]['phase_shift_to_max'] # fitting result
+			q['image'] = imagedata
+			q['phase shift correction'] = applied_phase_shifts[k] # phase shift applied to bring lpp on node.
+			q.insert()
+		self.saveLppFitInImageComment(imagedata, r, False)
+
+	def saveLppFitInImageComment(self, imagedata, r, is_on_node_ref=False):
+		# save image comment
+		periods = []
+		phis = []
+		for k in r.keys():
+			periods.append('%.1f' % r[k]['wave_period'])
+			phis.append('%.1f' % r[k]['phase_shift_to_max'])
+		n = len(list(r.keys()))
+		if n > 1:
+			period_text = '('+','.join(periods)+')'
+			phi_text = '('+','.join(phis)+')'
+			text = 'p-p %s pixels and phi %s degrees' % (period_text, phi_text)
+		elif n == 1:
+			period_text = periods[0]
+			phi_text = phis[0]
+			text = 'p-p %s pixels and phi %s degrees' % (period_text, phi_text)
+		else:
+			text = 'failed fringe fitting'
+		if is_on_node_ref:
+			text = 'On-node ref '+text
+		# put result in comment
+		q = leginondata.ImageCommentData(session=self.node.session, image=imagedata)
+		q['comment'] = text
+		q.insert()
+
+	def fitFringe(self, myimage_array):
+		try:
+			number_of_lpp = 1
+			if self.is_xlpp:
+				number_of_lpp = 2
+			results = lppfit.run_fringe_fit(myimage_array, number_of_lpp)
+		except Exception as e:
+			self.node.logger.warning('failed fitting, skipping: %s' % e)
+			raise RuntimeError('Lpp Fitting failed: %e' % e)
+		return results
+
+	def getNewXTiltFromFringeFit(self,phase_shifts):
+			new_xtilt = self.instrument.tem.PhasePlatePlaneShift
+			# Wave fit method starts
+			delta_xtilt = {'x':0.0,'y':0.0}
+			for k in self.lpp_axes:
+				c = 1/360.0
+				for axis in ('x','y'):
+					delta_xtilt[axis] += phase_shifts[k]*c*self.xtilt_cal['lpp%d wave xtilt vector %s' % (k,axis)]
+			self.node.logger.info('Calculated LPP xtilt shift as %s' % (delta_xtilt))
+			for axis in ('x','y'):
+				new_xtilt[axis] += delta_xtilt[axis]
+			self.node.logger.info('Phase shift LPP new xtilt as x:%.4e, y:%.4e' % (new_xtilt['x'],new_xtilt['y']))
+			# Wave fit method ends
+			return new_xtilt
+
+	def calculatePhaseShiftCorrectionFromFringeFit(self, refdata, imagedata):
+		status = 'success'
+		new_phase_shifts = {}
+		try:
+			results = self.fitFringe(imagedata['image'])
+			# phase shift represent correction needed, so it needs to reverse sign.
+			for k in results.keys():
+				phase_shift_needed = results[k]['phase_shift_to_max']
+				phase_diff = -(phase_shift_needed - refdata['lpp%d phase shift' % k])
+				new_phase_shifts[k] = lppfit.convert_phase_degrees(phase_diff)
+		except Exception as e:
+			self.node.logger.error('Error calculating on-node values: %s' % e)
+			status = 'error'
+			return {1:0.0,2:0.0}, status,results
+		self.node.logger.info('phase shift correction = %s' % new_phase_shifts)
+		self.saveLppFitMeasurement(refdata, imagedata, results, new_phase_shifts)
+		return new_phase_shifts, status, results
+
+	def getXTiltDeltaMagnitudeLimit(self):
+		'''
+		Return the xt on each axis the vector value with higher magnitude regardless
+		of the sign of vector.  This can be improved to be proper when lpp is not
+		oriented to image x, y axis.
+		'''
+		result = leginondata.LppCalibrationData(xlpp=self.is_xlpp).query(results=1)[0]
+		xs = result['lpp1 wave xtilt vector x'],result['lpp2 wave xtilt vector x']
+		ys = result['lpp1 wave xtilt vector y'],result['lpp2 wave xtilt vector y']
+		def max_magnitude(xs):
+			mags = list(map((lambda x:abs(x)),xs))
+			return xs[mags.index(max(mags))]
+		wave_max = {}
+		wave_max['x'] = max_magnitude(xs)
+		wave_max['y'] = max_magnitude(ys)
+		return wave_max
+
+	def limitXTiltDrift(self, xt, refdata, wave_max):
+		'''
+		Keep the xtilt correction to be around the reference image within +/-
+		one wave length so that the correction stay within +/- 0.5 of the wave.
+		'''
+		ref_xt = refdata['reference']['scope']['phase plate plane shift']
+		new_xt = xt.copy()
+		for axis in 'x','y':
+			if abs(xt[axis]-ref_xt[axis]-0.5*wave_max[axis]) > 1:
+				self.node.logger.warning('shift by one wave length to avoid drifting in %s axis' % axis)
+			new_xt[axis] = (xt[axis]-ref_xt[axis]-0.5*wave_max[axis]) % wave_max[axis] - 0.5*wave_max[axis] + ref_xt[axis]
+		return new_xt
+
+	def setOnPlaneOnNode(self):
+		try:
+			self.instrument.tem.PhasePlateFocus = self.node.new_f0
+		except Exception as e:
+			self.node.logger.error('Error setting to on-plane')
+			return
+		try:
+			# set xtilt
+			# Method 1: Fringe Fitting. Calculated but not used now.
+			fringe_fit_phase_shifts = self.node.new_phase_shifts
+			new_xt0 = self.getNewXTiltFromFringeFit(fringe_fit_phase_shifts)
+			# Method 2: Correlation
+			new_xt0 = self.node.new_xt0.copy()
+			# setting value
+			self.node.logger.info('Calibrated LPP new xtilt as y:%.4e, y:%.4e' % (new_xt0['x'],new_xt0['y']))
+			self.node.logger.info('Use correlation for correction')
+			self.instrument.tem.PhasePlatePlaneShift = new_xt0
+			msg = 'Set LPP focus to %.8f, x-tilt to x:%.4e, y:%.4e' % (self.node.new_f0, new_xt0['x'],new_xt0['y'])
+			self.node.logger.info(msg)
+			#
+			# Save the new alignment as the new reset point upon successful correction
+			self.node.xt0 = new_xt0.copy()
+			self.node.f0 = self.node.new_f0
+		except Exception as e:
+			self.node.logger.error('Error setting on-plane and on-node values')
+			self.node.resetLppFocus()
+			raise
 
 class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	mover = False
@@ -1832,7 +2273,11 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 			newscope = self.transform(pixelshift, scope, cam)
 			# y component is all we care about to get Z
 			y = newscope['stage position']['y'] - scope['stage position']['y']
-			z[t] = y / math.sin(state[t]['stage position']['a'])
+			if abs(math.sin(state[t]['stage position']['a'])) <0.001:
+				# avoid division by zero error
+				z[t] = 0.0
+			else:
+				z[t] = y / math.sin(state[t]['stage position']['a'])
 
 		zmean = (z[1]+z[2]) / 2
 		return zmean
@@ -2119,7 +2564,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 	def pixelToPixel(self, tem1, ccdcamera1, tem2, ccdcamera2, ht, mag1, mag2, p1):
 		'''
 		Using stage position as a global coordinate system, we can
-		do pixel to pixel transforms between mags.
+		do unbinned pixel to pixel transforms between mags.
 		This function will calculate a (row, col) pixel vector at mag2, given
 		a (row, col) pixel vector at mag1.
 		'''
@@ -2453,6 +2898,254 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 
 		return iy,ix
 
+class ObjectiveStigCalibrationClient(PixelSizeCalibrationClient):
+	stigmator_name = 'objective'
+	def __init__(self, node):
+		CalibrationClient.__init__(self, node)
+
+	def researchCalibration(self, tem, ccdcamera, name):
+		#TODO this should be projection mode dependent in case of rotation between modes.
+		queryinstance = leginondata.StigmatorCalibrationData()
+		queryinstance['tem'] = tem
+		queryinstance['ccdcamera'] = ccdcamera
+		queryinstance['type'] = name
+		caldatalist = self.node.research(datainstance=queryinstance, results=1)
+		return caldatalist[0]
+
+	def ctf2Stigmator(self, cal, ctf_correction):
+		"""
+		Convert ctf estimation values and averaged_defocus with sign to
+		objective stigmator values
+		ctf_correction has at least two keys:
+			defocus: defocus correction needed to add to reach in-focus.
+			ctfvalues: result dict from auto ctf estimation on the image.
+		"""
+		# an underfocused image should have positive sign
+		defocus_with_sign = ctf_correction['defocus']
+		ctf = ctf_correction['ctfvalues']
+		#
+		stigmator_rotation = cal['rotation angle'] # degrees
+		x_coeff = cal['coeff']['x']
+		y_coeff = cal['coeff']['y']
+		#
+		# calculate values to apply to remove the measurement
+		# gctffind naming convension
+		phiA = ctf['angle_astigmatism']-stigmator_rotation
+		astig_magnitude = 0.5 * (ctf['defocus1']-ctf['defocus2']) # in meters
+		stigx = astig_magnitude * math.cos(math.radians(2*phiA))/x_coeff
+		stigy = astig_magnitude * math.sin(math.radians(2*phiA))/y_coeff
+		if defocus_with_sign < 0:
+				stigx = -stigx
+				stigy = -stigy
+		return stigx, stigy
+
+	def saveStigCalibration(self, rotation, coeff, name='objective'):
+		newdata = leginondata.StigmatorCalibrationData()
+		newdata['session'] = self.node.session
+		newdata['tem'] = self.instrument.getTEMData()
+		newdata['ccdcamera'] = self.instrument.getCCDCameraData()
+		newdata['type'] = name
+		newdata['rotation angle'] = rotation
+		newdata['coeff'] = coeff
+		self.node.publish(newdata, database=True, dbforce=True)
+
+	def storeStigmatorCenter(self, tem, center):
+		rc = leginondata.StigmatorCenterData()
+		rc['type'] = self.stigmator_name
+		rc['center'] = center
+		rc['tem'] = tem
+		rc['session'] = self.node.session
+		self.node.publish(rc, database=True, dbforce=True)
+
+	def retrieveStigmatorCenter(self, tem):
+		rc = leginondata.StigmatorCenterData()
+		rc['tem'] = tem
+		rc['type'] = self.stigmator_name
+		results = self.node.research(datainstance=rc, results=1)
+		if results:
+			return results[0]['center']
+		else:
+			return None
+
+	def _stigmatorCenterToScope(self):
+		tem = self.instrument.getTEMData()
+		center = self.retrieveStigmatorCenter(tem)
+		if not center:
+			raise RuntimeError('no stigmator center for %geV, %gX' % (ht, probe))
+		self.instrument.tem.Stigmator = {self.stigmator_name: center}
+
+	def stigmatorCenterToScope(self):
+		try:
+			self._stigmatorCenterToScope()
+		except Exception as e:
+			self.node.logger.error('Unable to set stigmator center: %s' % e)
+		else:
+			self.node.logger.info('Set instrument stigmator center')
+
+	def _stigmatorCenterFromScope(self):
+		tem = self.instrument.getTEMData()
+		stigs = self.instrument.tem.Stigmator
+		self.storeStigmatorCenter(tem, stigs[self.stigmator_name])
+
+	def stigmatorCenterFromScope(self):
+		try:
+			self._stigmatorCenterFromScope()
+		except Exception as e:
+			self.node.logger.error('Unable to get stigmator center: %s' % e)
+		else:
+			self.node.logger.info('Saved instrument stigmator center')
+
+class CtfCalibrationClient(PixelSizeCalibrationClient):
+	def __init__(self, node):
+		CalibrationClient.__init__(self, node)
+		self.stig_calclient = ObjectiveStigCalibrationClient(node)
+
+	def measureCtf(self, initial_defocus=None, correct_tilt=False, stig=False, settle=0.0, image0=None, phase_search=(0,0)):
+		"""
+		measure defocus correction by estimating CTF on two images.
+		"""
+		phase_search = list(phase_search)
+		# backward compatible where old settings has Null in database
+		for index in (0,1):
+			if phase_search[index] is None:
+				phase_search[index] = 0.0
+		self.abortevent.clear()
+		if initial_defocus is not None:
+			self.instrument.tem.Defocus = initial_defocus
+		if image0 is None:
+			imagedata0 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
+		else:
+			# last imagedata from drift check.
+			imagedata0 = image0
+		self.displayImage(imagedata0['image'])
+		defocus0 = self.instrument.tem.Defocus
+		defocus_avg0, ctfvalues0 = self.measureImageCtf(imagedata0, phase_search)
+		# adjust by pixelsize
+		ht = imagedata0['scope']['high tension']
+		cs = imagedata0['scope']['tem']['cs']
+		s0 = fftfun.calculateFirstNode(ht,defocus_avg0,cs)
+		rpixel = self.getImageReciprocalPixelSize(imagedata0)['x']
+		if s0/rpixel > 0.125*imagedata0['camera']['dimension']['x']:
+			# bring it to underfocus if it is low overfocus
+			delta_defoc = - 2.5 * defocus_avg0
+		else:
+			# not to go too much further if it is high underfocus
+			delta_defoc = - defocus_avg0*0.5
+		self.node.logger.info('add underfocus by %.2f um for the second image' % (-delta_defoc*1e6))
+		# second image should always be underfocus
+		defocus1 = self.instrument.tem.Defocus + delta_defoc
+		self.instrument.tem.Defocus = defocus1
+		time.sleep(settle)
+		imagedata1 = self.node.acquireCorrectedCameraImageData(force_no_frames=True)
+		defocus_avg1, ctfvalues1 = self.measureImageCtf(imagedata1, phase_search,'temp1')
+		# reset
+		self.instrument.tem.Defocus = defocus0
+
+		# determine sign of the ctf defocus correction required to reach 0.
+		# an underfocused image should have positive sign
+		defocus0_is_over_focus = False
+		if defocus_avg1 - defocus_avg0 < 0:
+			defocus0_is_over_focus = True
+		else:
+			if defocus_avg1 < abs(delta_defoc):
+				defocus0_is_over_focus = False
+		sign0 = -1 if defocus0_is_over_focus else 1
+		self.node.logger.info('correction sign of the 1st image is %d' % sign0)
+		correction0 = defocus_avg0*sign0
+		sign1 = -1 if correction0 - delta_defoc < 0 else 1
+		self.node.logger.info('correction sign of the 2nd image is %d' % sign1)
+		correction1 = defocus_avg1*sign1
+		if 'confidence' not in ctfvalues0.keys() or 'confidence' not in ctfvalues1.keys():
+			self.node.error('No confidence value for the ctf fit')
+			residual = 99999.0
+		else:
+			self.node.logger.info('Confidence of the fits for the two images are (%.3f,%.3f)' % (ctfvalues0['confidence'],ctfvalues1['confidence']))
+			# failure as either confidence (0-1.0) are too low 
+			if 'confidence' not in ctfvalues0.keys() or 'confidence' not in ctfvalues1.keys() or ctfvalues0['confidence'] < 1e-4 or ctfvalues0['confidence']+ctfvalues1['confidence'] < 1e-3:
+				residual = 99999.0
+				self.node.logger.warning('Failed estimate with low confidence')
+			else:
+				residual = 1/ctfvalues0['confidence']
+		# failure as defocus not separated by 80% of delta
+		measured_correction_delta = correction1 - correction0
+		self.node.logger.info('measured correction delta is %.2f um' % (measured_correction_delta*1e6))
+		if measured_correction_delta < -0.8 * delta_defoc or measured_correction_delta > -1.2 * delta_defoc:
+			residual = 9.999e8
+			self.node.logger.warning('Failed estimate with bad correction_delta')
+		result = {'defocus': correction0, 'min': residual, 'ctfvalues': ctfvalues0}
+		return result
+
+	def measureImageCtf(self, imagedata, phase_search=(0,0),temp_filename='temp'):
+		if not imagedata['filename']:
+			# This occurs when image is taken without saving
+			session_path = imagedata['session']['image path']
+			os.makedirs(session_path, exist_ok=True)
+
+			imagedata['filename']=temp_filename
+			mrc.write(imagedata['image'],'%s/%s.mrc' % (session_path,temp_filename))
+		im = imagedata['image']
+		self.displayImage(im)
+		ctfvalues = self.ctfclient.runFromImageData(imagedata, phase_search=phase_search)
+		self.node.logger.info('estimated ctf: def1,def2,angle_astig: %.2f um, %.2f um, %.1f degrees' % (ctfvalues['defocus1']*1e6, ctfvalues['defocus2']*1e6, ctfvalues['angle_astigmatism']))
+		defocus_avg1 = (ctfvalues['defocus1']+ctfvalues['defocus2'])/2.0
+		if max(phase_search) > min(phase_search):
+			self.node.logger.info('estimated phase shift: %.2f degrees' % ctfvalues['extra_phase_shift'])
+		print(ctfvalues)
+		return defocus_avg1, ctfvalues
+
+	def measureDefocusStig(self, initial_defocus=None, settle=0.5, correct_tilt=False, image0=None, on_phase_plate=False):
+		'''
+		Returns defocus and stigmator values required for correction measured by
+		ctf analysis of the power spectrum.
+		'''
+		self.abortevent.clear()
+		tem = self.instrument.getTEMData()
+		cam = self.instrument.getCCDCameraData()
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
+		stig_name = 'objective'
+		# Can not handle the exception for retrieveMatrix here.
+		# Focuser node that calls this need to know the type of error
+		self.stig_cal = self.stig_calclient.researchCalibration(tem, cam, stig_name)
+		phase_search = (0,0)
+		if on_phase_plate:
+			phase_search = (10,170)
+		ctf_correction = self.measureCtf(initial_defocus,False, True, settle,image0, phase_search)
+		stig_x, stig_y = self.stig_calclient.ctf2Stigmator(self.stig_cal, ctf_correction)
+		result = ctf_correction.copy()
+		# These are stigmator values to apply, not ctf estimation result
+		# Note: the key needs to be stigx and stigy to avoid database migration
+		result['stigx'] = stig_x
+		result['stigy'] = stig_y
+		return result
+
+class TableauAberrationCalibrationClient(PixelSizeCalibrationClient):
+	def __init__(self, node):
+		CalibrationClient.__init__(self, node)
+		self.ctf_calclient = CtfCalibrationClient(node)
+		## initialize a new tableau
+		self.initTableau()
+		ht = self.instrument.tem.HighTension
+		self.abe = aberration.AberrationEstimator(presetdata['tem']['cs'], ht)
+
+	def calculateAxialComa(self):
+		try:
+			A = self.abe.run()
+			Adict = self.abe.mapAberration(A)
+		except ValueError as e:
+			self.node.logger.error(e)
+			return None, None
+		c21 = Adict['coma']
+		if TESTING:
+			# reduced by half for each iteration
+			c21['x'] = (0.5**self.auto_count)*(Adict['coma']['x'])
+			c21['y'] = (0.5**self.auto_count)*(Adict['coma']['y'])
+		bt = self.abe.calculateBeamTiltCorrection(A)
+		self.node.logger.info('Axial Coma C21 (um)= (%.2f,%.2f),total= %.2f' % (c21['x']*1e6,c21['y']*1e6,math.hypot(c21['x'],c21['y'])*1e6))
+		self.node.logger.info('Coma correction beam tilt (x,y)(mrad)= (%.2f,%.2f)' % (bt['x']*1e3,bt['y']*1e3))
+		self.abe.resetData()
+		return c21, bt
 class EucentricFocusClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)

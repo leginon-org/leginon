@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright under
-#       Apache License, Version 2.0
-#       For terms of the license agreement
-#       see  http://leginon.org
+#   The Leginon software is Copyright under
+#   Apache License, Version 2.0
+#   For terms of the license agreement
+#   see  http://leginon.org
 #
 #
 
@@ -30,8 +30,7 @@ from leginon import correctorclient
 from leginon import remoteserver
 from leginon import settingsfun
 
-# testprinting for development
-testing = False
+# printing for development test should be set within the node class as self.print_testing
 
 class ResearchError(Exception):
 	pass
@@ -68,6 +67,7 @@ class Node(correctorclient.CorrectorClient):
 	objectserviceclass = remotecall.NodeObjectService
 
 	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None, order=0):
+		self.is_testing = self.print_testing if hasattr(self,'print_testing') else False
 		self.name = name
 		self.this_node = None
 		self.panel = panel
@@ -164,10 +164,6 @@ class Node(correctorclient.CorrectorClient):
 							temname = description
 						self.tem_hostname = temname
 		return self.tem_hostname
-
-	def testprint(self,msg):
-		if testing:
-			print(msg)
 
 	# settings
 
@@ -644,7 +640,6 @@ class Node(correctorclient.CorrectorClient):
 		z = self.getLastFocusedStageZ(targetdata)
 		if z is not None:
 			msg = 'moveToLastFocusedStageZ %s' % (z,)
-			self.testprint(msg)
 			self.logger.debug(msg)
 			stage_position = {'z':z}
 			self.instrument.tem.StagePosition = stage_position
@@ -722,6 +717,19 @@ class Node(correctorclient.CorrectorClient):
 	def setUserVerificationStatus(self, state):
 		evt = leginon.gui.wx.Events.UserVerificationUpdatedEvent(self.panel, state)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
+
+	def cyclePhasePlateFocus(self, before, after, repeat=2, sleep_time=0.5):
+		self.logger.info('cycling lpp focus %d times with %.1f sec sleep' % (repeat, sleep_time))
+		if abs(before-after) < 1e-8:
+			return
+		for i in range(repeat):
+			self.instrument.tem.PhasePlateFocus = after
+			time.sleep(sleep_time)
+			self.instrument.tem.PhasePlateFocus = before
+			time.sleep(sleep_time)
+		self.logger.info('final lpp focus  %.8f' % after)
+		self.instrument.tem.PhasePlateFocus = after
+
 
 ## module global for storing start times
 start_times = {}

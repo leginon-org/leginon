@@ -104,7 +104,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 
 	def moveAndExecute(self, request_data):
 		'''
-		Overwrite base class moveAndExecute from AlignZeroLossPeak.
+		Overwrite base class moveAndExecute from Reference.
 		It needs to check shift threshold, and take test image.
 		'''
 		request_preset_name = request_data['preset']
@@ -139,6 +139,9 @@ class AlignZeroLossPeak(ReferenceTimer):
 		if need_align:
 			# now ready to do it.
 			try:
+				state = self.pauseCheckBeforeExecute()
+				if state == 'stop':
+					raise ValueError('stoped by user')
 				self._setRequestPreset(request_preset_name)
 			except:
 				self.moveBack(position0)
@@ -146,6 +149,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 			try:
 				self.at_reference_target = True
 				self.execute(request_data)
+				self.logExecution(request_data)
 			except Exception as e:
 				self.logger.error('Error executing request, %s' % e)
 				self._setRequestPreset(request_preset_name)
@@ -211,6 +215,8 @@ class AlignZeroLossPeak(ReferenceTimer):
 		Execute without moving. Used in testing and handling the
 		request after moving and set preset.
 		'''
+		self.logger.info('Checking if pause is requested...')
+		state = self.player.wait()
 		ccd_camera = self.instrument.ccdcamera
 		try:
 			if not ccd_camera.EnergyFiltered:

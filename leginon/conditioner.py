@@ -210,7 +210,7 @@ class Conditioner(node.Node):
 		Run fixCondition once as a test
 		'''
 		for ctype in self.ctypes:
-			self.testprint('ctype %s' % ctype)
+			self.logger.debug('ctype %s' % ctype)
 			self.fixCondition(ctype)
 		self.player.stop()
 		self.setStatus('idle')

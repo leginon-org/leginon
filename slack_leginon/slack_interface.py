@@ -15,7 +15,7 @@ class SlackInterface(SlackClient):
 	def __init__(self):
 
 		slackconfig = slackconfigparser.getSlackData()
-		
+		self.check_channel = slackconfig['check_channel'] if 'check_channel' in slackconfig.keys() else False
 		self.slack_token = slackconfig['slack_token']
 		if 'virtualenv_path' in list(slackconfig.keys()) and slackconfig['virtualenv_path']:
 			self.virtualenv_path = slackconfig['virtualenv_path']+"activate.csh"
@@ -33,18 +33,18 @@ class SlackInterface(SlackClient):
 		return self.default_channel
 
 	def setDefaultChannel(self,name):
-		if name not in self.getChannelNames():
+		if self.check_channel and name not in self.getChannelNames():
 			raise ValueError('Channel %s does not exist' % name)
 		self.default_channel = name
 
-	# send a message to a certain channel. Optional checkchannel flag will check if the channel exists, and create it if not.
-	# if checkchannel is false and a channel does not exist, slack will return an error.
-	def sendMessage(self,slackchannel,message,checkchannel=True):
+	# send a message to a certain channel. check_channel flag in slack.cfg will check if the channel exists, and create it if not.
+	# if check_channel is false and a channel does not exist, slack will return an error.
+	def sendMessage(self,slackchannel,message):
 
 		#print("Token: ",self.slack_token)
 		#print("Channel: ",slackchannel)
 
-		if checkchannel is True:
+		if self.check_channel is True:
 			if slackchannel in self.getChannelNames():
 				return self.client.chat_postMessage(
 						channel=slackchannel,
@@ -53,7 +53,6 @@ class SlackInterface(SlackClient):
 				print(( 'Channel '+slackchannel+' does not exist; Please create channel in Slack.'))
 
 		return self.client.chat_postMessage(
-				"chat.postMessage",
 				channel=slackchannel,
 				text=message)	
 
@@ -62,7 +61,7 @@ class SlackInterface(SlackClient):
 		channels = self.client.api_call('conversations.list')
 		names = []
 		for channel in channels['channels']:
-			        names.append(channel['name_normalized'])
+				names.append(channel['name_normalized'])
 		return names
 
 if __name__ == "__main__":
@@ -71,14 +70,13 @@ if __name__ == "__main__":
 	parser = OptionParser(usage="usage: slack_interface.py [options]", version="0.1")
 	parser.add_option("-c","--channel",action="store",type="string",dest="channel")
 	parser.add_option("-m","--message",action="store",type="string",dest="message")
-	parser.add_option("--checkchannel",action="store_true",default=False,dest="checkchannel")
 	(options, args) = parser.parse_args()
 
 	if options.channel and options.message:
 		slackchannel = options.channel
 		message = options.message
 
-		sc = client.sendMessage(slackchannel,message,checkchannel=options.checkchannel)
+		sc = client.sendMessage(slackchannel,message)
 		print(sc)
 
 

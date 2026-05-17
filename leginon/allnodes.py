@@ -207,6 +207,16 @@ noderegistry.registerNodeClass(TiltCycler,classtype)
 from leginon.phaseplateplaneshiftcycler import PhasePlatePlaneShiftCycler
 noderegistry.registerNodeClass(PhasePlatePlaneShiftCycler,classtype)
 
+from leginon.lppaligner import LppAligner
+noderegistry.registerNodeClass(LppAligner,classtype)
+
+from leginon.lppaligntimer import LppAlignTimer
+noderegistry.registerNodeClass(LppAlignTimer,classtype)
+
+from leginon.lppimageshiftimager import LppImageShiftImager
+noderegistry.registerNodeClass(LppImageShiftImager,classtype)
+
+
 ##############################
 # Calibrations
 ##############################
@@ -225,6 +235,9 @@ noderegistry.registerNodeClass(ImageBeamCalibrator,classtype)
 
 from leginon.beamtiltcalibrator import BeamTiltCalibrator
 noderegistry.registerNodeClass(BeamTiltCalibrator,classtype)
+
+from leginon.stigcalibrator import StigCalibrator
+noderegistry.registerNodeClass(StigCalibrator,classtype)
 
 from leginon.pixelsizecalibrator import PixelSizeCalibrator
 noderegistry.registerNodeClass(PixelSizeCalibrator,classtype)

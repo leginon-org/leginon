@@ -25,16 +25,24 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		return [sbsz]
 
 	def insertSizersToSZ(self):
-		position = self.createBypassCheckBox((0, 0))
+		position = self.createPrefixSizer((0, 0))
+		position = self.createBypassCheckBox((position[0],0))
 		position = self.createSubTitleSizer((position[0],0),'Moving to Target')
 		position = self.createMoveTypeChoice((position[0],0))
 		position = self.createMoverChoiceSizer((position[0],0))
 		position = self.createMovePrecisionSizer((position[0],0))
+		position = self.createUserCheckSizer((position[0],0))
 		position = self.createSubTitleSizer((position[0],0),'Timing')
 		# seperater
 		position = self.createPauseTimeEntry((position[0],0))
 		position = self.createIntervalEntry((position[0],0))
 		position = self.createReturnSettleTimeEntry((position[0],0))
+
+	def createPrefixSizer(self, position):
+		'''
+		Defined in subclasses
+		'''
+		return position
 
 	def createIntervalEntry(self, position):
 		'''
@@ -77,6 +85,11 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.sz.Add(szmoveprec, start_position, totalsize, wx.ALIGN_CENTER_VERTICAL)
 		return start_position[0]+totalsize[0],start_position[1]+totalsize[1]
 
+	def createUserCheckSizer(self,start_position):
+		self.widgets['user check'] = wx.CheckBox(self, -1, 'Wait for user confirmation before returning from reference target')
+		self.sz.Add(self.widgets['user check'], start_position, (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
+		return start_position[0]+1,start_position[1]+1
+
 	def createSubTitleSizer(self, start_position,title):
 		szblank = wx.GridBagSizer(5, 5)
 		szblank.Add(wx.StaticText(self, -1, '________%s__________' % (title)), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -113,10 +126,15 @@ class ReferencePanel(leginon.gui.wx.Node.Panel):
 		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelp='Settings')
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelp='Test')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelp='Continue')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PAUSE, 'pause', shortHelp='Pause')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelp='Abort')
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+
 		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET, 'simulatetarget', shortHelp='Test')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ACQUIRE,
 													'acquire',
 													shortHelp='Acquire and save current position as reference')
@@ -139,9 +157,13 @@ class ReferencePanel(leginon.gui.wx.Node.Panel):
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onTest,
-											id=leginon.gui.wx.ToolBar.ID_PLAY)
 		self.Bind(leginon.gui.wx.Events.EVT_PLAYER, self.onPlayer)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onTest,
+											id=leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool,
+											id=leginon.gui.wx.ToolBar.ID_PLAY)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPauseTool,
+											id=leginon.gui.wx.ToolBar.ID_PAUSE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
 											id=leginon.gui.wx.ToolBar.ID_ABORT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool,
@@ -158,24 +180,51 @@ class ReferencePanel(leginon.gui.wx.Node.Panel):
 		return SettingsDialog(parent)
 	
 	def onTest(self, evt):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
 		threading.Thread(target=self.node.onTest).start()
 
 	def onPlayer(self, evt):
 		if evt.state == 'play':
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET, False)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
 		elif evt.state == 'pause':
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET, False)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
 		elif evt.state == 'stop':
-			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
 			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 
-	def onStopTool(self, evt):
+	def onPlayTool(self, evt):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
+		self.node.setStatus('processing')
+		self.node.player.play()
+
+	def onPauseTool(self, evt):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+		self.node.setStatus('user input')
+		self.node.player.pause()
+
+	def onStopTool(self, evt):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET, True)
+		self.node.setStatus('idle')
 		self.node.player.stop()
 
 	def onAcquireTool(self, evt):

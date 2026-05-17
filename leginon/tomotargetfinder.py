@@ -243,8 +243,12 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 		if typename == 'acquisition':
 			self.publishTomoTargets(imagedata, typename, targetlist)
 		elif typename == 'focus' or typename == 'track':
+			# Do not publish these targets here.  They are done within
+			# Tomography2 so that these are handled at per
+			# acquisition target, not targetlist.
 			pass
-		else: 
+		else:
+			# preview and reference targets
 			return super(TomoClickTargetFinder, self).publishTargets(imagedata, typename, targetlist)
 	
 	#def getTrackPreset(self):
@@ -258,9 +262,11 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 		# (1) Get all acquisition targets. 
 		# (2) Publish them. 
 		# (3) Get track offset and preset name. 
-		# (4) If each acquisition target gets a focus target, input offset.
+		# (4) If each acquisition target gets a focus target
+		#     (settings "auto focus target"==True), input offset.
 		# (5) Make and publish TomoTargetOffsetData for this target list
-		# (6) If there is only one focus target for this targetlist, publish to database.
+		# (6) If "auto focus target" setting is False, take the first
+		#     focus target for this targetlist, and publish to database.
 
 		assert(typename == 'acquisition')
 		imagearray = imagedata['image']
@@ -271,31 +277,32 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 		# advance to next target number
 		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
 		number = lastnumber + 1
-		for imagetarget in imagetargets:															
+		for imagetarget in imagetargets:
 			acquisition_td = self.getNewTargetForImage(imagedata,imageshape,imagetarget,targetlist,number)
 			self.publish(acquisition_td, database=True)												# (2)
 			number += 1
 
 		trackoffset = self.getTrackOffset()															# (3)
-		if self.panel.imagepanel.isAutoFocus():														# (4)	
+		if self.settings['auto focus target']:														# (4)
 			focusoffset = self.getFocusOffset()
 		else:
-			focusoffset = (None,None)				# single focus target for this targetlist 
-		offset_td = leginondata.TomoTargetOffsetData(list=targetlist,focusoffset=focusoffset,		
-											trackoffset=trackoffset) #,trackpreset=trackpreset)		# (5)
+			focusoffset = (None,None)			# single focus target for this targetlist
+		offset_td = leginondata.TomoTargetOffsetData(session=self.session,
+				list=targetlist,focusoffset=focusoffset,
+				trackoffset=trackoffset)															# (5)
 		self.publish(offset_td, database=True)
-		
-		if not self.panel.imagepanel.isAutoFocus():													# (6)
+
+		if not self.settings['auto focus target']:													# (6)
 			focustarget = self.panel.getTargets('focus')
 			if focustarget:
+				# TODO do we need to consider multi-site averaging of focusing?
 				focustarget = focustarget[0]
 				focus_td = self.getNewTargetForImage(imagedata,imageshape,focustarget,targetlist,number)
-				self.publish(focus_td, database=True)												
+				self.publish(focus_td, database=True)
 				number += 1
 			else:
 				pass
 
-		
 	def getNewTargetForImage(self,imagedata, imageshape, target_obj, targetlist, number):
 		typename = target_obj.type.name
 		column, row = target_obj.position
@@ -305,6 +312,9 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 		return targetdata
 
 	def getTrackOffset(self, offset=None):
+		"""
+		Returns binned pixel shift in (r,c) from acquisition target on current imagedata
+		"""
 		imagedata = self.currentimagedata
 		tem = imagedata['scope']['tem']
 		ccd = imagedata['camera']['ccdcamera']
@@ -324,6 +334,9 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 		return pixeloffset
 
 	def getFocusOffset(self, offset=None):
+		"""
+		Returns binned pixel shift in (r,c) from acquisition target on current imagedata
+		"""
 		imagedata = self.currentimagedata
 		tem = imagedata['scope']['tem']
 		ccd = imagedata['camera']['ccdcamera']

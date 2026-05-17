@@ -352,6 +352,7 @@ class ApAceRunData(Data):
 			('xmipp_ctf_params', ApXmippCtfParamsData),
 			('ace2_params', ApAce2ParamsData),
 			('ctffind4_params', ApCtfFind4ParamsData),
+			('gctffind_params', ApGCtfFindParamsData),
 			('transferred', bool),
 			('transfer_params', ApAceTransferParamsData),
 			('session', leginon.leginondata.SessionData),
@@ -418,7 +419,7 @@ class ApCtfTiltParamsData(Data):
 			('resmin', float),
 			('resmax', float),
 			('defstep', float),
-			('dast', float),
+			('ast', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -436,6 +437,20 @@ class ApCtfFind4ParamsData(Data):
 			('max_phase_shift', float),
 			('phase_search_step', float),
 			('local_refine', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ApGCtfFindParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('bestdb', bool),
+			('ampcontrast', float),
+			('fieldsize', int),
+			('cs', float), # mm
+			('shift_phase', bool),
+			('min_phase_shift', float), # degrees
+			('max_phase_shift', float), # degrees
+			('astig', float), # fraction in delta/avg
 		)
 	typemap = classmethod(typemap)
 

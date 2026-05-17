@@ -43,19 +43,19 @@ class genericJob(object):
 	
 	def setJobAttributes (self, optList):
 		newCommandLine = []
-		options = {'runname'   : self.setName, 
-				   'jobid'	 : self.setJobId,
-				   'rundir'	: self.setOutputDir, 
-				   'walltime'  : self.setWallTime, 
-				   'cput'	  : self.setCpuTime, 
-				   'nodes'	 : self.setNodes,
-				   'ppn'	   : self.setPPN,
-				   'nproc'	   : self.setNProc,
-				   'projectid' : self.setProjectId, 
-				   'expid'	 : self.setExpId, 
-				   'mem'	 : self.setMem, 
-				   'queue'	 : self.setQueue,
-				   'jobtype'   : self.setJobType}
+		options = {'runname': self.setName, 
+				'jobid'	 : self.setJobId,
+				'rundir'	: self.setOutputDir, 
+				'walltime'  : self.setWallTime, 
+				'cput'	  : self.setCpuTime, 
+				'nodes'	 : self.setNodes,
+				'ppn'	   : self.setPPN,
+				'nproc'	   : self.setNProc,
+				'projectid' : self.setProjectId, 
+				'expid'	 : self.setExpId, 
+				'mem'	 : self.setMem, 
+				'queue'	 : self.setQueue,
+				'jobtype'   : self.setJobType}
 		excludeList = ['jobid', 'walltime', 'cput', 'nodes', 'ppn', 'jobtype', 'mem', 'queue']
 		optionKeys = list(options.keys())
 		has_nproc = False
@@ -74,7 +74,7 @@ class genericJob(object):
 					newCommandLine.append(opt)
 
 				if key in optionKeys:
-					options[key](value)	
+					options[key](value)
 				if key == 'nproc':
 					has_nproc = True
 			else:
@@ -93,62 +93,62 @@ class genericJob(object):
 			#	newCommandLine.append('--nproc=%d' % (int(self.getNProc())))
 		return newCommandLine
 	
-					
+
 	def getWalltime(self):
 		return self.wallTime
 	def setWallTime(self, time):
-		self.wallTime = time	  
+		self.wallTime = time 
    
 	def getName(self):
 		return self.runname 
 	def setName(self, newname):
 		self.runname = newname + ".appionsub"
-						  
+
 	def getNodes(self):
 		return self.nodes
 	def setNodes(self, numNodes):
 		self.nodes = numNodes
-		
+
 	def getPPN(self):
 		return self.ppn
 	def setPPN(self, numProcs):
 		self.ppn = numProcs
-		
+
 	def getNProc(self):
 		return self.nproc
 	def setNProc(self, totalNumProcs):
 		self.nproc = totalNumProcs
-		
+
 	def getCpuTime(self):
 		return self.cpuTime
 	def setCpuTime(self,time):
 		self.cpuTime = time
-		
+
 	def getMem(self):
 		return  self.mem
 	def setMem(self, memSize):
 		self.mem = memSize
-		
+
 	def getPmem(self):
 		return None
 	def getQueue(self):
 		return self.queue
 	def setQueue(self, queue):
 		self.queue = queue
-		
+
 	def getAccount(self):
 		return None
 	
-	def getOutputDir(self):	   
+	def getOutputDir(self):   
 		return self.rundir
 	def setOutputDir(self, dirname):
 		if dirname.startswith('~'):
-			dirname = os.path.expanduser(dirname)		   
+			dirname = os.path.expanduser(dirname)   
 		self.rundir = os.path.expandvars(dirname)
-		
+
 	def getCommandList(self):
 		return self.command_list
-	
+
 	def getJobId(self):
 		return self.jobid
 	def setJobId(self, id):
@@ -171,7 +171,7 @@ class genericJob(object):
 		return self.runname + ".job"
 	def getLaunchAsShell(self):
 		return self.launch_as_shell
-        def getSetupOnly(self):
+	def getSetupOnly(self):
 		return False
-	
+
 

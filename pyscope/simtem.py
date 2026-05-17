@@ -78,7 +78,7 @@ class SimTEM(tem.TEM):
 		self.intensity_range = (0.0, 1.0)
 		self.intensity = 0.0
 		self.parallel_offset = 0.0
-
+		self.lpp_focus = 0.0
 		self.stigmators = {
 			'condenser': {
 				'x': 0.0,
@@ -689,6 +689,12 @@ class SimTEM(tem.TEM):
 		print('beamstop set to %s' % (value,))
 		self.beamstop_position = value
 
+	def getPhasePlateFocus(self):
+		return self.lpp_focus
+
+	def setPhasePlateFocus(self, value):
+		self.lpp_focus = value
+
 class SimTEM300(SimTEM):
 	name = 'SimTEM300'
 	def __init__(self):
@@ -788,3 +794,24 @@ class SimDiffrGlacios(SimDiffrTEM):
 			1100,
 			2750,
 		]
+
+class SimEFKriosXL(SimTEM300):
+	name = 'SimEF-KriosXL'
+	def __init__(self):
+		SimTEM300.__init__(self)
+		self.high_tension = 300000.0
+		self.magnifications = [
+			99,
+			930,
+			3600,
+			88000,
+			140000,
+		]
+		self.xlens1_focus = 0.3
+
+	def getXLens1Focus(self):
+		return self.xlens1_focus
+
+	def setXLens1Focus(self, value):
+		self.xlens1_focus = value
+

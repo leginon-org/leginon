@@ -285,6 +285,9 @@ class PhasePlatePublishEvent(PublishEvent):
 class PhasePlateUsagePublishEvent(PublishEvent):
 	dataclass = leginondata.PhasePlateUsageData
 
+class AlignLppPublishEvent(PublishEvent):
+	dataclass = leginondata.AlignLppRequestData
+
 class FixAlignmentEvent(Event):
 	pass
 

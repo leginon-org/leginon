@@ -1602,6 +1602,44 @@ class leginondata {
 		}
 	}
 
+	function getImageLppFitResults($imageId) {
+		if ($this->mysql->isTable('LppFitResultData') && $imageId) {
+			$q = "select * from LppFitResultData where `REF|AcquisitionImageData|image`=".$imageId." ";
+			$r = $this->mysql->getSQLResult($q);
+		} else {
+			return array();
+		}
+		$skipedKeys = ['DEF_timestamp', 'REF|SessionData|session', 'REF|AcquisitionImageData|image'];
+		$sharedKeys = ['REF|LppOnNodeRefData|on node ref'];
+
+		$result = [];
+
+		foreach ($r as $subArray) {
+			$axisValue = $subArray['axis'];
+
+			// based on Claude code suggestion
+			foreach ($subArray as $key => $value) {
+				if (in_array($key, $skipedKeys)) {
+					continue;
+				} elseif ($key === 'DEF_id') {
+					$key = 'lpp_fit_id';
+				} elseif (in_array($key, $sharedKeys)) {
+					// Add shared keys once (no suffix)
+					$new_key = str_replace(' ','_',resolveKey($key));
+					$result[$new_key] = $value;
+				} elseif ($key === 'axis') {
+					// Skip the axis key itself or store it if needed
+					continue;
+				} else {
+					// Append axis value as suffix for unique keys
+					$new_key = str_replace(' ','_',resolveKey($key));
+					$result[$new_key . '_axis' . $axisValue] = $value;
+				}
+			}
+		}
+		return $result;
+	}
+
 	function getGridId($imgId) {
 		if (!$this->mysql->isTable('GridData'))
 			return 0;
@@ -2942,6 +2980,45 @@ class leginondata {
 		return $r[0];
 	}
 
+	function getImageScopeValues($sessionId, $preset="", $scaler_fieldnames=array('intensity',), $xy_fieldnames=array('image shift',), $stats=false) {
+		$wherepreset=($preset) ? "AND `p`.name='$preset'" : "";
+		$select_q = "";
+		foreach ($scaler_fieldnames as $fieldname) {
+			$displayname = str_replace(' ','_',$fieldname);
+			$select_q.= ",`s`.`".$fieldname."` AS `".$displayname."` ";
+		};
+		foreach ($xy_fieldnames as $fieldname) {
+			$displayname= str_replace(' ','_',$fieldname);
+			$select_q.= ",`s`.`SUBD|".$fieldname."|x` AS `".$displayname."_x` ";
+			$select_q.= ",`s`.`SUBD|".$fieldname."|y` AS `".$displayname."_y` ";
+			// pass also stage position z values
+			$qz = ($fieldname == 'stage position') ? ",`s`.`SUBD|".$fieldname."|z` AS `".$displayname."_z` ":"";
+			$select_q.= $qz;
+		};
+		$displayname = str_replace(' ','_',$fieldname);
+		$q="SELECT "
+		."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) AS `unix_timestamp`, "
+		."`a`.`DEF_timestamp` AS `timestamp`, "
+		."`p`.`name`, "
+		."a.`DEF_id` AS image_id, "
+		."CONCAT(`a`.`filename`,'.mrc') AS filename "
+		.$select_q
+		."FROM "
+		."`AcquisitionImageData` AS `a` "
+		."LEFT JOIN `PresetData` AS `p` "
+		."ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
+		."LEFT JOIN `ScopeEMData` AS `s` "
+		."ON (`s`.`DEF_id`=`a`.`REF|ScopeEMData|scope`) "
+		."WHERE "
+		."`a`.`REF|SessionData|session`=$sessionId "
+		.$wherepreset;
+		if ($stats) {
+			$statsarray = array('v'=>$this->getStats($displayname, $q));
+			return $statsarray;
+		}
+		return $this->mysql->getSQLResult($q);
+	}
+
 	function getImageScopeXYValues($sessionId, $preset="", $fieldname='image shift',$stats=false) {
 		$wherepreset=($preset) ? "AND `p`.name='$preset'" : "";
 		$displayname = str_replace(' ','_',$fieldname);
@@ -3078,7 +3155,8 @@ class leginondata {
 			."FROM `AcquisitionImageData` AS `a` "
 			."LEFT JOIN `PresetData` AS `p` ON (`p`.`DEF_id` = `a`.`REF|PresetData|preset`) "
 			."WHERE `a`.`REF|SessionData|session` = $sessionId "
-			."AND `a`.`version`=0 "
+			."AND (`a`.`version`=0 or `a`.`version` is NULL) "
+			#."AND (`a`.`version`=0) "
 			."AND `p`.`name` like '".$preset_name."' "
 			."ORDER BY `utime` DESC ";
 			if ($limit !== false) {
@@ -3111,29 +3189,43 @@ class leginondata {
 	}
 
 	function getTiming($sessionId, $preset="", $getquery=false) {
+		$test = $this->_getTiming($sessionId, $preset, $false);
+		if (!empty($ret)) {
+			$ret = $this->_getTiming($sessionId, $preset, $getquery,'target');
+		} else {
+			$ret = $this->_getTiming($sessionId, $preset, $getquery,'emtarget');
+		}
+		return $ret;
+	}
+
+	function _getTiming($sessionId, $preset="", $getquery=false, $target_data_type='target') {
 		// This timing calculation checks time difference between
 		// target start processing and image published, thus without
 		// overhead from processing rejected targets nor autofilling etc.
+		$target_table = ($target_data_type==='target') ? 'AcquisitionImageTargetData':'EMTargetData';
+		$target_field = ($target_data_type==='target') ? 'REF|AcquisitionImageTargetData|target':'REF|EMTargetData|emtarget';
 		$datatype=($preset) ? array($preset):$this->getDataTypes($sessionId);
 		foreach ($datatype as $preset) {
             if ($preset == 'manual') continue;
 			$siblings=$this->getSiblingsfrompreset($sessionId, $preset);
 			$presetorder=array();
-			if ($siblings)
-			foreach($siblings as $sibling) {
-				$presetorder[]=$sibling['s_preset'];
+			if ($siblings) {
+				foreach($siblings as $sibling) {
+					$presetorder[]=$sibling['s_preset'];
+				}
 			}
 			$key = array_search($preset, $presetorder);
 			$key -=1;
 			if ($key<0)
 				$key=0;
 			$sibling=$siblings[$key];
-			$sqlsiblings[]="(`p`.`name` = '".$preset."' AND `s_p`.`name` = '".$sibling['s_preset']."')";
+			$sibling_preset = $sibling['s_preset'] ? $sibling['s_preset']: $preset;
+			$sqlsiblings[]="(`p`.`name` = '".$preset."' AND `s_p`.`name` = '".$sibling_preset."')";
 		}
 
 			$where[] = "`a`.`REF|SessionData|session` = $sessionId";
-			$where[] = "`sibling`.`version`=0 ";
-			$where[] = "`a`.`version`=0 ";
+			$where[] = "(`sibling`.`version`=0 or `sibling`.`version` is NULL) ";
+			$where[] = "(`a`.`version`=0 or `a`.`version` is NULL) ";
 			$where[] = "(".join(" OR ", $sqlsiblings).")";
 			// --- quick hack for Square preset --- //
 			if ($preset=="sq")
@@ -3158,10 +3250,10 @@ class leginondata {
 		.$preselect
 		."FROM "
 		."`AcquisitionImageData` AS `a` "
-		."LEFT JOIN `AcquisitionImageTargetData` AS `t` "
-		."ON (`t`.`DEF_id`=`a`.`REF|AcquisitionImageTargetData|target`) "
+		."LEFT JOIN `".$target_table."` AS `t` "
+		."ON (`t`.`DEF_id`=`a`.`".$target_field."`) "
 		."LEFT JOIN AcquisitionImageData AS `sibling` "
-		."ON (`sibling`.`REF|AcquisitionImageTargetData|target`=`t`.`DEF_id`) "
+		."ON (`sibling`.`".$target_field."`=`t`.`DEF_id`) "
 		.$prejoin
 		.$sqlwhere;
 
@@ -4324,6 +4416,13 @@ class leginondata {
 function rsum($v, $w) {
 	$v += $w;
 	return $v;
+}
+
+function resolveKey($key) {
+    if (str_starts_with($key, 'REF|')) {
+        return substr($key, strrpos($key, '|') + 1).' id';
+    }
+    return $key;
 }
 
 $leginondata = new leginondata();

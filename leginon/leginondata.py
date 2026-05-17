@@ -207,6 +207,7 @@ scope_params = (
 	('phase plate plane shift', dict),
 	('phase plate plane tilt', dict),
 	('phase plate focus', float),
+	('xlens1 focus', float),
 	('corrected stage position', int),
 	('stage position', dict),
 	('holder type', str),
@@ -414,6 +415,14 @@ class MagnificationComparisonData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class XTiltCenterData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('tem', InstrumentData),
+			('center', dict), # x,y key/value pair
+		)
+	typemap = classmethod(typemap)
+
 class CalibrationData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
@@ -422,11 +431,39 @@ class CalibrationData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class LppCalibrationData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('xlpp', bool),
+			('lpp1 wave xtilt vector x', float),
+			('lpp1 wave xtilt vector y', float),
+			('lpp2 wave xtilt vector x', float),
+			('lpp2 wave xtilt vector y', float),
+		)
+	typemap = classmethod(typemap)
+
 class CameraSensitivityCalibrationData(CalibrationData):
 	def typemap(cls):
 		return CalibrationData.typemap() + (
 			('high tension', int),
 			('sensitivity', float),
+		)
+	typemap = classmethod(typemap)
+
+class StigmatorCalibrationData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('type', str),
+			('rotation angle', float), #degrees from x-axis like in ctffind
+			('coeff', dict), # unit conversion from stigmator current to astig
+		)
+	typemap = classmethod(typemap)
+
+class StigmatorCenterData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('type', str),
+			('center', dict), # x,y key/value pair
 		)
 	typemap = classmethod(typemap)
 
@@ -501,6 +538,16 @@ class MatrixCalibrationData(BeamProbeDependentCalibrationData):
 			('type', str),
 			('matrix', sinedon.newdict.DatabaseArrayType),
 			('previous', MatrixCalibrationData),
+		)
+	typemap = classmethod(typemap)
+
+class AffineMatrixCalibrationData(BeamProbeDependentCalibrationData):
+	def typemap(cls):
+		return BeamProbeDependentCalibrationData.typemap() + (
+			('type', str),
+			('matrix', sinedon.newdict.DatabaseArrayType),
+			('previous', AffineMatrixCalibrationData),
+			('defocus', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -679,6 +726,7 @@ class NavigatorScopeEMData(PresetScopeEMData):
 	def typemap(cls):
 		return PresetScopeEMData.typemap() + (
 			('stage position', dict),
+			('phase plate plane shift', dict),
 		)
 	typemap = classmethod(typemap)
 
@@ -1097,11 +1145,20 @@ class ReferenceRequestData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('preset', str),
+			('on_position', bool),
 		)
 	typemap = classmethod(typemap)
 
 class AlignZeroLossPeakData(ReferenceRequestData):
 	pass
+
+class ReferenceReqExecutionData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('node', NodeSpecData),
+			('request name', str),
+		)
+	typemap = classmethod(typemap)
 
 class ZeroLossCheckData(InSessionData):
 	def typemap(cls):
@@ -1112,6 +1169,9 @@ class ZeroLossCheckData(InSessionData):
 			('std', float),
 		)
 	typemap = classmethod(typemap)
+
+class AlignLppRequestData(ReferenceRequestData):
+	pass
 
 class PhasePlateLogData(InSessionData):
 	def typemap(cls):
@@ -1230,7 +1290,7 @@ class FocuserResultData(InSessionData):
 			('stigx', float),
 			('stigy', float),
 			('min', float),
-			('stig correction', int),
+			('stig correction', int), #Shouldn't this boolean ?
 			('defocus correction', str),
 			('method', str),
 			('status', str),
@@ -1638,6 +1698,7 @@ class NavigatorSettingsData(SettingsData):
 			('final image shift', bool),
 			('background readout', bool),
 			('preexpose', bool),
+			('move without reacquire', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1952,6 +2013,7 @@ class RasterFinderSettingsData(TargetFinderSettingsData):
 			('raster limit', int),
 			('raster limit asymm', int),
 			('raster symmetric', bool),
+			('raster spiral order', bool),
 			('select polygon', bool),
 		)
 	typemap = classmethod(typemap)
@@ -2181,6 +2243,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('wait for process', bool),
 			('wait for rejects', bool),
 			('wait for reference', bool),
+			('post-target tuning', bool),
 			#('duplicate targets', bool),
 			#('duplicate target type', str),
 			('loop delay time', float),
@@ -2223,6 +2286,62 @@ class MoverParamsData(Data):
 			('mover', str),
 			('move precision', float),
 			('accept precision', float),
+		)
+	typemap = classmethod(typemap)
+
+class LppAlignerSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('xlpp',bool),
+			('global view offset', float),
+			('compress ratio', int),
+			('acquire type', str),
+			('phase plate defocus sequence', str), #Issue #5687
+		)
+	typemap = classmethod(typemap)
+
+class LppImageShiftImagerSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('image shift', float),
+			('image shift count', int),
+			('sites', int),
+			('startangle', float),
+			('tableau type', str),
+			('tableau binning', int),
+			('xlpp', bool),
+			('fringe rotation1', float),
+			('fringe rotation2', float),
+		)
+	typemap = classmethod(typemap)
+
+class LppOnNodeRefData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('tem', InstrumentData),
+			('ccdcamera', InstrumentData),
+			('reference', AcquisitionImageData),
+			('xlpp', bool),
+			('lpp1 rotation', float), # degrees
+			('lpp1 phase shift', float),
+			('lpp2 rotation', float), # degrees
+			('lpp2 phase shift', float),
+			('delta lpp focus', float),
+		)
+	typemap = classmethod(typemap)
+
+class LppFitResultData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('axis', int), # axis of lpp cavity default=1
+			('axis rotation', float), # image rotation for fitting in degrees
+			('on node ref', LppOnNodeRefData), # on-node reference
+			('amp', float), # lpp modulation intensiity amplitude
+			('offset', float), # modulation intensity offset
+			('period', float), # peak-to-peak distance in pixels
+			('phase shift', float), # fitting phase shift needed
+			('image', AcquisitionImageData),
+			('phase shift correction', float), # phase shift required to bring lpp on node.
 		)
 	typemap = classmethod(typemap)
 
@@ -2296,6 +2415,8 @@ class FocusSettingData(InSessionData):
 			('tilt', float),
 			('correlation type', str),
 			('fit limit', float),
+			('phase search min',int),
+			('phase search max',int),
 			('delta min', float),
 			('delta max', float),
 			('correction type', str),
@@ -2355,6 +2476,7 @@ class PhasePlatePlaneShiftCyclerSettingsData(AcquisitionSettingsData):
 			('shift scale', float),
 			('x projection', float),
 			('y projection', float),
+			('two d scan', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -2518,15 +2640,25 @@ class BeamTiltCalibratorSettingsData(CalibratorSettingsData):
 			('comafree beam tilt', float),
 			('comafree misalign', float),
 			('imageshift coma tilt', float),
+			('imageshift coma image defocus', float),
 			('imageshift coma step', float),
 			('imageshift coma number', int),
 			('imageshift coma repeat', int),
 		)
 	typemap = classmethod(typemap)
-		
+
+class StigCalibratorSettingsData(CalibratorSettingsData):
+	def typemap(cls):
+		return CalibratorSettingsData.typemap() + (
+			('measure defocus', float),
+			('correct tilt', bool),
+			('settling time', float),
+		)
+	typemap = classmethod(typemap)
+
 class MatrixCalibratorSettingsData(CalibratorSettingsData):
 	def typemap(cls):
-		parameters = ['image shift', 'beam shift', 'diffraction shift', 'stage position']
+		parameters = ['image shift', 'beam shift', 'diffraction shift', 'stage position', 'phase plate plane shift']
 		parameterstypemap = []
 		for parameter in parameters:
 			parameterstypemap.append(('%s tolerance' % parameter, float))
@@ -2702,6 +2834,7 @@ class Tomography2SettingsData(TomographySettingsData):
 			('full track', bool),
 			('tolerance', float),
 			('maxfitpoints', int),
+			('save track images', bool),
 		)
 	typemap = classmethod(typemap)
 class TomographySimuSettingsData(AcquisitionSettingsData):
@@ -2759,6 +2892,7 @@ class TiltSeriesData(InSessionData):
 			('tilt step', float),
 			('tilt order', str),
 			('number', int),
+			('is_tracking', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -2937,6 +3071,7 @@ class ReferenceSettingsData(SettingsData):
 			('mover', str),
 			('move precision', float),
 			('accept precision', float),
+			('user check', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -2987,6 +3122,16 @@ class AlignZLPSettingsData(ReferenceTimerSettingsData):
 		return ReferenceTimerSettingsData.typemap() + (
 			('check preset', str),
 			('threshold', float),
+		)
+	typemap = classmethod(typemap)
+
+class LppAlignTimerSettingsData(ReferenceTimerSettingsData):
+	def typemap(cls):
+		return ReferenceTimerSettingsData.typemap() + (
+			('xlpp', bool),
+			('xt offset x', float),
+			('xt offset y', float),
+			('delta xt threshold', float),
 		)
 	typemap = classmethod(typemap)
 

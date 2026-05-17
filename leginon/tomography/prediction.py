@@ -49,11 +49,21 @@ class TiltGroup(object):
 		self.tilts = []
 		self.xs = []
 		self.ys = []
+		self.delta_xys = []
 
 	def addTilt(self, tilt, x, y):
 		self.tilts.append(tilt)
 		self.xs.append(x)
 		self.ys.append(y)
+
+	def addDelta(self, correlation):
+		"""
+		Correlation dictionary of x,y is the difference between predict and actual position.
+		"""
+		if len(self.xs) > 1:
+			self.delta_xys.append(correlation)
+		else:
+			self.delta_xys.append({'x':0.0,'y':0.0})
 
 	def __len__(self):
 		return len(self.tilts)
@@ -69,6 +79,8 @@ class Prediction(object):
 		self.fitdata = [4,4]
 		self.fixed_model = True
 		self.valid_tilt_series_list = []
+		self.damping_factor = -0.5
+		self.damping_start = 1000 # minimal delta hypot in pixels to apply damping
 
 	def resetTiltSeriesList(self):
 		self.tilt_series_list = []
@@ -136,9 +148,10 @@ class Prediction(object):
 		g = tilt_series.getCurrentTiltGroupIndex()
 		return g
 
-	def addPosition(self, tilt, position):
+	def addPosition(self, tilt, position, delta={'x':0.0,'y':0.0}):
 		tilt_group = self.getCurrentTiltGroup()
 		tilt_group.addTilt(tilt, position['x'], position['y'])
+		tilt_group.addDelta(delta)
 
 	def setParameters(self, index, params):
 		self.parameters[index] = params
@@ -200,7 +213,7 @@ class Prediction(object):
 		n_tilt_series = len(self.valid_tilt_series_list)
 		n_tilt_groups = len(tilt_series)
 		n_tilts = len(tilt_group.tilts)
-
+		predict_method = 'as_is'
 		#####
 		parameters = self.getCurrentParameters()
 		debug_print('z0 at start of prediction %.2f' % parameters[-1])
@@ -214,6 +227,7 @@ class Prediction(object):
 			# x, y, z unchanged
 			x, y = tilt_group.xs[-1], tilt_group.ys[-1]
 			z = 0.0
+			predict_method = 'as_is'
 		elif n_tilts < n_start_fit:
 			debug_print('set use input model as prediction')
 			# number of tilts not enough to calculate modeled position.
@@ -233,15 +247,18 @@ class Prediction(object):
 			z = result[-1][-1][2] - z0
 			x = result[-1][-1][0]
 			y = result[-1][-1][1]
+			predict_method = 'as_input_model'
 
 		else:
 			# fitting is possible
 			if n_tilts != n_start_fit:
 				self.forcemodel = False
+				predict_method = ''
 			else:
 				# When it is fitted the first time, force the prediction
 				# to be used if it has the same trend as the earlier tilts.
 				# Otherwise it would slip off too much.
+				predict_method = 'first '
 				r2 = [0,0]
 				r2[0] = abs(self._getCorrelationCoefficient(tilt_group.tilts[1:], tilt_group.xs[1:]))
 				r2[1] = abs(self._getCorrelationCoefficient(tilt_group.tilts[1:], tilt_group.ys[1:]))
@@ -249,6 +266,7 @@ class Prediction(object):
 				if max(r2) > 0.95 and r2xy > 0.95 and not self.fixed_model:
 					self.forcemodel = True
 					debug_print('force to use fitted model')
+					predict_method = 'force_fitted_model'
 				else:
 					debug_print( 'trend is not strong: %.4f, %.4f <=0.95' % (max(r2), r2xy))
 					debug_print('or fixed model (%s) is True' % (self.fixed_model))
@@ -259,6 +277,13 @@ class Prediction(object):
 								  tilt_group.ys,
 								  tilt,
 									n_smooth_fit)
+			damping = self.derivativeDamping(tilt_group.delta_xys)
+			debug_print('tilt_group delta %s' % tilt_group.delta_xys)
+			debug_print('dirivative dampling %.5f' % damping)
+			debug_print('original prediction x,y %.5f %.5f' % (x, y))
+			x = x + damping * (tilt_group.delta_xys[-1]['x'])
+			y = y + damping * (tilt_group.delta_xys[-1]['y'])
+			debug_print('combined with damping of last delta %.5f, %.5f' % (x, y))
 			## calculate optical axis tilt and offset
 			mintilt, maxtilt = self.getMinMaxTiltsOfTiltSeriesList(current_group_index)
 			if (abs(maxtilt) < math.radians(30) and abs(mintilt) < math.radians(30)):
@@ -269,9 +294,10 @@ class Prediction(object):
 				self.fixed_model = True
 				self.calculate()
 				self.fixed_model = orig_fixed_model
+				predict_method += 'as_input_model'
 			else:
 				self.calculate()
-
+				predict_method += 'fitted_model'
 
 			# use the tilt and tilt0 x,y values to calculate the model z0
 			x0 = tilt_group.xs[0]
@@ -300,6 +326,7 @@ class Prediction(object):
 			'phi': float(phi),
 			'optical axis': float(offset),
 			'z0': float(self.parameters[current_group_index][-1]),
+			'predict_method': predict_method
 		}
 		debug_print('calculate result: %s' % result)
 		return result
@@ -451,6 +478,16 @@ class Prediction(object):
 		except TypeError:
 			x = [result[0]]
 		return x
+
+	def derivativeDamping(self, delta_xys):
+		hypot1 = math.hypot(delta_xys[-1]['x'],delta_xys[-1]['y'])
+		hypot2 = math.hypot(delta_xys[-2]['x'],delta_xys[-2]['y'])
+		if hypot1 - hypot2 <= 0 or hypot2 == 0:
+			return 0.0
+		min_hypot1 = self.damping_start
+		if hypot1 <= min_hypot1:
+			return 0.0
+		return self.damping_factor*(hypot1-min_hypot1)/min_hypot1
 
 	def getParameters(self, parameters):
 		phi = parameters[0]

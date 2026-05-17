@@ -43,6 +43,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		'accept precision': 1e-6,
 		'pause time': 3.0,
 		'return settle time': 2.5,
+		'user check': False,
 	}
 	requestdata = None
 
@@ -72,11 +73,18 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.navigator_bound = False
 		self.at_reference_target = False
 		self.last_processed = None
-
+		self.label = None
+		self.target_image_shift = None
+		self.target_focus = None #used to keep target focus the same as reference in LppAlignTimer
 
 		if self.__class__ == Reference:
-			print('isReference')
 			self.start()
+
+	def onInitialized(self):
+		super(Reference, self).onInitialized()
+		# self.panel is now made
+		combined_state = self.settings['user check'] and not self.settings['bypass']
+		self.setUserVerificationStatus(combined_state)
 
 	def handleApplicationEvent(self,evt):
 		'''
@@ -213,7 +221,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.at_reference_target = True
 		# check results
 		p = self.instrument.tem.StagePosition
-		self.logger.info('Reference target position x: %.1f um, y:%.1f um, z:%.1f um' % (p['x']*1e6,p['y']*1e6,p['z']))
+		self.logger.info('Reference target position x: %.1f um, y:%.1f um, z:%.1f um' % (p['x']*1e6,p['y']*1e6,p['z']*1e6))
 		preset = self.presets_client.getCurrentPreset()
 		if preset['name'] != preset_name:
 			message = 'failed to set preset \'%s\'' % preset_name
@@ -242,6 +250,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		# subclass need to define self.last_processed in resetProcess
 
 	def moveBack(self,position0):
+		self.pauseCheckBeforeMoveBack()
 		self.logger.info('Returning to the original position....')
 		try:
 			self.instrument.tem.StagePosition = position0
@@ -255,7 +264,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.player.wait()
 		self.at_reference_target = False
 		self.setStatus('processing')
-		self.pauseBeforeReturn()
+		self.pauseAfterMoveBack()
 
 	def handleFailToMoveBack(self, position):
 		self.player.pause()
@@ -283,15 +292,36 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		# Moving part
 		preset_name = request_data['preset']
 		self.preset_name = preset_name
+		on_position = False
+		if 'on_position' in request_data.keys():
+			on_position = request_data['on_position']
+		if on_position:
+				self.logger.info('Stay on the current position to execute')
 		position0 = self.instrument.tem.StagePosition
-		try:
-			self.moveToTarget(preset_name)
-			self.declareDrift('stage')
-		except Exception as e:
-			self.logger.error('Error moving to target, %s' % e)
-			self.moveBack(position0)
-			return
+		if not on_position:
+			try:
+				self.moveToTarget(preset_name)
+				self.declareDrift('stage')
+			except Exception as e:
+				self.logger.error('Error moving to target, %s' % e)
+				self.moveBack(position0)
+				return
+		self.target_image_shift = self.instrument.tem.ImageShift
 		# Execution part
+		try:
+			state = self.pauseCheckBeforeExecute()
+		except ValueError as e:
+			self.logger.error(e)
+			if not on_position:
+				self.player.play()
+				self.moveBack(position0)
+				return
+		# aborted is not an error
+		if state == 'aborted':
+			if not on_position:
+				self.player.play()
+				self.moveBack(position0)
+				return
 		if pause_time is not None:
 			self.logger.info('Pausing %.1f second before execution' % (pause_time,))
 			time.sleep(pause_time)
@@ -300,16 +330,26 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			return
 		try:
 			self.execute(request_data)
+			self.logExecution(request_data)
 			# default behavior: reset only if successful
 			self.resetProcess()
+			if self.settings['user check']:
+				self.setStatus('user input')
+				self.panel.playerEvent('pause')
+				self.logger.info('Paused by settings to always confirm by user')
+				self.player.pause()
+			self.player.wait()
+			self.setStatus('processing')
+			self.panel.playerEvent('play')
 		except Exception as e:
 			self.logger.error('Error executing request, %s' % e)
 		finally:
-			# Must move back
-			self.moveBack(position0)
+			if not on_position:
+				# Must move back
+				self.moveBack(position0)
 			return
 
-	def pauseBeforeReturn(self):
+	def pauseAfterMoveBack(self):
 		pause_time = self.settings['return settle time']
 		if pause_time is not None:
 			self.logger.info('Settling the stage for %.1f second' % (pause_time,))
@@ -323,6 +363,8 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.panel.playerEvent('play')
 		try:
 			self._processRequest(request_data)
+		except Exception as e:
+			raise
 		finally:
 			self.setStatus('idle')
 			self.panel.playerEvent('stop')
@@ -343,8 +385,8 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		try:
 			self.setReferenceTarget()
 			self.logger.info('Done setting reference target')
-		except:
-			self.logger.error('can not set reference target at current position')
+		except Exception as e:
+			self.logger.error('can not set reference target at current position: %s' % e)
 		finally:
 			self.panel.playerEvent('stop')
 			self.setStatus('idle')
@@ -356,7 +398,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		# This is different from moveAndExecute
 		self.logger.info('Testing...')
 		self.setStatus('processing')
-		self.player.play()
+		#self.player.play()
 		try:
 			self._testRun()
 		except Exception as e:
@@ -394,15 +436,29 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		else:
 			self.logger.warning('No reference target')
 			self.logger.info('Use current position for testing')
+			state = self.pauseCheckBeforeExecute()
+			if self.player.state == 'stop':
+				return
 			if pause_time is not None:
 				self.logger.info('Pausing %.1f second before execution' % (pause_time,))
 				time.sleep(pause_time)
-			if self.player.state() == 'stop':
+			if self.player.state == 'stop':
 				return
 			try:
 				self.execute(None)
 			finally:
+				self.logExecution()
 				self.resetProcess()
+
+	def logExecution(self, request_data=None):
+		try:
+			request_name = request_data.__class__.__name__
+		except:
+			request_name = None
+		q = leginondata.ReferenceReqExecutionData(session=self.session)
+		q['node'] = self.this_node
+		q['request name'] = request_name
+		q.insert(force=True)
 
 	def resetProcess(self):
 		# self.last_processed is different between Timer and Counter
@@ -450,21 +506,8 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		else:
 			self.logger.error('Send a preset to scope/camera first.')
 			raise RuntimeError('No preset')
-		emtarget = leginondata.EMTargetData(preset=preset,movetype='stage position')
-		emtarget['image shift'] = preset['image shift']
-		emtarget['beam shift'] = preset['beam shift']
-		emtarget['stage position'] = self.instrument.tem.StagePosition
-		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
-		## convert CameraImageData to AcquisitionImageData
-		dim = imagedata['camera']['dimension']
-		pixels = dim['x'] * dim['y']
-		try:
-			pixeltype = str(imagedata['image'].dtype)
-		except:
-			self.logger.error('array not returned from camera')
-			raise RuntimeError('Parent image for reference target failed to be acquired')
-		filename = self.getImageFilename(imagedata)
-		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=preset, label=self.name, emtarget=emtarget, pixels=pixels, pixeltype=pixeltype, filename=filename)
+
+		imagedata = self.newImageData(preset, self.label, None)
 		# make reference target on the image
 		drow, dcol = (0,0)
 		targetdata = self.newReferenceTarget(imagedata, drow, dcol)
@@ -475,25 +518,64 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		except:
 			raise RuntimeError('Failed to publish reference target')
 
+	def newImageData(self, preset, label, filename=None, setfocus=False):
+		"""
+		Return unpublished imagedata with acquired image array at current
+		position.
+		"""
+		emtarget = leginondata.EMTargetData(preset=preset,movetype='stage position')
+		emtarget['image shift'] = preset['image shift']
+		emtarget['beam shift'] = preset['beam shift']
+		emtarget['stage position'] = self.instrument.tem.StagePosition
+		if setfocus and self.target_focus is not None:
+			self.instrument.tem.Focus = self.target_focus
+		imagedata = self.acquireCorrectedCameraImageData(force_no_frames=True)
+		## convert CameraImageData to AcquisitionImageData
+		dim = imagedata['camera']['dimension']
+		pixels = dim['x'] * dim['y']
+		try:
+			pixeltype = str(imagedata['image'].dtype)
+		except:
+			self.logger.error('array not returned from camera')
+			raise RuntimeError('Image failed to be acquired')
+		if not filename:
+			filename = self.getImageFilename(imagedata)
+		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=preset, label=self.name, emtarget=emtarget, pixels=pixels, pixeltype=pixeltype, filename=filename)
+		return imagedata
+
 	def newReferenceTarget(self, image_data, drow, dcol):
-		target_data = leginondata.ReferenceTargetData()
-		target_data['image'] = image_data
-		target_data['scope'] = image_data['scope']
-		target_data['camera'] = image_data['camera']
-		target_data['preset'] = image_data['preset']
-		target_data['grid'] = image_data['grid']
-		target_data['delta row'] = drow
-		target_data['delta column'] = dcol
-		target_data['session'] = self.session
-		return target_data
+		return self.calibration_clients['image shift'].newReferenceTarget(image_data, drow, dcol)
 
 	def onPlayer(self, state):
 		infostr = ''
-		if state == 'pause':
-			infostr += 'Paused'
+		if state == 'play':
+			infostr += 'Continuing...'
+		elif state == 'pause':
+			infostr += 'Pausing'
 		elif state == 'stop':
 			infostr += 'Aborting...'
 		if infostr:
 			self.logger.info(infostr)
 		self.panel.playerEvent(state)
 
+	def pauseCheckBeforeExecute(self):
+		preset = self.presets_client.getCurrentPreset()
+		if self.player.state() == 'pause':
+			self.logger.info('Paused')
+			self.setStatus('user input')
+			self.player.wait()
+			new_preset = self.presets_client.getCurrentPreset()
+			if new_preset['name'] != preset['name']:
+				raise ValueError('Preset change not allowed during this pause.')
+		if self.player.state() == 'stop':
+			self.logger.info('Aborted execution')
+			return 'aborted'
+
+	def pauseCheckBeforeMoveBack(self):
+		if self.player.state() == 'pause':
+			self.logger.info('Paused before return')
+			self.setStatus('user input')
+			self.player.wait()
+		if self.player.state() == 'stop':
+			self.logger.warning('Too late to abort. Will still move back')
+			self.player.play()

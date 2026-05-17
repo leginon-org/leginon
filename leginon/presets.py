@@ -168,12 +168,17 @@ class PresetsClient(object):
 			self.node.remote_pmlock.setUnlock()
 
 	def presetchanged(self, ievent):
-		self.currentpreset = ievent['preset']
-		name = self.currentpreset['name']
+		has_error = ievent['has_error']
+		if ievent['preset'] is not None:
+			self.currentpreset = ievent['preset']
+			name = self.currentpreset['name']
+		else:
+			name = ievent['name']
 
-		# update node's instruments to match new preset
-		self.node.instrument.setTEM(self.currentpreset['tem']['name'])
-		self.node.instrument.setCCDCamera(self.currentpreset['ccdcamera']['name'])
+		if not has_error:
+			# update node's instruments to match new preset
+			self.node.instrument.setTEM(self.currentpreset['tem']['name'])
+			self.node.instrument.setCCDCamera(self.currentpreset['ccdcamera']['name'])
 
 		# if waiting for this event, then set the threading event
 		if name in self.pchanged:
@@ -408,7 +413,9 @@ class PresetsManager(node.Node):
 							# Avoid unknown bug with JEOL scopes:
 							#can not read pre-existing image shift offset at this point
 							self.logger.info('Jeol hack: pre-existing image shift offset dy=0,0')
-					self._cycleToScope(pname)
+					has_error = self._cycleToScope(pname)
+					if has_error:
+						raise PresetChangeError('error in _cycleToScope')
 					if ievent['keep image shift']:
 						self.logger.info('Keeping pre-existing image shift offset')
 						# send image shift offset to scope
@@ -421,13 +428,16 @@ class PresetsManager(node.Node):
 					self.targetToScope(pname, emtarget)
 			except PresetChangeValueError:
 				self.logger.error('preset request to "%s" value error' % (pname))
+				succeed = False
 				break
-			except PresetChangeError:
+			except (PresetChangeError, Exception) as e:
+				succeed = False
 				if i < failtries-1:
 					# retry since this is often communication error that can be recovered.
 					self.logger.warning('preset request to "%s" failed, waiting %d seconds to try again' % (pname,failwait))
 					time.sleep(failwait)
 				else:
+					self.logger.error('preset request to "%s" error: %s' % (pname,e))
 					self.logger.error('preset request to "%s" failed %d times' % (pname,failtries))
 			else:
 				self.logger.info('Preset changed to "%s"' % pname)
@@ -436,6 +446,7 @@ class PresetsManager(node.Node):
 
 		if not succeed:
 			self.logger.error('preset request to "%s" failed %d times' % (pname,failtries))
+			self.outputEvent(event.PresetChangedEvent(name=pname, preset=None, has_error=True))
 
 		if tmplock:
 						self.unlock(ievent['node'])
@@ -803,7 +814,7 @@ class PresetsManager(node.Node):
 
 	def cycleToScope(self, presetname):
 		self.setStatus('processing')
-		self._cycleToScope(presetname)
+		has_error = self._cycleToScope(presetname)
 		self.setStatus('idle')
 		self.panel.presetsEvent()
 
@@ -815,16 +826,18 @@ class PresetsManager(node.Node):
 		   that have the same magnification
 		magonly = True:  all presets in cycle (except for final) 
 		   will only send magnification to TEM
+		return has_error
 		'''
 		errstr = 'Preset cycle failed: %s'
 		if not self.settings['cycle']:
 			if dofinal:
 				try:
 					self.toScope(presetname, final=True)
-				except PresetChangeError:
-					pass
+				except Exception:
+					self.outputEvent(event.PresetChangedEvent(name=presetname, preset=None, has_error=True))
+					return True
 			self.beep()
-			return
+			return False
 
 		order = list(self.presets.keys())
 		magonly = self.settings['mag only']
@@ -833,7 +846,7 @@ class PresetsManager(node.Node):
 		if presetname not in order:
 			estr = 'final preset %s not in cycle order list' % (presetname,)
 			self.logger.error(errstr % estr)
-			return
+			return True
 
 		### check if this is the first time a preset
 		### has been set for this PresetManager instance
@@ -844,7 +857,7 @@ class PresetsManager(node.Node):
 			try:
 				self.toScope(presetname, final=False)
 			except PresetChangeError:
-				return
+				return True
 			force = True
 		else:
 			force = False
@@ -853,7 +866,7 @@ class PresetsManager(node.Node):
 		if currentname not in order:
 			estr = 'current preset %s not in cycle order list' % (currentname,)
 			self.logger.error(errstr % estr)
-			return
+			return True
 
 		thiscycle = self.createCycleList(currentname, presetname, magshortcut)
 		
@@ -879,16 +892,17 @@ class PresetsManager(node.Node):
 			try:
 				self.toScope(pname, magonly, final=False)
 			except PresetChangeError:
-				return
+				return True
 
 		## final preset change
 		if dofinal:
 			try:
 				self.toScope(thiscycle[-1], final=True)
 			except PresetChangeError:
-				return
+				return True
 			self.logger.info('Cycle completed')
 		self.beep()
+		return False
 
 	def createCycleList(self, current, final, magshortcut, reverse=False):
 		order = list(self.presets.keys())
@@ -1084,7 +1098,7 @@ class PresetsManager(node.Node):
 			return
 
 		if self.currentpreset is None or self.currentpreset['name'] != presetname:
-			self._cycleToScope(presetname)
+			has_error = self._cycleToScope(presetname)
 
 		if self.currentpreset is None or self.currentpreset['name'] != presetname:
 			e = 'cannot go to preset \'%s\'' % presetname
@@ -1352,7 +1366,7 @@ class PresetsManager(node.Node):
 				return
 
 			if self.currentpreset is None or self.currentpreset['name'] != presetname:
-				self._cycleToScope(presetname)
+				has_error = self._cycleToScope(presetname)
 
 			if self.currentpreset is None or self.currentpreset['name'] != presetname:
 				e	= 'cannot go to preset \'%s\'' % presetname
@@ -1498,11 +1512,10 @@ class PresetsManager(node.Node):
 		be tightly coupled.
 		Stage position is always xy only
 		'''
-
 		## first cycle through presets before sending the final one
 		if self.currentpreset is None or self.currentpreset['name'] != newpresetname:
 			self.blankOn()
-			self._cycleToScope(newpresetname, dofinal=False)
+			has_error = self._cycleToScope(newpresetname, dofinal=False)
 
 		self.logger.info('Going to target and to preset %s' % (newpresetname,))
 
@@ -1522,6 +1535,7 @@ class PresetsManager(node.Node):
 
 		## make copy of target stage and image shift
 		mystage = dict(emtargetdata['stage position'])
+		## Important: myimage and mybeam are based on the preset of targetdata parent.
 		myimage = dict(emtargetdata['image shift'])
 		mybeam = dict(emtargetdata['beam shift'])
 		# TODO Find out when diffraction shift is or is not in emtargetdata
@@ -1548,7 +1562,7 @@ class PresetsManager(node.Node):
 			for key in list(mystage.keys()):
 				if key not in ('x','y'):
 					del mystage[key]
-		self.testprint('targetToScope used no z change')
+		self.logger.debug('targetToScope used no z change')
 
 		## offset image shift to center stage tilt axis
 		if self.settings['apply offset']:
@@ -1569,35 +1583,20 @@ class PresetsManager(node.Node):
 			fakescope2.friendly_update(newpreset)
 			fakecam2 = leginondata.CameraEMData()
 			fakecam2.friendly_update(newpreset)
-			new_tem = newpreset['tem']
-			new_ccdcamera = newpreset['ccdcamera']
-			old_tem = oldpreset['tem']
-			old_ccdcamera = oldpreset['ccdcamera']
 			ht = self.instrument.tem.HighTension
+			#TODO ####
+			# insert image shift transform from preset1 to preset2
 			try:
-				'''
-				pixelshift is the shift value in the unit of the binned pixel
-				pixelvector is the shift value in the unit of unbinned pixel
-				'''
 				pixelshift1 = self.calclients['image'].itransform(myimage, fakescope1, fakecam1)
-				### Transform as unbinned pixel shift vector
-				pixrow = pixelshift1['row'] * oldpreset['binning']['y']
-				pixcol = pixelshift1['col'] * oldpreset['binning']['x']
-				pixvect1 = numpy.array((pixrow, pixcol))
-				# image shift coil rotation
-				pixvect1 = self.imageRotationTransform(pixvect1,oldpreset,newpreset)
-				# extra rotation
-				if SPECIAL_TRANSFORM:
-					pixvect1 = self.specialTransform(pixvect1,new_tem,oldpreset['magnification'],newpreset['magnification'])
-				# magnification and camera (if camera is different)
-				# Transform pixelvect1 at magnification to new magnification according to image-shift matrix
-				# include a relative  image rotation and scale addition to the transform
-				pixvect2 = self.calclients['scale rotation'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
-				# transform to the binned pixelsift
-				# pixvect2 is float
-				pixelshift2 = {'row':pixvect2[0] / newpreset['binning']['y'],'col':pixvect2[1] / newpreset['binning']['x']}
-				newscope = self.calclients['image'].transform(pixelshift2, fakescope2, fakecam2)
-				myimage = newscope['image shift']
+				if newpreset['name'] != oldpreset['name']:
+					# pixelshift input is tuple in binned image pixel values
+					px1 = {'row':pixelshift1['row']/fakecam1['binning']['y'],'col':pixelshift1['col']/fakecam1['binning']['y']}
+					px2 = self.calclients['image'].presetImagePixelToPixel(ht, oldpreset, newpreset, px1)
+					pixelshift2 = {'row':px2['row']*fakecam2['binning']['y'],'col':px2['col']*fakecam2['binning']['x']}
+					newscope = self.calclients['image'].transform(pixelshift2, fakescope2, fakecam2)
+					myimage = newscope['image shift']
+				else:
+					pixelshift2 = pixelshift1
 				if emtargetdata['movetype'] == 'image beam shift':
 					beam_pixel_shift = {'row': -pixelshift2['row'], 'col': -pixelshift2['col']}
 					newscope = self.calclients['beam'].transform(beam_pixel_shift, fakescope2, fakecam2)
@@ -1719,8 +1718,7 @@ class PresetsManager(node.Node):
 		else:
 			self.logger.info('same preset for camera, skip setting camera')
 		newstage = self.instrument.tem.StagePosition
-		msg = '%s targetToScope %.6f' % (newpresetname,newstage['z'])
-		self.testprint('Presetmanager:' + msg)
+		msg = '%s targetToScope %.3f um' % (newpresetname,newstage['z']*1e6)
 		self.logger.debug(msg)
 
 		self.startTimer('preset pause')

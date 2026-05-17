@@ -471,6 +471,8 @@ class ImageShiftComaScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		position = self.addImageshiftComaNumberSizer(position)
 		position = self.addImageshiftComaStepSizer(position)
 		#position = self.addImageshiftComaRepeatSizer(position)
+		position = self.addImageshiftComaImageDefocus(position)
+
 		sbsz.Add(self.sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 		return [sbsz]
 
@@ -491,6 +493,15 @@ class ImageShiftComaScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'positions per image shift direction')
 		self.sz.Add(label, (p[0],p[1]+2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return (p[0]+1,p[1])
+
+	def addImageshiftComaImageDefocus(self, p=(0,0)):
+		self.widgets['imageshift coma image defocus'] = FloatEntry(self, -1, chars=9)
+		label = wx.StaticText(self, -1, 'Auto focus to')
+		self.sz.Add(label, p, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.widgets['imageshift coma image defocus'], (p[0], p[1]+1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'm (underfocus is negative)')
+		self.sz.Add(label, (p[0], p[1]+2), (1, 1), wx.ALIGN_LEFT)
 		return (p[0]+1,p[1])
 
 	def addImageshiftComaStepSizer(self, p=(0,0)):
