@@ -598,8 +598,14 @@ class GatanSocket(object):
 			return False
 		fullcommand = "Object manager = CM_GetCameraManager();\n Object cameraList = CM_GetCameras(manager);\n Object camera = ObjectAt(cameraList,%d);\n " % (camera_id)
 		fullcommand += "%s(camera);\n" % (function_name)
-		result = self.ExecuteCameraScript(fullcommand, camera_id, recv_longargs_init, recv_dblargs_init, recv_longarray_init)
+		result = self.ExecuteScript(fullcommand, camera_id, recv_longargs_init, recv_dblargs_init, recv_longarray_init) 
 		return result
+
+	def ExecuteSendScript(self, command_line, select_camera=0):
+		recv_longargs_init = (0,)
+		result = self.ExecuteScript(command_line,select_camera,recv_longargs_init)
+		# first longargs is error code. Error if > 0
+		return result.array['longargs'][0]
 
 	def ExecuteGetLongScript(self,command_line, select_camera=0):
 		'''
@@ -613,32 +619,10 @@ class GatanSocket(object):
 		Execute DM script that gets one double float number
 		'''
 		recv_dblargs_init = (0.0,)
-		result = self.ExecuteCameraScript(command_line,select_camera,recv_dblargs_init=recv_dblargs_init)
+		result = self.ExecuteScript(command_line,select_camera,recv_dblargs_init=recv_dblargs_init)
 		return result.array['dblargs'][0]
 
-	def ExecuteSendScript(self, command_line, select_camera=0):
-		recv_longargs_init = (0,)
-		result = self.ExecuteCameraScript(command_line,select_camera,recv_longargs_init)
-		# first longargs is error code. Error if > 0
-		return result.array['longargs'][0]
-
-	def ExecuteCameraScript(self,command_line, select_camera=0, recv_longargs_init=(0,), recv_dblargs_init=(0.0,), recv_longarray_init=[]):
-		'''
-		Execute DM script function that requires camera object as input.
-		'''
-		boolargs = (select_camera,)
-		self.ExecuteScript(boolargs, recv_longargs_init, recv_dblargs_init, recv_longarray_init)
-
-	def ExecuteViewerScript(self,viewer_command, recv_longargs_init=(0,), recv_dblargs_init=(0.0,), recv_longarray_init=[]):
-		'''
-		Execute DM script function that requires viewer object as input.
-		'''
-		fullcommand = "Object manager = CM_GetCameraManager();\n Object viewer = manager.CM_GetCurrentViewer();\n"
-		fullcommand += "%s;\n" % (viewer_command)
-		result = self.ExecuteScript(fullcommand, [], recv_longargs_init, recv_dblargs_init, recv_longarray_init)
-		return result
-
-	def ExecuteScript(self,command_line, boolargs=[], recv_longargs_init=(0,), recv_dblargs_init=(0.0,), recv_longarray_init=[]):
+	def ExecuteScript(self,command_line, select_camera=0, recv_longargs_init=(0,), recv_dblargs_init=(0.0,), recv_longarray_init=[]):
 		funcCode = enum_gs['GS_ExecuteScript']
 		cmd_str = command_line + '\0'
 		extra = len(cmd_str) % 4
@@ -647,7 +631,7 @@ class GatanSocket(object):
 			cmd_str = cmd_str + (npad) * '\0'
 		# send the command string as 1D longarray
 		longarray = numpy.frombuffer(bytes(cmd_str,'utf-8'), dtype=numpy.int32)
-		message_send = Message(longargs=(funcCode,), boolargs=boolargs, longarray=longarray)
+		message_send = Message(longargs=(funcCode,), boolargs=(select_camera,), longarray=longarray)
 		message_recv = Message(longargs=recv_longargs_init, dblargs=recv_dblargs_init, longarray=recv_longarray_init)
 		self.ExchangeMessages(message_send, message_recv)
 		return message_recv
