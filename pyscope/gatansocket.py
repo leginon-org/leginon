@@ -557,6 +557,7 @@ class GatanSocket(object):
 		return imArray
 
 	def IsViewerLive(self):
+		''' Use view object valid to check if live view is on '''
 		function_name = 'ScriptObjectIsValid'
 		if not self.hasScriptFunction(function_name):
 			return -999.0
