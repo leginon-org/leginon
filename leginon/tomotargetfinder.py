@@ -277,32 +277,32 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 		# advance to next target number
 		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
 		number = lastnumber + 1
-		for imagetarget in imagetargets:															
+		for imagetarget in imagetargets:
 			acquisition_td = self.getNewTargetForImage(imagedata,imageshape,imagetarget,targetlist,number)
 			self.publish(acquisition_td, database=True)												# (2)
 			number += 1
 
 		trackoffset = self.getTrackOffset()															# (3)
-		if self.settings['auto focus target']:													# (4)	
+		if self.settings['auto focus target']:														# (4)
 			focusoffset = self.getFocusOffset()
 		else:
-			focusoffset = (None,None)				# single focus target for this targetlist 
-		offset_td = leginondata.TomoTargetOffsetData(list=targetlist,focusoffset=focusoffset,		
-											trackoffset=trackoffset) #,trackpreset=trackpreset)		# (5)
+			focusoffset = (None,None)			# single focus target for this targetlist
+		offset_td = leginondata.TomoTargetOffsetData(session=self.session,
+				list=targetlist,focusoffset=focusoffset,
+				trackoffset=trackoffset)															# (5)
 		self.publish(offset_td, database=True)
-		
+
 		if not self.settings['auto focus target']:													# (6)
 			focustarget = self.panel.getTargets('focus')
 			if focustarget:
 				# TODO do we need to consider multi-site averaging of focusing?
 				focustarget = focustarget[0]
 				focus_td = self.getNewTargetForImage(imagedata,imageshape,focustarget,targetlist,number)
-				self.publish(focus_td, database=True)												
+				self.publish(focus_td, database=True)
 				number += 1
 			else:
 				pass
 
-		
 	def getNewTargetForImage(self,imagedata, imageshape, target_obj, targetlist, number):
 		typename = target_obj.type.name
 		column, row = target_obj.position
@@ -312,6 +312,9 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 		return targetdata
 
 	def getTrackOffset(self, offset=None):
+		"""
+		Returns binned pixel shift in (r,c) from acquisition target on current imagedata
+		"""
 		imagedata = self.currentimagedata
 		tem = imagedata['scope']['tem']
 		ccd = imagedata['camera']['ccdcamera']
@@ -331,6 +334,9 @@ class TomoClickTargetFinder(targetfinder.ClickTargetFinder):
 		return pixeloffset
 
 	def getFocusOffset(self, offset=None):
+		"""
+		Returns binned pixel shift in (r,c) from acquisition target on current imagedata
+		"""
 		imagedata = self.currentimagedata
 		tem = imagedata['scope']['tem']
 		ccd = imagedata['camera']['ccdcamera']

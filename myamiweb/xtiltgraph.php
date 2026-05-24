@@ -43,7 +43,7 @@ $dbemgraph->xaxistitle=$axes[0]." scope unit (x 1000)";
 $dbemgraph->yaxistitle=$axes[1]." scope unit (x 1000)";
 
 if ($viewdata) {
-	$dbemgraph->dumpData(array('image_id', 'filename', $display_x, $display_y));
+	$dbemgraph->dumpData(array('image_id', 'timestamp', 'filename', $display_x, $display_y));
 }
 if ($histogram) {
 	$dbemgraph->histogram=true;

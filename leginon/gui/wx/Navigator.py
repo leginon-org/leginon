@@ -58,6 +58,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 													shortHelp='Reset stage Z to 0')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET_ALPHA, 'alpha',
 													shortHelp='Reset stage alpha tilt to 0')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SET_BEAMTILT, 'beamtiltset', shortHelp='Toggle Lpp Focus On/Off Plane')
 
 		# image
 		self.imagepanel = leginon.gui.wx.TargetPanel.ClickAndTargetImagePanel(self, -1)
@@ -108,6 +109,8 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 											id=leginon.gui.wx.ToolBar.ID_RESET_Z)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onResetAlpha,
 											id=leginon.gui.wx.ToolBar.ID_RESET_ALPHA)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onToggleLppFocus,
+											id=leginon.gui.wx.ToolBar.ID_SET_BEAMTILT)
 		self.cmovetype.Bind(wx.EVT_CHOICE, self.onMoveTypeChoice)
 		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked,
 							self.imagepanel)
@@ -163,6 +166,9 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 	def onResetAlpha(self, evt):
 		self.node.onResetAlpha()
+
+	def onToggleLppFocus(self, evt):
+		self.node.onToggleLppFocus()
 
 	def onReproTest(self, evt):
 		self.test_dialog.Show()

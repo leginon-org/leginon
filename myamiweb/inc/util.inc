@@ -532,8 +532,9 @@ function dumpData($data, $keys="") {
 	foreach ($data as $d) {
 		$f=array();
 		if (is_array($keys)) {
-		foreach ($keys as $k)
-			$f[] = $d[$k];
+			foreach ($keys as $k) {
+				$f[] = $d[$k];
+			}
 		} else {
 			$f[] = $d;
 		}

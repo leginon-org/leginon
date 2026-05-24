@@ -185,7 +185,7 @@ class ValueScaleBitmap(wx.StaticBitmap):
 
     def updateParameters(self, extrema=None, fromrange=None):
         if extrema is not None:
-            self.extrema = extrema
+            self.extrema = tuple(map((lambda x: float(x)),extrema))
         if fromrange is not None:
             self.fromrange = fromrange
         self.updateBitmap()
@@ -286,6 +286,7 @@ class ValueScaler(wx.Panel):
             self.minslider.SetValue(self.minslider.GetMin())
             self.maxslider.SetValue(self.maxslider.GetMax())
         else:
+            self.extrema = tuple(map((lambda x: float(x)), self.extrema))
             types = [type(value) for value in self.valuerange + self.extrema]
 
             self.type = None
@@ -309,6 +310,7 @@ class ValueScaler(wx.Panel):
             self.maxentry.SetValue('%g' % valuerange[1])
             slidermin = self.minslider.GetMin()
             slidermax = self.maxslider.GetMax()
+            extrema = tuple(map((lambda x:float(x)), extrema))
             sliderscale = float(slidermax - slidermin)/(extrema[1] - extrema[0])
             self.minslider.SetValue(
                int(round((valuerange[0] - extrema[0])*sliderscale + slidermin)))

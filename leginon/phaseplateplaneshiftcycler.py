@@ -35,6 +35,7 @@ class PhasePlatePlaneShiftCycler(acquisition.Acquisition):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
 		self.shifts_on_plane = eval(self.settings['shift sequence']) #in micron defocus
+		self.iter = 0
 		self.resetCycles()
 		self.xy = self.calculateUnitVector()
 		self.scale = self.settings['shift scale']

@@ -44,7 +44,7 @@ class CircleMaskCreator(object):
 		def circle(indices0,indices1):
 			## this shifts and wraps the indices
 			i0 = numpy.where(indices0<cutoff[0], indices0-center[0]+lshift[0], indices0-center[0]+gshift[0])
-			i1 = numpy.where(indices1<cutoff[1], indices1-center[1]+lshift[1], indices1-center[0]+gshift[1])
+			i1 = numpy.where(indices1<cutoff[1], indices1-center[1]+lshift[1], indices1-center[1]+gshift[1])
 			rsq = i0*i0+i1*i1
 			c = numpy.where((rsq>=minradsq)&(rsq<=maxradsq), 1.0, 0.0)
 			return c.astype(numpy.int8)

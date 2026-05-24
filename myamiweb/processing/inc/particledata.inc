@@ -1120,6 +1120,7 @@ class particledata {
 		$phase_shift_select = $this->getPhaseShiftString('c');
 		$q =	"select "
 			."c.`REF|leginondata|AcquisitionImageData|image` as imageid, "
+			."i.`filename`AS filename, "
 			// ScopeEMData timestamp is not changed after DD frame alignment
 			."unix_timestamp(s.`DEF_timestamp`) as unix_timestamp, "
 			."s.`defocus`, "

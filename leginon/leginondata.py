@@ -207,6 +207,7 @@ scope_params = (
 	('phase plate plane shift', dict),
 	('phase plate plane tilt', dict),
 	('phase plate focus', float),
+	('xlens1 focus', float),
 	('corrected stage position', int),
 	('stage position', dict),
 	('holder type', str),
@@ -414,6 +415,14 @@ class MagnificationComparisonData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class XTiltCenterData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('tem', InstrumentData),
+			('center', dict), # x,y key/value pair
+		)
+	typemap = classmethod(typemap)
+
 class CalibrationData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
@@ -438,6 +447,23 @@ class CameraSensitivityCalibrationData(CalibrationData):
 		return CalibrationData.typemap() + (
 			('high tension', int),
 			('sensitivity', float),
+		)
+	typemap = classmethod(typemap)
+
+class StigmatorCalibrationData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('type', str),
+			('rotation angle', float), #degrees from x-axis like in ctffind
+			('coeff', dict), # unit conversion from stigmator current to astig
+		)
+	typemap = classmethod(typemap)
+
+class StigmatorCenterData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('type', str),
+			('center', dict), # x,y key/value pair
 		)
 	typemap = classmethod(typemap)
 
@@ -700,6 +726,7 @@ class NavigatorScopeEMData(PresetScopeEMData):
 	def typemap(cls):
 		return PresetScopeEMData.typemap() + (
 			('stage position', dict),
+			('phase plate plane shift', dict),
 		)
 	typemap = classmethod(typemap)
 
@@ -1118,6 +1145,7 @@ class ReferenceRequestData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('preset', str),
+			('on_position', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1254,7 +1282,7 @@ class FocuserResultData(InSessionData):
 			('stigx', float),
 			('stigy', float),
 			('min', float),
-			('stig correction', int),
+			('stig correction', int), #Shouldn't this boolean ?
 			('defocus correction', str),
 			('method', str),
 			('status', str),
@@ -2206,6 +2234,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('wait for process', bool),
 			('wait for rejects', bool),
 			('wait for reference', bool),
+			('post-target tuning', bool),
 			#('duplicate targets', bool),
 			#('duplicate target type', str),
 			('loop delay time', float),
@@ -2257,14 +2286,8 @@ class LppAlignerSettingsData(AcquisitionSettingsData):
 			('xlpp',bool),
 			('global view offset', float),
 			('compress ratio', int),
-			('rotation1', float), # degrees
-			('rotation2', float), # degrees
 			('acquire type', str),
 			('phase plate defocus sequence', str), #Issue #5687
-			('lpp1 wave xtilt vector x', float),
-			('lpp1 wave xtilt vector y', float),
-			('lpp2 wave xtilt vector x', float),
-			('lpp2 wave xtilt vector y', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -2608,15 +2631,25 @@ class BeamTiltCalibratorSettingsData(CalibratorSettingsData):
 			('comafree beam tilt', float),
 			('comafree misalign', float),
 			('imageshift coma tilt', float),
+			('imageshift coma image defocus', float),
 			('imageshift coma step', float),
 			('imageshift coma number', int),
 			('imageshift coma repeat', int),
 		)
 	typemap = classmethod(typemap)
-		
+
+class StigCalibratorSettingsData(CalibratorSettingsData):
+	def typemap(cls):
+		return CalibratorSettingsData.typemap() + (
+			('measure defocus', float),
+			('correct tilt', bool),
+			('settling time', float),
+		)
+	typemap = classmethod(typemap)
+
 class MatrixCalibratorSettingsData(CalibratorSettingsData):
 	def typemap(cls):
-		parameters = ['image shift', 'beam shift', 'diffraction shift', 'stage position']
+		parameters = ['image shift', 'beam shift', 'diffraction shift', 'stage position', 'phase plate plane shift']
 		parameterstypemap = []
 		for parameter in parameters:
 			parameterstypemap.append(('%s tolerance' % parameter, float))
@@ -3029,6 +3062,7 @@ class ReferenceSettingsData(SettingsData):
 			('mover', str),
 			('move precision', float),
 			('accept precision', float),
+			('user check', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -3086,6 +3120,9 @@ class LppAlignTimerSettingsData(ReferenceTimerSettingsData):
 	def typemap(cls):
 		return ReferenceTimerSettingsData.typemap() + (
 			('xlpp', bool),
+			('xt offset x', float),
+			('xt offset y', float),
+			('delta xt threshold', float),
 		)
 	typemap = classmethod(typemap)
 

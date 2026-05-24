@@ -31,7 +31,17 @@ if ($viewsql) {
 	exit;
 }
 
-$display_names = array('image_id', 'filename');
+// Add lpp fit results to data
+$new_fielddata = array();
+$lppfit_keys = array();
+foreach ($fielddata as $d) {
+	$r_array = $leginondata->getImageLppFitResults($d['image_id']);
+	$new_fielddata[] = array_merge($d, $r_array);
+	$lppfit_keys = array_unique(array_merge($lppfit_keys,array_keys($r_array)));
+}
+
+$scaler_fieldnames = array_merge($scaler_fieldnames, $lppfit_keys);
+$display_names = array('image_id', 'timestamp', 'filename');
 foreach ($scaler_fieldnames as $fieldname) {
 	$display_names[] = str_replace(' ','_',$fieldname);
 }
@@ -40,8 +50,7 @@ foreach ($xy_fieldnames as $fieldname) {
 	$display_names[] = str_replace(' ','_',$fieldname).'_y';
 }
 if ($viewdata) {
-	echo dumpData($fielddata, $display_names);
+	echo dumpData($new_fielddata, $display_names);
 }
-
 
 ?>

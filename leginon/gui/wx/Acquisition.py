@@ -199,14 +199,10 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_response = self.createBadResponseSizer()
 		sz_range = self.createBadRangeSizer()
 		sz_evaluate = self.createBadEvaluateSizer()
-		# bad stats email
-		passwordbut = wx.Button(self, -1, 'Enter Email Password')
-		self.Bind(wx.EVT_BUTTON, self.onEnterPassword, passwordbut)
 		# evaluate box sizer
 		sbsz_evaluate.Add(sz_response, 0, wx.ALIGN_CENTER|wx.ALL, 0)
 		sbsz_evaluate.Add(sz_range, 0, wx.ALIGN_CENTER|wx.ALL,0)
 		sbsz_evaluate.Add(sz_evaluate, 0, wx.ALIGN_CENTER|wx.ALL,0)
-		sbsz_evaluate.Add(passwordbut, 0, wx.ALIGN_CENTER|wx.ALL, 3)
 		return sbsz_evaluate
 
 	def createTransformSizer(self):
@@ -250,6 +246,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 																				'Publish and wait for rejected targets')
 		self.widgets['wait for reference'] = wx.CheckBox(self, -1,
 																				'Publish and wait for the reference target')
+		self.widgets['post-target tuning'] = wx.CheckBox(self, -1,
+																				'tune on-position after processing target')
 		self.widgets['drift between'] = wx.CheckBox(self, -1, 'Declare drift between targets')
 		self.widgets['background'] = wx.CheckBox(self, -1, 'Acquire in the background')
 		self.widgets['park after target'] = wx.CheckBox(self, -1, 'Park after every target acquired')
@@ -259,6 +257,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_misc.Add(self.widgets['wait for process'])
 		sz_misc.Add(self.widgets['wait for rejects'])
 		sz_misc.Add(self.widgets['wait for reference'])
+		sz_misc.Add(self.widgets['post-target tuning'])
 		sz_misc.Add(self.createTransformSizer())
 		sz_misc.Add(self.createUseParentMoverSizer())
 		sz_misc.Add(self.createOffsetSizer())
@@ -480,12 +479,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(szright, (0,2),(8,1), wx.ALIGN_TOP)
 		sz.Add(sz_limit_image, (9,2), (2,1), wx.ALIGN_BOTTOM)
 		return sz
-
-	def onEnterPassword(self, evt):
-		dialog = wx.PasswordEntryDialog(self, 'Enter Password:')
-		dialog.ShowModal()
-		self.node.setEmailPassword(dialog.GetValue())
-		dialog.Destroy()
 
 class Panel(leginon.gui.wx.Node.Panel):
 	icon = 'acquisition'

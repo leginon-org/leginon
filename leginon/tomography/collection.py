@@ -16,6 +16,12 @@ class Abort(Exception):
 class Fail(Exception):
 	pass
 
+class LoopBreaking(Exception):
+	pass
+
+class LowIntensity(Exception):
+	pass
+
 class Collection(object):
 	def __init__(self):
 		self.tilt_series = None
@@ -196,9 +202,92 @@ class Collection(object):
 
 		self.checkAbort()
 
+		self.image_pixel_size = self.pixel_size*self.preset['binning']['x']
 		self._loop(tilts, exposures, sequence)
 		
 		self.logger.info('Collection loop completed.')
+
+	def predictDefocusZByCalibration(self, defocus0, tilt):
+		# use calibrated defocus delta instead
+		cal_delta = self.prediction.getCalibratedDefocusDelta(tilt)
+		self.logger.info('calibrated tilt defocus shift: %.2f um' % (cal_delta*1e6))
+		defocus =  defocus0 - cal_delta
+		return defocus, cal_delta / self.pixel_size
+
+	def predictByTilt(self, defocus0, tilt, position, defocus):
+		predicted_position = self.prediction.predict(tilt)
+
+		predicted_shift = {}
+		predicted_shift['x'] = predicted_position['x'] - position['x']
+		predicted_shift['y'] = predicted_position['y'] - position['y']
+		#
+		# undo defocus from last tilt
+		predicted_shift['z'] = -defocus
+		# use calibrated defocus delta instead
+		cal_delta = self.prediction.getCalibratedDefocusDelta(tilt)
+		self.logger.info('calibrated tilt defocus shift: %.2f um' % (cal_delta*1e6))
+		defocus =  defocus0 - cal_delta
+		self.logger.info('defocus0: %g meters,sintilt: %g' % (defocus0,math.sin(tilt)))
+		self.logger.info('prediction defocus %.2f um' % (defocus*1e6))
+		# record z prediction not including calibrated defocus delta ???
+		z_prediction = defocus0 + predicted_position['z']*self.image_pixel_size
+		predicted_shift['z'] += z_prediction
+		m = 'Predicted position: %g, %g pixels, %g, %g meters.'
+		self.logger.info(m % (predicted_position['x'],
+							  predicted_position['y'],
+							  predicted_position['x']*self.image_pixel_size,
+							  predicted_position['y']*self.image_pixel_size))
+		self.logger.info('Predicted defocus: %g meters.' % defocus)
+		return predicted_position, defocus, predicted_shift
+
+	def acquireTiltImage(self, exposure, channel):
+		"""
+		Return camera image data at tilt.
+		"""
+		m = 'Acquiring image (%g second exposure)...' % exposure
+		self.logger.info(m)
+		self.instrument.ccdcamera.ExposureTime = int(exposure*1000)
+
+		self.logger.info('Pausing for %.1f seconds before starting acquiring' % self.settings['tilt pause time']) 
+		time.sleep(self.settings['tilt pause time'])
+
+		# TODO: error checking
+		cam_image_data = self.node.acquireCorrectedCameraImageData(channel)
+		if cam_image_data is None:
+			self.finalize()
+			raise Fail
+		self.logger.info('Image acquired.')
+
+		image_mean = cam_image_data['image'].mean()
+		if self.settings['integer']:
+			intscale = self.settings['intscale']
+			cam_image_data['image'] = numpy.around(cam_image_data['image']*intscale).astype(numpy.int16)
+			image_mean *= intscale
+
+		image = cam_image_data['image']
+
+		if image_mean < self.settings['mean threshold']:
+			self.logger.warning('Image counts below threshold (mean of %.1f, threshold %.1f)' % (image_mean, self.settings['mean threshold']))
+			raise LowIntensity
+		return cam_image_data
+
+	def saveTiltImage(self, cam_image_data):
+		self.logger.info('Saving image...')
+		# notify manager on every image.
+		self.node.notifyNodeBusy()
+		while True:
+			try:
+				tilt_series_image_data = self.tilt_series.saveImage(cam_image_data)
+				break
+			except Exception as e:
+				self.logger.warning('Retrying save image: %s.' % (e,))
+				raise
+			for tick in range(60):
+				self.checkAbort()
+				time.sleep(1.0)
+		filename = tilt_series_image_data['filename']
+		self.logger.info('Image saved (filename: \'%s\').' % filename)
+		return tilt_series_image_data
 
 	def _loop(self, tilts, exposures, sequence):
 		'''
@@ -206,7 +295,6 @@ class Collection(object):
 		'''
 		# tilts and exposures are grouped
 		# sequence is the 2 element tuple used to choose the tilt and the exposure		
-		image_pixel_size = self.pixel_size*self.preset['binning']['x']
 
 		seq0 = sequence[0]
 		tilt0 = tilts[seq0[0]][seq0[1]]
@@ -236,32 +324,15 @@ class Collection(object):
 			self.checkAbort()
 			seq = sequence[seq_index]
 			tilt = tilts[seq[0]][seq[1]]
-
 			self.logger.info('Current tilt angle: %g degrees.' % math.degrees(tilt))
 			try:
 				self.prediction.setCurrentTiltGroup(seq[0])
-				predicted_position = self.prediction.predict(tilt)
+				predicted_position, defocus, predicted_shift = self.predictByTilt(defocus0, tilt, position, defocus)
 			except:
 				raise
 			self.checkAbort()
 
-			predicted_shift = {}
-			predicted_shift['x'] = predicted_position['x'] - position['x']
-			predicted_shift['y'] = predicted_position['y'] - position['y']
-
-			# undo defocus from last tilt
-			predicted_shift['z'] = -defocus
-
-			#Use calibrated defocus delta
-			cal_delta = self.prediction.getCalibratedDefocusDelta(tilt)
-			self.logger.info('calibrated tilt defocus shift: %.2f um' % (cal_delta*1e6))
-			defocus =  defocus0 + cal_delta
-			z_prediction = defocus0 + predicted_position['z']*image_pixel_size
-			self.logger.info('defocus0: %g meters,sintilt: %g' % (defocus0,math.sin(tilt)))
-			self.logger.info('prediction defocus %.2f um' % (defocus*1e6))
-			# record z prediction
-			predicted_shift['z'] += z_prediction
-
+			# set predicted position with image shift
 			try:
 				self.node.setPosition('image shift', predicted_position)
 			except Exception as e:
@@ -269,13 +340,7 @@ class Collection(object):
 				self.finalize()
 				raise Fail
 
-			m = 'Predicted position: %g, %g pixels, %g, %g meters.'
-			self.logger.info(m % (predicted_position['x'],
-								  predicted_position['y'],
-								  predicted_position['x']*image_pixel_size,
-								  predicted_position['y']*image_pixel_size))
-			self.logger.info('Predicted defocus: %g meters.' % defocus)
-			# set defocus based on the calibration
+			# set defocus
 			self.node.setDefocus(defocus)
 
 			if self.settings['measure defocus']:
@@ -290,61 +355,32 @@ class Collection(object):
 
 			self.checkAbort()
 
+			# acquire and save image data under the tilt series
 			exposure = exposures[seq[0]][seq[1]]
-			m = 'Acquiring image (%g second exposure)...' % exposure
-			self.logger.info(m)
-			self.instrument.ccdcamera.ExposureTime = int(exposure*1000)
-
 			self.checkAbort()
 
-			self.logger.info('Pausing for %.1f seconds before starting acquiring' % self.settings['tilt pause time']) 
-			time.sleep(self.settings['tilt pause time'])
-
-			# TODO: error checking
 			channel = self.correlator[seq[0]].getChannel()
-			image_data = self.node.acquireCorrectedCameraImageData(channel)
-			if image_data is None:
-				self.finalize()
-				raise Fail
-			self.logger.info('Image acquired.')
-
-			image_mean = image_data['image'].mean()
-			if self.settings['integer']:
-				intscale = self.settings['intscale']
-				image_data['image'] = numpy.around(image_data['image']*intscale).astype(numpy.int16)
-				image_mean *= intscale
-
-			image = image_data['image']
-
-			if image_mean < self.settings['mean threshold']:
-				if seq[1] < (self.settings['collection threshold']/100.0)*len(tilts):
-					self.logger.error('Image counts below threshold (mean of %.1f, threshold %.1f), aborting series...' % (image_mean, self.settings['mean threshold']))
+			try:
+				cam_image_data = self.acquireTiltImage(exposure, channel)
+				tilt_series_image_data = self.saveTiltImage(cam_image_data)
+			except LoopBreaking as e:
+				break
+			except LowIntensity as e:
+				if seq[1] < (self.settings['collection threshold']/100.0)*len(sequence):
+					# Fail too early
+					self.logger.error('Below threshold too early, aborting target')
 					self.finalize()
 					raise Abort
 				else:
+					# abort just the loop. continue on the other tilt_group
 					self.logger.warning('Image counts below threshold, aborting loop...')
 					self.restoreInstrumentState()
 					break
-
-			self.logger.info('Saving image...')
-			# notify manager on every image.
-			self.node.notifyNodeBusy()
-			while True:
-				try:
-					tilt_series_image_data = self.tilt_series.saveImage(image_data)
-					break
-				except Exception as e:
-					self.logger.warning('Retrying save image: %s.' % (e,))
-					raise
-				for tick in range(60):
-					self.checkAbort()
-					time.sleep(1.0)
-			filename = tilt_series_image_data['filename']
-			self.logger.info('Image saved (filename: \'%s\').' % filename)
+			except Exception:
+				raise
 
 			self.checkAbort()
-
-			self.viewer.addImage(image)
+			self.viewer.addImage(tilt_series_image_data['image'])
 
 			self.checkAbort()
 
@@ -379,13 +415,26 @@ class Collection(object):
 					other_group = int(not seq[0])
 					fake_corr_image = self.correlator[other_group].correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=False, taper=0)
 		
+			raw_correlation = self.correlator[seq[0]].getShift(True)
+			correlation = self.correlator[seq[0]].getShift(False)
 			phi, optical_axis, z0 = self.prediction.getCurrentParameters()
 			phi,offset = self.prediction.convertparams(phi,optical_axis)
-			correlation = self.correlator[seq[0]].getShift(False)
-
 			if self.settings['use tilt']:
+				# alternative correlation using phi from model as tilt axis.
 				correlation = self.correlator[seq[0]].tiltShift(tilt,correlation,phi)
-
+			corr_bin = self.correlator[seq[0]].getCorrelationBinning()
+			for i, axis in enumerate(('y','x')):
+				if type(correlation_image) != type(None):
+					print('pair-wise correlation', axis, raw_correlation[axis]*corr_bin)
+					if abs(raw_correlation[axis]*corr_bin) > 0.49*correlation_image.shape[i]:
+						print('at edge of the correlation')
+						print('predicted_position',axis, predicted_shift[axis])
+						if predicted_position[axis] > 0 and predicted_shift[axis] < 0:
+							correlation[axis] -= correlation_image.shape[i]
+							print('wrap to left')
+						elif predicted_position[axis] < 0 and predicted_shift[axis] > 0:
+							correlation[axis] += correlation_image.shape[i]
+							print('wrap to right')
 			position = {
 				'x': predicted_position['x'] - correlation['x'],
 				'y': predicted_position['y'] - correlation['y'],
@@ -396,14 +445,13 @@ class Collection(object):
 			m = 'Correlated shift from feature: %g, %g pixels, %g, %g meters.'
 			self.logger.info(m % (correlation['x'],
 								  correlation['y'],
-								  correlation['x']*image_pixel_size,
-								  correlation['y']*image_pixel_size))
-
+								  correlation['x']*self.image_pixel_size,
+								  correlation['y']*self.image_pixel_size))
 			m = 'Feature position: %g, %g pixels, %g, %g meters.'
 			self.logger.info(m % (position['x'],
 								  position['y'],
-								  position['x']*image_pixel_size,
-								  position['y']*image_pixel_size))
+								  position['x']*self.image_pixel_size,
+								  position['y']*self.image_pixel_size))
 			raw_correlation = self.correlator[seq[0]].getShift(True)
 			s = (raw_correlation['x'], raw_correlation['y'])
 			self.viewer.setXC(correlation_image, s)
@@ -422,7 +470,7 @@ class Collection(object):
 				position,
 				correlation,
 				raw_correlation,
-				image_pixel_size,
+				self.image_pixel_size,
 				tilt_series_image_data,
 				seq[0],
 				measured_defocus,

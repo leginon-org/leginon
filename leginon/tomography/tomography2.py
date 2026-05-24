@@ -39,6 +39,7 @@ class Tomography2(Tomography):
 	panelclass = leginon.gui.wx.tomography.Tomography.Panel2
 
 	def __init__(self, *args, **kwargs):
+		self.print_testing = True
 		super(Tomography2, self).__init__(*args, **kwargs)
 		self.calclients['image rotation'] = \
 			leginon.calibrationclient.ImageScaleRotationCalibrationClient(self)
@@ -98,8 +99,12 @@ class Tomography2(Tomography):
 	def getPredictionObject(self):
 		return leginon.tomography.prediction2.Prediction2()
 	
-	def getCollectionObject(self,target):
+	def getCollectionObject(self):
 		collect = leginon.tomography.collection2.Collection2()
+		return collect
+
+	def setTrackingInCollection(self, collect):
+		target = collect.target
 		offsetdata = self.researchTargetOffset(target['list'])
 		if offsetdata:
 			collect.offset = offsetdata
@@ -107,8 +112,7 @@ class Tomography2(Tomography):
 				self.presetsclient.getPresetByName(self.settings['track preset'])
 			collect.fulltrack = self.settings['full track']
 			collect.save_track_images = self.settings['save track images']
-		return collect
-	
+
 	def loadPredictionInfo(self):	
 		# dummy function since we don't need previous history	
 		pass

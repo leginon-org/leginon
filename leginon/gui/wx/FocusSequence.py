@@ -13,7 +13,7 @@ import leginon.gui.wx.Entry
 import leginon.gui.wx.ListBox
 import leginon.gui.wx.Presets
 
-hide_stig = True
+hide_stig = False
 
 class DialogSettings(object):
 	def __init__(self, preset_names,
@@ -269,7 +269,9 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 		### Frame for widgets that are not enabled for manual focusing
 		sbauto = wx.StaticBox(self, -1, '(Autofocus Only)')
 		autosizer = wx.GridBagSizer(3, 3)
+		fitsizer = wx.GridBagSizer(3, 3)
 		self.autowidgets = []
+		self.fitwidgets = []
 		self.ctfwidgets = []
 		self.correctwidgets = []
 
@@ -297,13 +299,15 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 		self.autowidgets.append(label)
 		autosizer.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		label = wx.StaticText(self, -1, 'Fit limit:')
-		self.autowidgets.append(label)
-		autosizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		# fit residual widget
+		label = wx.StaticText(self, -1, 'Fit residual limit:')
+		self.fitwidgets.append(label)
+		fitsizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.fit_limit_entry = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6)
-		autosizer.Add(self.fit_limit_entry, (2, 1), (1, 1),
+		fitsizer.Add(self.fit_limit_entry, (0, 1), (1, 1),
 					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		self.autowidgets.append(self.fit_limit_entry)
+		self.fitwidgets.append(self.fit_limit_entry)
+		autosizer.Add(fitsizer, (2, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 
 		ctfsizer = wx.GridBagSizer(3,3)
 		label = wx.StaticText(self, -1, 'Phase Shift Search Range in degrees:')
@@ -411,7 +415,7 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 		self.autowidgets.append(sbauto)
 		self.autobox = wx.StaticBoxSizer(sbauto, wx.VERTICAL)
 		self.autobox.Add(autosizer, 1, wx.EXPAND|wx.ALL, 5)
-		paramsizer.Add(self.autobox, (2,0), (1,3))
+		paramsizer.Add(self.autobox, (2,0), (2,3))
 
 		parambox = wx.StaticBoxSizer(sbparam, wx.VERTICAL)
 		parambox.Add(paramsizer, 1, wx.EXPAND|wx.ALL, 5)
@@ -442,6 +446,7 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 		if method == 'Stage Tilt':
 			self.enableCtf(False)
 			self.enableAuto(True)
+			self.enableFit(False)
 			# stage tilt focus measurement can not be used to correct defocus
 			if self.correction_type_choice.GetStringSelection()=='Defocus':
 				self.correction_type_choice.SetStringSelection('Stage Z') 
@@ -455,15 +460,19 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 		elif method == 'Beam Tilt':
 			self.enableCtf(False)
 			self.enableAuto(True)
+			self.enableFit(True)
 			self.tiltlabel.SetLabel('radians')
 		elif method == 'Ctf Fit':
 			self.enableAuto(False)
+			self.enableFit(True)
 			self.enableCtf(True)
 		elif method == 'Manual':
 			self.enableAuto(False)
+			self.enableFit(False)
 			self.enableCtf(False)
 		else:
 			self.enableAuto(False)
+			self.enableFit(False)
 			self.enableCtf(False)
 		# Combine switch checkbox state and event method selection
 		# as the state of the current setting
@@ -497,6 +506,10 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 		for widget in self.autowidgets:
 			widget.Enable(enable)
 		for widget in self.correctwidgets:
+			widget.Enable(enable)
+
+	def enableFit(self, enable):
+		for widget in self.fitwidgets:
 			widget.Enable(enable)
 
 	def enableCtf(self, enable):

@@ -209,6 +209,8 @@ class Focuser(singlefocuser.SingleFocuser):
 		self.current_focus_sequence_step each time this is called.
 		'''
 		self.new_acquire = True
+		# make sure self.imagedata is only created on acquireFinal
+		self.imagedata = None
 
 		## sometimes have to apply or un-apply deltaz if image shifted on
 		## tilted specimen
@@ -260,6 +262,15 @@ class Focuser(singlefocuser.SingleFocuser):
 	def acquireFinal(self, presetdata, emtarget):
 		self.clearBeamPath()
 		manualfocuschecker.ManualFocusChecker.acquire(self, presetdata, emtarget)
+		self.postTargetSetup()
+
+	def postTargetSetup(self):
+		while self.settings['post-target tuning'] and not self.settings['acquire final']:
+			self.logger.error('Must acquire final image to reset reference target')
+			self.player.pause()
+			state =  self.pauseCheck('Correct this settings before continue')
+			self.setStatus('processing')
+		return super(Focuser,self).postTargetSetup()
 
 	def processFocusSetting(self, setting, emtarget=None):
 		"""
