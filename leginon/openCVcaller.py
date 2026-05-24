@@ -43,10 +43,10 @@ def yshift(k1, k2, sel_matches):
 		filt=sp.ndimage.filters.gaussian_filter1d(myfilt, 1)
 		for i in range(len(filt)):
 				if (ys+i-(len(filt)/2)) in ysd:
-					 ysd[ys+i-(len(filt)/2)]+=filt[i]
+					ysd[ys+i-(len(filt)/2)]+=filt[i]
 				else:
-					 ysd[ys+i-(len(filt)/2)]=filt[i]
-					 
+					ysd[ys+i-(len(filt)/2)]=filt[i]
+					
 	if ysd:				
 		print("y-shift:", max(ysd, key=ysd.get),"pixels with",  max(ysd.values()), "votes")
 		return max(ysd, key=ysd.get)
@@ -61,61 +61,61 @@ def modifyImage(image, blur=3, thresh=0):
 
 #-----------------------
 def MatchImages(image1, image2):
-	 """
-	 Given two images:
-	 (1) Find regions
-	 (2) Match the regions
-	 (3) Find the affine matrix relating the two images
-	 
-	 Inputs:
+	"""
+	Given two images:
+	(1) Find regions
+	(2) Match the regions
+	(3) Find the affine matrix relating the two images
+	
+	Inputs:
 		numpy image1 array, dtype=float32
 		numpy image2 array, dtype=float32
 		Blur the image by blur pixels (defaults to 3)
 
-	 Output:
+	Output:
 		3x3 Affine Matrix
-	 """
-	 h1, w1 = image1.shape[:2]
-	 h2, w2 = image2.shape[:2]
+	"""
+	h1, w1 = image1.shape[:2]
+	h2, w2 = image2.shape[:2]
 
-	 view = sp.zeros((max(h1, h2), w1 + w2), sp.uint8)
-	 view[:h1, :w1] = image1
-	 view[:h2, w1:] = image2
-	 cv2.imwrite('sift_orig.jpg', view)
+	view = sp.zeros((max(h1, h2), w1 + w2), sp.uint8)
+	view[:h1, :w1] = image1
+	view[:h2, w1:] = image2
+	cv2.imwrite('sift_orig.jpg', view)
 
-	 detector = cv2.FeatureDetector_create("SIFT")
-	 descriptor = cv2.DescriptorExtractor_create("BRIEF")
-	 matcher = cv2.DescriptorMatcher_create("BruteForce-Hamming")
+	detector = cv2.FeatureDetector_create("SIFT")
+	descriptor = cv2.DescriptorExtractor_create("BRIEF")
+	matcher = cv2.DescriptorMatcher_create("BruteForce-Hamming")
 
-	 kp1=detector.detect(image1)
-	 kp2=detector.detect(image2)
+	kp1=detector.detect(image1)
+	kp2=detector.detect(image2)
 
-	 if kp1 is None or kp2 is None:
+	if kp1 is None or kp2 is None:
 		print("No features detected")
 		return np.zeros([3,3], dtype=np.float32)
-	 
-	 k1, d1 = descriptor.compute(image1, kp1)
-	 k2, d2 = descriptor.compute(image2, kp2)
+	
+	k1, d1 = descriptor.compute(image1, kp1)
+	k2, d2 = descriptor.compute(image2, kp2)
 
-	 if d1 is None or d2 is None:
+	if d1 is None or d2 is None:
 		print("No features detected")
 		return np.zeros([3,3], dtype=np.float32)
-	 
-	 print('%d keypoints in image1, %d keypoints in image2' % (len(d1), len(d2)))
+	
+	print('%d keypoints in image1, %d keypoints in image2' % (len(d1), len(d2)))
 
-	 matches = matcher.match(d1, d2)
-	 distances = [m.distance for m in matches]
-	 print("%d preliminary matches" % (len(distances)))
+	matches = matcher.match(d1, d2)
+	distances = [m.distance for m in matches]
+	print("%d preliminary matches" % (len(distances)))
 
-	 mean_dist = (sum(distances)/len(distances))
-	 sel_matches = [m for m in matches if m.distance < mean_dist*0.6]
-	 ys = yshift(k1, k2, sel_matches)
-	 if ys is not None:
+	mean_dist = (sum(distances)/len(distances))
+	sel_matches = [m for m in matches if m.distance < mean_dist*0.6]
+	ys = yshift(k1, k2, sel_matches)
+	if ys is not None:
 		sel_matches = [m for m in sel_matches if math.fabs(int(k2[m.trainIdx].pt[1])-int(k1[m.queryIdx].pt[1])-ys)<10]
-	 print("%d matches" % (len(sel_matches)))
-	 
-	 count=0
-	 while len(sel_matches)<40 and count<20:
+	print("%d matches" % (len(sel_matches)))
+	
+	count=0
+	while len(sel_matches)<40 and count<20:
 		count+=1
 		sel_matches = [m for m in matches if m.distance < mean_dist*(.6+.05*count)]
 		ys=yshift(k1, k2, sel_matches)
@@ -123,45 +123,45 @@ def MatchImages(image1, image2):
 				sel_matches = [m for m in sel_matches if math.fabs(int(k2[m.trainIdx].pt[1])-int(k1[m.queryIdx].pt[1])-ys)<10]
 		print("Try:", count, "#selected matches:", len(sel_matches))
 
-	 for m in sel_matches:
+	for m in sel_matches:
 		color = tuple([sp.random.randint(0, 255) for _ in range(3)])
 		cv2.line(view, (int(k1[m.queryIdx].pt[0]), int(k1[m.queryIdx].pt[1])) , (int(k2[m.trainIdx].pt[0] + w1), int(k2[m.trainIdx].pt[1])), color)
-	 cv2.imwrite('sift_comparison.jpg', view)
+	cv2.imwrite('sift_comparison.jpg', view)
 		
-	 ## Calculating affine matrix
-	 src_pts=np.float32([k1[m.queryIdx].pt for m in sel_matches ]).reshape(-1, 1, 2)
-	 dst_pts=np.float32([k2[m.trainIdx].pt for m in sel_matches ]).reshape(-1, 1, 2)
+	## Calculating affine matrix
+	src_pts=np.float32([k1[m.queryIdx].pt for m in sel_matches ]).reshape(-1, 1, 2)
+	dst_pts=np.float32([k2[m.trainIdx].pt for m in sel_matches ]).reshape(-1, 1, 2)
 
-	 affineM=cv2.estimateRigidTransform(src_pts, dst_pts, fullAffine=True)
-	 if affineM==None:
+	affineM=cv2.estimateRigidTransform(src_pts, dst_pts, fullAffine=True)
+	if affineM==None:
 		print("affine matrix could not be calculated")
-		return np.zeros([3,3], dtype=np.float32)		  
+		return np.zeros([3,3], dtype=np.float32)		 
 
-	 M=np.eye(3, dtype=float)
-	 for i in range(2):
+	M=np.eye(3, dtype=float)
+	for i in range(2):
 		for j in range(3):
 				M[i][j]=affineM[i][j]
 
-	 ## hview=copy.copy(view)
-	 ## for i in xrange(h1):
-	 ##	for j in xrange(w1):
-	 ##			vec=np.dot(M, [j, i, 1])
-	 ##			if 0<int(round(vec[0]))<w2 and 0<int(round(vec[1]))<h2:
-	 ##				 hview[int(round(vec[1]))][int(round(vec[0]))+w1]/=2
+	## hview=copy.copy(view)
+	## for i in xrange(h1):
+	##	for j in xrange(w1):
+	##			vec=np.dot(M, [j, i, 1])
+	##			if 0<int(round(vec[0]))<w2 and 0<int(round(vec[1]))<h2:
+	##				hview[int(round(vec[1]))][int(round(vec[0]))+w1]/=2
 
-	 ## cv2.imwrite('sift_projection.jpg', hview)
+	## cv2.imwrite('sift_projection.jpg', hview)
 
-	 ## For compatibility
-	 compat=copy.copy(M)
-	 M[0][0]=compat[1][1]
-	 M[2][0]=compat[1][2]
-	 M[1][1]=compat[0][0]
-	 M[2][1]=compat[0][2]
-	 M[0][2]=0.0
-	 M[1][2]=0.0
-	 print(M)
+	## For compatibility
+	compat=copy.copy(M)
+	M[0][0]=compat[1][1]
+	M[2][0]=compat[1][2]
+	M[1][1]=compat[0][0]
+	M[2][1]=compat[0][2]
+	M[0][2]=0.0
+	M[1][2]=0.0
+	print(M)
 
-	 return M
+	return M
 
 #-----------------------
 def convertImage(image1, thresh=0):
@@ -204,7 +204,7 @@ def checkOpenCVResult(logger, result, is_small_tilt_difference):
 		#min tilt angle of 12 degrees
 		logger.warning("Bad openCV result: bad tilt in matrix: "+affineToText(result))
 		print(("Bad openCV result: bad tilt in matrix: "+affineToText(result)))
-		return False	 
+		return False	
 	elif abs(result[0][0]) > 1.1 or abs(result[1][1]) > 1.1:
 		#restrict maximum allowable expansion
 		logger.warning("Bad openCV result: image expansion: "+affineToText(result))

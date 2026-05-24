@@ -4,13 +4,13 @@ import subprocess
 # dcshrum@fsu.edu
 class SlurmHost(processingHost.ProcessingHost):
 	def __init__ (self, command, jobType, configDict=None):
-            
-                # added so detail on what kind of job is available in the class
-                # for web service that generates headers.  The plan is for this custom class to go away :)
-                # dcshrum@fsu.edu
-                self.command = command
-                self.jobType = jobType
-        
+	   
+		# added so detail on what kind of job is available in the class
+		# for web service that generates headers.  The plan is for this custom class to go away :)
+		# dcshrum@fsu.edu
+		self.command = command
+		self.jobType = jobType
+	
 		processingHost.ProcessingHost.__init__(self)  #initialize parent
 		self.type="Slurm"
 		self.execCommand="sbatch"
@@ -18,9 +18,9 @@ class SlurmHost(processingHost.ProcessingHost):
 		self.scriptPrefix="#SBATCH"
 		if configDict:
 			self.configure(configDict)
-                # print "SlurmHost object created\n"            
-                            
-                
+		# print "SlurmHost object created\n"	  
+
+		
 
 	##generateHeaders (jobObject)
 	#Takes a job object or no arguments. If jobObject is supplied it uses it to 
@@ -33,15 +33,14 @@ class SlurmHost(processingHost.ProcessingHost):
 			currentJob=self.currentJob
 		else:
 			raise UnboundLocalError ("Current Job not set")
-               
-             
+ 
 		#Every Shell Script starts by indicating shell type
 		header = "#!" + self.getShell() + "\n"
 			   
 		#add job attribute headers
 		if currentJob.getWalltime():
 			header += self.scriptPrefix +" -t " + str(currentJob.getWalltime())+":00:00\n"
-                        
+
 		if currentJob.getNodes():
 			header += self.scriptPrefix +" -N " + str(currentJob.getNodes())
 			header += "\n"
