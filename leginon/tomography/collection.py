@@ -100,6 +100,8 @@ class Collection(object):
 			lpf = None
 		# bin down images for correlation
 		imageshape = self.preset['dimension']
+		# set minimal_number_of_pixels for PID differential damping as 10%
+		self.prediction.damping_start = min(imageshape['x'],imageshape['y'])*0.1
 		# use minsize since tiltcorrelator needs it square, will crop the image in there.
 		minsize = min((imageshape['x'],imageshape['y']))
 		if minsize > 512:
@@ -389,7 +391,7 @@ class Collection(object):
 				'y': predicted_position['y'] - correlation['y'],
 			}
 
-			self.prediction.addPosition(tilt, position)
+			self.prediction.addPosition(tilt, position, correlation)
 
 			m = 'Correlated shift from feature: %g, %g pixels, %g, %g meters.'
 			self.logger.info(m % (correlation['x'],

@@ -330,9 +330,14 @@ class DMSEM(ccdcamera.CCDCamera):
 		# Check and insert the camera every 0.5 minutes
 		self._midNightDelay(delay_start, delay_length, force_insert=0.5)
 
+	def isCameraInUse(self):
+		return self.camera.IsViewerLive() > 0
+
 	def _getImage(self):
 		self.midNightDelay()
 		self.camera.SelectCamera(self.cameraid)
+		if self.isCameraInUse():
+			raise RuntimeError('camera in use for live view.')
 		self.custom_setup()
 		acqparams = self.calculateAcquireParams()
 		self.acqparams = acqparams

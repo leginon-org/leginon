@@ -323,12 +323,12 @@ class Krios(tem.TEM):
 		self.projection_submode_map ={}
 		self.logger = Logger()
 		self.stage_logger = Logger()
-        # loading fei.cfg
+		# loading fei.cfg
 		self.correctedstage = self.getFeiConfig('stage','do_stage_xyz_backlash')
 		self.corrected_alpha_stage = self.getFeiConfig('stage','do_stage_alpha_backlash')
 		self.alpha_backlash_delta = self.getFeiConfig('stage','stage_alpha_backlash_angle_delta')
 		self.normalize_all_after_setting = self.getFeiConfig('optics','force_normalize_all_after_setting')
-        # logging
+		# logging
 		if self.getDebugAll():
 			self.logger.setLevel(3)
 			self.stage_logger.setLevel(3)
@@ -941,7 +941,8 @@ class Krios(tem.TEM):
 			# small move is ignored.
 			return
 		v_req = vctr_p.Vector(x=vector['x'],y=vector['y'])
-		if req_key_name.startswith('x_'):
+		# some request attribute name starts with set.
+		if req_key_name.startswith('x_') or req_key_name.startswith('align_beam'):
 			req_attr_name = 'Set%sRequest' % my_device
 		else:
 			req_attr_name = '%sRequest' % my_device
@@ -1055,9 +1056,10 @@ class Krios(tem.TEM):
 		Diffraction shift in meters for vector axes x,y.
 		"""
 		r = self._getAllDeflectors()
-		result = _get_vector_xy(r,'difffractionShift')
+		result = _get_vector_xy(r,'diffractionShift')
 		if result['x'] is None:
 			return {'x':0,'y':0}
+		return result
 
 	def setDiffractionShift(self, vector, relative = 'absolute'):
 		if self.getProjectionMode() != 'diffraction':

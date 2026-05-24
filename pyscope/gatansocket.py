@@ -556,6 +556,14 @@ class GatanSocket(object):
 		imArray = imArray.reshape((height,width))
 		return imArray
 
+	def IsViewerLive(self):
+		''' Use view object valid to check if live view is on '''
+		function_name = 'ScriptObjectIsValid'
+		if not self.hasScriptFunction(function_name):
+			return -999.0
+		script = 'object mgr = CM_GetCameraManager(); object viewer = mgr.CM_GetCurrentViewer(); if (viewer.ScriptObjectIsValid()) { Exit(1.0); } else { Exit(-1.0); }'
+		return self.ExecuteGetDoubleScript(script)
+
 	def ExecuteSendCameraObjectionFunction(self, function_name, camera_id=0):
 		# first longargs is error code. Error if > 0
 		return self.ExecuteGetLongCameraObjectFunction(function_name, camera_id)

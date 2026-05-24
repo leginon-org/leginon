@@ -504,6 +504,16 @@ class MatrixCalibrationData(BeamProbeDependentCalibrationData):
 		)
 	typemap = classmethod(typemap)
 
+class AffineMatrixCalibrationData(BeamProbeDependentCalibrationData):
+	def typemap(cls):
+		return BeamProbeDependentCalibrationData.typemap() + (
+			('type', str),
+			('matrix', sinedon.newdict.DatabaseArrayType),
+			('previous', AffineMatrixCalibrationData),
+			('defocus', float),
+		)
+	typemap = classmethod(typemap)
+
 class ImageRotationCalibrationData(BeamProbeDependentCalibrationData):
 	def typemap(cls):
 		return BeamProbeDependentCalibrationData.typemap() + (
@@ -2223,6 +2233,15 @@ class MoverParamsData(Data):
 			('mover', str),
 			('move precision', float),
 			('accept precision', float),
+		)
+	typemap = classmethod(typemap)
+
+class LppAlignerSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('global view offset', float),
+			('compress ratio', int),
+			('rotation', float), # degrees
 		)
 	typemap = classmethod(typemap)
 
