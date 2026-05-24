@@ -26,6 +26,7 @@ class PhasePlatePlaneShiftCycler(acquisition.Acquisition):
 		'shift scale': 0.00001,
 		'x projection': 1.0,
 		'y projection': 0.0,
+		'two d scan': False,
 	})
 
 	eventinputs = acquisition.Acquisition.eventinputs
@@ -34,11 +35,18 @@ class PhasePlatePlaneShiftCycler(acquisition.Acquisition):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
 		self.shifts_on_plane = eval(self.settings['shift sequence']) #in micron defocus
-		self.shifts_cycle = itertools.cycle(eval(self.settings['shift sequence']))
+		self.resetCycles()
 		self.xy = self.calculateUnitVector()
 		self.scale = self.settings['shift scale']
 		self.shift_name = 'phase plate plane shift'
 		self.scope_attr = ''.join(map((lambda x:x.capitalize()),self.shift_name.split(' ')))
+
+	def resetCycles(self):
+		self.col_shifts_cycle = itertools.cycle(eval(self.settings['shift sequence']))
+		if self.settings['two d scan']:
+			self.row_shifts_cycle = itertools.cycle(eval(self.settings['shift sequence']))
+		else:
+			self.row_shifts_cycle = itertools.cycle((0.0,))
 
 	def calculateUnitVector(self):
 		u_norm = math.hypot(self.settings['x projection'],self.settings['y projection'])
@@ -72,11 +80,17 @@ class PhasePlatePlaneShiftCycler(acquisition.Acquisition):
 		if self.settings['use cycler'] and len(self.shifts_on_plane) > 0:
 			if not hasattr(self, 'parent_shift'):
 				self.resetCycle()
-			shift = next(self.shifts_cycle)
-			x_value = self.parent_shift['x'] + shift*self.xy['x']*self.settings['shift scale']
-			y_value = self.parent_shift['y'] + shift*self.xy['y']*self.settings['shift scale']
+			self.c_shift = next(self.col_shifts_cycle)
+			if self.iter % len(eval(self.settings['shift sequence'])) == 0:
+				self.r_shift = next(self.row_shifts_cycle)
+			x_unit_shift = self.xy['x']*self.settings['shift scale']
+			y_unit_shift = self.xy['y']*self.settings['shift scale']
+			x_value = self.parent_shift['x'] + self.c_shift*x_unit_shift + self.r_shift*y_unit_shift
+			y_value = self.parent_shift['y'] - self.c_shift*y_unit_shift + self.r_shift*x_unit_shift
 			getattr(self.instrument.tem,'set%s' % self.scope_attr)({'x':x_value,'y':y_value})
-			self.logger.info('%s sent: %s' % (self.shift_name.capitalize(),{'x':x_value,'y':y_value}))
+			m = '%s sent: %s' % (self.shift_name.capitalize(),{'x':x_value,'y':y_value})
+			self.logger.info(m)
+			self.iter += 1
 			super(PhasePlatePlaneShiftCycler, self).processTargetData(targetdata, attempt)
 		else:
 			# process as normal
@@ -86,10 +100,11 @@ class PhasePlatePlaneShiftCycler(acquisition.Acquisition):
 		self.logger.info('%s reset to %s' % (self.shift_name.capitalize(),self.parent_shift))
 		getattr(self.instrument.tem,'set%s' % self.scope_attr)(self.parent_shift)
 		self.logger.info('Shift sequence cycler reset to beginning')
-		self.shifts_cycle = itertools.cycle(eval(self.settings['shift sequence']))
+		self.resetCycles()
 
 	def resetCycle(self):
 		# reset iteration cycle, unit vector and default value
 		self.xy = self.calculateUnitVector()
 		self.getParentShift({})
-		self.shifts_cycle = itertools.cycle(eval(self.settings['shift sequence']))
+		self.resetCycles()
+		self.iter = 0

@@ -279,6 +279,7 @@ class Logger(object):
 class Krios(tem.TEM):
 	name = 'Krios'
 	default_stage_speed_fraction = 1.0
+	stage_top_speed = default_stage_speed_fraction
 	has_x_lens = False
 	# (pyscope value, utapi CONSTANT)
 	cm_projection_mode_map = [	('imaging','PROJECTION_MODE_IMAGING'),
@@ -829,19 +830,31 @@ class Krios(tem.TEM):
 			req_key_name = 'illuminated_area_diameter'
 		else:
 			req_key_name = 'intensity'
-		self._setIllumination(req_key_name, value)
+		prev = self.getIntensity()
+		if prev != value:
+			self.setAutoNormalizeEnabled(False)
+			self._setIllumination(req_key_name, value)
 		# Normalizations
 		if self.normalize_all_after_setting:
 			if self.getDebugAll():
-				self.need_normalize_all
+				print('need_normalize_all',self.need_normalize_all)
 			if self.need_normalize_all:
 				if self.getDebugAll():
 					print('normalize all')
 				self.normalizeLens('all')
+		# wabble around the value for precision tuning
+		need_lpp_norm_diam = self.getFeiConfig('optics','maximum_beam_diameter_for_local_intensity_normalization')
+		if prev != value and value <= need_lpp_norm_diam and req_key_name !='intensity':
+			# This does not work with non-titan column since 10% intensity change is likely too big.
+			for v in (value*0.9, value*1.1):
+				self._setIllumination(req_key_name, v)
+				time.sleep(1)
+			self._setIllumination(req_key_name, value)
 		# sleep for intensity change
 		extra_sleep = self.getFeiConfig('camera','extra_protector_sleep_time')
 		if self.need_normalize_all and extra_sleep:
 			time.sleep(extra_sleep)
+		
 		#reset changed flag
 		self.setAutoNormalizeEnabled(True)
 
@@ -917,7 +930,7 @@ class Krios(tem.TEM):
 
 	def setAutoNormalizeEnabled(self, value):
 		if self.normalize_all_after_setting:
-			my_request = norm_p.SetAutoNormalizeEnabledRequest(enable=bool(value))
+			my_request = norm_p.SetAutoNormalizeEnabledRequest(enabled=bool(value))
 			_set_by_request(norm_stub, 'SetAutoNormalizeEnabled', my_request)
 			self.need_normalize_all = not bool(value)
 		else:

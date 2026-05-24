@@ -31,6 +31,7 @@ class dbemGraph {
 	var $baselinevalue=0;
 	var $manualscale=false;
 	var $scaletype='linlin';
+	var $is_proportion=false;
 
 	function __construct($data, $xname, $yname) {
 		$this->data=&$data;
@@ -63,6 +64,7 @@ class dbemGraph {
 		$this->ymin = $ymid - $range * (0.5 + $margin);
 		$this->xmax = $xmid + $range * (0.5 + $margin);
 		$this->ymax = $ymid + $range * (0.5 + $margin);
+		$this->is_proportion = true;
 	}
 
 	function scale(&$d) {
@@ -191,6 +193,9 @@ class dbemGraph {
 				$sp1->mark->SetColor('red');
 				$sp1->mark->SetWidth(4);
 				$graph->Add($sp1);
+				if ($this->is_proportion) {
+					$graph->xgrid->Show();
+				}
 			}
 
 			if ($this->lineplot) {

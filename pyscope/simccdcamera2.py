@@ -857,22 +857,23 @@ class SimK3Camera(SimFrameCamera):
 
 	def getAcqBinning(self):
 		self.acq_binning = self.binning['x']
-		if self.binning['x'] > 2:
-			#K3 can only bin from super resolution by 1 or 2.
-			self.acq_binning = 2
+		# The follow is only needed on real K3 camera
+		#if self.binning['x'] > 2:
+		#	#K3 can only bin from super resolution by 1 or 2.
+		#	self.acq_binning = 2
 		# bin scale is 1 always
 		return self.acq_binning, 1
 
 	def getAcqBinningAndROI(self):
 		acq_binning, binscale = self.getAcqBinning()
-		height = self.camsize['y'] / acq_binning
-		width = self.camsize['x'] / acq_binning
+		height = self.camsize['y'] // acq_binning
+		width = self.camsize['x'] // acq_binning
 		if self.needConfigDimensionFlip(height,width):
 			tmpheight = height
 			height = width
 			width = tmpheight
-		left = self.tempoffset['x'] / binscale
-		top = self.tempoffset['y'] / binscale
+		left = self.tempoffset['x'] // binscale
+		top = self.tempoffset['y'] // binscale
 		right = left + width
 		bottom = top + height
 		return acq_binning, left, top, right, bottom, width, height
@@ -899,7 +900,7 @@ class SimK3Camera(SimFrameCamera):
 				image = image.reshape(self.acqparams['height'],self.acqparams['width'])
 				print('WARNING: image reshaped', image.shape)
 		# K3 can not bin more than 2. Bin it here.
-		added_binning = self.binning['x'] / self.acq_binning
+		added_binning = self.binning['x'] // self.acq_binning
 		if added_binning > 1:
 			image = imagefun_bin(image, added_binning)
 		image = self._cropImage(image)

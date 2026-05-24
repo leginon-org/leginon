@@ -104,7 +104,7 @@ class AlignZeroLossPeak(ReferenceTimer):
 
 	def moveAndExecute(self, request_data):
 		'''
-		Overwrite base class moveAndExecute from AlignZeroLossPeak.
+		Overwrite base class moveAndExecute from Reference.
 		It needs to check shift threshold, and take test image.
 		'''
 		request_preset_name = request_data['preset']

@@ -94,6 +94,7 @@ class Navigator(node.Node):
 		'final image shift': False,
 		'camera settings': cameraclient.default_settings,
 		'preexpose': True,
+		'move without reacquire': False,
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs + [event.MoveToTargetEvent]
 	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs + [event.CameraImagePublishEvent, event.MoveToTargetDoneEvent,event.UpdatePresetEvent]
@@ -195,10 +196,14 @@ class Navigator(node.Node):
 		deltacol = clickcol - centerc
 
 		check = self.settings['check calibration']
+		no_reacquire = self.settings['move without reacquire']
+		self.currentpreset = self.presetsclient.getCurrentPreset()
+		if self.newimagedata['preset']['name'] != self.currentpreset['name']:
+			self.logger.warning('preset of the image will be applied to the scope')
 		status = self.move(deltarow, deltacol, movetype, precision, accept_precision, check, final_imageshift=final_imageshift)
 
 		## acquire image if check not done
-		if not check:
+		if not check and not no_reacquire:
 			self.reacquireImage()
 		elif status != 'error' and movetype != 'image shift' and final_imageshift:
 			self.reacquireImage()
