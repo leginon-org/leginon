@@ -11,6 +11,8 @@ class FEITemScriptingConnection(object):
 	autoloader = None
 	temp_control = None
 
+import datetime
+
 import comtypes
 import comtypes.client
 # a clean class instance at import
@@ -169,7 +171,8 @@ def handleRpcError(e):
 	if e.code() == grpc.StatusCode.ABORTED:
 		utapi_response = urp.UtapiResponse()
 		utapi_response.ParseFromString(e.trailing_metadata()[0][1])
-		print(f"Error with UtapiResponse>\n{utapi_response}<")
+		msg=f"Aborted with UtapiResponse>\n{utapi_response}<"
+		raise RuntimeError(msg)
 	else:
 		# Not an UtapiResponse. rethrow exception
 		raise
@@ -177,6 +180,8 @@ def handleRpcError(e):
 def _response_to_dict(response):
 	if SIMULATION:
 		return response
+	printModuleDebug('responds: %s' % response)
+	printModuleDebug('json_format: %s' % json_format.MessageToDict(response))
 	return json_format.MessageToDict(response)
 
 def _get_by_request(stub,attr_name,request):
@@ -354,15 +359,22 @@ class Krios(tem.TEM):
 		self.default_stage_speed_fraction = self.stage_speed_fraction
 		try:
 			global connection
-			print('connection initial',connection.autoloader)
+			self.logger.debug('connection initial',connection.autoloader)
 			connectToFEITemScripting()
-			print('connection after connect',connection.autoloader)
+			self.logger.debug('connection after connect',connection.autoloader)
 			self.script_autoloader = connection.autoloader
 			self.script_temp_control = connection.temp_control
 			self.gridloader_slot_states = {0:'unknown', 1:'occupied', 2:'empty', 3:'error'}
 		except Exception as e:
-			print('unable to initialize Advanced Scriptiong interface, %s' % e)
+			self.logger.debug('unable to initialize Advanced Scriptiong interface, %s' % e)
 			self.adv_instr = None
+		self.bt_sc = self.getBeamTiltScale()
+
+	def getBeamTiltScale(self):
+		sc = {}
+		sc['x'] = 1.733548
+		sc['y'] = 1.869528
+		return sc
 
 	def getDebugAll(self):
 		return getFeiConfig('debug','all')
@@ -387,7 +399,7 @@ class Krios(tem.TEM):
 			self.logger.debug('GetState result: %s' % state_dict)
 			state_short = state_dict['state']
 		except Exception as e:
-			self.logger.debug(e)
+			self.logger.error(e)
 			return 'unknown'
 		# response state is 'INSERTED' instead of 'INSERT'
 		state_map = list(map((lambda x: (x[0],x[1].upper()+'ED')),self.bstop_attr_map))
@@ -396,7 +408,7 @@ class Krios(tem.TEM):
 			result = state_map[list(map((lambda x: x[1]),state_map)).index(state_short)][0]
 			return result
 		except Exception as e:
-			self.logger.debug(e)
+			self.logger.error(e)
 			return 'unknown'
 
 	def setBeamstopPosition(self, value):
@@ -509,36 +521,66 @@ class Krios(tem.TEM):
 		my_device = 'FocusIndex'
 		my_request = getattr(feg_p,'%sRequest' % my_device)()
 		r = _get_by_request(feg_stub, 'Get%s' % my_device, my_request)
-		return r['coarse'] + r['fine']*0.1 if 'fine' in r.keys() else float(r['coarse'])
+		value = 0.0
+		for kv in (('coarse',1),('fine',0.01)):
+			k = kv[0]
+			v = kv[1]
+			if k in r.keys():
+				value += r[k]*v
+		return value
 
 	def getColdFegBeamCurrent(self):
+		"""
+		Return Cold Feg beam current value in Volts. If the gun has no
+		such value, returns -1
+		"""
 		my_device = 'BeamCurrent'
 		return self._getFegValue(my_device)
 
 	def getExtractorVoltage(self):
+		"""
+		Return Extractor Voltage value in Volts. If the gun has no
+		such value, returns -1
+		"""
 		my_device = 'ExtractorVoltage'
 		return self._getFegValue(my_device)
 	
+	def getFegEmissionState(self):
+		"""
+		Return whether feg is in stable emitting state.
+		False means ramping or off.
+		"""
+		my_device = 'FegState'
+		my_request = getattr(feg_p,'%sRequest' % my_device)()
+		r = _get_by_request(feg_stub, 'Get%s' % my_device, my_request)
+		# result state can be 'EMITTING' or 'NOT_EMITTING'
+		if 'NOT' in r['state']:
+			return False
+		return True
+
 	def hasColdFeg(self):
 		try:
-			flash_type_constant = self.cold_feg_flash_types['low']
-			r = self._getFlashingAdvised(flash_type_constant)
-			return True
+			# non-cfeg returns -1 for this call.
+			# cfeg gives values in Amp
+			if self.getColdFegBeamCurrent() >= 0:
+				return True
+			else:
+				return False
 		except Exception as e:
-			print(e)
 			return False
 
 	def _getFlashingAdvised(self,flash_type_constant):
 		my_device = 'FegFlashing'
 		my_request = getattr(flash_p,'%sRequest' % my_device)(flashing_type=flash_type_constant)
 		r = _get_by_request(flash_stub, 'GetFlashingAdvised', my_request)
+		# r can either be {} or {'flashingAdvised': True}
+		return bool(r.keys()) and 'flashingAdvised' in r.keys() and r['flashingAdvised']
 
 	def getFlashingAdvised(self, flash_type):
 		advised_only = getFeiConfig('source','flash_cold_feg_only_if_advised')
 		try:
 			flash_type_constant = self.cold_feg_flash_types[flash_type]
 			r = self._getFlashingAdvised(flash_type_constant)
-			# r can either be {} or {'flashing_advised': True}
 			should_flash = bool(r)
 		except AttributeError as e:
 			return False
@@ -560,6 +602,7 @@ class Krios(tem.TEM):
 		my_device = 'FegFlashing'
 		my_request = getattr(flash_p,'%sRequest' % my_device)(flashing_type=flash_type_constant)
 		r = _set_by_request(flash_stub, 'PerformFlashing', my_request)
+		self.logger.info("%s %d" % (datetime.datetime.now(),flash_type_constant))
 
 	def setColdFegFlashing(self,state):
 		# 'on' starts flashing, 'off' stops flashing
@@ -578,8 +621,9 @@ class Krios(tem.TEM):
 					self._performColdFegFlashing(flash_type_constant)
 					# no need to do lowT flashing if highT is done
 					break
-				except Exception as e:
-					raise RuntimeError(e)
+				except RuntimeError as e:
+					self.logger.error("%s %s" % (datetime.datetime.now(),e))
+					raise
 
 	# column modes
 	def _getColumnModes(self):
@@ -755,7 +799,7 @@ class Krios(tem.TEM):
 				# none of the valid index
 				prev_index = -1
 			except Exception as e:
-				print("Other error", e)
+				self.logger.error("Other error", e)
 				prev_index = -1
 			index = self.sup_mag_data[obj_mode_name]['displayedMagnifications'].index(int_value)
 			if prev_index != index:
@@ -856,10 +900,10 @@ class Krios(tem.TEM):
 		# Normalizations
 		if self.normalize_all_after_setting:
 			if self.getDebugAll():
-				print('need_normalize_all',self.need_normalize_all)
+				self.logger.debug('need_normalize_all',self.need_normalize_all)
 			if self.need_normalize_all:
 				if self.getDebugAll():
-					print('normalize all')
+					self.logger.debug('normalize all')
 				self.normalizeLens('all')
 		# wabble around the value for precision tuning
 		need_lpp_norm_diam = getFeiConfig('optics','maximum_beam_diameter_for_local_intensity_normalization')
@@ -897,7 +941,7 @@ class Krios(tem.TEM):
 			result = my_map[list(map((lambda x: x[1].upper()+'ED'),my_map)).index(state_short)][0]
 			return result
 		except Exception as e:
-			self.logger.debug(e)
+			self.logger.error(e)
 			return 'unknown'
 
 	def setBeamBlank(self, value):
@@ -980,7 +1024,7 @@ class Krios(tem.TEM):
 		my_request = my_request(**kwargs)
 		_set_by_request(defl_stub,'Set%s' % my_device, my_request)
 
-	def getBeamTilt(self):
+	def getBeamTilt_script(self):
 		"""
 		Beam Tilt with beam deflectors in radians for vector axes x,y
 		without linked image deflectors change.
@@ -993,15 +1037,26 @@ class Krios(tem.TEM):
 
 		return value
 
+	def getBeamTilt(self):
+		try:
+			my_request = getattr(defl_aln_p,'GetBeamTiltAlignmentRequest')()
+			r = _get_by_request(defl_aln_stub, 'GetBeamTiltAlignment', my_request)['beamTiltAlignment']
+			return {'x':r['x']/self.bt_sc['x'], 'y':r['y']/self.bt_sc['y']}
+		except Exception as e:
+			self.logger.error('Error getting beam tilt alignment values: %s' %e)
+			return {}
+
 	def setBeamTilt(self, vector, relative = 'absolute'):
 		"""
 		Beam Tilt with beam deflectors in radians for vector axes x,y
 		without linked image deflectors change.
-		Using TEMScripting until utapi implementation is available.
 		"""
 		# TODO: switch to utapi implementation when it is available
+		original_vector = self.getBeamTilt()
 		if relative == 'relative':
-			original_vector = self.getBeamTilt()
+			if abs(vector['x'])+abs(vector['y']) < 1e-6:
+				# 1 urad move is ignored.
+				return
 			try:
 				vector['x'] += original_vector['x']
 			except KeyError:
@@ -1011,23 +1066,25 @@ class Krios(tem.TEM):
 			except KeyError:
 				pass
 		elif relative == 'absolute':
+			if abs(vector['x']-original_vector['x'])+abs(vector['y']-original_vector['y']) < 1e-6:
+				# 1 urad move is ignored.
+				return
 			pass
 		else:
 			raise ValueError
+		return self._setBeamTilt(vector)
 		
-		vec = connection.instr.Illumination.RotationCenter
-		if abs(vec.X-vector['x'])+abs(vec.Y-vector['y']) < 1e-6:
-			# 1 urad move is ignored.
-			return
-		try:
-			vec.X = vector['x']
-		except KeyError:
-			pass
-		try:
-			vec.Y = vector['y']
-		except KeyError:
-			pass
-		connection.instr.Illumination.RotationCenter = vec
+	def _setBeamTilt(self, vector):
+		req_key_name = 'beam_tilt_alignment'
+		my_device = underscore_to_camelcase(req_key_name,True)
+		#
+		v_req = vctr_p.Vector(x=vector['x']*self.bt_sc['x'],y=vector['y']*self.bt_sc['y'])
+		req_attr_name = 'Set%sRequest' % my_device
+		my_request = getattr(defl_aln_p,req_attr_name)
+		kwargs = {}
+		kwargs[req_key_name]=v_req
+		my_request = my_request(**kwargs)
+		_set_by_request(defl_aln_stub,'Set%s' % my_device, my_request)
 
 	def getImageBeamTilt(self):
 		"""
@@ -1338,9 +1395,9 @@ class Krios(tem.TEM):
 		return self._getChamberPressure('SourceBuffer')['pressure']
 
 	def hasGridLoader(self):
-		print('hasGridLoader',connection.autoloader)
-		print('hasGridLoader2',self.script_autoloader)
-		print('LoaderAvailable',self.script_autoloader.AutoLoaderAvailable)
+		self.logger.debug('hasGridLoader',connection.autoloader)
+		self.logger.debug('hasGridLoader2',self.script_autoloader)
+		self.logger.debug('LoaderAvailable',self.script_autoloader.AutoLoaderAvailable)
 		return bool(self.script_autoloader.AutoLoaderAvailable)
 		#TODO broken service not functional
 		#my_device = 'SampleloaderType'
@@ -1489,7 +1546,7 @@ class Krios(tem.TEM):
 		dt = 0.0 # delta time
 		trials = 0
 		while state != 'STAGE_STATE_READY':
-			self.logger.debug('wait 0.2 s for stage to be ready %s' % my_msg)
+			self.stage_logger.debug('wait 0.2 s for stage to be ready %s' % my_msg)
 			trials += 1
 			time.sleep(0.2)
 			state = self._getStageState()
@@ -1497,9 +1554,9 @@ class Krios(tem.TEM):
 				raise RuntimeError('stage is not going to ready status in %d seconds. Last state: %s' % (int(timeout), state))
 			dt = time.time() - t0 
 		if self.getDebugStage() and trials > 0:
-			print(datetime.datetime.now())
+			self.stage_logger.debug(datetime.datetime.now())
 			donetime = time.time() - t0
-			print('took extra %.1f seconds to get to ready status' % (donetime))
+			self.stage_logger.debug('took extra %.1f seconds to get to ready status' % (donetime))
 
 	def getMinimumStageMovement(self):
 		return getFeiConfig('stage','minimum_stage_movement')
@@ -1653,9 +1710,8 @@ class Krios(tem.TEM):
 					my_request = stage_p.MoveStageRequest(move_type=1,position=p_msg,speed_factor=self.stage_speed_fraction)
 					_set_by_request(stage_stub,'MoveStage', my_request)
 		except Exception as e:
-			if self.getDebugStage():
-				print(datetime.datetime.now())
-				print('Error in going to %s' % (position,))
+			self.stage_logger.debug(datetime.datetime.now())
+			self.stage_logger.debug('Error in going to %s' % (position,))
 			raise RuntimeError('set %s with error: %s' % (short_pos_str, e))
 		self.waitForStageReady('after setting %s' % (short_pos_str,))
 
@@ -1769,6 +1825,16 @@ class Krios(tem.TEM):
 		except KeyError:
 			# value is zero or screen is up.
 			return 0.0
+
+	def exposeSpecimenNotCamera(self,exptime=0):
+		'''
+		Expose specimen by lowering main screen. Used in pre-exposure and melting ice
+		'''
+		if exptime == 0:
+			return
+		self.setMainScreenPosition('down')
+		time.sleep(exptime)
+		self.setMainScreenPosition('up')
 
 	def hasXLens(self):
 		return self.has_x_lens
