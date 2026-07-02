@@ -295,8 +295,8 @@ class Logger(object):
 
 class Krios(tem.TEM):
 	name = 'Krios'
-	default_stage_speed_fraction = 1.0
-	stage_top_speed = default_stage_speed_fraction
+	stage_top_speed = 1.0
+	fast_stage_speed_fraction = 1.0 # the fraction of top speed that allows combined x,y move in one move call.
 	has_x_lens = False
 	# (pyscope value, utapi CONSTANT)
 	cm_projection_mode_map = [	('imaging','PROJECTION_MODE_IMAGING'),
@@ -333,7 +333,6 @@ class Krios(tem.TEM):
 		self.cold_feg_flash_types = {'low':1,'high':2}
 		self.beamstop_device_id = dip.DeviceIdRequest(id='BeamStopper')
 		# default to let the scope control auto normalization.
-		self.stage_speed_fraction = self.default_stage_speed_fraction
 		self.noramlize_all_after_setting = False
 		self.need_normalize_all = False
 		self.sup_mag_data = {}
@@ -350,6 +349,9 @@ class Krios(tem.TEM):
 		if self.getDebugAll():
 			self.logger.setLevel(3)
 			self.stage_logger.setLevel(3)
+		# reduce stage speed if required and make it default
+		self.stage_speed_fraction = self.getInitialStageSpeedFraction()
+		self.default_stage_speed_fraction = self.stage_speed_fraction
 		try:
 			global connection
 			print('connection initial',connection.autoloader)
@@ -367,6 +369,16 @@ class Krios(tem.TEM):
 
 	def getDebugStage(self):
 		return getFeiConfig('debug','stage')
+
+	def getInitialStageSpeedFraction(self):
+		reduction_factor = getFeiConfig('stage','stage_move_reduction_factor')
+		# set to lower stage speed
+		if reduction_factor is None:
+			reduction_factor = 1
+		if reduction_factor < 1.0:
+			self.stage_logger.warning('Speed reduction must be >= 1. Auto adjusted to 1.')
+			reduction_factor = 1
+		return self.fast_stage_speed_fraction / reduction_factor
 
 	def getBeamstopPosition(self):
 		self.logger.debug('---getBeamstopPosition---')
@@ -1597,6 +1609,8 @@ class Krios(tem.TEM):
 		self.stage_speed_fraction = self.default_stage_speed_fraction
 
 	def setStageSpeed(self, value):
+		# This is used to set alpha tilt speed
+		# TODO: need to separate alpha speed from xyz speed.
 		self.speed_deg_per_second = float(value)
 		self.stage_speed_fraction = min(value/self.stage_top_speed,1.0)
 
@@ -1624,7 +1638,7 @@ class Krios(tem.TEM):
 			return
 		#TODO check low speed move limit on the real scope
 		try:
-			if self.stage_speed_fraction == self.default_stage_speed_fraction:
+			if self.stage_speed_fraction == self.fast_stage_speed_fraction:
 				my_request = stage_p.MoveStageRequest(move_type=1,position=position_message)
 				_set_by_request(stage_stub,'MoveStage', my_request)
 			else:
