@@ -265,6 +265,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.screencurrent_bound = False
 		self.alignzlp_warned = False
 		self.beamtilt0 = None
+		self.xt0 = None
 		self.paused_by_gui = False
 		self.retry_count = 0
 
@@ -824,6 +825,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		self.defoc0 = self.instrument.tem.getDefocus()
 
+	def setXt0(self):
+		'''
+		Set beam-image shift xtilt correction reset value.  This should
+		be called after preset is set.
+		'''
+		self.xt0 = self.instrument.tem.getPhasePlatePlaneShift()
+
 	def correctImageShiftAbberations(self, cam=None):
 		if self.settings['correct image shift coma']:
 			## beam tilt correction induced by image shift
@@ -856,6 +864,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.instrument.tem.Defocus = defoc
 				defoc1 = self.instrument.tem.getDefocus()
 				self.logger.info("correcting defocus for image acquired by (%.4f) (um)" % ((defoc1-self.defoc0)*1e6))
+			except Exception as e:
+				self.resetComaCorrection()
+				raise NoMoveCalibration(e)
+			try:
+				xt = beamtiltclient.transformImageShiftToPhasePlatePlaneShift(imageshift, tem, cam, ht, self.xt0, mag)
+				self.instrument.tem.PhasePlatePlaneShift = xt
+				xt1 = self.instrument.tem.getPhasePlatePlaneShift()
+				self.logger.info("pp plane shift for image acquired (%.4f,%.4f) mrad" % ((xt1['x']-self.stig0['x'])*1e3,(stig1['y']-self.stig0['y'])*1e3))
 			except Exception as e:
 				self.resetComaCorrection()
 				raise NoMoveCalibration(e)
@@ -919,6 +935,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			# at this point all scope parameters from the preset is applied
 			self.setComaStig0()
 			self.setDefocus0()
+			self.setXt0()
 			self.correctImageShiftAbberations(presetdata['ccdcamera'])
 			self.adjustTiltExposure(presetdata)
 			self.onTarget = True
@@ -1139,11 +1156,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.instrument.tem.BeamTilt = self.beamtilt0
 				self.instrument.tem.Stigmator = {'objective':self.stig0}
 				self.instrument.tem.Defocus = self.defoc0
+				self.instrument.tem.PhasePlatePlaneShift = self.xt0
 				self.logger.info("reset beam tilt to (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
 				stig1 = self.instrument.tem.getStigmator()['objective']
 				self.logger.info("reset object stig to (%.4f,%.4f)" % (stig1['x'],stig1['y']))
 				defoc1 = self.instrument.tem.getDefocus()
 				self.logger.info("reset defocus to (%.4f) um" % (defoc1*1e6))
+				xt1 = self.instrument.tem.getPhasePlatePlaneShift()
+				self.logger.info("reset pp plane-shift to (%.4f,%.4f) mrad" % (xt1['x']*1e3,stig1['y']*1e3))
 			except Exception as e:
 				# Don't raise, just report because this function is the escape route
 				# for other failures.

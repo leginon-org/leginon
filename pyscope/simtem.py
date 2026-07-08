@@ -808,10 +808,32 @@ class SimEFKriosXL(SimTEM300):
 			140000,
 		]
 		self.xlens1_focus = 0.3
+		self.x_tilt = {'x':0.0,'y':0.0}
+		self.x_shift = {'x':0.0,'y':0.0}
 
 	def getXLens1Focus(self):
 		return self.xlens1_focus
 
 	def setXLens1Focus(self, value):
 		self.xlens1_focus = value
+
+	def getPhasePlatePlaneShift(self):
+		return copy.copy(self.x_tilt)
+
+	def setPhasePlatePlaneShift(self, vector, relative = 'absolute'):
+		for axis in list(self.x_tilt.keys()):
+			try:
+				self.x_tilt[axis] = vector[axis]
+			except KeyError:
+				pass
+
+	def getPhasePlatePlaneTilt(self):
+		return copy.copy(self.x_shift)
+
+	def setPhasePlatePlaneTilt(self, vector, relative = 'absolute'):
+		for axis in list(self.x_shift.keys()):
+			try:
+				self.x_shift[axis] = vector[axis]
+			except KeyError:
+				pass
 

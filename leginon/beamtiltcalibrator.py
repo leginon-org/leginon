@@ -223,6 +223,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		ordered_axes = ['x','y']
 		debug = False
 		# Step 1: Auto defocus stig at 0,0
+		"""
+		#Disabled because the result is often worse.
 		self.setPreMeasureState()
 		try:
 			self.autoFocusImage()
@@ -236,6 +238,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			self.logger.error('Failed auto stig and focusing:%s' % e)
 			traceback.print_exc()
 			return
+		"""
 
 		# Step 2 find needed abberation correction at each axis and shift
 		try:
@@ -902,7 +905,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			self.logger.error('No ctf estimator')
 
 	def calculateAxialComa(self):
-		return self.calibration_clients['coma'].calculateAxialComa()
+		c12, deltabt = self.calibration_clients['coma'].calculateAxialComa()
+		# reverse y to match navigate correction
+		deltabt['y'] = - deltabt['y']
+		return c12, deltabt
 
 	def setManualComaFreeImage(self,imagearray):
 		self.panel.setManualComaFreeImage(imagearray, 'Image')
@@ -978,6 +984,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			'correct_tilt': False,
 			'image0': imagedata,
 			'settle': settling_time,
+			'on_phase_plate': False,  #TODO: adjust according to phase plate presence.
 		}
 		# This result include the sign of defocus to correct
 		result = self.ctfcalclient.measureDefocusStig(*args,**kwargs)

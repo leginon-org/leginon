@@ -77,7 +77,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.szmain.AddGrowableRow(0)
 		self.szmain.AddGrowableCol(0)
 		# tools
-		choices = ['Defocus', 'Image-Shift Coma', 'Image-Shift Stig', 'Image-Shift Defocus']
+		choices = ['Defocus', 'Image-Shift Coma', 'Image-Shift Stig', 'Image-Shift Defocus', 'Image-Shift PP-Plane-Shift']
 		if not hide_stig:
 			choices.append('Stigmator')
 		self.cparameter = wx.Choice(self.toolbar, -1, choices=choices)
