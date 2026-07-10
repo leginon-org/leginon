@@ -97,8 +97,10 @@ if not SIMULATION:
 	from vacuum.v1 import column_valves_pb2 as colv_p
 	from vacuum.v1 import vacuum_pb2 as vac_p
 	from vacuum.v1 import vacuum_chambers_pb2 as vchm_p
-	from sample.v0 import loader_pb2 as ldr_p
-	from system_integral.v0 import column_temperature_pb2 as ctemp_p
+	from sample.v1 import loader_pb2 as ldr_p
+	from sample.v1 import temperature_pb2 as dtemp_p
+	from system_integral.v1 import column_temperature_pb2 as ctemp_p
+	from system_integral.v1 import vibration_manager_pb2 as vib_p
 	from stage.v1 import stage_pb2 as stage_p
 	from acquisition.v1 import fluscreen_pb2 as scrn_p
 
@@ -122,8 +124,10 @@ if not SIMULATION:
 	from vacuum.v1 import column_valves_pb2_grpc as colv_pg
 	from vacuum.v1 import vacuum_pb2_grpc as vac_pg
 	from vacuum.v1 import vacuum_chambers_pb2_grpc as vchm_pg
-	from sample.v0 import loader_pb2_grpc as ldr_pg
-	from system_integral.v0 import column_temperature_pb2_grpc as ctemp_pg
+	from sample.v1 import loader_pb2_grpc as ldr_pg
+	from sample.v1 import temperature_pb2_grpc as dtemp_pg
+	from system_integral.v1 import column_temperature_pb2_grpc as ctemp_pg
+	from system_integral.v1 import vibration_manager_pb2_grpc as vib_pg
 	from stage.v1 import stage_pb2_grpc as stage_pg
 	from acquisition.v1 import fluscreen_pb2_grpc as scrn_pg
 
@@ -151,9 +155,11 @@ if not SIMULATION:
 	vac_stub = vac_pg.VacuumServiceStub(channel)
 	vchm_stub = vchm_pg.VacuumChambersServiceStub(channel)
 	ldr_stub = ldr_pg.LoaderServiceStub(channel)
+	dtemp_stub = dtemp_pg.TemperatureServiceStub(channel)
 	ctemp_stub = ctemp_pg.ColumnTemperatureServiceStub(channel)
 	stage_stub = stage_pg.StageServiceStub(channel)
 	scrn_stub = scrn_pg.FluscreenServiceStub(channel)
+	vib_stub = vib_pg.VibrationManagerServiceStub(channel)
 
 else:
 	from pyscope import simtem
@@ -357,14 +363,13 @@ class Krios(tem.TEM):
 		# reduce stage speed if required and make it default
 		self.stage_speed_fraction = self.getInitialStageSpeedFraction()
 		self.default_stage_speed_fraction = self.stage_speed_fraction
+		self.gridloader_slot_states = {'SLOT_STATE_UNKNOWN':'unknown', 'SLOT_STATE_FILLED':'occupied', 'SLOT_STATE_EMPTY':'empty', 'SLOT_STATE_UNDEFINED':'error'}
 		try:
 			global connection
-			self.logger.debug('connection initial',connection.autoloader)
+			self.logger.debug('connection initial %s ' % connection.autoloader)
 			connectToFEITemScripting()
-			self.logger.debug('connection after connect',connection.autoloader)
-			self.script_autoloader = connection.autoloader
+			self.logger.debug('connection after connect %s' % connection.autoloader)
 			self.script_temp_control = connection.temp_control
-			self.gridloader_slot_states = {0:'unknown', 1:'occupied', 2:'empty', 3:'error'}
 		except Exception as e:
 			self.logger.debug('unable to initialize Advanced Scriptiong interface, %s' % e)
 			self.adv_instr = None
@@ -1395,43 +1400,55 @@ class Krios(tem.TEM):
 		return self._getChamberPressure('SourceBuffer')['pressure']
 
 	def hasGridLoader(self):
-		self.logger.debug('hasGridLoader',connection.autoloader)
-		self.logger.debug('hasGridLoader2',self.script_autoloader)
-		self.logger.debug('LoaderAvailable',self.script_autoloader.AutoLoaderAvailable)
-		return bool(self.script_autoloader.AutoLoaderAvailable)
-		#TODO broken service not functional
-		#my_device = 'SampleloaderType'
-		#my_request = getattr(ldr_p,'Get%sRequest' % my_device)()
-		#return _get_by_request(ldr_stub, 'Get%s' % my_device, my_request)
-
+		my_device = 'SampleloaderType'
+		my_request = getattr(ldr_p,'Get%sRequest' % my_device)()
+		r = _get_by_request(ldr_stub, 'Get%s' % my_device, my_request)
+		return r and 'type' in r.keys() and r['type'] == 'TYPE_FULLY_AUTOMATED'
 	def _loadCartridge(self, number):
-		state = self.script_autoloader.LoadCartridge(number)
-		if state != 0:
-			raise RuntimeError()
+		# utapi slot number is base 0
+		my_slot = ldr_p.SlotID(id=number-1)
+		my_device = 'LoadCartridge'
+		my_request = getattr(ldr_p,'%sRequest' % my_device)(from_slot=my_slot)
+		r = _get_by_request(ldr_stub, '%s' % my_device, my_request)
+			#raise RuntimeError()
 
 	def _unloadCartridge(self):
 		'''
 		FIX ME: Can we specify which slot to unload to ?
 		'''
-		state = self.script_autoloader.UnloadCartridge()
-		if state != 0:
-			raise RuntimeError()
+		my_device = 'UnLoadCartridge'
+		my_request = getattr(ldr_p,'%sRequest' % my_device)()
+		r = _get_by_request(ldr_stub, '%s' % my_device, my_request)
+		#raise RuntimeError()
 
 	def getGridLoaderNumberOfSlots(self):
-		if self.hasGridLoader():
-			return self.script_autoloader.NumberOfCassetteSlots
+		if not self.hasGridLoader():
+			return 0
+		my_device = 'NumberOfCassetteSlots'
+		my_request = getattr(ldr_p,'Get%sRequest' % my_device)()
+		r = _get_by_request(ldr_stub, 'Get%s' % my_device, my_request)
+		result_key = 'numberOfSlots'
+		if r and result_key in r.keys():
+			return r[result_key]
 		else:
 			return 0
 
 	def getGridLoaderSlotState(self, number):
 		# base 1
 		if not self.hasGridLoader():
-			return self.gridloader_slot_states[0]
+			return 'unknown'
 		else:
 			if number > self.getGridLoaderNumberOfSlots():
 				return 'error'
-			status = self.script_autoloader.SlotStatus(number)
-			state = self.gridloader_slot_states[status]
+		# utapi slot number is base 0
+		my_slot = ldr_p.SlotID(id=number-1)
+		my_device = 'SlotStatus'
+		my_request = getattr(ldr_p,'Get%sRequest' % my_device)(slot=my_slot)
+		r = _get_by_request(ldr_stub, 'Get%s' % my_device, my_request)
+		result_key = 'state'
+		if not r or result_key not in r.keys():
+			return 'unknown'
+		state = self.gridloader_slot_states[r[result_key]]
 		return state
 
 	def getGridLoaderInventory(self):
@@ -1443,16 +1460,15 @@ class Krios(tem.TEM):
 		""" need to find return states
 				0 - no error, but also could be no action taken.
 		"""
-		return self.script_autoloader.PerformCassetteInventory()
+		my_device = 'PerformCassetteInventory'
+		my_request = getattr(ldr_p,'%sRequest' % my_device)(slot=my_slot)
+		r = _get_by_request(ldr_stub, '%s' % my_device, my_request)
+		return bool(r)
 
 	def hasAutoFiller(self):
-		return self.script_temp_control.TemperatureControlAvailable
-		#TODO broken service not functional
-		my_device = 'HolderTemperatureSupported'
-		my_device = 'DewarLevelSupported'
-		my_request = getattr(ctemp_p,'Is%sRequest' % my_device)()
-		my_device = 'DewarLevelSupported'
-		return _get_by_request(ctemp_stub, 'Is%s' % my_device, my_request)
+		my_device = 'IsDewarAutoFillSupported'
+		my_request = getattr(ctemp_p,'%sRequest' % my_device)()
+		return bool(_get_by_request(ctemp_stub, my_device, my_request))
 
 	def runAutoFiller(self):
 		'''
@@ -1472,8 +1488,12 @@ class Krios(tem.TEM):
 		t0 = time.time()
 		try:
 			self.script_temp_control.ForceRefill()
-		except com_module.COMError as e:
-			#COMError: (-2147155969, None, (u'[ln=102, hr=80004005] Cannot force refill', u'TEM Scripting', None, 0, None))
+			my_id = vib_p.RegisterClient(name='my_client')
+			my_device = 'PrepareToAvoidVibration'
+			my_request = getattr(vib_p,'%sRequest' % my_device)(id=my_id.id)
+			r = _get_by_request(vib_stub, '%s' % my_device, my_request)
+		except Exception as e:
+			#TODO error handling but avoid false error
 			# This COMError can occur when fill is slow, too.  Need to ignore it
 			raise RuntimeError('Failed Force Refill')
 		t1 = time.time()
