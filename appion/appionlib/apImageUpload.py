@@ -120,7 +120,15 @@ class ImageLoader(appionLoop2.AppionLoop):
 				apDisplay.printError("If not specifying a parameter file, specify directory containing images")
 			if not os.path.exists(self.params['imgdir']):
 				apDisplay.printError("specified path '%s' does not exist\n"%self.params['imgdir'])
-		elif not os.path.isfile(self.params["batchscript"]):
+		elif self.params["batchscript"]=='mdocs':
+			if self.params['imgdir'] is None:
+				apDisplay.printError("Specify directory containing images")
+			mdoc_files = glob.glob("%s/*.mdoc" % self.params['imgdir'])
+			# frame stack
+			stack_files = glob.glob("%s/*.%s" % (self.params['imgdir'], self.params['filetype']))
+			if len(mdoc_files) != len(stack_files): 
+				apDisplay.printError("need the same number of stack and mdoc")
+		elif self.params["batchscript"] and self.params["batchscript"]!='mdoc' and not os.path.isfile(self.params["batchscript"]):
 			#mode 2: batch script
 			apDisplay.printError("Could not find Batch parameter file: %s"%(self.params["batchscript"]))
 
@@ -286,10 +294,14 @@ class ImageLoader(appionLoop2.AppionLoop):
 		"""
 		appionLoop OVERRIDE
 		"""
-		if self.params['batchscript']:
-			self.batchinfo = self.readBatchUploadInfo()
+		if self.params['batchscript'] and self.params['batchscript'] !='mdocs':
+				self.batchinfo = self.readBatchUploadInfo()
 		else:
-			self.batchinfo = self.setBatchUploadInfo()
+			self.setUploadFiles()
+			if not self.params['batchscript']:
+				self.batchinfo = self.setBatchUploadInfo()
+			if self.params['batchscript'] and self.params['batchscript'] =='mdocs':
+				self.batchinfo = self.setBatchUploadMdocs()
 		self.stats['imagecount'] = len(self.batchinfo)
 
 	#=====================
@@ -538,14 +550,32 @@ class ImageLoader(appionLoop2.AppionLoop):
 		return batchinfo
 
 	#=====================
+	def setUploadFiles(self):
+		imgdir = os.path.join(self.params['imgdir'],"*."+self.params['filetype']+"*")
+		upfiles = glob.glob(imgdir)
+		upfiles = list(filter((lambda x: not x.endswith('.mdoc')), upfiles))
+		if not upfiles:
+			apDisplay.printError("No images for upload in '%s'"%self.params['imgdir'])
+		self.upfiles = self.filterUpFileByDoneDict(upfiles)
+
+	#=====================
 	def setBatchUploadInfo(self):
 		# instead of specifying a batch script file, the same values
 		# are applied to all images for upload
 		batchinfo = []
-		imgdir = os.path.join(self.params['imgdir'],"*."+self.params['filetype']+"*")
-		upfiles = glob.glob(imgdir)
-		if not upfiles:
-			apDisplay.printError("No images for upload in '%s'"%self.params['imgdir'])
+		for upfile in self.upfiles:
+			fname = os.path.abspath(upfile)
+			apix = "%.4e"%(self.params['apix']*1e-10)
+			binx = "%d"%(self.params['binx'])
+			biny = "%d"%(self.params['biny'])
+			mag =  "%d"%(self.params['mag'])
+			df =   "%.4e"%(self.params['df']*1e-6)
+			ht =   "%d"%(self.params['kv']*1000)
+			cols = [fname, apix, binx, biny, mag, df, ht]
+			batchinfo.append(cols)
+		return batchinfo
+
+	def filterUpFileByDoneDict(self, upfiles):
 		if self.donedict and len(self.donedict) > 1:
 			apDisplay.printMsg("Cleaning up alreadly uploaded images")
 			newupfiles = []
@@ -567,20 +597,24 @@ class ImageLoader(appionLoop2.AppionLoop):
 					(len(upfiles)-len(newupfiles), len(upfiles), len(newupfiles)))
 				upfiles = newupfiles
 		upfiles.sort()
-		for upfile in upfiles:
-			fname = os.path.abspath(upfile)
-			apix = "%.4e"%(self.params['apix']*1e-10)
-			binx = "%d"%(self.params['binx'])
-			biny = "%d"%(self.params['biny'])
-			mag =  "%d"%(self.params['mag'])
-			df =   "%.4e"%(self.params['df']*1e-6)
-			ht =   "%d"%(self.params['kv']*1000)
-			cols = [fname, apix, binx, biny, mag, df, ht]
-			batchinfo.append(cols)
+		return upfiles
+
+	def setBatchUploadMdocs(self):
+		mdocfiles = list(map((lambda x: x+'.mdoc'), self.upfiles))
+		batchinfo = []
+		for p, mdoc_path in enumerate(mdocfiles):
+			info = self.readUploadInfoFromMdoc(mdoc_path)
+			upfile = self.upfiles[p]
+			dims = self.getImageDimensions(upfile)
+			info['dimension'] = dims
+			info['nframes'] = self.getNumberOfFrames(upfile)
+			batchinfo.append(info)
 		return batchinfo
 
 	#=====================
 	def readUploadInfo(self,info=None):
+		if type(info) == type({}): #dictionary from mdoc with more items
+			return info
 		if info is None:
 			# example
 			info = ['test.mrc','2e-10','1','1','50000','-2e-6','120000','0.0','20.0']
@@ -595,11 +629,11 @@ class ImageLoader(appionLoop2.AppionLoop):
 			uploadedInfo['magnification'] = int(info[4])
 			uploadedInfo['defocus'] = float(info[5])
 			uploadedInfo['high tension'] = int(info[6])
+			uploadedInfo['stage position'] = {'x':0.0,'y':0.0,'z':0.0,'a':0.0}
 			if len(info) > 7:
-				uploadedInfo['stage a'] = float(info[7])*math.pi/180.0
-			else:
-				uploadedInfo['stage a'] = 0.0
+				uploadedInfo['stage position']['a'] = float(info[7])*math.pi/180.0
 			if len(info) > 8:
+				# electrons per meter^2
 				uploadedInfo['dose'] = float(info[8])*1e+20
 			else:
 				uploadedInfo['dose'] = None
@@ -641,6 +675,11 @@ class ImageLoader(appionLoop2.AppionLoop):
 		uploadedInfo['session'] = self.session
 		uploadedInfo['pixel size'] = uploadedInfo['unbinned pixelsize']*uploadedInfo['binning']['x']
 		return uploadedInfo
+
+	def readUploadInfoFromMdoc(self, mdoc_path):
+		from pyami import mdoc_meta
+		data = mdoc_meta.read_mdoc(mdoc_path)
+		return mdoc_meta.mdoc2leginon(data, self.params['imgdir'])
 
 	#=====================
 	def setNewFilename(self, original_filepath):
@@ -751,23 +790,27 @@ class ImageLoader(appionLoop2.AppionLoop):
 		scopedata['defocus'] = info['defocus']
 		scopedata['magnification'] = info['magnification']
 		scopedata['high tension'] = info['high tension']
-		if 'stage a' in list(info.keys()):
-			tiltseriesdata = leginon.leginondata.TiltSeriesData(session=self.session)
-			scopedata['stage position'] = {'x':0.0,'y':0.0,'z':0.0,'a':info['stage a']}
-		else:
-			scopedata['stage position'] = {'x':0.0,'y':0.0,'z':0.0,'a':0.0}
 		# These are queried in myamiweb as imageinfo.  Need to be defined
 		# so that the first upload will populate the column
-		scopedata['image shift'] = { 'x': 0.0, 'y': 0.0 }
-		scopedata['beam tilt'] = { 'x': 0.0, 'y': 0.0 }
+		myamiweb_required_keys = ['image shift','beam tilt']
+		for k in myamiweb_required_keys:
+			scopedata[k] = { 'x': 0.0, 'y': 0.0 }
+		info_keys = list(info.keys())
+		scope_keys = list(scopedata.keys())
+		for k in info_keys:
+			if k in scope_keys:
+				scopedata[k] = info[k]
 		return scopedata
 
 	def makeCameraEMData(self,info,nframes):
 		# CameraEMData
 		cameradata = leginon.leginondata.CameraEMData(session=self.session,ccdcamera=self.camdata)
-		cameradata['dimension'] = info['dimension']
-		cameradata['binning'] = info['binning']
-		cameradata['offset'] = {'x':0,'y':0}
+		info_keys = list(info.keys())
+		cam_keys = list(cameradata.keys())
+		for k in info_keys:
+			if k in cam_keys:
+				cameradata[k] = info[k]
+		cameradata['offset'] = {'x':0,'y':0} #no easy way to get this
 		cameradata['save frames'] = (nframes > 1)
 		cameradata['nframes'] = nframes
 		cameradata['frame time'] = 100
