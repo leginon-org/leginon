@@ -15,7 +15,7 @@ class SlackInterface(SlackClient):
 	def __init__(self):
 
 		slackconfig = slackconfigparser.getSlackData()
-		self.check_channel = slackconfig['check_channel'] if 'check_channel' in slackconfig.keys() else False
+		self.check_channel = slackconfig['check_channel'] if 'check_channel' in slackconfig.keys() and (slackconfig['check_channel']).lower() == 'true' else False
 		self.slack_token = slackconfig['slack_token']
 		if 'virtualenv_path' in list(slackconfig.keys()) and slackconfig['virtualenv_path']:
 			self.virtualenv_path = slackconfig['virtualenv_path']+"activate.csh"
