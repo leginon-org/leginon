@@ -1583,19 +1583,40 @@ class PresetsManager(node.Node):
 			fakescope2.friendly_update(newpreset)
 			fakecam2 = leginondata.CameraEMData()
 			fakecam2.friendly_update(newpreset)
+			new_tem = newpreset['tem']
+			new_ccdcamera = newpreset['ccdcamera']
+			old_tem = oldpreset['tem']
+			old_ccdcamera = oldpreset['ccdcamera']
 			ht = self.instrument.tem.HighTension
-			#TODO ####
-			# insert image shift transform from preset1 to preset2
 			try:
+				'''
+				pixelshift is the shift value in the unit of the binned pixel
+				pixelvector is the shift value in the unit of unbinned pixel
+				'''
+				# itransform includes the defocus distortion correction of oldpreset
 				pixelshift1 = self.calclients['image'].itransform(myimage, fakescope1, fakecam1)
 				if newpreset['name'] != oldpreset['name']:
-					# pixelshift input is tuple in binned image pixel values
-					px1 = {'row':pixelshift1['row']/fakecam1['binning']['y'],'col':pixelshift1['col']/fakecam1['binning']['y']}
-					px2 = self.calclients['image'].presetImagePixelToPixel(ht, oldpreset, newpreset, px1)
-					pixelshift2 = {'row':px2['row']*fakecam2['binning']['y'],'col':px2['col']*fakecam2['binning']['x']}
+					### Transform as unbinned pixel shift vector
+					pixrow = pixelshift1['row'] * oldpreset['binning']['y']
+					pixcol = pixelshift1['col'] * oldpreset['binning']['x']
+					pixvect1 = numpy.array((pixrow, pixcol))
+					# image shift coil rotation
+					pixvect1 = self.imageRotationTransform(pixvect1,oldpreset,newpreset)
+					# extra rotation
+					if SPECIAL_TRANSFORM:
+						pixvect1 = self.specialTransform(pixvect1,new_tem,oldpreset['magnification'],newpreset['magnification'])
+					# magnification and camera (if camera is different)
+					# Transform pixelvect1 at magnification to new magnification according to image-shift matrix
+					# include a relative  image rotation and scale addition to the transform
+					pixvect2 = self.calclients['scale rotation'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
+					# transform to the binned pixelsift
+					# pixvect2 is float
+					pixelshift2 = {'row':pixvect2[0] / newpreset['binning']['y'],'col':pixvect2[1] / newpreset['binning']['x']}
+					# transform includes the defocus distortion correction of newpreset
 					newscope = self.calclients['image'].transform(pixelshift2, fakescope2, fakecam2)
 					myimage = newscope['image shift']
 				else:
+					# same preset.  No mag/camera transform needed.
 					pixelshift2 = pixelshift1
 				if emtargetdata['movetype'] == 'image beam shift':
 					beam_pixel_shift = {'row': -pixelshift2['row'], 'col': -pixelshift2['col']}

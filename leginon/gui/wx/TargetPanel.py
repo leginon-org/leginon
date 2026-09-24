@@ -287,8 +287,11 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 		Exp tool type calls this to show both area and beam size
 		'''
 		# area
-		self.drawImageArea(dc, color, targets)
-		self.drawBeamSize(dc, color, targets)
+		try:
+			self.drawImageArea(dc, color, targets)
+			self.drawBeamSize(dc, color, targets)
+		except Exception as e:
+			pass
 
 
 	def drawEmptyCircle(self,dc,row,col,radius):

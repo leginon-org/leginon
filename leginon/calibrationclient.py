@@ -1564,7 +1564,7 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		tem1 = preset1['tem']
 		ccdcamera1 = preset1['ccdcamera']
 		mag1 = preset1['magnification']
-		tem2 = preset1['tem']
+		tem2 = preset2['tem']
 		ccdcamera2 = preset2['ccdcamera']
 		mag2 = preset2['magnification']
 		p1_row = p1_shift['row'] * preset1['binning']['y']
@@ -1833,7 +1833,7 @@ class ImageScaleRotationCalibrationClient(ImageShiftCalibrationClient):
 		m = numpy.matrix([[math.cos(a),math.sin(a)],[-math.sin(a),math.cos(a)]])
 		pixvect = numpy.array(pixvect)
 		rotated_vect = numpy.dot(pixvect,numpy.asarray(m))
-		self.node.logger.info('Adjust for image rotation: rotate %s to %s' % (pixvect, rotated_vect))
+		self.node.logger.info('Adjust for image rotation at %d x: rotate %s to %s' % (mag, pixvect, rotated_vect))
 		return rotated_vect
 
 	def scalePosition(self, tem, ccdcamera, ht, mag, pixvect, invert=False):
@@ -1842,13 +1842,13 @@ class ImageScaleRotationCalibrationClient(ImageShiftCalibrationClient):
 			caldata = self.retrieveImageScaleAddition(tem,ccdcamera,mag,ht)
 			a = caldata['scale addition']
 		except:
-			self.node.logger.info('No calibration')
+			self.node.logger.info('No scale calibration at %d x' % mag)
 		scale = 1.0 + a
 		if invert:
 			scale = 1.0 / scale
 		pixvect = numpy.array(pixvect)
 		scaled_vect = scale * pixvect
-		self.node.logger.info('Adjust for image scale: %.4f' % (scale))
+		self.node.logger.info('Adjust for image scale at %d x: %.4f' % (mag,scale))
 		return scaled_vect
 
 class PhasePlatePlaneShiftCalibrationClient(SimpleMatrixCalibrationClient):
