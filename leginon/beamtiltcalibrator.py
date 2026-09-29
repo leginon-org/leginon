@@ -170,21 +170,26 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		tdict = {}
 		xydict = {}
 		ordered_axes = ['x','y']
-		debug = False
+		auto = False
 		# Step 1: Auto defocus stig at 0,0
 		self.setPreMeasureState()
-		try:
-			self.autoFocusImage()
-			# reset defocus at the measured correction
-			self.instrument.tem.Defocus = -self.settings['imageshift coma image defocus']
-			self.instrument.tem.resetDefocus()
-			# set to the defocus we want.
-			self.instrument.tem.Defocus = self.settings['imageshift coma image defocus']
-			self.setPreMeasureState()
-		except ValueError as e:
-			self.logger.error('Failed auto stig and focusing:%s' % e)
-			traceback.print_exc()
-			return
+		"""
+		TODO: auto calibration still in development.
+		not tested on scope successfully
+		"""
+		if auto:
+			try:
+				self.autoFocusImage()
+				# reset defocus at the measured correction
+				self.instrument.tem.Defocus = -self.settings['imageshift coma image defocus']
+				self.instrument.tem.resetDefocus()
+				# set to the defocus we want.
+				self.instrument.tem.Defocus = self.settings['imageshift coma image defocus']
+				self.setPreMeasureState()
+			except ValueError as e:
+				self.logger.error('Failed auto stig and focusing:%s' % e)
+				traceback.print_exc()
+				raise
 
 		try:
 			for axis in ordered_axes:
@@ -235,6 +240,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 					self.instrument.tem.Stigmator = {'objective':newstate['stig']}
 					'''
 					# For TESTING ---END HERE
+					newstate = self.readAbFree(state['image shift'])
 					if abs(shift) > 1e-7:
 						# There must be some coma.
 						while no_cal and abs(newstate['beam tilt']['x']-self.state0['beam tilt']['x']) < 1e-5 or abs(newstate['beam tilt']['y']-self.state0['beam tilt']['y']) < 1e-5:
@@ -340,7 +346,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			self.instrument.tem.BeamTilt = state0['beam tilt']
 		if 'defocus' in correction.keys():
 			self.instrument.tem.Defocus = state0['defocus']+correction['defocus']
-		if 'stig' in correction.keys():
+		if 'stigx' in correction.keys() and correction['stigx'] is not None:
 			state0['stig']['x'] += correction['stigx']
 			state0['stig']['y'] += correction['stigy']
 			self.instrument.tem.Stigmator = {'objective':state0['stig']}
@@ -902,7 +908,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 				raise ValueError('Failed to converge after %d rounds' % max_trials)
 			result = self._acquireAutoFocusImage(self.settings['imageshift coma image defocus'])
 			diff_defocus = abs(result['defocus']) # applied value to reach required
-			stig_mag = math.hypot(result['stigx'],result['stigy'])
+			if result['stigx'] is None:
+				stig_mag = 0.0
+			else:
+				stig_mag = math.hypot(result['stigx'],result['stigy'])
 			if diff_defocus < 0.05*abs(required_image_defocus) and stig_mag < 0.001:
 				self.logger.info('Converged after %d rounds' % trial)
 				break

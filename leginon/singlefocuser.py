@@ -346,17 +346,19 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		tem = presetdata['tem']
 		ccdcamera = presetdata['ccdcamera']
 		name = 'objective'
-		cal = self.stigcalclient.researchCalibration(tem, ccdcamera, name)
-
 		defoc = correction['defocus']
+		sx = sy = 'N/A'
+		stigx = None
+		stigy = None
 		if setting['stig correction'] and 'ctfvalues' in correction.keys():
-			stigx, stigy = self.stigcalclient.ctf2Stigmator(cal, correction)
-			sx = '%.6f' % stigx
-			sy = '%.6f' % stigy
-		else:
-			sx = sy = 'N/A'
-			stigx = None
-			stigy = None
+			try:
+				cal = self.stigcalclient.retrieveStigmatorCalibration(tem, ccdcamera, name)
+			except calibrationclient.NoCalibrationError as e:
+				self.logger.warning('%s. Stigmator not corrected' % e)
+			else:
+				stigx, stigy = self.stigcalclient.ctf2Stigmator(cal, correction)
+				sx = '%.6f' % stigx
+				sy = '%.6f' % stigy
 		self.logger.info('Measured defocus: %.3e, stigx: %s, stigy: %s, min: %.2f' % (correction['defocus'], sx, sy, correction['min']))
 		fitmin = correction['min']
 

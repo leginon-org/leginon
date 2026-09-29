@@ -2911,7 +2911,17 @@ class ObjectiveStigCalibrationClient(PixelSizeCalibrationClient):
 		queryinstance['ccdcamera'] = ccdcamera
 		queryinstance['type'] = name
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
-		return caldatalist[0]
+		return caldatalist
+
+	def retrieveStigmatorCalibration(self, tem, ccdcamera, name):
+		'''
+		finds the requested stigmator calibration
+		'''
+		caldatalist = self.researchCalibration(tem, ccdcamera, name)
+		if len(caldatalist) < 1:
+			raise NoCalibrationError('Objective stigmator not calibrated')
+		caldata = caldatalist[0]
+		return caldata
 
 	def ctf2Stigmator(self, cal, ctf_correction):
 		"""
@@ -2966,13 +2976,11 @@ class ObjectiveStigCalibrationClient(PixelSizeCalibrationClient):
 		if results:
 			return results[0]['center']
 		else:
-			return None
+			raise NoCalibrationError('Stigmator center not saved')
 
 	def _stigmatorCenterToScope(self):
 		tem = self.instrument.getTEMData()
 		center = self.retrieveStigmatorCenter(tem)
-		if not center:
-			raise RuntimeError('no stigmator center for %geV, %gX' % (ht, probe))
 		self.instrument.tem.Stigmator = {self.stigmator_name: center}
 
 	def stigmatorCenterToScope(self):
@@ -3057,7 +3065,7 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		self.node.logger.info('correction sign of the 2nd image is %d' % sign1)
 		correction1 = defocus_avg1*sign1
 		if 'confidence' not in ctfvalues0.keys() or 'confidence' not in ctfvalues1.keys():
-			self.node.error('No confidence value for the ctf fit')
+			self.node.logger.error('No confidence value for the ctf fit')
 			residual = 99999.0
 		else:
 			self.node.logger.info('Confidence of the fits for the two images are (%.3f,%.3f)' % (ctfvalues0['confidence'],ctfvalues1['confidence']))
@@ -3108,12 +3116,19 @@ class CtfCalibrationClient(PixelSizeCalibrationClient):
 		stig_name = 'objective'
 		# Can not handle the exception for retrieveMatrix here.
 		# Focuser node that calls this need to know the type of error
-		self.stig_cal = self.stig_calclient.researchCalibration(tem, cam, stig_name)
+		try:
+			self.stig_cal = self.stig_calclient.retrieveStigmatorCalibration(tem, cam, stig_name)
+		except NoCalibrationError as e:
+			self.node.logger.warning('%s. Only defocus will be corrected' % e)
+			self.stig_cal = None
 		phase_search = (0,0)
 		if on_phase_plate:
 			phase_search = (10,170)
 		ctf_correction = self.measureCtf(initial_defocus,False, True, settle,image0, phase_search)
-		stig_x, stig_y = self.stig_calclient.ctf2Stigmator(self.stig_cal, ctf_correction)
+		if self.stig_cal:
+			stig_x, stig_y = self.stig_calclient.ctf2Stigmator(self.stig_cal, ctf_correction)
+		else:
+			stig_x = stig_y = None
 		result = ctf_correction.copy()
 		# These are stigmator values to apply, not ctf estimation result
 		# Note: the key needs to be stigx and stigy to avoid database migration

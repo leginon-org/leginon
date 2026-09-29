@@ -370,7 +370,7 @@ class StigCalibrator(calibrator.Calibrator):
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
 		par = self.parameter
-		return self.stgcalclient.researchCalibration(tem, cam, par)
+		return self.stgcalclient.retrieveStigmatorCalibration(tem, cam, par)
 
 	def getCurrentFocusCalibration(self):
 		tem = self.instrument.getTEMData()
