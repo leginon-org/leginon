@@ -1468,7 +1468,10 @@ class Krios(tem.TEM):
 	def hasAutoFiller(self):
 		my_device = 'IsDewarAutoFillSupported'
 		my_request = getattr(ctemp_p,'%sRequest' % my_device)()
-		return bool(_get_by_request(ctemp_stub, my_device, my_request))
+		c_has_auto = bool(_get_by_request(ctemp_stub, my_device, my_request))
+		my_request = getattr(dtemp_p,'%sRequest' % my_device)()
+		d_has_auto = bool(_get_by_request(dtemp_stub, my_device, my_request))
+		return c_has_auto and d_has_auto
 
 	def runAutoFiller(self):
 		'''
@@ -1486,9 +1489,11 @@ class Krios(tem.TEM):
 		if not self.hasAutoFiller:
 			return
 		t0 = time.time()
+		watch_states_responses = vib_stub.WatchState(vib_p.WatchStateRequest())
+		watch_states = stream_async(watch_states_responses, thread_name)
+
 		try:
-			self.script_temp_control.ForceRefill()
-			my_id = vib_p.RegisterClient(name='my_client')
+			my_id = vib_stub.RegisterClient(name='my_client')
 			my_device = 'PrepareToAvoidVibration'
 			my_request = getattr(vib_p,'%sRequest' % my_device)(id=my_id.id)
 			r = _get_by_request(vib_stub, '%s' % my_device, my_request)
@@ -1500,32 +1505,60 @@ class Krios(tem.TEM):
 		if t1-t0 < 10.0:
 			raise RuntimeError('Force refill Denied: returned in %.1f sec' % (t1-t0))
 
+	def isSampleDewarFillerBusy(self):
+		my_device = 'IsFillingDewar'
+		my_request = getattr(dtemp_p,'%sRequest' % my_device)()
+		return bool(_get_by_request(dtemp_stub, '%s' % my_device, my_request))
+
+	def isColumnDewarFillerBusy(self):
+		my_device = 'IsFillingDewar'
+		my_request = getattr(ctemp_p,'%sRequest' % my_device)()
+		return bool(_get_by_request(ctemp_stub, '%s' % my_device, my_request))
+
 	def isAutoFillerBusy(self):
+		"""
+		Any dewar is filling is considered busy.
+		"""
+		return self.isSampleDewarFillerBusy() or self.isColumnDewarFillerBusy()
+
+	def getTimeUntilSampleDewarRefill(self):
+		my_device = 'GetTimeUntilDewarRefill'
+		my_request = getattr(dtemp_p,'%sRequest' % my_device)()
 		try:
-			isbusy = self.script_temp_control.DewarsAreBusyFilling
+			r = _get_by_request(dtemp_stub, '%s' % my_device, my_request)['remainingTime']
 		except:
-			# property not exist for older versions
-			isbusy = None
-		return isbusy
+			return 0
+
+	def getTimeUntilColumnDewarRefill(self):
+		my_device = 'GetTimeUntilDewarRefill'
+		my_request = getattr(ctemp_p,'%sRequest' % my_device)()
+		try:
+			r = _get_by_request(ctemp_stub, '%s' % my_device, my_request)['remainingTime']
+		except:
+			return 0
 
 	def getAutoFillerRemainingTime(self):
 		'''
 		Get remaining time from instrument. Unit is second.
 		If it is not set to cool, the value is -60.
 		'''
-		try:
-			remain_sec = self.script_temp_control.DewarsRemainingTime
-		except:
-			# property not exist for older versions
-			remain_sec = None
-		return remain_sec
+		return min(self.getTimeUntilColumnDewarRefill(), self.getTimeUntilSampleDewarRefill())
+
+	def getSampleDewarRefrigerantLevel(self):
+		my_device = 'GetDewarRefrigerantLevel'
+		my_request = getattr(dtemp_p,'%sRequest' % my_device)()
+		r = _get_by_request(dtemp_stub, '%s' % my_device, my_request)
+		return r['level']*100
 
 	def getRefrigerantLevel(self,id=0):
 		'''
 		Get current refrigerant level. Only works on Krios and Artica. id 0 is the
 		autoloader, 1 is the column.
 		'''
-		return self.script_temp_control.RefrigerantLevel(id)
+		if id == 0:
+			return self.getSampleDewarRefrigerantLevel()
+		elif id == 1:
+			return self.getColumnRefrigerantLevel()
 
 	def _getStageState(self):
 		my_device = 'StageState'
