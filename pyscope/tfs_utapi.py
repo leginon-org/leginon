@@ -1469,9 +1469,7 @@ class Krios(tem.TEM):
 		my_device = 'IsDewarAutoFillSupported'
 		my_request = getattr(ctemp_p,'%sRequest' % my_device)()
 		c_has_auto = bool(_get_by_request(ctemp_stub, my_device, my_request))
-		my_request = getattr(dtemp_p,'%sRequest' % my_device)()
-		d_has_auto = bool(_get_by_request(dtemp_stub, my_device, my_request))
-		return c_has_auto and d_has_auto
+		return c_has_auto
 
 	def runAutoFiller(self):
 		'''
@@ -1489,21 +1487,31 @@ class Krios(tem.TEM):
 		if not self.hasAutoFiller:
 			return
 		t0 = time.time()
-		watch_states_responses = vib_stub.WatchState(vib_p.WatchStateRequest())
-		watch_states = stream_async(watch_states_responses, thread_name)
 
 		try:
-			my_id = vib_stub.RegisterClient(name='my_client')
+			my_device = 'RegisterClient'
+			my_request = getattr(vib_p,'%sRequest' % my_device)(name='my_device')
+			my_id = vib_stub.RegisterClient(my_request)
 			my_device = 'PrepareToAvoidVibration'
 			my_request = getattr(vib_p,'%sRequest' % my_device)(id=my_id.id)
 			r = _get_by_request(vib_stub, '%s' % my_device, my_request)
+		except RuntimeError as e:
+			t1 = time.time()
+			if t1-t0 < 10.0:
+				raise RuntimeError('Force refill Denied: returned in %.1f sec' % (t1-t0))
+			else:
+				# utapi throws an error after successful refill with InactiveRpcError and code 10 (abort) ok to pass
+				# error_string ="UNKNOWN;Error received from peer"
+				self.logger.debug(f'ignored utapi error{e}')	
+				pass
 		except Exception as e:
 			#TODO error handling but avoid false error
 			# This COMError can occur when fill is slow, too.  Need to ignore it
 			raise RuntimeError('Failed Force Refill')
-		t1 = time.time()
-		if t1-t0 < 10.0:
-			raise RuntimeError('Force refill Denied: returned in %.1f sec' % (t1-t0))
+		self.logger.debug(f'sample busy: {self.isSampleDewarFillerBusy()}')
+		self.logger.debug(f'column busy: {self.isColumnDewarFillerBusy()}')
+		self.logger.debug(f'sample refill time: {self.getTimeUntilSampleDewarRefill()}')
+		self.logger.debug(f'col refill time: {self.getTimeUntilColumnDewarRefill()}')
 
 	def isSampleDewarFillerBusy(self):
 		my_device = 'IsFillingDewar'
@@ -1525,7 +1533,7 @@ class Krios(tem.TEM):
 		my_device = 'GetTimeUntilDewarRefill'
 		my_request = getattr(dtemp_p,'%sRequest' % my_device)()
 		try:
-			r = _get_by_request(dtemp_stub, '%s' % my_device, my_request)['remainingTime']
+			return _get_by_request(dtemp_stub, '%s' % my_device, my_request)['remainingTime']
 		except:
 			return 0
 
@@ -1533,7 +1541,7 @@ class Krios(tem.TEM):
 		my_device = 'GetTimeUntilDewarRefill'
 		my_request = getattr(ctemp_p,'%sRequest' % my_device)()
 		try:
-			r = _get_by_request(ctemp_stub, '%s' % my_device, my_request)['remainingTime']
+			return _get_by_request(ctemp_stub, '%s' % my_device, my_request)['remainingTime']
 		except:
 			return 0
 
@@ -1550,6 +1558,12 @@ class Krios(tem.TEM):
 		r = _get_by_request(dtemp_stub, '%s' % my_device, my_request)
 		return r['level']*100
 
+	def getColumnDewarRefrigerantLevel(self):
+		my_device = 'GetDewarRefrigerantLevel'
+		my_request = getattr(dtemp_p,'%sRequest' % my_device)()
+		r = _get_by_request(dtemp_stub, '%s' % my_device, my_request)
+		return r['level']*100
+
 	def getRefrigerantLevel(self,id=0):
 		'''
 		Get current refrigerant level. Only works on Krios and Artica. id 0 is the
@@ -1558,7 +1572,7 @@ class Krios(tem.TEM):
 		if id == 0:
 			return self.getSampleDewarRefrigerantLevel()
 		elif id == 1:
-			return self.getColumnRefrigerantLevel()
+			return self.getColumnDewarRefrigerantLevel()
 
 	def _getStageState(self):
 		my_device = 'StageState'
