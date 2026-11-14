@@ -135,3 +135,6 @@ STAGE_LIMITS%A = -1.2217, 1.2217
 STAGE_LIMITS%B = -1.58, 1.58
 # Relax distance
 #XY_STAGE_RELAX_DISTANCE = 10.0e-8
+
+# Always move stage at a reduced speed if this is larger than 1
+STAGE_MOVE_REDUCTION_FACTOR = 1.0
