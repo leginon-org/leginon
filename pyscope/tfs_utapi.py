@@ -1749,7 +1749,7 @@ class Krios(tem.TEM):
 		short_pos_str = ''
 		self._validateStageLimit(position, ['x','y','z','a','b'])
 		position_options = {}
-		stage_axis_name_map = [('x', 'x'),('y', 'y'),('z', 'z'),('a','rx'),('b',stage_p,'rz')]
+		stage_axis_name_map = [('x', 'x'),('y', 'y'),('z', 'z'),('a','rx'),('b','rz')]
 		pyscope_names = list(map((lambda x: x[0]), stage_axis_name_map))
 		position_message = stage_p.Position()
 		valid_api_axes = []
