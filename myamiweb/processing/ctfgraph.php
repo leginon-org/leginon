@@ -63,6 +63,9 @@ foreach($ctfinfo as $t) {
 		$value = $t['astig_x'];
 	else
 		$value=$t[$f];
+	// CTFFIND5 tilt and thickness are NULL if not determined
+	if (in_array($f, array('tilt_angle','tilt_axis_angle','sample_thickness')) && !isset($t[$f]))
+		continue;
 	// if grouping by cutoff confidence or resolution with one cutoff
 	if ($cutoff) {
 		// first check if value exists
@@ -90,7 +93,9 @@ foreach($ctfinfo as $t) {
 	if ($f!='astig_distribution') {
 		$ndata[]=array('unix_timestamp' => $t['unix_timestamp'], 'image_id' => $t['imageid'],  "$f"=>$value);
 	} else {
-		$ndata[]=array('unix_timestamp' => $t['unix_timestamp'], 'image_id' => $t['imageid'], 'astig_x' => $t['astig_x'], "astig_y"=>$t['astig_y']);
+		if ($t['ctffind4_resolution'] < 8) {  #this eliminates poorly fit ctf outliers with possibly large astigmatism
+		   $ndata[]=array('unix_timestamp' => $t['unix_timestamp'], 'image_id' => $t['imageid'], 'astig_x' => $t['astig_x'], "astig_y"=>$t['astig_y']);
+		}
 	}
 }
 if ($f == 'astig_distribution') {
@@ -106,7 +111,7 @@ if ($histogram == true && $histaxis == 'x')
 $dbemgraph = new dbemgraph($ndata, $axes[0], $axes[1]);
 //plot type
 // $is_lineplot = ($f == 'astig_distribution') ? false:true;
-// wjr I don;t like the line plots
+// wjr I don't like the line plots
 $is_lineplot = false;
 $dbemgraph->lineplot=$is_lineplot;
 $graph_title = ($f == 'ctffind4_resolution') ? 'CTFFIND4 resolution' : $f;
@@ -120,6 +125,8 @@ $dbemgraph->xaxistitle= $xtitle;
 //y
 $yunit = ($f == 'defocus1' || $f == 'defocus2' || 'astig_distribution') ? ' (um)':'';
 $yunit = (strpos($f,'resolution') !== false) ? ' (angstroms)': $yunit;
+$yunit = (strpos($f,'tilt') !== false) ? ' (degrees)': $yunit;
+$yunit = (strpos($f,'thickness') !== false) ? ' (nm)': $yunit;   #in case thickness graph is plotted
 $ytitle = ($f == 'ctffind4_resolution') ? 'package_resolution': $axes[1];
 $ytitle = ($cutoff) ? $ytitle.' avg defocus (um)' : $ytitle.$yunit;
 $dbemgraph->yaxistitle= $ytitle;

@@ -1008,6 +1008,23 @@ class particledata {
 		return $d;
 	}
 
+	function hasAceResolutionData($sessionId) {
+		// True if any CTF run in the session ran the Appion ACE display tools,
+		// which give resolution_50_percent. Only CTFFIND runs saved with
+		// no_acerun=1 skip them; runs from before the field have NULL.
+		if (!$this->mysql->FieldExists('ApCtfFind4ParamsData','no_acerun'))
+			return $this->hasCtfData($sessionId);
+		$q = "select acerun.DEF_id "
+			."from ApAceRunData AS acerun "
+			."LEFT JOIN ApCtfFind4ParamsData AS params "
+			."ON (acerun.`REF|ApCtfFind4ParamsData|ctffind4_params` = params.DEF_id) "
+			."WHERE acerun.`REF|leginondata|SessionData|session`='$sessionId' "
+			."AND (params.no_acerun IS NULL OR params.no_acerun = 0) "
+			."LIMIT 1";
+		$r = $this->mysql->getSQLResult($q);
+		return !empty($r);
+	}
+
 	function hasLocalCtfData($sessionId) {
 		$d = ($this->getLastLocalCtfRun($sessionId)) ? true : false;
 		return $d;
@@ -1118,6 +1135,7 @@ class particledata {
 	function getCtfInfo($runId) {
 		// ctf info of all images in a run without sorting
 		$phase_shift_select = $this->getPhaseShiftString('c');
+		$sample_thickness_select = ($this->mysql->FieldExists('ApCtfData','sample_thickness')) ? "c.`sample_thickness`, ": "";
 		$q =	"select "
 			."c.`REF|leginondata|AcquisitionImageData|image` as imageid, "
 			."i.`filename`AS filename, "
@@ -1152,6 +1170,9 @@ class particledata {
 			."c.`resolution_50_percent` , "
 			."c.`ctffind4_resolution` , "
 			."c.`confidence_d` , "
+			."c.`tilt_angle` , "
+			."c.`tilt_axis_angle` , "
+			.$sample_thickness_select
 			.$this->getAppionConfidenceScoreSelect('c')." , "
 			."c.`snr` , "
 			."c.`graph1` , "
@@ -1168,6 +1189,7 @@ class particledata {
 	function getCtfInfoFromImageId($imageId, $order=false, $method='', $acerunId='') {
 		$phase_shift_select = $this->getPhaseShiftString('c');
 		$local_plot_select = ($this->mysql->FieldExists('ApCtfData','localplot')) ? "c.localplot, ": "";
+		$sample_thickness_select = ($this->mysql->FieldExists('ApCtfData','sample_thickness')) ? "c.sample_thickness, ": "";
 		$q =	"select "
 			."c.`DEF_id`, "
 			."c.`REF|leginondata|AcquisitionImageData|image`, "
@@ -1198,6 +1220,7 @@ class particledata {
 			."c.`resolution_80_percent` , "
 			."c.`resolution_50_percent` , "
 			."c.`ctffind4_resolution` , "
+			.$sample_thickness_select
 			."(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
 			."from ApCtfData c "
 			."left join(ApAceRunData r, ApPathData p) "

@@ -45,7 +45,6 @@ list($ctfdata) = $ctf->getCtfInfoFromImageId($imgId,$order=False,$ctftype,$runId
 $ctfdata['cs'] = $leginondata->getCsValueFromSession($sessionId);
 
 // Set the order of the displayed information
-$keys[]='resolution_50_percent';
 $keys[]='ctffind4_resolution';
 
 // estimate parameters
@@ -60,9 +59,14 @@ if (abs($ctfdata['defocus1'] - $ctfdata['defocus2']) > $epsilon) {
 if (abs($ctfdata['extra_phase_shift']) > 0.001) {
 	$keys[]='extra_phase_shift';
 }
+$keys[]='cs';
+$keys[]='amplitude_contrast';
 $keys[]='runname';
-$keys[]='resolution_80_percent';
-$keys[]='confidence_appion';
+if (!empty($ctfdata['resolution_50_percent'])) {
+	$keys[]='resolution_50_percent';
+	$keys[]='resolution_80_percent';
+	$keys[]='confidence_appion';
+}
 //$keys[]='confidence_30_10';
 //$keys[]='confidence_5_peak';
 
@@ -70,8 +74,15 @@ if ($ctftype=='ctffind')
 	$keys[]='cross_correlation';
 else 
 	$keys[]='confidence';
-$keys[]='cs';
-$keys[]='amplitude_contrast';
+
+// CTFFIND5 sample tilt and thickness, if determined
+if (isset($ctfdata['sample_thickness'])) {
+	$keys[]='sample_thickness';
+}
+if (isset($ctfdata['tilt_angle'])) {
+	$keys[]='tilt_angle';
+	$keys[]='tilt_axis_angle';
+}
 
 //$keys[]='confidence_d';
 // add the Cs
@@ -118,10 +129,14 @@ if ($ctfdata) {
 				echo " <b>$name:</b>&nbsp;".format_angle_degree($v*180/3.14159,2,2);
 			elseif (preg_match('%resolution%',$k))
 				echo " <b>$name:</b>&nbsp;".format_angstrom_number($v*1e-10,2,2);
-			elseif (preg_match('confidence%',$k) || $k == "amplitude_contrast")
+			elseif (preg_match('confidence%',$k) || $k == "amplitude_contrast" )
 				echo " <b>$name:</b>&nbsp;".number_format($v,2);
 			elseif ($k == 'cs')
 				echo " <b>$name:</b>&nbsp;".number_format($v,3)."&nbsp;mm";
+			elseif ($k == "tilt_angle" || $k == "tilt_axis_angle" )
+				echo " <b>$name:</b>&nbsp;".format_angle_degree($v,1);
+			elseif ($k == 'sample_thickness')
+				echo " <b>$name:</b>&nbsp;".number_format($v,1)."&nbsp;nm";
 			elseif (gettype($v) == "double" && $v-floor($v)) 
 				echo " <b>$name:</b>&nbsp;".format_sci_number($v,2,2);
 			else
