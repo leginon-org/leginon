@@ -19,9 +19,11 @@ radian_suspects = 0
 
 #====================
 #====================
-def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir, fftpath=None, fftfreq=None):
+def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir, fftpath=None, fftfreq=None, acerun=True):
 	"""
 	function to insert CTF values in database
+	acerun=False skips the Appion ACE display tools and uses the package's
+	power spectrum (graph1) and 1D plot (graph2) as they are.
 	"""
 	apDisplay.printMsg("Committing ctf parameters for "
 		+apDisplay.short(imgdata['filename'])+" to database")
@@ -46,11 +48,18 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir, fftpath=None, 
 		ctfvalues['extra_phase_shift'] = 0.0
 
 	if isvalid is True:
-		oldctfvalues = ctfvalues.copy()
-		ctfvalues = runCTFdisplayTools(imgdata, ctfvalues, opimagedir, fftpath, fftfreq)
-		# check if image creation failed
-		if ctfvalues is None:
-			ctfvalues = oldctfvalues
+		if acerun is True:
+			oldctfvalues = ctfvalues.copy()
+			ctfvalues = runCTFdisplayTools(imgdata, ctfvalues, opimagedir, fftpath, fftfreq)
+			# check if image creation failed
+			if ctfvalues is None:
+				ctfvalues = oldctfvalues
+		else:
+			# use the package-generated images for display
+			for src, dst in (('graph1', 'graph3'), ('graph2', 'graph4')):
+				if ctfvalues.get(src):
+					ctfvalues[src] = os.path.basename(ctfvalues[src])
+					ctfvalues[dst] = ctfvalues[src]
 
 	### clean rundir from all entries:
 	if not rundir.endswith("/"):

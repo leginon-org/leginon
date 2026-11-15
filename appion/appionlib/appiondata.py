@@ -437,6 +437,7 @@ class ApCtfFind4ParamsData(Data):
 			('max_phase_shift', float),
 			('phase_search_step', float),
 			('local_refine', bool),
+			('no_acerun', bool), # True if Appion ACE display tools were skipped
 		)
 	typemap = classmethod(typemap)
 
@@ -492,8 +493,8 @@ class ApCtfData(Data):
 			('localCTFstarfile', str), # local CTF output file
 			('ctfvalues_file', str),  # used for ace2correct
 			('cross_correlation', float),  # direct from ctffind/ctftilt
-			('tilt_angle', float),  # from ctftilt
-			('tilt_axis_angle', float),  # from ctftilt
+			('tilt_angle', float),  # from ctftilt or CTFFIND5
+			('tilt_axis_angle', float),  # from ctftilt or CTFFIND5
 			('mat_file', str),  # from ACE1
 			('extra_phase_shift', float), #phase plate phase shift addition (radians)
 		)

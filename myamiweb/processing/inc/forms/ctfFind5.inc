@@ -13,14 +13,15 @@ require_once "dbDefocusTable.inc";
 class CtfFind5 extends BasicLoopForm
 {
 	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $fieldsize='1024',
-								$resmin='50', $resmax='4', $defstep='0.1', $numstep='25', $dast='0.05', $bestdb=true, $nominal='', $parallel=true, $useDDStack=false, $ddstackid=false, $phase_plate=false, $min_phase_shift=10, $max_phase_shift=170, $phase_search_step=10, $num_frame_avg=7) 
+								$resmin='50', $resmax='4', $defstep='0.1', $numstep='25', $dast='0.05', $bestdb=true, $nominal='', $parallel=true, $useDDStack=false, $ddstackid=false, $phase_plate=false, $min_phase_shift=10, $max_phase_shift=170, $phase_search_step=10, $num_frame_avg=7,
+								$sample_tilt=false, $sample_thickness=false, $brute_force_1D=false, $refine_2D=false, $low_resolution_nodes=30, $high_resolution_nodes=3.0, $rounded_square=false, $downweight_nodes=false, $acerun=false) 
 	{
 		parent::__construct($expId, $extraHTML);
 		
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
 		// Set the publications to be references on the web pages
-		$pubList = array('ctffind4');
+		$pubList = array('ctffind5');
 		$this->setPublications( $pubList );
 		$this->setJobType( 'ctfestimate' );
 		$this->setOutputDirectory( 'ctf' );
@@ -56,6 +57,17 @@ class CtfFind5 extends BasicLoopForm
 		$params->addParam( "max_phase_shift", $max_phase_shift, "Maximun Phase Shift in search (degrees)" );
 		$params->addParam( "phase_search_step", $phase_search_step, "Initial Phase Shift Search Step (degrees)" );
 		$params->addParam( "num_frame_avg", $num_frame_avg, "Number of Frames to average" );
+
+		// CTFFIND5 tilt and thickness. Names must match ctffind5.py options.
+		$params->addParam( "sample_tilt", $sample_tilt, "Determine sample tilt (much slower)" );
+		$params->addParam( "sample_thickness", $sample_thickness, "Determine sample thickness" );
+		$params->addParam( "brute_force_1D", $brute_force_1D, "Use brute force 1D search for thickness" );
+		$params->addParam( "2D_refinement", $refine_2D, "Use 2D refinement for thickness" );
+		$params->addParam( "low_resolution_nodes", $low_resolution_nodes, "Low resolution limit for nodes (in &Aring;)" );
+		$params->addParam( "high_resolution_nodes", $high_resolution_nodes, "High resolution limit for nodes (in &Aring;)" );
+		$params->addParam( "rounded_square", $rounded_square, "Use rounded square for nodes" );
+		$params->addParam( "downweight_nodes", $downweight_nodes, "Downweight nodes for thickness" );
+		$params->addParam( "acerun", $acerun, "Also run Appion ACE display tools" );
 		
 		// Validations
 		//$params->addValidation( "numpart", "req" );
@@ -101,6 +113,19 @@ class CtfFind5 extends BasicLoopForm
 		$html.= $params->insertTextField( "min_phase_shift", $fieldSize );
 		$html.= $params->insertTextField( "max_phase_shift", $fieldSize );
 		$html.= $params->insertTextField( "phase_search_step", $fieldSize );
+
+		$html.= "<hr /><b>CTFFIND5 tilt and thickness</b><br />";
+		$html.= $params->insertCheckboxField( "sample_tilt" );
+		$html.= $params->insertCheckboxField( "sample_thickness" );
+		$html.= "<i>Used only if thickness is determined:</i><br />";
+		$html.= $params->insertCheckboxField( "brute_force_1D" );
+		$html.= $params->insertCheckboxField( "2D_refinement" );
+		$html.= $params->insertTextField( "low_resolution_nodes", $fieldSize );
+		$html.= $params->insertTextField( "high_resolution_nodes", $fieldSize );
+		$html.= $params->insertCheckboxField( "rounded_square" );
+		$html.= $params->insertCheckboxField( "downweight_nodes" );
+		$html.= "<hr />";
+		$html.= $params->insertCheckboxField( "acerun" );
 
 		
 		return $html;

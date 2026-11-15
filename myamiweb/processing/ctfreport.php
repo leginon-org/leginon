@@ -144,7 +144,8 @@ if ($ctfrundatas) {
 				//'confidence', 'confidence_d', 
 				'angle_astigmatism', 'astig_distribution',
 				'extra_phase_shift',
-				'resolution_80_percent', 'resolution_50_percent', 'ctffind4_resolution');
+				'tilt_angle', 'tilt_axis_angle', 'ctffind4_resolution');
+				#'resolution_80_percent', 'resolution_50_percent', 'ctffind4_resolution');   #make room for tilt information
 			$stats = $ctf->getCTFStats($fields, $expId);
 			$display_ctf=false;
 			foreach($stats as $field=>$data) {
@@ -278,6 +279,20 @@ if ($ctfrundatas) {
 	echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 		."w=800&h=600&hg=0&expId=$expId&s=1&xmin=1&xmax=15&f=resolution_appion&ctff=$ctff'></a>\n";
 	echo "</td></tr>";
+
+        echo "<tr><td>\n";
+		echo "<h3>Tilt Angle from CTFFIND5</h3>";
+		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&xmin=0&xmax=90&f=tilt_angle&ctff=$ctff'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=0&expId=$expId&s=1&xmin=0&xmax=90&f=tilt_angle&ctff=$ctff' alt='please wait...'></a>\n";
+	echo "</td><td>\n";
+		echo "<h3>Tilt Axis Angle from CTFFIND5</h3>\n";
+		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&xmin=0&xmax=360&f=tilt_axis_angle&ctff=$ctff'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+		."w=800&h=600&hg=0&expId=$expId&s=1&xmin=0&xmax=360&f=tilt_axis_angle&ctff=$ctff'></a>\n";
+		echo "</td></tr>";
+
+
 	echo "</table>";
 
 	// show defocus histograms with different cutoffs

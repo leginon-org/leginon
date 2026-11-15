@@ -58,7 +58,7 @@ if ($relion >= 1) {
 	$pixelsize *= $imginfo['binning'];
 	$kev = $imginfo['high tension']/1000;
 	$cs = $leginon->getCsValueFromSession($expId);
-	# get IMAGE MATRIX CALIBRATION once
+	# get IMAGE MATRIX CALIBRATION ONCE
 	# image shift coma is not mag dependent
 	$m = $leginon->getImageMatrixCalibration($imgid, $type='image-shift coma', $mag_depend=false);
 	# if no matrix is defined, leave it as unit vector so raw image shift will be output
@@ -66,13 +66,16 @@ if ($relion >= 1) {
 		$m[a11] = 1;
 		$m[a22] = 1;
 	}
+	#$matrix = matrix($m[a11],$m[a12],$m[a21],$m[a22]);
+	#
 }
-else $data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\textra_phase_shift\tres(0.8)\tres(0.5)\tres(pkg)\tconf(30/10)\tconf(5_peak)\tconf\tconf(appion)\timage_name\n";
+else $data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\textra_phase_shift\tres(0.8)\tres(0.5)\tres(pkg)\tconf(30/10)\tconf(5_peak)\tconf\tconf(appion)\ttilt_angle\ttilt_axis_angle\tsample_thickness\timage_name\n";
 //echo "</br>\n";
 
 foreach ($ctfdatas as $ctfdata) {
 	$imgid = $ctfdata['imageid'];
-	$filename = $ctfdata['filename']; 
+	#$filename = $appiondb->getImageNameFromId($imgid);
+	$filename = $ctfdata['filename']; #->getImageNameFromId($imgid);
 	if (!empty($preset))
 		$p = $leginon->getPresetFromImageId($imgid);
 		if ($preset != $p['name'] ) continue;
@@ -107,7 +110,10 @@ foreach ($ctfdatas as $ctfdata) {
 	else {
 		// regular appion download
 		$angtxt = str_pad(sprintf("%.3f",$ctfdata['angle_astigmatism']), 9, " ", STR_PAD_LEFT);
-		$data[] = sprintf("%d\t%.4e\t%.5e\t%.5e\t%s\t%.4f\t%.4f\t%.2f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\t%s\n",
+		if (! isset($ctfdata['sample_thickness'])) {
+			$ctfdata['sample_thickness']=0;
+		}
+		$data[] = sprintf("%d\t%.4e\t%.5e\t%.5e\t%s\t%.4f\t%.4f\t%.2f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\t%.1f\t%.1f\t%.1f\t%s\n",
 			$ctfdata['imageid'],
 			$ctfdata['defocus'],
 			$ctfdata['defocus1'],
@@ -122,6 +128,9 @@ foreach ($ctfdatas as $ctfdata) {
 			$ctfdata['confidence_5_peak'],
 			$ctfdata['confidence'],
 			$ctfdata['confidence_appion'],
+			$ctfdata['tilt_angle'],
+			$ctfdata['tilt_axis_angle'],
+			$ctfdata['sample_thickness'],
 			$filename);
 	}
 }
