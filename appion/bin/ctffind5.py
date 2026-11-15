@@ -404,6 +404,13 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			if self.params['sample_tilt'] and len(bits) >= 9:
 				self.ctfvalues['tilt_axis_angle'] = float(bits[7])
 				self.ctfvalues['tilt_angle'] = float(bits[8])
+			if self.params['sample_thickness'] and len(bits) >= 10:
+				thickness = float(bits[9])/10.0 # Angstroms to nm
+				# CTFFIND5 can give inf or nan if the fit fails; the database can not take them
+				if math.isfinite(thickness):
+					self.ctfvalues['sample_thickness'] = thickness
+				else:
+					apDisplay.printWarning("CTFFIND5 sample thickness %s is not saved" % (bits[9]))
 
 		if len(list(self.ctfvalues.keys())) == 0:
 			apDisplay.printWarning("Invalid %s"%(ctfproglog))

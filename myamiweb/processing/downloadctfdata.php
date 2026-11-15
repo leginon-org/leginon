@@ -69,7 +69,7 @@ if ($relion >= 1) {
 	#$matrix = matrix($m[a11],$m[a12],$m[a21],$m[a22]);
 	#
 }
-else $data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\textra_phase_shift\tres(0.8)\tres(0.5)\tres(pkg)\tconf(30/10)\tconf(5_peak)\tconf\tconf(appion)\ttilt_angle\ttilt_axis_angle\tsample_thickness\timage_name\n";
+else $data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\textra_phase_shift\tres(0.8)\tres(0.5)\tres(pkg)\tconf(30/10)\tconf(5_peak)\tconf\tconf(appion)\ttilt_angle\ttilt_axis_angle\tsample_thickness(nm)\timage_name\n";
 //echo "</br>\n";
 
 foreach ($ctfdatas as $ctfdata) {
@@ -110,10 +110,11 @@ foreach ($ctfdatas as $ctfdata) {
 	else {
 		// regular appion download
 		$angtxt = str_pad(sprintf("%.3f",$ctfdata['angle_astigmatism']), 9, " ", STR_PAD_LEFT);
-		if (! isset($ctfdata['sample_thickness'])) {
-			$ctfdata['sample_thickness']=0;
+		// CTFFIND5 tilt and thickness are NA if not determined
+		foreach (array('tilt_angle','tilt_axis_angle','sample_thickness') as $k) {
+			$ctfdata[$k] = (isset($ctfdata[$k])) ? sprintf("%.1f",$ctfdata[$k]) : 'NA';
 		}
-		$data[] = sprintf("%d\t%.4e\t%.5e\t%.5e\t%s\t%.4f\t%.4f\t%.2f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\t%.1f\t%.1f\t%.1f\t%s\n",
+		$data[] = sprintf("%d\t%.4e\t%.5e\t%.5e\t%s\t%.4f\t%.4f\t%.2f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\t%s\t%s\t%s\t%s\n",
 			$ctfdata['imageid'],
 			$ctfdata['defocus'],
 			$ctfdata['defocus1'],

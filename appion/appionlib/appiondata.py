@@ -497,6 +497,7 @@ class ApCtfData(Data):
 			('tilt_axis_angle', float),  # from ctftilt or CTFFIND5
 			('mat_file', str),  # from ACE1
 			('extra_phase_shift', float), #phase plate phase shift addition (radians)
+			('sample_thickness', float), # from CTFFIND5 (nm)
 		)
 	typemap = classmethod(typemap)
 
