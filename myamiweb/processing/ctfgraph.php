@@ -63,6 +63,9 @@ foreach($ctfinfo as $t) {
 		$value = $t['astig_x'];
 	else
 		$value=$t[$f];
+	// CTFFIND5 tilt and thickness are NULL if not determined
+	if (in_array($f, array('tilt_angle','tilt_axis_angle','sample_thickness')) && !isset($t[$f]))
+		continue;
 	// if grouping by cutoff confidence or resolution with one cutoff
 	if ($cutoff) {
 		// first check if value exists
