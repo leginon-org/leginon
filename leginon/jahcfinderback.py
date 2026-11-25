@@ -51,6 +51,7 @@ class HoleFinder(icefinderback.IceFinder):
 			'holes2': None, # good holes to use after convolution, ice filtering etc.
 			'markedholes2': None,
 			'holes3': None, # center holes to use after convolution, in case holes2 is empty after ice filtering
+			'holes4': None, # 2-fold convoluted holes to use after convolution, in case holes2 is empty after ice filtering
 		}
 
 		## This defines which dependent results should be cleared
@@ -65,11 +66,12 @@ class HoleFinder(icefinderback.IceFinder):
 			'blobs': ('lattice',),
 			'vector': ('lattice',),
 			'lattice': ('holes',),
-			'holes': ('holes2','markedholes','holes3'),
+			'holes': ('holes2','markedholes','holes3','holes4'),
 			'markedholes': (),
-			'holes2': ('markedholes2','holes3'),
+			'holes2': ('markedholes2','holes3','holes4'),
 			'markedholes2': (),
 			'holes3':(),
+			'holes4':(),
 		}
 
 	def setComponents(self):

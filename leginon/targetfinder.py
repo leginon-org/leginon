@@ -534,7 +534,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if len(imagetargets) <= 1:
 			return imagetargets
 		else:
-			self.logger.warning('Publish only the focus target closest to the center')
+			self.logger.info('Publish only the focus target closest to the center')
 			deltas = map((lambda x: math.hypot(x[1]-imageshape[0]/2,x[0]-imageshape[1]/2)),imagetargets)
 			return [imagetargets[deltas.index(min(deltas))],]
 
@@ -847,6 +847,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 				target['stats']['Score'] = blob.stats['score']
 			if 'signal' in blob.stats.keys():
 				target['stats']['Signal'] = blob.stats['signal']
+			if 'group' in blob.stats.keys():
+				target['stats']['Group'] = blob.stats['group']
+			if 'label_index' in blob.stats.keys():
+				target['stats']['Label_index'] = blob.stats['label_index']
 			targets.append(target)
 		return targets
 

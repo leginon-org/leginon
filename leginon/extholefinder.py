@@ -58,6 +58,13 @@ class ExtHoleFinder(targetfinder.TargetFinder):
 		'focus offset row': 0,
 		'focus offset col': 0,
 		'filter ice on convolved': False,
+		'sampling targets': False,
+		'max sampling': 100,
+		'randomize acquisition': False,
+		'random y offset': 50,	
+		'randomize chunky': False,
+		'fallback2 radius': 28,
+		'no center fallback': False,
 	})
 	targetnames = targetfinder.TargetFinder.targetnames + ['ExtHoles']
 	def __init__(self, id, session, managerlocation, **kwargs):

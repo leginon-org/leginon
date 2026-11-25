@@ -159,6 +159,9 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['random y offset'] = IntEntry(self, -1, chars=6)
 		self.widgets['randomize chunky'] = wx.CheckBox(self, -1,
 			'Limit offsets to  0,max offset/2, or max offset')
+		self.widgets['fallback2 radius'] = IntEntry(self, -1, chars=6)
+		self.widgets['no center fallback'] = wx.CheckBox(self, -1,
+			'Do NOT fall back to center targeting')
 
 		szice = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Min. mean:')
@@ -189,6 +192,12 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szice.Add(self.widgets['randomize chunky'], (6, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		szice.Add(self.widgets['random y offset'], (6, 2), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Two-target fallback radius (0 for center-only):')
+		szice.Add(label, (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szice.Add(self.widgets['fallback2 radius'], (7, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		szice.Add(self.widgets['no center fallback'], (8, 0), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		szice.AddGrowableCol(1)

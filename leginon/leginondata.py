@@ -263,6 +263,7 @@ camera_params = (
 	('system dark subtracted', bool),
 	('use cds', bool),
 	('fast save', bool),
+	('quart stats', bool),
 )
 
 class ScopeEMData(EMData):
@@ -647,6 +648,7 @@ class PresetData(InSessionData):
 			('readout delay', int),
 			('fast save', bool),
 			('use cds', bool), # K3 only
+			('quart stats', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1324,6 +1326,8 @@ class IceTargetFinderPrefsData(InSessionData):
 			('randomize acquisition',bool),
 			('random y offset',int),
 			('randomize chunky',bool),
+			('fallback2 radius',int),
+			('no center fallback',bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1798,6 +1802,8 @@ class IceTargetFinderSettingsData(TargetFinderSettingsData):
 			('randomize acquisition',bool),
 			('random y offset',int),
 			('randomize chunky',bool),
+			('fallback2 radius',int),
+			('no center fallback',bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -2028,6 +2034,7 @@ class TargetGroupingSettingsData(SettingsData):
 			('classes', int),
 			('group method', str),
 			('randomize blobs', bool),
+			('groups to ignore',str),
 		)
 	typemap = classmethod(typemap)
 

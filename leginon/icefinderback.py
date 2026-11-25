@@ -50,6 +50,7 @@ class IceFinder(object):
 			'holes': None,
 			'holes2': None, #good holes to use, including convolved
 			'holes3': None, #original unconvolved holes, to be later added to holes2
+			'holes4': None, #2-target convolved holes, to be later added to holes2
 		}
 
 		## This defines which dependent results should be cleared
@@ -61,6 +62,7 @@ class IceFinder(object):
 			'holes': ('holes2',),
 			'holes2': (),
 			'holes3': (),
+			'holes4': (),
 		}
 
 	def setComponents(self):
@@ -154,7 +156,7 @@ class IceFinder(object):
 		hole.stats['hole_mean'] = holestats['mean']
 		hole.stats['hole_std'] = holestats['std']
 
-	def calc_ice(self, i0=None, tmin=None, tmax=None, input_name='holes'):
+	def calc_ice(self, i0=None, tmin=None, tmax=None, input_name='holes',output_name='holes2'):
 		'''
 		Set result holes2 that contains only good holes from ice thickness thresholds
 		in ice_config.
@@ -164,7 +166,7 @@ class IceFinder(object):
 		self.configure_ice(i0=i0,tmin=tmin,tmax=tmax)
 		holes = self.get_result(input_name)
 		holes, holes2 = self.ice.calc_ice(holes)
-		self.update_result('holes2',holes2)
+		self.update_result(output_name,holes2)
 
 	def find_holes(self):
 		'''
@@ -225,9 +227,9 @@ class IceFinder(object):
 			blobs.append(blob)
 		return blobs
 
-	def make_convolved(self, input_name='holes',excluding_hole=None):
+	def make_convolved(self, input_name='holes',excluding_hole=None, output_name='holes2'):
 		"""
-		Make convolved results as holes2.
+		Make convolved results as holes2 (default) or specified output name.
 		"""
 		if self.get_result(input_name) is None:
 			raise RuntimeError('need %s to generate convolved targets' % input_name)
@@ -249,12 +251,12 @@ class IceFinder(object):
 		centers = map((lambda x: x.stats['center']),goodholes)
 		conv_vect = self.convolve.configs['conv_vect'] # list of (del_r,del_c)s
 		# reset before start
-		self.update_result('holes2', [])
+		self.update_result(output_name, [])
 		if not conv_vect:
 			return
 		#real part
 		convolved = self.convolve.make_convolved(goodholes)
-		self.update_result('holes2', convolved)
+		self.update_result(output_name, convolved)
 
 	def sampling(self, input_name='holes2'):
 		"""

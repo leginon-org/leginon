@@ -46,6 +46,7 @@ class HoleFinder(icefinderback.IceFinder):
 			'holes': None,  # holes found by holefinder
 			'holes2': None, # good holes to use after convolution, ice filtering etc.
 			'holes3': None, #original unconvolved holes, to be later added to holes2
+			'holes4': None, # 2-fold holes to use after convolution, in case holes2 is empty after ice filtering
 		}
 
 		## This defines which dependent results should be cleared
@@ -54,9 +55,10 @@ class HoleFinder(icefinderback.IceFinder):
 		##  If you update key, clear everything in the dependent tuple
 		self.__dependents = {
 			'original': ('holes',),
-			'holes': ('holes2',),
-			'holes2': (),
-			'holes3': (),
+			'holes': ('holes2','holes3','holes4'),
+			'holes2': ('holes3',),
+			'holes3':(),
+			'holes4':(),
 		}
 		self.setComponents()
 		self.setDefaults()

@@ -57,6 +57,8 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		'randomize acquisition': False,
 		'random y offset': 50,	
 		'randomize chunky': False,
+		'fallback2 radius': 28,
+		'no center fallback': False,
 	})
 	targetnames = targetfinder.TargetFinder.targetnames + ['Hole']
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -236,7 +238,7 @@ class IceTargetFinder(targetfinder.TargetFinder):
 				hole.stats['center'] = (new_y,new_x)
 
 
-	def filterIce(self, input_name='holes'):
+	def filterIce(self, input_name='holes', output_name='holes2'):
 		'''
 		Filter hf[input_name] by ice thickness stats.  The results are in
 		hf['holes2']
@@ -248,8 +250,9 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		tstdmax = self.settings['ice max std']
 		tstdmin = self.settings['ice min std']
 		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax,tstdmax=tstdmax, tstdmin=tstdmin)
+# wjr 1-12-25 generalize for holes2 and holes4
 		try:
-			self.hf.calc_ice(input_name=input_name)
+			self.hf.calc_ice(input_name=input_name,output_name=output_name)
 		except Exception as e:
 			self.logger.error(e)
 			return
@@ -353,27 +356,40 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		'''
 		if self.settings['filter ice on convolved']:
 			self._makeConvolvedHoles2('acquisition','holes',self.focus_hole)
-			self.iceOnConvolved() # results in holes2
-			if len(self.settings['acquisition template']) >1:  # if more than 1 target check if center is good in case others are bad
+			self.iceOnConvolved('holes2') # results in holes2
+			if len(self.settings['acquisition template']) >2 and self.settings['fallback2 radius'] >0:  # if more than 2 targets check if double shots can be added in case others are bad
+				fallback2_radius=self.settings['fallback2 radius']
+				self._makeConvolvedHoles4('acquisition',fallback2_radius,'holes',self.focus_hole)
+				self.iceOnConvolved('holes4') # results in holes4
+				self._addholes('holes2','holes4') # add back holes4 to holes 2 if there is no convolutated target wjr
+
+			if len(self.settings['acquisition template']) >1 and not self.settings['no center fallback']:  # if more than 1 target check if center is good in case others are bad
 				self.hf.filter_good('holes','holes3') # wjr results of unconvolved into holes3
 				self._addholes('holes2','holes3') # add back holes3 to holes 2 if there is no convolutated target wjr
-
 		else:
 			self.hf.filter_good('holes')
 			self._makeConvolvedHoles2('acquisition','holes2',self.focus_hole)
 		return
 
+	def _calc_distance(self,point1, point2):
+		    """Calculates the Euclidean distance between two points."""
+		    return math.sqrt(sum((x - y)**2 for x, y in zip(point1, point2)))
+
 	def _addholes(self,oldholes='holes2',newholes='holes3'):
 		''' 
 		adds a list of newholes to oldholes if a given new hole is not within <limit> of any old hole
 		limit caclulated as maximum distance of target list, plus 3 for floating point safety
+		NEW NEW min_distance between all targets is used as the limit rather than the distance of targets from center
 		wjr
 		'''
 		conv_vect = self.settings['acquisition template'] # list of (del_c,del_r)s
-		distancelist = []
-		for p in conv_vect:
-			distancelist.append(math.hypot(p[0],p[1]))
-		limit = max(distancelist)+3  # add 3 for safety, if center point is within this distance of a convolved point, center point is removed
+# wjr find minimum distance between points as follows
+		min_distance = 1000  # essentially inf;
+		for i in range(len(conv_vect)):
+			for j in range(i + 1, len(conv_vect)):
+				dist = self._calc_distance(conv_vect[i], conv_vect[j])
+				if dist < min_distance:
+					min_distance = dist
 		oldholes_list = list(self.hf.get_result(oldholes))
 		newholes_list = list(self.hf.get_result(newholes))
 		oldcenters = map((lambda x: x.stats['center']),oldholes_list)
@@ -385,13 +401,11 @@ class IceTargetFinder(targetfinder.TargetFinder):
 			for j, p2 in enumerate(oldcenters):
 				r2,c2=p2
 				dist = math.hypot(r1-r2,c1-c2)
-				if dist < limit:
+				if dist < min_distance:
 					delpoint=True
 					break
 			if delpoint:
-		#		print "marked for deletion i=%d"%i
 				remove_points.append(i)
-				oldcenters.pop(j)  # can also delete this good point since the center near it has been removed
 		remove_points.reverse()
 		for i in remove_points:
 			newholes_list.pop(i)
@@ -400,7 +414,6 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		self.logger.info('Center targets added: %d' % n_holes_added)
 		self.hf.update_result(oldholes, []) # wjr is clearing necessary??
 		self.hf.update_result(oldholes, oldholes_list)
-
 
 	def _getStatsKeys(self):
 		'''
@@ -424,23 +437,43 @@ class IceTargetFinder(targetfinder.TargetFinder):
 		goodholes = self.hf['holes2']
 		return goodholes
 
+	def _makeConvolvedHoles4(self,acq_type='acquisition', radius=27, input_name='holes', excluding_hole=None):  
+		'''
+		Convolve the radial distance  with holes to save as holes4, excluding the hole
+		used in deriving the focus. Return the centers as
+		(x,y) points
+		'''
+		# target template are x,y instead of row,col
+		#setting_name = '%s template' % acq_type
+		# conolve_config conv_vect needs (row, col)
+		#vect = self.hf.swapxy(self.settings[setting_name])
+		radius = float(radius)
+		vect = [(-radius,0),(radius,0)]
+		if radius <0:   # make sideways for negative radius
+			vect = [(0,-radius),(0,radius)]
+		self.hf.configure_convolve(conv_vect=vect)
+		self.hf.make_convolved(input_name, excluding_hole,"holes4")
+		goodholes = self.hf['holes4']
+		return goodholes
+
 	def _holesToCenters(self, holes, existing_points):
 		acq_points = self.blobCenters(holes)
 		acq_points.extend(existing_points)
 		return acq_points
 
-	def iceOnConvolved(self):
+	def iceOnConvolved(self,input_holes='holes2'):
 		'''
 		Filter convolved holes with ice thickness threshold.
 		The results are in hf['holes2']
+		wjr replace 'holes2' with input_holes so this function can be re-used
 		'''
 		r = self.settings['lattice hole radius']
 		self.hf.configure_holestats(radius=r)
-		self.hf.calc_holestats(input_name='holes2')
-		n_holes_before = len(list(self.hf['holes2']))
-		if self.hf['holes2'] is not None:
-			self.logger.info('Potential targets with stats: %d' % n_holes_before)
-		self.filterIce(input_name='holes2')
+		self.hf.calc_holestats(input_name=input_holes)
+		n_holes_before = len(list(self.hf[input_holes]))
+		if self.hf[input_holes] is not None:
+			self.logger.info('Potential targets from %s with stats: %d' % (input_holes,n_holes_before))
+		self.filterIce(input_name=input_holes,output_name=input_holes)   #wjr 01-17-25 try
 
 	def centerCarbonWithoutLattice(self, points):
 		'''
@@ -644,6 +677,8 @@ class IceTargetFinder(targetfinder.TargetFinder):
 			'randomize acquisition': self.settings['randomize acquisition'],
 			'random y offset': self.settings['random y offset'],
 			'randomize chunky': self.settings['randomize chunky'],
+			'fallback2 radius': self.settings['fallback2 radius'],
+			'no center fallback': self.settings['no center fallback'],
 
 		})
 

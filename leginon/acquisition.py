@@ -935,8 +935,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imagedata['phase plate'] = self.pp_used
 		imagedata['version'] = 0
 		## store EMData to DB to prevent referencing errors
-		self.publish(imagedata['scope'], database=True)
-		self.publish(imagedata['camera'], database=True)
+		self.publish(imagedata['scope'], database=True, dbforce=True)  # wjr add dbforce=True to speed up long sessions
+		self.publish(imagedata['camera'], database=True, dbforce=True)  # wjr add dbforce=True to speed up long sessions
 		return imagedata
 
 	def _acquireCameraImage(self, correctimage, channel):
